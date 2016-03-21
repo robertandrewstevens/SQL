@@ -1,0 +1,27 @@
+---
+title: "lsqlthw04"
+author: "Robert A. Stevens"
+date: "September 2, 2015"
+output: html_document
+---
+
+http://sql.learncodethehardway.org/book/ex4.html
+
+Exercise 4: Insert Referential Data
+In the last exercise you filled in some tables with people and pets. The only thing that's missing is who owns what pets, and that data goes into the person_pet table like this:
+
+INSERT INTO person_pet (person_id, pet_id) VALUES (0, 0);
+INSERT INTO person_pet VALUES (0, 1);
+Again I'm using the explicit format first, then the implicit format. How this works is I'm using the id values from the person row I want (in this case, 0) and the id from the pet rows I want (again, 0 for the Unicorn and 1 for the Dead Robot). I then insert one row into person_pet relation table for each "connection" between a person and a pet.
+
+What You Should See
+I'll just piggyback on the last exercise and run this right on the ex3.db database to set these values:
+
+$ sqlite3 -echo ex3.db < ex4.sql
+INSERT INTO person_pet (person_id, pet_id) VALUES (0, 0);
+INSERT INTO person_pet VALUES (0, 1);
+$
+Extra Credit
+Add the relationships for you and your pets.
+Using this table, could a pet be owned by more than one person? Is that logically possible? What about the family dog? Wouldn't everyone in the family technically own it?
+Given the above, and given that you have an alternative design that puts the pet_id in the person table, which design is better for this situation?

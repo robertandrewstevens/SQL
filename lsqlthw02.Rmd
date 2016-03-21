@@ -1,0 +1,107 @@
+---
+title: "lsqlthw02"
+author: "Robert A. Stevens"
+date: "January 10, 2015"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex2.html
+
+## Exercise 2: Creating A Multi-Table Database
+
+Creating one table isn't too useful. I want you to now make 3 tables that you can store data into:
+
+    CREATE TABLE person (
+        id INTEGER PRIMARY KEY,
+        firstName TEXT,
+        lastName TEXT,
+        age INTEGER
+    );
+    
+    CREATE TABLE pet (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        breed TEXT,
+        age INTEGER,
+        dead INTEGER
+    );
+    
+    CREATE TABLE personPet (
+        personId INTEGER,
+        petId INTEGER
+    );
+
+In this file you are making tables for two types of data, and then "linking" them together with a third table. People call these "linking" tables "relations", but very pedantic people with no lives call all tables "relations" and enjoy confusing people who just want to get their jobs done. In my book, tables that have data are "tables", and tables that link tables together are called "relations".
+
+There isn't anything new here, except when you look at **personPet** you'll see that I've made two columns: **personId** and **petId**. How you would link two tables together is simply insert a row into personPet that had the values of the two row's id columns you wanted to connect. For example, if person contained a row with **id**=20 and pet had a row with **id**=98, then to say that person owned that pet, you would insert **personId**=20, **petId**=98 into the personPet relation (table).
+
+We'll get into actually inserting data like this in the next few exercises.
+
+## What You Should See
+
+You run this SQL script in the same way as before, but you specify **ex2.db** instead of **ex1.db**. As usual there's no output, but this time I want you to open the database and use the **.schema** command to dump it:
+
+    sqlite> .schema
+    CREATE TABLE person (
+        id INTEGER PRIMARY KEY,
+        firstName TEXT,
+        lastName TEXT,
+        age INTEGER
+    );
+    CREATE TABLE personPet (
+        personId INTEGER,
+        petId INTEGER
+    );
+    CREATE TABLE pet (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        breed TEXT,
+        age INTEGER,
+        dead INTEGER
+    );
+    sqlite>
+
+```{r comment=NA}
+library(sqldf)
+sqldf("attach 'ex2' as new")
+sqldf("CREATE TABLE person (
+           id INTEGER PRIMARY KEY,
+           firstName TEXT,
+           lastName TEXT,
+           age INTEGER
+       );", dbname = "ex2")
+sqldf("CREATE TABLE personPet (
+           personId INTEGER,
+           petId INTEGER
+       );", dbname = "ex2")
+sqldf("CREATE TABLE pet (
+           id INTEGER PRIMARY KEY,
+           name TEXT,
+           breed TEXT,
+           age INTEGER,
+           dead INTEGER
+       );", dbname = "ex2")
+sqldf("select * from person", dbname = "ex2")
+sqldf("select * from personPet", dbname = "ex2")
+sqldf("select * from pet", dbname = "ex2")
+```
+
+The "schema" should match what you typed in.
+
+## Extra Credit
+
+- In these tables I made a 3rd relation table to link them. How would you get rid of this relation table **personPet** and put that information right into person? What's the implication of this change?
+
+- If you can put one row into **personPet**, can you put more than one? How would you record a crazy cat lady with 50 cats?
+
+- Create another table for the cars people might own, and create its corresponding relation table.
+
+- Search for "sqlite3 datatypes" in your favorite search engine and go read the "Datatypes In SQLite Version 3" document. Take notes on what types you can use and other things that seem important. We'll cover more later.
+
+## Portability Notes
+
+Databases have a lot of options for specifying the keys in these relations, but for now we'll keep it simple.

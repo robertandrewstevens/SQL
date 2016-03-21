@@ -1,0 +1,151 @@
+---
+title: "lsqlthw00"
+author: "Robert A. Stevens"
+date: "January 10, 2015"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/preface.html
+
+## Preface
+
+This is a rough in-progress dump of the book. The grammar will probably be bad, there will be sections missing, but you get to watch me write the book and see how I do things.
+
+Finally, don't forget that I have *Learn Python The Hard Way* (http://learnpythonthehardway.org) which you should read if you can't code yet. LSQLTHW will not be for beginners, but for people who have at least read LPTHW or know one other programming language.
+
+http://sql.learncodethehardway.org/book/introduction.html
+
+## Introduction: Haters Gonna Hate, Or Why You Still Need SQL
+
+SQL is everywhere, and I'm not saying that because I want you to use it. It's just a fact. I bet you have some in your pocket right now. All Android Phones and iPhones have easy access to a SQL database called SQLite and many applications on your phone use it directly. It runs banks, hospitals, universities, governments, small businesses, large ones, just about every computer and every person on the planet eventually touches something running SQL. SQL is an incredibly successful and solid technology.
+
+The problem with SQL is it seems everyone hates its guts. It is a weird obtuse kind of "non-language" that most programmers can't stand. It was designed long before any of these modern problems like "web scale" or Object Oriented Programming even existed. Despite being based on a solid mathematically built theory of operation, it gets enough wrong to be annoying. Trees? Nested objects and parent child relationships? SQL just laughs in your face and gives you a massive flat table saying, "You figure it out bro."
+
+Why should you learn SQL if everyone hates it so much? Because behind this supposed hate is a lack of understanding of what SQL is and how to use it. The NoSQL movement is partially a reaction to antiquated database servers, and also a response to a fear of SQL borne from ignorance of how it works. By learning SQL, you actually will learn important theoretical concepts that apply to nearly every data storage system past and present.
+
+No matter what the SQL haters claim, you should learn SQL because it is everywhere, and it's actually not that hard to learn enough to be educated about it. Becoming an educated SQL user will help you make informed decisions about what databases to use, whether to not use SQL, and give you a deeper understanding of many of the systems you work with as a programmer.
+
+Ultimately though, I want you to learn SQL because it is very handy. I can use SQLite to prototype a simple data model for a web application, or a phone, or a desktop application in quick order and know it will work just about everywhere that has SQLite. This ability to use a cross-platform consistent and powerful data storage language is worth its weight in gold.
+
+## About This Book
+
+This book teaches SQL to anyone, but it helps you can code already. The concepts in SQL are taught assuming you at least know how to do some programming even if it's just a tiny bit. It also assumes you can run commands from the command line, know how to use the shell, and have access to a good programmer's text editor.
+
+To keep the book simple, and since managing a giant database server is tangential to learning SQL, this book will use *SQLite3* (http://sqlite.org) to teach the fundamentals of the language. It will use SQLite3 similar to how you use Python or Ruby and you'll be writing full .sql scripts and running them to learn the language.
+
+Each exercise will introduce the concept in the usual "Learn The Hard Way" style. It will also have a small section on "portability" that explains what might be different in PostgreSQL and/or MySQL, or any other gotchas to be aware of so that the book is useful on more than just sqlite3.
+
+When you're done with this book, you should understand SQL well, how to design data, a bit about optimizing databases, and you should be able to branch out into another database of your choice.
+
+## What Is SQL?
+
+I pronounce SQL "sequel" but you can also say "ESS-QUEUE-ELL" if you want. SQL also stands for Structured Query Language but by now nobody even cares about that since that was just a marketing ploy anyway. What SQL does is give you a language for interacting with data in a database. It's advantage though is that it closely matches a theory established many years ago defining properties of well structured data. It's not exactly the same (which some detractors lament) but it's close enough to be useful.
+
+How SQL works is it understands fields that are in tables, and how to find the data in the tables based on the contents of the fields. All SQL operations are then one of four general things you do to tables:
+
+**Create**
+Putting data into tables.
+
+**Read**
+Query data out of a table.
+
+**Update**
+Change data already in a table.
+
+**Delete**
+Remove data from the table.
+
+This has been given the acronym "CRUD" and is considered a fundamental set of features every data storage system must have. In fact, if you can't do one of these four in some way then there better be a very good reason.
+
+One way I like to explain how SQL works is by comparing it to a spreadsheet software like Excel:
+
+- A database is a whole spreadsheet file.
+
+- A table is a tab/sheet in the spreadsheet, with each one being given a name.
+
+- A column is a column in both.
+
+- A row is a row in both.
+
+- SQL then gives you a language for doing CRUD operations on these to produce new tables or alter existing ones.
+
+The last item is significant, and not understanding this causes people a lot of headaches. SQL only knows tables, and every operation produces tables. It either "produces" a table by modifying an existing one, or it returns a new temporary table as your data set.
+
+As you read this book, you'll begin to understand the significance of this design. For example, one of the reasons Object Oriented languages are mismatched with SQL databases is that OOP languages are organized around graphs, but SQL wants to only return tables. Since it's possible to map nearly any graph to a table and vice-versa this works, but it places a lot of work on the OOP language to do the translation. If SQL returned a nested data structure then this wouldn't be a problem.
+
+Another place that causes a mismatch is in SQL concepts such as ternary relationships and attributed relationships, which OOP just completely does not understand. In SQL I can make 3 tables related to each other using a 4th table, and that 4th table is a cohesive relationship. To do the same thing in an OOP language I have to make a whole intermediary class that encodes this relationship, which is kind of weird in OOP.
+
+This may sound like total magic incantations right now, but by the time you're done with this book you'll understand these issues and how to deal with them.
+
+## Against Indoctrination
+
+You may run into someone who thinks you should learn technology X because it is superior. They'll claim that learning SQLite will cripple you for life because it is missing features. Or, they may say SQL is dead and NoSQL is the future.
+
+The problem with these people is they are trying to indoctrinate you, not educate you. They think of the world of technology as a zero sum game that they have to win, and if you learn SQL or SQLite then you won't learn their system of choice. Typically, this indoctrination is designed so that you must depend on their company's software and services to stay alive.
+
+I want to educate you so that you have the ability to make your own choices and learn anything you want. I'm only using SQLite because it's the simplest and most complete SQL system you can install. Other servers are a huge pain to install and manage, but SQLite is one download, and it's free, and it's credible. That's the only reason I'm using SQLite. I don't want you to be stuck on it. I don't want to convince you to use SQL over NoSQL.
+
+My only goal is to educate you on this particular tool in the simplest way I can so that you can improve as a programmer, and do it in such a way that you do not need to depend on me or my services when you're done.
+
+Keep that in mind when people try to tell you that learning SQL will somehow "cripple" you. Typically they have something to gain by you remaining ignorant.
+
+## License And Status
+
+This book is in ALPHA status right now. If you have comments on what it should and should not teach, then feel free to email help@learncodethehardway.org and let me know. Commenting on the contents though is pointless since there really aren't any.
+
+You are free to read this book, but you can't give it out to anyone else or host it yourself.
+
+http://sql.learncodethehardway.org/book/ex0.html
+
+## Exercise 0: The Setup
+
+This book will use *SQLite3* (http://www.sqlite.org/download.html) as a training tool. SQLite3 is a complete database system that has the advantage of requiring almost no setup. You just download a binary and work it like most other scripting languages. Using this, you'll be able to learn SQL without getting stuck in the administrivia of administering a database server.
+
+Installing SQLite3 is easy:
+
+- Either go to *their downloads page* (http://www.sqlite.org/download.html) and grab the binary for your platform. Look for "Precompiled Binaries for X" with X being your operating system of choice.
+
+- Use your operating system's package manager to install it. If you're on Linux then you know what that means. If you're on OSX then first go get a package manager and then use it to install sqlite3.
+
+When you've got it installed, then make sure you can start up a command line and run it. Here's a quick test for you to try:
+
+    $ sqlite3 test.db
+    SQLite version 3.7.8 2011-09-19 14:49:19
+    Enter ".help" for instructions
+    Enter SQL statements terminated with a ";"
+    sqlite> create table test (id);
+    sqlite> .quit
+
+```{r comment=NA}
+# https://www.openhub.net/p/sqldf
+library(sqldf)
+# create new empty database called test 
+sqldf("attach 'test' as new")
+# create a new table, test, in the new database 
+# Note that sqldf does not delete tables created from create. 
+sqldf("create table test (id)", dbname = "test")
+# shows its still there 
+sqldf("select * from test", dbname = "test")
+```
+
+Then look to see that the test.db file is there. If that works then you're all set. You should make sure that your version of SQLite3 is the same as the one I have here: 3.7.8. Sometimes things won't work right with older versions.
+
+## Additional Tools You'll Need
+
+You will also need to have the following additional tools:
+
+- A good plain text editor. Use anyone you like, but do not use an IDE (Integrated Development Environment). They cannot help you.
+
+- Familiarity with your command line (aka Terminal, aka cmd.exe). You'll be running commands from there.
+
+- An internet connection with a web browser so you can look up documentation and research things I tell you to find.
+
+Once you have that all setup you are ready to go.
+
+## Extra Credit
+
+- Go to the *SQLite3* (http://www.sqlite.org/download.html) site again and browse around through the documentation.

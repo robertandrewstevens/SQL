@@ -1,0 +1,11 @@
+---
+title: "lsqlthw02"
+author: "Robert A. Stevens"
+date: "January 10, 2015"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+

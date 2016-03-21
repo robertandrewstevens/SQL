@@ -1,0 +1,878 @@
+http://sql.learncodethehardway.org/book/ex6.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 6: Select Across Many Tables
+Hopefully you're getting your head around selecting data out of tables. Always remember this: SQL ONLY KNOWS TABLES. SQL LOVES TABLES. SQL ONLY RETURNS TABLES. TABLES. TABLES. TABLES. TABLES! I repeat this in this rather crazy manner so that you will start to realize that what you know in programming isn't going to help. In programming you deal in graphs and in SQL you deal in tables. They're related concepts, but the mental model is different.
+
+Here's an example of where it becomes different. Imagine you want to know what pets Zed owns. You need to write a SELECT that looks in person and then "somehow" finds my pets. To do that you have to query the person_pet table to get the id columns you need. Here's how I'd do it:
+
+SELECT pet.id, pet.name, pet.age, pet.dead
+    FROM pet, person_pet, person
+    WHERE
+    pet.id = person_pet.pet_id AND
+    person_pet.person_id = person.id AND
+    person.first_name = "Zed";
+Now this looks like a lot, but I'll break it down so you can see it's simply crafting a new table based on data in the three tables and the WHERE clause:
+
+ex6.sql:1
+I only want some columns from pet so I specify them in the select. In the last exercise you used '*' to say "every column" but that's going to be a bad idea here. Instead, you want to be explicit and say what column from each table you want, and you do that by using table.column as in pet.name.
+ex6.sql:2
+To connect pet to person I need to go through the person_pet relation table. In SQL that means I need to list all three tables after the FROM.
+ex6.sql:3
+Start the WHERE clause.
+ex6.sql:4
+First I connect pet to person_pet by the related id columns pet.id and person_pet.id.
+ex6.sql:5
+AND I need to connect person to person_pet in the same way. Now the database can search for only the rows where the id columns all match up, and those are the ones that are connected.
+ex6.sql:6
+AND I finally ask for only the pets that I own by adding a person.first_name test for my first name.
+What You Should See
+When you run this you should get this exactly, not any of the data you've entered in previous exercises:
+
+$ sqlite3 -column -header ex3.db < ex6.sql
+id          name        age         dead      
+----------  ----------  ----------  ----------
+0           Fluffy      1000        0         
+1           Gigantor    1           1         
+$
+If you didn't, then do a SELECT on the person_pet table and make sure it's right. You might have inserted too many values into it.
+
+Extra Credit
+This may be a mind blowing weird way to look at data if you already know a language like Python or Ruby. Take the time to model the same relationships using classes and objects then map it to this setup.
+Do a query that finds your pets you've added thus far.
+Change the queries to use your person.id intead of the person.name like I've been doing.
+Portability Notes
+There are actually other ways to get these kinds of queries to work called "joins". I'm avoiding those concepts for now because they are insanely confusing. Just stick to this way of joining tables for now and ignore people who try to tell that this is somehow slower or "low class".
+
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+
+
+http://sql.learncodethehardway.org/book/ex7.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 7: Deleting Data
+This is the simplest exercise, but I want you to think for a second before typing the code in. If you had "SELECT * FROM" for SELECT, and "INSERT INTO" for INSERT, then how would you write the DELETE format? You can probably glance down but try to guess at what it would be then look.
+
+/* make sure there's dead pets */
+SELECT name, age FROM pet WHERE dead = 1;
+
+/* aww poor robot */
+DELETE FROM pet WHERE dead = 1;
+
+/* make sure the robot is gone */
+SELECT * FROM pet;
+
+/* let's resurrect the robot */
+INSERT INTO pet VALUES (1, "Gigantor", "Robot", 1, 0);
+
+/* the robot LIVES! */
+SELECT * FROM pet;
+I'm simply implementing a very complex update of the robot by deleting him and then putting the record back but with dead=0. In later exercises I'll show you how to use UPDATE to do this, so don't consider this to be the real way you'd do an update.
+
+Most of the lines in this script are already familiar to you, with the exception of line 5. Here you have the DELETE and it has nearly the same format as other commands. You give DELETE FROM table WHERE tests and a way to think about it is being like a SELECT that removes rows. Anything that works in a WHERE clause will work here.
+
+What You Should See
+I'm going to reconstruct the entire database from scratch by replaying all of the exercises to this point that you need. This shows you how your work so far should continue to work as you go through the exercises.
+
+$ rm ex3.db
+$ sqlite3 ex3.db < ex2.sql
+$ sqlite3 ex3.db < ex3.sql
+$ sqlite3 ex3.db < ex4.sql
+$ sqlite3 ex3.db < ex5.sql
+0|Zed|Shaw|37
+Fluffy|1000
+Gigantor|1
+Fluffy|1000
+$ sqlite3 ex3.db < ex6.sql
+0|Fluffy|1000|0
+1|Gigantor|1|1
+$ sqlite3 -echo ex3.db < ex7.sql
+SELECT name, age FROM pet WHERE dead = 1;
+Gigantor|1
+DELETE FROM pet WHERE dead = 1;
+SELECT * FROM pet;
+0|Fluffy|Unicorn|1000|0
+INSERT INTO pet VALUES (1, "Gigantor", "Robot", 1, 0);
+SELECT * FROM pet;
+0|Fluffy|Unicorn|1000|0
+1|Gigantor|Robot|1|0
+$
+Notice at the end I'm adding the sqlite3 -echo so you can see what statements run and what they produce.
+
+Extra Credit
+Go through the output from your run and make sure you know what table is produced for which SQL commands and how they produced that output.
+Combine all of ex2.sql through ex7.sql into one file and redo the above script so you just run this one new file to recreate the database.
+At the top of this new .sql file, add DROP TABLE commands to drop the tables you're about to recreate. Now your script can run without you needing to rm ex3.db. You'll need to go look up the syntax for DROP TABLE.
+Add onto the script to delete other pets and insert them again with new values. Remember that this is not how you normally update records and is only for the exercise.
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+
+http://sql.learncodethehardway.org/book/ex8.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 8: Deleting Using Other Tables
+Remember I said, "DELETE is like SELECT but it removes rows from the table." The limitation is you can only delete from one table at a time. That means to delete all of the pets you need to do some additional queries and then delete based on those.
+
+One way you do this is with a subquery that selects the ids you want delete based on a query you've already written. There's other ways to do this, but this is one you can do right now based on what you know:
+
+DELETE FROM pet WHERE id IN (
+    SELECT pet.id
+    FROM pet, person_pet, person
+    WHERE
+    person.id = person_pet.person_id AND
+    pet.id = person_pet.pet_id AND
+    person.first_name = "Zed"
+);
+
+SELECT * FROM pet;
+SELECT * FROM person_pet;
+
+DELETE FROM person_pet
+    WHERE pet_id NOT IN (
+        SELECT id FROM pet
+    );
+
+SELECT * FROM person_pet;
+The lines 1-8 are a DELETE command that starts off normally, but then the WHERE clause uses IN to match id columns in pet to the table that's returned in the subquery. The subquery (also called a subselect) is then a normal SELECT and it should look really similar to the ones you've done before when trying to find pets owned by people.
+
+On lines 13-16 I then use a subquery to clear out the person_pet table of any pets that don't exist anymore by using NOT IN rather than IN.
+
+How SQL does this is with the following process:
+
+Runs the subquery in the parenthesis at the end and build a table with all the columns just like a normal SELECT.
+Treats this table as a kind of temporary table to match pet.id columns against.
+Goes through the pet table and deletes any row that has an id IN this temporary table.
+What You Should See
+I've changed the formatting on this and removed extra output that isn't relevant to this exercise. Notice how I'm using a new databse called mydata.db and I'm using a conglomerate SQL file that has all the SQL from exercises 2 through 7 in it. This makes it easier to rebuild and run this exercise. I'm also using sqlite3 -header -column -echo to get nicer output for the tables and to see the SQL that's being run.
+
+$ sqlite3 mydata.db < code.sql
+# ... cut the output for this ...
+$ sqlite3 -header -column -echo mydata.db < ex8.sql
+DELETE FROM pet WHERE id IN (
+    SELECT pet.id 
+    FROM pet, person_pet, person 
+    WHERE 
+    person.id = person_pet.person_id AND
+    pet.id = person_pet.pet_id AND
+    person.first_name = "Zed"
+);
+
+SELECT * FROM pet;
+
+SELECT * FROM person_pet;
+person_id   pet_id    
+----------  ----------
+0           0         
+0           1         
+
+DELETE FROM person_pet
+    WHERE pet_id NOT IN (
+        SELECT id FROM pet
+    );
+
+SELECT * FROM person_pet;
+$
+You should see that after you DELETE the SELECT returns nothing.
+
+Extra Credit
+Practice writing SELECT commands and then put them in a DELETE WHERE IN to remove those records found. Try deleting any dead pets owned by you.
+Do the inverse and delete people who have dead pets.
+Do you really need to delete dead pets? Why not just remove their relationship in person_pet and mark them dead? Write a query that removes dead pets from person_pet.
+Portability Notes
+Depending on the database subqueries will be slow. Sometimes they can be faster depending on how the tables are setup and the type of data you're querying. There are other ways to do this same thing, but for now just use this since it's something you can understand.
+
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+
+http://sql.learncodethehardway.org/book/ex9.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 9: Updating Data
+You now know the CRD parts of CRUD, and I just need to teach you the Update part to round out the core of SQL. As with all the other SQL commands the UPDATE command follows a format similar to DELETE but it changes the columns in rows instead of deleting them.
+
+UPDATE person SET first_name = "Hilarious Guy"
+    WHERE first_name = "Zed";
+
+UPDATE pet SET name = "Fancy Pants"
+    WHERE id=0;
+
+SELECT * FROM person;
+SELECT * FROM pet;
+In the above code I'm changing my name to "Hilarious Guy", since that's more accurate. And to demonstrate my new moniker I renamed my Unicorn to "Fancy Pants". He loves it.
+
+This shouldn't be that hard to figure out, but just in case I'm going to break the first one down:
+
+Start with UPDATE and the table you're going to update, in this case person.
+Next use SET to say what columns should be set to what values. You can change as many columns as you want as long as you separate them with commas like first_name = "Zed", last_name = "Shaw".
+Then specify a WHERE clause that gives a SELECT style set of tests to do on each row. When the UPDATE finds a match it does the update and SETs the columns to how you specified.
+What You Should See
+I'm resetting the database with my code.sql script and then running this:
+
+$ sqlite3 mydata.db < code.sql
+# ... output cut ...
+$
+$ sqlite3 -header -column -echo mydata.db < ex9.sql
+UPDATE person SET first_name = "Hilarious Guy"
+    WHERE first_name = "Zed";
+UPDATE pet SET name = "Fancy Pants"
+    WHERE id=0;
+
+SELECT * FROM person;
+id          first_name     last_name   age       
+----------  -------------  ----------  ----------
+0           Hilarious Guy  Shaw        37        
+
+SELECT * FROM pet;
+id          name         breed       age         dead      
+----------  -----------  ----------  ----------  ----------
+0           Fancy Pants  Unicorn     1000        0         
+1           Gigantor     Robot       1           0         
+$
+I've done a bit of reformatting by adding some newlines but otherwise your output should look like mine.
+
+Extra Credit
+Use UPDATE to change my name back to "Zed" by my person.id.
+Write an UPDATE that renames any dead animals to "DECEASED". If you try to say they are "DEAD" it'll fail because SQL will think you mean 'set it to the column named "DEAD"', which isn't what you want.
+Try using a subquery with this just like with DELETE.
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+http://sql.learncodethehardway.org/book/ex10.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 10: Updating Complex Data
+In the last exercise I had you do a subquery in the UPDATE, and now you'll use it to change all the pets I own to be named "Zed's Pet".
+
+SELECT * FROM pet;
+
+UPDATE pet SET name = "Zed's Pet" WHERE id IN (
+    SELECT pet.id
+    FROM pet, person_pet, person
+    WHERE
+    person.id = person_pet.person_id AND
+    pet.id = person_pet.pet_id AND
+    person.first_name = "Zed"
+);
+
+SELECT * FROM pet;
+This is how you update one table based on information from another table. There's other ways to do the same thing, but this way is the easiest to understand for you right now.
+
+What You Should See
+As usual, I use my little code.sql to reset my database and then output nicer columns with sqlite3 -header -column -echo.
+
+$ sqlite3 mydata.db < code.sql
+# ... output cut ...
+$ sqlite3 -header -column -echo mydata.db < ex10.sql
+SELECT * FROM pet;
+id          name        breed       age         dead      
+----------  ----------  ----------  ----------  ----------
+0           Fluffy      Unicorn     1000        0         
+1           Gigantor    Robot       1           0         
+
+UPDATE pet SET name = "Zed's Pet" WHERE id IN (
+    SELECT pet.id 
+    FROM pet, person_pet, person 
+    WHERE 
+    person.id = person_pet.person_id AND
+    pet.id = person_pet.pet_id AND
+    person.first_name = "Zed"
+);
+
+SELECT * FROM pet;
+id          name        breed       age         dead      
+----------  ----------  ----------  ----------  ----------
+0           Zed's Pet   Unicorn     1000        0         
+1           Zed's Pet   Robot       1           0         
+$
+Extra Credit
+Write an SQL that only renames dead pets I own to "Zed's Dead Pet".
+Go to the SQL As Understood By SQLite page and start reading through the docs for CREATE TABLE, DROP TABLE, INSERT, DELETE, SELECT, and UPDATE.
+Try out some of the interesting things you find in these docs, and take notes on things you don't understand so you can research them more later.
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+http://sql.learncodethehardway.org/book/ex11.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 11: Replacing Data
+I'm going to show you an alternative way to insert data which helps with atomic replacement of rows. You don't necessarily need this too often, but it does help if you're having to replace whole records and don't want to do a more complicated UPDATE without resorting to transactions.
+
+In this situation, I want to replace my record with another guy but keep the unique id. Problem is I'd have to either do a DELETE/INSERT in a transaction to make it atomic, or I'd need to do a full UPDATE.
+
+Another simpler way to do it is to use the REPLACE command, or add it as a modifier to INSERT. Here's some SQL where I first fail to insert the new record, then I use these two forms of REPLACE to do it:
+
+/* This should fail because 0 is already taken. */
+INSERT INTO person (id, first_name, last_name, age)
+    VALUES (0, 'Frank', 'Smith', 100);
+
+/* We can force it by doing an INSERT OR REPLACE. */
+INSERT OR REPLACE INTO person (id, first_name, last_name, age)
+    VALUES (0, 'Frank', 'Smith', 100);
+
+SELECT * FROM person;
+
+/* And shorthand for that is just REPLACE. */
+REPLACE INTO person (id, first_name, last_name, age)
+    VALUES (0, 'Zed', 'Shaw', 37);
+
+/* Now you can see I'm back. */
+SELECT * FROM person;
+What You Should See
+In this exercise I'm going to enter these commands in the sqlite3 console rather than run them from the command line:
+
+sqlite> /* This should fail because 0 is already taken. */
+sqlite> INSERT INTO person (id, first_name, last_name, age)
+   ...>     VALUES (0, 'Frank', 'Smith', 100);
+Error: PRIMARY KEY must be unique
+sqlite> 
+sqlite> /* We can force it by doing an INSERT OR REPLACE. */
+sqlite> INSERT OR REPLACE INTO person (id, first_name, last_name, age)
+   ...>     VALUES (0, 'Frank', 'Smith', 100);
+sqlite> 
+sqlite> SELECT * FROM person;
+0|Frank|Smith|100
+sqlite> 
+sqlite> /* And shorthand for that is just REPLACE. */
+sqlite> REPLACE INTO person (id, first_name, last_name, age)
+   ...>     VALUES (0, 'Zed', 'Shaw', 37);
+sqlite> 
+sqlite> /* Now you can see I'm back. */
+sqlite> SELECT * FROM person;
+0|Zed|Shaw|37
+sqlite> 
+sqlite>
+You can see on line 4 that I get an "Error: PRIMARY KEY must be unique" because the record has the id 0. I want to do a combination DELETE/INSERT with the new record, so then I do an INSERT OR REPLACE next. After that I put the record back with REPLACE which is shorthand for INSERT OR REPLACE.
+
+Extra Credit
+Go to the SQLite3 INSERT page and look at the other INSERT OR options you have.
+Practice REPLACE by replacing the Unicorn with a pet Parrot.
+Portability Notes
+Some databases might not have the REPLACE command or even the INSERT OR REPLACE syntax. In that case, you'll just have to wait until I show you transactions.
+
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+
+http://sql.learncodethehardway.org/book/ex12.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 12: Destroying And Altering Tables
+You've already encountered DROP TABLE as a way to get rid of a table you've created. I'm going to show you another way to use it and also how to add or remove columns from a table with ALTER TABLE.
+
+/* Only drop table if it exists. */
+DROP TABLE IF EXISTS person;
+
+/* Create again to work with it. */
+CREATE TABLE person (
+    id INTEGER PRIMARY KEY,
+    first_name TEXT,
+    last_name TEXT,
+    age INTEGER
+);
+
+/* Rename the table to peoples. */
+ALTER TABLE person RENAME TO peoples;
+
+/* Add a hatred column to peoples. */
+ALTER TABLE peoples ADD COLUMN hatred INTEGER;
+
+/* Rename peoples back to person. */
+ALTER TABLE peoples RENAME TO person;
+
+.schema person
+
+/* We don't need that. */
+DROP TABLE person;
+I'm doing some fake changes to the tables to demonstrate the commands, but this is everything you can do in SQLite3 with the ALTER TABLE and DROP TABLE statements. I'll walk through this so you understand what's going on:
+
+ex21.sql:2
+Use the IF EXISTS modifier and the table will be dropped only if it's already there. This suppresses the error you get when running you .sql script on a fresh database that has no tables.
+ex21.sql:5
+Just recreating the table again to work with it.
+ex21.sql:13
+Using ALTER TABLE to rename it to peoples.
+ex21.sql:16
+Add a new column hatred that is an INTEGER to the newly renamed table peoples.
+ex21.sql:19
+Rename peoples back to person because that's a dumb name for a table.
+ex21.sql:21
+Dump the schema for person so you can see it has the new hatred column.
+ex21.sql:24
+Drop the table to clean up after this exercise.
+What You Should See
+If you run this script it should look something like this:
+
+$ sqlite3 -echo ex12.db < ex12.sql
+
+DROP TABLE IF EXISTS person;
+
+CREATE TABLE person (
+    id INTEGER PRIMARY KEY,
+    first_name TEXT,
+    last_name TEXT,
+    age INTEGER
+);
+
+ALTER TABLE person RENAME TO peoples;
+ALTER TABLE peoples ADD COLUMN hatred INTEGER;
+ALTER TABLE peoples RENAME TO person;
+
+.schema person
+
+CREATE TABLE "person" (
+    id INTEGER PRIMARY KEY,
+    first_name TEXT,
+    last_name TEXT,
+    age INTEGER
+, hatred INTEGER);
+
+DROP TABLE person;
+$
+I've added some extra spacing so you can read it easier, and remember to pass in the -echo argument so it prints out what it's run.
+
+Extra Credit
+Update your code.sql file you've been putting all the code in so that it uses the DROP TABLE IF EXISTS syntax.
+Use ALTER TABLE to add a height and weight column to person and put that in your code.sql file.
+Run your new code.sql script to reset your database and you should have no errors.
+Portability Notes
+Typically ALTER TABLE is a mashup of just about everything a database vendor couldn't put into their SQL syntax. Some databases will let you do more with tables than other databases, so read up on the documentation and see what's possible.
+
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+
+http://sql.learncodethehardway.org/book/ex13.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 13: Migrating And Evolving Data
+This exercise will have you apply some skills you've learned. I'll have you take your database and "evolve" the schema to a different form. You'll need to make sure you know the previous exercise well and have your code.sql working as we'll be. If you don't have either of these then go back and get everything straightened out.
+
+To make sure you are in the right state to attempt this exercise, when you run your code.sql you should be able to run .schema like this:
+
+$ sqlite3 ex13.db < code.sql
+$ sqlite3 ex13.db .schema
+CREATE TABLE person (
+    id INTEGER PRIMARY KEY,
+    first_name TEXT,
+    last_name TEXT,
+    age INTEGER
+);
+CREATE TABLE person_pet (
+    person_id INTEGER,
+    pet_id INTEGER
+);
+CREATE TABLE pet (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    breed TEXT,
+    age INTEGER,
+    dead INTEGER,
+    dob DATETIME
+);
+Make sure your tables look like my tables, and if not then go back and remove any commands that are doing ALTER TABLE or anything from the last exercise.
+
+The Assignment
+What you're tasked with doing is the following list of changes to the database:
+
+Add a dead column to person that's like the one in pet.
+Add a phone_number column to person.
+Add a salary column to person that is float.
+Add a dob column to both person and pet that is a DATETIME.
+Add a purchased_on column to person_pet of type DATETIME.
+Add a parent to pet column that's an INTEGER and holds the id for this pet's parent.
+Update the existing database records with the new column data using UPDATE statements. Don't forget about the purchased_on column in person_pet relation table to indicate when that person bought the pet.
+Add 4 more people and 5 more pets and assign their ownership and what pet's are parents. On this last part remember that you get the id of the parent, then set it in the parent column.
+Write a query that can find all the names of pets and their owners bought after 2004. Key to this is to map the person_pet based on the purchased_on column to the pet and parent.
+Write a query that can find the pets that are children of a given pet. Again look at the pet.parent to do this. It's actually easy so don't over think it.
+You should do this by writing a ex13.sql file with these new things in it. You then test it by resetting the database using code.sql and then running ex13.sql to alter the database and run the SELECT queries that confirm you made the right changes.
+
+Take your time working on this, and when you're done your schema should look like this:
+
+$ sqlite3 mine.db < ex13.sql
+$ sqlite3 mine.db .schema
+CREATE TABLE person (
+    id INTEGER PRIMARY KEY,
+    first_name TEXT,
+    last_name TEXT,
+    age INTEGER
+, dead INTEGER, phone_number TEXT, salary FLOAT, dob DATETIME);
+CREATE TABLE person_pet (
+    person_id INTEGER,
+    pet_id INTEGER
+, purchased_on DATETIME);
+CREATE TABLE pet (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    breed TEXT,
+    age INTEGER,
+    dead INTEGER
+, parent INTEGER);
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+http://sql.learncodethehardway.org/book/ex14.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 14: Basic Transactions
+Imagine if the SQL in your last exercise had an error half-way through it's run and it aborted. You may have even ran into this problem, and then you see that your database is not seriously broken. You've been getting away with this because you have a big code.sql file that rebuilds your database, but in a real situation you can't trash your whole database when you mess up.
+
+What you need to make your script safer is the BEGIN, COMMIT, and ROLLBACK commands. These start a transaction, which creates a "boundary" around a group of SQL statements so you can abort them if they have an error. You start the transaction with BEGIN, do your SQL, and then when everything's good end the transaction with COMMIT. If you have an error then you just issue ROLLBACK to abort what you did.
+
+For this exercise I want you to do the following:
+
+Take your ex13.sql and copy it to ex14.sql so you can modify it.
+Once you have that, put a BEGIN at the top and a ROLLBACK. At the bottom.
+Now run it and you'll see that it's as if your script didn't do anything.
+Next, change the ROLLBACK to be COMMIT and run it again, and you'll see it works like normal.
+Get rid of the BEGIN and COMMIT from your ex14.sql so it's back the way it was.
+Now create an error by removing one of the TABLE keywords from one of the lines. This is so you can make it have an error and recover.
+Once you have this broken ex14.sql you'll play with it in the sqlite3 console to do a recovery:
+
+$ sqlite3 ex14.db
+SQLite version 3.7.8 2011-09-19 14:49:19
+Enter ".help" for instructions
+Enter SQL statements terminated with a ";"
+sqlite> 
+sqlite> 
+sqlite> .read code.sql
+/* cut for simplicity */
+
+sqlite> 
+sqlite> BEGIN;
+sqlite> .read ex14.sql
+Error: near line 5: near "person_pet": syntax error
+sqlite> .schema
+/* cut the schema with partial alters in it */
+sqlite> ROLLBACK;
+sqlite> 
+sqlite> .schema
+CREATE TABLE person (
+    id INTEGER PRIMARY KEY,
+    first_name TEXT,
+    last_name TEXT,
+    age INTEGER
+);
+CREATE TABLE person_pet (
+    person_id INTEGER,
+    pet_id INTEGER
+);
+CREATE TABLE pet (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    breed TEXT,
+    age INTEGER,
+    dead INTEGER
+);
+sqlite> 
+This one's long so I'm going to break it down so you can track what's going on:
+
+1
+I start up sqlite3 so I can get into the console with ex14.db.
+7
+I then .read the code.sql file to setup the database like normal but doing it from within sqlite3.
+11
+I enter BEGIN so I can start a transaction boundary.
+12
+I run .read ex14.sql to run it, but remember it has an error so it aborts. My error was on line 5 but yours could be anywhere else.
+14
+I then run .schema so you can see that some of the changes actually were made, and I'll want to undo them.
+16
+Since the last command had an error I run ROLLBACK here to abort all the things I did since the BEGIN on line 11.
+18
+To show that the database is back the way it should be, I do another .schema and you can see all that junk is now gone.
+Extra Credit
+Read the instructions on SQLite3 transactions to get an idea of what's possible.
+Use transactions to bound some example UPDATES and INSERTS to see how those work too.
+Try using the alternative syntax of BEGIN TRANSACTION, COMMIT TRANSACTION, and ROLLBACK TRANSACTION.
+Portability Notes
+Some databases don't have the same rollback and commit semantics as other databases. Some also don't understand the syntax with the word TRANSACTION. They should universally abort everything you did, but again look at your manual to confirm this is true.
+
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+ 
+
+http://sql.learncodethehardway.org/book/ex15.html
+
+Learn SQL The Hard Way
+
+Python | Ruby | C | Regex
+
+Exercise 15: Data Modeling
+Note
+
+This is just a rough dump of my thoughts on designing a database. There will be terminology errors and statements of fact that are wrong. Just let me know if you find any and I'll fix them.
+
+In the world of programming we have this concept of "Don't Repeat Yourself" where programmers are admonished against duplicating code in their programs. Rather than copy-paste chunks of code into your source files or between them, you'll create a function that contains the code and use it. This creates one logical place to find everything thus reducing the chance of bugs and logical errors in your code while also making it easier to maintain and fix.
+
+In databases you have a similar concept called "normalization" where you try to craft a database schema so that it has reduced duplication and so that facts live in one place only. This is partly because of space requirements, but mostly because if you have the same data in multiple places it gives the database logical flaws and inconsistencies. By normalizing a database you take repeated data in columns and place them in other tables where they are only mentioned once. In database design this is called Normal Form and usually abbreviated with NF. Normal Form also has numeric levels to indicate how "well" normalized the database is with higher numbers being "better".
+
+However, there are a few more similarities between DRY and NF:
+
+You can take DRY and NF too far until you have removed all the repetition but in the process make the system almost impossible to understand. This is similar to "compressing" the code with gzip. Sure there's no repetition, but then nobody can read it either.
+You can add horrible inefficiency to the system by creating so many interlocking pieces that the weight of communication crushes any activity. In software this comes from continually moving every "repetition" into more indirect pieces of the code until doing simple things takes 10 function calls with 20 objects. In databases you see this when doing simple queries requires 10 tables and hundreds of rows and foreign keys.
+You can remove repetition instead of redesigning the system with a new simpler design. You then end up with a system that is cleaner, but still flawed and is most likely more convoluted but nobody remembers the old system so there's no history to explain why it is what it is.
+Aesthetic Guidelines
+Because there's no limit to what is logical or not, you can spend all your time removing repetition and making the system more and more convoluted to accomplish it. Instead of doing that, get it to a point that it is easily understood and maintainable, but is still direct, efficient and consistent. Let me break that down because it pertains to this lesson:
+
+understandable
+A person can figure out the system in some reasonable amount of time and can work with it daily without special tools like IDEs.
+maintainable
+Repairs and changes shouldn't require making the same change in multiple places or many small changes in lots of places.
+direct
+Favor direct communications between components over chains of indirection for no benefit. Also realize that "indirection" is not "abstraction", and that you can get rid of indirection by getting rid of optional features.
+efficient
+There shouldn't be wasted computation or storage in the system, but there should be evidence that a change has a statistically significant increase in performance if it destroys any of these other guidelines.
+consistent
+The system should be consistent such that facts about the system should live in one place only and they shouldn't contradict each other, but this should be balanced by attempting to reduce the facts necessary to understand the system.
+I consider these to be very high minded aesthetics and not "rules" you can follow. You can see that I've worded them so they are balanced such that if you go too crazy in on direction, another guideline kicks in to constrain it. For example, if you make a database totally direct then you'd denormalize all tables into one giant table, and that might also help efficiency, but you'd make it inconsistent and difficult to maintain or understand. Another example would be that you have software that's maintainable, but only because the original authors know the history of it and nobody else has to understand it.
+
+Designing The Data Model
+With that out of the way, I can get into what Normal Form (NF) actually is on a practical level. I'm not going to get into the mathematics behind it, because honestly it's very confusing and not helpful. I learned it years ago then broke it down into a practical process that you can follow to create a good design:
+
+conceptualize
+Map out all "concepts" or objects in the system and their cardinality.
+identify
+Give the concepts all names and create unique integer primary keys.
+relate
+Draw a simple diagram showing how each concept is related.
+itemize
+Write down the cardinality of the relationships as many-to-many or one-to-one, rarely one-to-many.
+atomize
+Break out each concept into its attributes and parts.
+reduce
+Get rid of anything you don't actually need. It's easy to add later, harder to remove.
+normalize
+Move duplication around to improve consistency and reduce repetition.
+denormalize
+Denormalize tables if you must.
+I'll cover each step in order, but keep in mind these are meant to be done continually and for you to jump around as you refine the data model.
+
+Conceptualize
+The first step is to figure out what you are talking about and develop a list of the concepts you'll need. These are going to be similar to the classes you'd make in an object oriented programming language and map to the tables you'll need in the database.
+
+One way to determine all your concepts is to do all of the screen prototypes first. If you can work out the user interface on paper and how people flow between them, then you can pull out all the major concepts fairly easily. This will also help you start to figure out logical problems in your user interfaces, and so building the database can help clean up and refine the UI. I typically first do the screens on paper, then pull out the concepts, then design the database, then go back and refine the screens and cycle over this for a while before building the real application.
+
+Then again, sometimes I just hack on it until I get what's in my head on the screen.
+
+Identify
+Once you've identified the concepts, give them simple names that are singular. A huge misconception programmers have is thinking of a database table as a "bag of objects" and therefore naming the tables with plural names. This is like naming all of your classes with plural names. Instead, think of the tables as being like classes, and the rows as being like instances of that class or objects. The practical reason you give them singular names is that plurals in many languages are inconsistent, but singulars are usually more consistent. If you name a class Person, then name the table person and you have no translation issues in your ORMs.
+
+Remember, the name of the table is like the name of the class, the row in the table is an object.
+
+Once you have their identities, then remember that the very first column (attribute) you'll make is a unique primary key integer. Do not be tempted by the dark side and try to use a composite key. In fact, I'm not going to tell you what that is just so you don't try to use it. A composite key is where you try to use data from columns in a table to identify rows. These fail all the time because there's always a probability that the data is not unique, so it can't be relied on.
+
+Relate
+Now that you've identified all the concepts, you need to relate them to each other to determine how they are connected. This should be simple but you may run into hairy relationship issues that you'll need to think through. First step is to create a diagram that has boxes for each concept, and then a line between them if they are connected somehow. When you have all the connections listed, give them names that are either the two tables (like person_pet, or some descriptive name if that makes sense like "owns".
+
+Itemize
+I'm not sure why, but people just completely suck at "cardinality" so getting them to itemize how two things are related is difficult. To do this you have to fill in the following statement for each relation and the tables it refers to:
+
+Y has (one|many) X, and X has (one|many) Y.
+Taking the example I've used in this book, I would say this:
+
+Person has many Pet, and Pet has many Person.
+You can also see where some people get confused about plurals and table names. Your brain probably screams that "Person has many Pet" should be "People have many Pets". Then you'll be clever and go off naming your tables people and pets. The problem is the statement would really be "A Person may have more than one Pet, but a Pet may have more than one Person." The pluralized statement is actually false because not all people have many pets, but the last one I've written is true since they may have more than one pet. This is pedantic, but this is the kind of things you have to deal with in figuring this out. To simplify it, just write it down the way I have it and tell your brain to shut up since it's just a shorthand sentence.
+
+Force yourself to say this out loud as you do it and ask yourself if that's really true and possible. For example, can a pet actually have more than one owner? Sure, if they are part of a family then all the family members can be owners. Or, maybe you want there to be one owner and that's it. Be sure why you are making this decision, then come up with counter scenarios that prove you wrong.
+
+Once you have this list create a table on a sheet of paper that gives the cardinality of these relationships succinctly:
+
+X
+The X table on the left of your phrase.
+->
+Table X's one or many cardinality to the table on the right.
+<-
+The table on the right's cardinality.
+Y
+The Y table on the right of your phrase.
+Note
+
+One thing that trips up programmers is they come from a world of objects and data structures where there are clear parent child relationships. In databases there's no such thing as all tables are equal semantically and you have to look at them to figure out how they relate. Don't make the mistake of attributing some "parent child" form to these relationships. They might be in your software, but in the database they are just tables connected by other tables and columns. There is no hierarchy.
+
+The final step in this subsection is to check for the following common problems:
+
+Find any "asymmetric" relationships that are one-to-many or many-to-one (same thing) and consider changing them to many-to-many. Years of experience has taught me that almost every time someone swears up and down that two tables are one-to-many they end up changing it to many-to-many a week later and have to redesign the whole database. Just save yourself the trouble and really justify one-to-many and declare it permanent if it's really true.
+Find any many-to-many relationships that seem to involve the same table and see if maybe that table should be an "attributed relation". I'll cover this later, but the idea is that the table is used to relate many other tables and also has a few attributes on it as well. Once you identify this you can simplify the design by using this one table as a single connector for all of them.
+Look for any three tables that have "triangle" connections that seem to always exist, and consider making a single "ternary relation". A ternary relation is a single table that connects three other tables together, with the idea being that these three tables can only be connected all at once or not at all.
+Atomize
+Once you're done with that you then need to figure out what attributes each table has and what data types they contain. Your first reaction will be to put limits on each one and pick the smallest type possible in an attempt to create efficiency and save space. I want you to instead pick the loosest biggest types you can and worry about efficiency later when you have a need. Trust me, it's just easier.
+
+My preferred tool for doing this is a simple text file with each table listed and then under it bullet points for each attribute (column) and the type. Nothing fancy just lines like "name TEXT".
+
+Reduce
+Software is the inverse of carpentry. In carpentry you can't add wood back but you can take it away, so you try to leave as much as possible. In software it's hard to take features away, so you try to remove as much as possible. Databases are the same because if you have a table of data, someone will try to use it and then you'll never get rid of it or be able to change it. It's best to remove the stuff you don't need, keep notes about what you original designed, and then only add it later when you do need it.
+
+Once you remove the tables you don't really need you can start trimming attributes you don't need and other things you don't need. The only caveat is don't try to get rid of many-to-many tables as they will come back later as your database evolves.
+
+Normalize
+If you've followed these steps closely your database should be almost entirely normalized and clean. Your job is to now go through all of the attributes and attempt to remove any duplication that makes sense. Here's how I go about it:
+
+Find any group of attributes (columns) that might be concepts on their own, or are possible "parent child" relationships in disguise.
+Take any columns that do not change often and consider making a table to store them as a list then reference them by id. I like to call these "enumeration tables" as they typically don't change and you can just load them into memory and cache them for long periods of time. An example would be a list of US states that only changes if there's an act of Congress.
+Denormalize
+This last part is difficult to quantify, but when you're done normalizing you may have gone a little crazy with it. There may be tables that are better if they are denormalized and kept flat. Personally I try to build the database "correctly", and then if there's data that is better as a big flat blob then I either don't use a SQL database, use a view, or denormalize the table.
+
+The place to look for is any information that is heavily read. The basic information of a user on a website is a good example of this, as you'll potentially be querying their information every time they hit your website. Having to do joins across multiple tables for this information might pose problems and it could be better to just denormalize the 85% of the data you need all the time. Another place would be documents and their attributes. Databases are horrible at storing documents, so you're better off denormalizing their attributes or using something that is better at document storage.
+
+However, all of this advice must be constrained by me yelling at you to test your theories out first and justify denormalization with hard numbers and evidence. Many times people denormalize a set of tables to be lazy and just not write proper SQL queries, or because their database has badly configured indexes. You should first run some benchmarks, then try to tune the database and your queries, then try to denormalize the tables in question.
+
+Finally, sometimes doing some of the work in your code is a huge time savings over doing it in the database. I've done applications where I had to query across 5 or more tables, and letting the database do it made it take forever. When I just queried the tables directly and then did the "joins" in my code the process sped up several orders of magnitude. I remember one query that took 10 to 20 minutes to complete, but when moved into code took only a fraction of a second.
+
+Another way to say all of this is that denormalization is something you can't undo later, so before betting the farm on it just rule out other simpler solutions.
+
+Implementing The SQL
+Once you've cycled over this and refined it so there's less duplication, you should sit down and write the SQL file that creates the database. Here's what you do:
+
+Create all the tables and just their primary key ids. No other attributes. Get that working.
+Now create all the relation tables, sticking to the convention of TABLE_TABLE for each of them. Use columns named TABLE_id for each of the relation tables columns. For example, I have a person_pet relation table, with the columns person_id and pet_id.
+Once you have this basic structure working, create a set of test queries that exercise each relation you've written down in your table of how tables are related. Take the time to cover as much of the connections as possible while you can shape the database.
+After you get the relations solid, you go back through and add all the other attributes as columns and then rerun your sample queries to make sure they still work. If you've done everything right your queries will keep working after you add the attributes. If they break then your attributes need to be redesigned or corrected.
+Finally, write some sample queries and data to test out that it works correctly.
+Implementing With Object-Relational Mappers
+If your system is going to use an ORM, then instead of writing the SQL you would sit down and create the code for the ORM plus unit tests to validate your model. The process is nearly the same:
+
+Create all the classes for your model and make sure it generates the right tables and only the ids.
+Add all the relationships to the classes you've made.
+Write unit tests for the basic relationships and make sure they make sense.
+Add the attributes and make sure the unit tests keep working as expected. Remember your attributes shouldn't break any of your relations.
+Finally, write higher level unit tests that validate the attributes and queries for them.
+I'm going to warn you against designing your database with the ORM and its quirks in mind. Do your design as if the ORM doesn't exist, then make the smallest number of changes necessary to integrate with the ORM. If you start with the ORM then you can end up with a convoluted "quirky" database that nothing else can talk to but your one little favorite programming platform. Frameworks come and go, but your database and its contents is typically the most valuable thing in your system and it'll be around for a very long time.
+
+Final Steps
+You then want to cycle over this for as long as you can without getting crazy about it. You'll want to talk with domain experts and make them confirm the cardinality of everything. Simply reading the statements to them like, "John, so a Person can have multiple Pets right? Ok, can a Pet belong to multiple People?"
+
+Whatever you do, don't get frustrated if these people you're asking seem to freak out and can't answer your questions. Many times you are actually reverse engineering human thought and social structure. The sad part is most people have no idea why they believe or know what they do, and they definitely have no idea why they do the things they do. Asking them these questions forces them to become concrete about their thinking and for many people this is painful and annoying. They are much happier just feeling their way through their jobs letting their intuition handle all of the logical inconsistencies in their daily life.
+
+When you show up asking questions you are basically pointing out how stupid they are. They probably never realized that a person can have multiple purchase orders, even if they did it last Tuesday. When you ask that, they suddenly have to come to terms with the fact that they've been wrong the whole time. That can make some people angry so just note it down and continue on.
+
+Extra Credit
+The extra credit for this exercise is huge. It's an application of nearly everything you've learned so far, but you should have to tools to attempt it. The goal isn't to get a perfect database, but to get you to make something small and try this process out. As you work on exercises you'll get more skills to make this easier and get more practice:
+
+Design a database for a veterinary management system, or pick some system you want to build and design a database for it. Create the screens for it after and compare it to your database design. Keep it small.
+Go draw up screens for a food delivery service, or something else you want to build. Again keep it small, nothing massive, but do the screens first. Now go and design the database using the screens to guide you.
+Evaluate the two approaches and see which one you liked better or which one made the best results for both UI and database design.
+
+
+
+
+
+
+Copyright (C) 2010 Zed. A. Shaw
+
+Credits
+
+  
+
+
+

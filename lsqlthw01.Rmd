@@ -1,0 +1,102 @@
+---
+title: "lsqlthw01"
+author: "Robert A. Stevens"
+date: "January 10, 2015"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex1.html
+
+## Exercise 1: Creating Tables
+
+In the introduction I said that you can do "Create Read Update Delete" operations to the data inside tables. How do you make the tables in the first place? By doing CRUD on the database schema, and the first SQL statement to learn is CREATE:
+
+    CREATE TABLE person (
+        id INTEGER PRIMARY KEY,
+        first_name TEXT,
+        last_name TEXT,
+        age INTEGER
+    );
+
+```{r comment=NA}
+library(sqldf)
+sqldf("attach 'ex1' as new")
+sqldf("CREATE TABLE person (
+           id INTEGER PRIMARY KEY,
+           first_name TEXT,
+           last_name TEXT,
+           age INTEGER
+       );", dbname = "ex1")
+sqldf("select * from person", dbname = "ex1")
+```
+
+You could put this all on one line, but I want to talk about each line so it's on multiple ones. Here's what each line does:
+
+**ex1.sql:1**
+
+The start of the "CREATE TABLE" which gives the name of the table as person. You then put the fields you want inside parenthesis after this setup.
+
+**ex1.sql:2**
+
+An id column which will be used to exactly identify each row. The format of a column is NAME TYPE, and in this case I'm saying I want an INTEGER that is also a PRIMARY KEY. Doing this tells SQLite3 to treat this column special.
+
+**ex1.sql:3-4**
+
+A first_name and a last_name column which are both of type TEXT.
+
+**ex1.sql:5**
+
+An age column that is just a plain INTEGER.
+
+**ex1.sql:6**
+Ending of the list of columns with a closing parenthesis and then a semi-colon ';' character.
+
+## What You Should See
+
+The easiest way to run this is to simply do: sqlite3 ex1.db < ex1.sql and it should just exit and not show you anything. To make sure it created a database use ls -l:
+
+    $ ls -l
+    total 16
+    -rw-r--r--  1 zedshaw  staff  2048 Nov  8 16:18 ex1.db
+    -rw-r--r--  1 zedshaw  staff    92 Nov  8 16:14 ex1.sql
+
+## Extra Credit
+
+- SQL is mostly a case-insensitive language. It was created in an era when case sensitivity was perceived as a major usability problem, so it has this quirk which can anoy the hell out of programmers from other languages. Rewrite this so that it's all lowercase and see if it still works. You'll need to delete ex1.db.
+
+```{r comment=NA}
+library(sqldf)
+sqldf("attach 'ex1a' as new")
+sqldf("create table person (
+           id integer primary key,
+           first_name text,
+           last_name text,
+           age integer
+       );", dbname = "ex1a")
+sqldf("select * from person", dbname = "ex1a")
+```
+
+- Add other INTEGER and TEXT fields for other things a person might have.
+
+```{r comment=NA}
+library(sqldf)
+sqldf("attach 'ex1b' as new")
+sqldf("CREATE TABLE person (
+           id INTEGER PRIMARY KEY,
+           first_name TEXT,
+           last_name TEXT,
+           age INTEGER,
+           gender TEXT,
+           weight INTEGER,
+           inches INTEGER
+       );", dbname = "ex1b")
+sqldf("select * from person", dbname = "ex1b")
+```
+
+## Portability Notes
+
+The types used by SQLite3 are usually the same as other databases, but be careful as one of the ways SQL database vendors differentiated themselves was to "embrace and extend" certain data types. The worst of these is anything to do with date and time.
