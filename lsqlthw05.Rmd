@@ -13,9 +13,7 @@ http://sql.learncodethehardway.org/book/ex5.html
 
 ## Exercise 5: Selecting Data
 
-Out of the CRUD matrix you only know "Create". You can create tables and you can create rows in those tables. I'll now show you how to "Read" or in the case of SQL, 
-
-    SELECT:
+Out of the CRUD matrix you only know "Create". You can create tables and you can create rows in those tables. I'll now show you how to "Read" or in the case of SQL, SELECT: 
     
     SELECT * FROM person;
     
@@ -57,6 +55,47 @@ When you run this with sqlite3 -echo you should get something like the following
     Fluffy|1000
     SELECT * FROM person WHERE first_name != "Zed";
     $
+
+```{r comment=NA}
+library(sqldf)
+
+# repeat from Exercise # 2
+sqldf("attach 'ex2' as new")
+sqldf("CREATE TABLE person (
+           id INTEGER PRIMARY KEY,
+           first_name TEXT,
+           last_name TEXT,
+           age INTEGER
+       );", dbname = "ex2")
+sqldf("CREATE TABLE person_pet (
+           person_Id INTEGER,
+           pet_Id INTEGER
+       );", dbname = "ex2")
+sqldf("CREATE TABLE pet (
+           id INTEGER PRIMARY KEY,
+           name TEXT,
+           breed TEXT,
+           age INTEGER,
+           dead INTEGER
+       );", dbname = "ex2")
+
+# repeat from Exercise # 3
+sqldf("INSERT INTO person (id, first_name, last_name, age) 
+           VALUES (0, 'Zed', 'Shaw', 37);", dbname = "ex2")
+sqldf("INSERT INTO pet (id, name, breed, age, dead)
+           VALUES (0, 'Fluffy', 'Unicorn', 1000, 0);", dbname = "ex2")
+sqldf("INSERT INTO pet VALUES (1, 'Gigantor', 'Robot', 1, 1);", dbname = "ex2")
+
+# repeat from Exercise # 4
+sqldf("INSERT INTO person_pet (person_id, pet_id) VALUES (0, 0);", dbname = "ex2")
+sqldf("INSERT INTO person_pet VALUES (0, 1);", dbname = "ex2")
+
+# new for Exercise # 5
+sqldf("SELECT * FROM person;", dbname = "ex2")
+sqldf("SELECT name, age FROM pet;", dbname = "ex2")
+sqldf("SELECT name, age FROM pet WHERE dead = 0;", dbname = "ex2")
+sqldf("SELECT * FROM person WHERE first_name != 'Zed';", dbname = "ex2")
+```
 
 I say "something like" because if you were doing the extra credit this whole time you will have different rows in your database. For example, if you added yourself then you will have some rows listed at the end. In my example above I have nothing returned for the last query because I'm the only person in the person table, and that means no row match the last query's WHERE clause. Study this carefully.
 

@@ -17,8 +17,8 @@ Creating one table isn't too useful. I want you to now make 3 tables that you ca
 
     CREATE TABLE person (
         id INTEGER PRIMARY KEY,
-        firstName TEXT,
-        lastName TEXT,
+        first_Name TEXT,
+        last_Name TEXT,
         age INTEGER
     );
     
@@ -30,14 +30,14 @@ Creating one table isn't too useful. I want you to now make 3 tables that you ca
         dead INTEGER
     );
     
-    CREATE TABLE personPet (
-        personId INTEGER,
-        petId INTEGER
+    CREATE TABLE person_Pet (
+        person_Id INTEGER,
+        pet_Id INTEGER
     );
 
 In this file you are making tables for two types of data, and then "linking" them together with a third table. People call these "linking" tables "relations", but very pedantic people with no lives call all tables "relations" and enjoy confusing people who just want to get their jobs done. In my book, tables that have data are "tables", and tables that link tables together are called "relations".
 
-There isn't anything new here, except when you look at **personPet** you'll see that I've made two columns: **personId** and **petId**. How you would link two tables together is simply insert a row into personPet that had the values of the two row's id columns you wanted to connect. For example, if person contained a row with **id**=20 and pet had a row with **id**=98, then to say that person owned that pet, you would insert **personId**=20, **petId**=98 into the personPet relation (table).
+There isn't anything new here, except when you look at **person_Pet** you'll see that I've made two columns: **person_Id** and **pet_Id**. How you would link two tables together is simply insert a row into personPet that had the values of the two row's id columns you wanted to connect. For example, if person contained a row with **id**=20 and pet had a row with **id**=98, then to say that person owned that pet, you would insert **person_Id**=20, **pet_Id**=98 into the personPet relation (table).
 
 We'll get into actually inserting data like this in the next few exercises.
 
@@ -48,13 +48,13 @@ You run this SQL script in the same way as before, but you specify **ex2.db** in
     sqlite> .schema
     CREATE TABLE person (
         id INTEGER PRIMARY KEY,
-        firstName TEXT,
-        lastName TEXT,
+        first_Name TEXT,
+        last_Name TEXT,
         age INTEGER
     );
-    CREATE TABLE personPet (
-        personId INTEGER,
-        petId INTEGER
+    CREATE TABLE person_Pet (
+        person_Id INTEGER,
+        pet_Id INTEGER
     );
     CREATE TABLE pet (
         id INTEGER PRIMARY KEY,
@@ -70,13 +70,13 @@ library(sqldf)
 sqldf("attach 'ex2' as new")
 sqldf("CREATE TABLE person (
            id INTEGER PRIMARY KEY,
-           firstName TEXT,
-           lastName TEXT,
+           first_Name TEXT,
+           last_Name TEXT,
            age INTEGER
        );", dbname = "ex2")
-sqldf("CREATE TABLE personPet (
-           personId INTEGER,
-           petId INTEGER
+sqldf("CREATE TABLE person_Pet (
+           person_Id INTEGER,
+           pet_Id INTEGER
        );", dbname = "ex2")
 sqldf("CREATE TABLE pet (
            id INTEGER PRIMARY KEY,
@@ -86,7 +86,7 @@ sqldf("CREATE TABLE pet (
            dead INTEGER
        );", dbname = "ex2")
 sqldf("select * from person", dbname = "ex2")
-sqldf("select * from personPet", dbname = "ex2")
+sqldf("select * from person_Pet", dbname = "ex2")
 sqldf("select * from pet", dbname = "ex2")
 ```
 
@@ -94,9 +94,9 @@ The "schema" should match what you typed in.
 
 ## Extra Credit
 
-- In these tables I made a 3rd relation table to link them. How would you get rid of this relation table **personPet** and put that information right into person? What's the implication of this change?
+- In these tables I made a 3rd relation table to link them. How would you get rid of this relation table **person_Pet** and put that information right into person? What's the implication of this change?
 
-- If you can put one row into **personPet**, can you put more than one? How would you record a crazy cat lady with 50 cats?
+- If you can put one row into **person_Pet**, can you put more than one? How would you record a crazy cat lady with 50 cats?
 
 - Create another table for the cars people might own, and create its corresponding relation table.
 

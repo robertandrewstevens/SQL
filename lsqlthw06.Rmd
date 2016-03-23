@@ -40,7 +40,7 @@ Start the WHERE clause.
 
 ### ex6.sql:4
 
-First I connect pet to person_pet by the related id columns pet.id and person_pet.id.
+First I connect pet to person\_pet by the related id columns pet.id and person\_pet.id.
 
 ### ex6.sql:5
 
@@ -60,6 +60,49 @@ When you run this you should get this exactly, not any of the data you've entere
      0           Fluffy      1000        0         
      1           Gigantor    1           1         
      $
+
+```{r comment=NA}
+library(sqldf)
+
+# repeat from Exercise # 2
+sqldf("attach 'ex2' as new")
+sqldf("CREATE TABLE person (
+           id INTEGER PRIMARY KEY,
+           first_name TEXT,
+           last_name TEXT,
+           age INTEGER
+       );", dbname = "ex2")
+sqldf("CREATE TABLE person_pet (
+           person_Id INTEGER,
+           pet_Id INTEGER
+       );", dbname = "ex2")
+sqldf("CREATE TABLE pet (
+           id INTEGER PRIMARY KEY,
+           name TEXT,
+           breed TEXT,
+           age INTEGER,
+           dead INTEGER
+       );", dbname = "ex2")
+
+# repeat from Exercise # 3
+sqldf("INSERT INTO person (id, first_name, last_name, age) 
+           VALUES (0, 'Zed', 'Shaw', 37);", dbname = "ex2")
+sqldf("INSERT INTO pet (id, name, breed, age, dead)
+           VALUES (0, 'Fluffy', 'Unicorn', 1000, 0);", dbname = "ex2")
+sqldf("INSERT INTO pet VALUES (1, 'Gigantor', 'Robot', 1, 1);", dbname = "ex2")
+
+# repeat from Exercise # 4
+sqldf("INSERT INTO person_pet (person_id, pet_id) VALUES (0, 0);", dbname = "ex2")
+sqldf("INSERT INTO person_pet VALUES (0, 1);", dbname = "ex2")
+
+# new for Exercise # 6
+sqldf("SELECT pet.id, pet.name, pet.age, pet.dead
+           FROM pet, person_pet, person
+           WHERE
+           pet.id = person_pet.pet_id AND
+           person_pet.person_id = person.id AND
+           person.first_name = 'Zed';", dbname = "ex2")
+```
 
 If you didn't, then do a SELECT on the person_pet table and make sure it's right. You might have inserted too many values into it.
 
