@@ -1,0 +1,95 @@
+---
+title: "lsqlthw08"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex8.html
+
+## Exercise 8: Deleting Using Other Tables
+
+Remember I said, "DELETE is like SELECT but it removes rows from the table." The limitation is you can only delete from one table at a time. That means to delete all of the pets you need to do some additional queries and then delete based on those.
+
+One way you do this is with a subquery that selects the ids you want delete based on a query you've already written. There's other ways to do this, but this is one you can do right now based on what you know:
+
+    DELETE FROM pet WHERE id IN (
+        SELECT pet.id
+        FROM pet, person_pet, person
+        WHERE
+        person.id = person_pet.person_id AND
+        pet.id = person_pet.pet_id AND
+        person.first_name = "Zed"
+    );
+    
+    SELECT * FROM pet;
+    SELECT * FROM person_pet;
+
+    DELETE FROM person_pet
+        WHERE pet_id NOT IN (
+            SELECT id FROM pet
+        );
+    
+    SELECT * FROM person_pet;
+
+The lines 1-8 are a DELETE command that starts off normally, but then the WHERE clause uses IN to match id columns in pet to the table that's returned in the subquery. The subquery (also called a subselect) is then a normal SELECT and it should look really similar to the ones you've done before when trying to find pets owned by people.
+
+On lines 13-16 I then use a subquery to clear out the person_pet table of any pets that don't exist anymore by using NOT IN rather than IN.
+
+How SQL does this is with the following process:
+
+- Runs the subquery in the parenthesis at the end and build a table with all the columns just like a normal SELECT.
+
+- Treats this table as a kind of temporary table to match pet.id columns against.
+
+- Goes through the pet table and deletes any row that has an id IN this temporary table.
+
+## What You Should See
+
+I've changed the formatting on this and removed extra output that isn't relevant to this exercise. Notice how I'm using a new databse called mydata.db and I'm using a conglomerate SQL file that has all the SQL from exercises 2 through 7 in it. This makes it easier to rebuild and run this exercise. I'm also using sqlite3 -header -column -echo to get nicer output for the tables and to see the SQL that's being run.
+
+    $ sqlite3 mydata.db < code.sql
+    # ... cut the output for this ...
+    $ sqlite3 -header -column -echo mydata.db < ex8.sql
+    DELETE FROM pet WHERE id IN (
+        SELECT pet.id 
+        FROM pet, person_pet, person 
+        WHERE 
+        person.id = person_pet.person_id AND
+        pet.id = person_pet.pet_id AND
+        person.first_name = "Zed"
+    );
+    
+    SELECT * FROM pet;
+    
+    SELECT * FROM person_pet;
+    person_id   pet_id    
+    ----------  ----------
+    0           0         
+    0           1         
+    
+    DELETE FROM person_pet
+        WHERE pet_id NOT IN (
+            SELECT id FROM pet
+        );
+    
+    SELECT * FROM person_pet;
+    $
+
+You should see that after you DELETE the SELECT returns nothing.
+
+## Extra Credit
+
+- Practice writing SELECT commands and then put them in a DELETE WHERE IN to remove those records found. Try deleting any dead pets owned by you.
+
+- Do the inverse and delete people who have dead pets.
+
+- Do you really need to delete dead pets? Why not just remove their relationship in person\_pet and mark them dead? Write a query that removes dead pets from person\_pet.
+
+## Portability Notes
+
+Depending on the database subqueries will be slow. Sometimes they can be faster depending on how the tables are setup and the type of data you're querying. There are other ways to do this same thing, but for now just use this since it's something you can understand.

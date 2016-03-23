@@ -1,0 +1,68 @@
+---
+title: "lsqlthw10"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex10.html
+
+## Exercise 10: Updating Complex Data
+
+In the last exercise I had you do a subquery in the UPDATE, and now you'll use it to change all the pets I own to be named "Zed's Pet".
+
+    SELECT * FROM pet;
+    
+    UPDATE pet SET name = "Zed's Pet" WHERE id IN (
+        SELECT pet.id
+        FROM pet, person_pet, person
+        WHERE
+        person.id = person_pet.person_id AND
+        pet.id = person_pet.pet_id AND
+        person.first_name = "Zed"
+    );
+
+    SELECT * FROM pet;
+
+This is how you update one table based on information from another table. There's other ways to do the same thing, but this way is the easiest to understand for you right now.
+
+## What You Should See
+
+As usual, I use my little code.sql to reset my database and then output nicer columns with sqlite3 -header -column -echo.
+
+    $ sqlite3 mydata.db < code.sql
+    # ... output cut ...
+    $ sqlite3 -header -column -echo mydata.db < ex10.sql
+    SELECT * FROM pet;
+    id          name        breed       age         dead      
+    ----------  ----------  ----------  ----------  ----------
+    0           Fluffy      Unicorn     1000        0         
+    1           Gigantor    Robot       1           0         
+    
+    UPDATE pet SET name = "Zed's Pet" WHERE id IN (
+        SELECT pet.id 
+        FROM pet, person_pet, person 
+        WHERE 
+        person.id = person_pet.person_id AND
+        pet.id = person_pet.pet_id AND
+        person.first_name = "Zed"
+    );
+    
+    SELECT * FROM pet;
+    id          name        breed       age         dead      
+    ----------  ----------  ----------  ----------  ----------
+    0           Zed's Pet   Unicorn     1000        0         
+    1           Zed's Pet   Robot       1           0         
+    $
+
+# Extra Credit
+
+- Write an SQL that only renames dead pets I own to "Zed's Dead Pet".
+
+- Go to the SQL As Understood By SQLite page and start reading through the docs for CREATE TABLE, DROP TABLE, INSERT, DELETE, SELECT, and UPDATE.
+
+- Try out some of the interesting things you find in these docs, and take notes on things you don't understand so you can research them more later.

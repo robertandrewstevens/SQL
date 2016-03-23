@@ -1,0 +1,76 @@
+---
+title: "lsqlthw06"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex6.html
+
+## Exercise 6: Select Across Many Tables
+
+Hopefully you're getting your head around selecting data out of tables. Always remember this: SQL ONLY KNOWS TABLES. SQL LOVES TABLES. SQL ONLY RETURNS TABLES. TABLES. TABLES. TABLES. TABLES! I repeat this in this rather crazy manner so that you will start to realize that what you know in programming isn't going to help. In programming you deal in graphs and in SQL you deal in tables. They're related concepts, but the mental model is different.
+
+Here's an example of where it becomes different. Imagine you want to know what pets Zed owns. You need to write a SELECT that looks in person and then "somehow" finds my pets. To do that you have to query the person_pet table to get the id columns you need. Here's how I'd do it:
+
+    SELECT pet.id, pet.name, pet.age, pet.dead
+        FROM pet, person_pet, person
+        WHERE
+        pet.id = person_pet.pet_id AND
+        person_pet.person_id = person.id AND
+        person.first_name = "Zed";
+
+Now this looks like a lot, but I'll break it down so you can see it's simply crafting a new table based on data in the three tables and the WHERE clause:
+
+### ex6.sql:1
+
+I only want some columns from pet so I specify them in the select. In the last exercise you used '*' to say "every column" but that's going to be a bad idea here. Instead, you want to be explicit and say what column from each table you want, and you do that by using table.column as in pet.name.
+
+### ex6.sql:2
+
+To connect pet to person I need to go through the person_pet relation table. In SQL that means I need to list all three tables after the FROM.
+
+### ex6.sql:3
+
+Start the WHERE clause.
+
+### ex6.sql:4
+
+First I connect pet to person_pet by the related id columns pet.id and person_pet.id.
+
+### ex6.sql:5
+
+AND I need to connect person to person_pet in the same way. Now the database can search for only the rows where the id columns all match up, and those are the ones that are connected.
+
+### ex6.sql:6
+
+AND I finally ask for only the pets that I own by adding a person.first_name test for my first name.
+
+## What You Should See
+
+When you run this you should get this exactly, not any of the data you've entered in previous exercises:
+
+     $ sqlite3 -column -header ex3.db < ex6.sql
+     id          name        age         dead      
+     ----------  ----------  ----------  ----------
+     0           Fluffy      1000        0         
+     1           Gigantor    1           1         
+     $
+
+If you didn't, then do a SELECT on the person_pet table and make sure it's right. You might have inserted too many values into it.
+
+## Extra Credit
+
+- This may be a mind blowing weird way to look at data if you already know a language like Python or Ruby. Take the time to model the same relationships using classes and objects then map it to this setup.
+
+- Do a query that finds your pets you've added thus far.
+
+- Change the queries to use your person.id intead of the person.name like I've been doing.
+
+## Portability Notes
+
+There are actually other ways to get these kinds of queries to work called "joins". I'm avoiding those concepts for now because they are insanely confusing. Just stick to this way of joining tables for now and ignore people who try to tell that this is somehow slower or "low class".

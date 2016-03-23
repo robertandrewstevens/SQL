@@ -1,0 +1,99 @@
+---
+title: "lsqlthw14"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex14.html
+
+## Exercise 14: Basic Transactions
+
+Imagine if the SQL in your last exercise had an error half-way through it's run and it aborted. You may have even ran into this problem, and then you see that your database is not seriously broken. You've been getting away with this because you have a big code.sql file that rebuilds your database, but in a real situation you can't trash your whole database when you mess up.
+
+What you need to make your script safer is the BEGIN, COMMIT, and ROLLBACK commands. These start a transaction, which creates a "boundary" around a group of SQL statements so you can abort them if they have an error. You start the transaction with BEGIN, do your SQL, and then when everything's good end the transaction with COMMIT. If you have an error then you just issue ROLLBACK to abort what you did.
+
+For this exercise I want you to do the following:
+
+- Take your ex13.sql and copy it to ex14.sql so you can modify it.
+
+- Once you have that, put a BEGIN at the top and a ROLLBACK. At the bottom.
+
+- Now run it and you'll see that it's as if your script didn't do anything.
+
+- Next, change the ROLLBACK to be COMMIT and run it again, and you'll see it works like normal.
+
+- Get rid of the BEGIN and COMMIT from your ex14.sql so it's back the way it was.
+
+- Now create an error by removing one of the TABLE keywords from one of the lines. This is so you can make it have an error and recover.
+
+Once you have this broken ex14.sql you'll play with it in the sqlite3 console to do a recovery:
+
+    $ sqlite3 ex14.db
+    SQLite version 3.7.8 2011-09-19 14:49:19
+    Enter ".help" for instructions
+    Enter SQL statements terminated with a ";"
+    sqlite> 
+    sqlite> 
+    sqlite> .read code.sql
+    /* cut for simplicity */
+    
+    sqlite> 
+    sqlite> BEGIN;
+    sqlite> .read ex14.sql
+    Error: near line 5: near "person_pet": syntax error
+    sqlite> .schema
+    /* cut the schema with partial alters in it */
+    sqlite> ROLLBACK;
+    sqlite> 
+    sqlite> .schema
+    CREATE TABLE person (
+        id INTEGER PRIMARY KEY,
+        first_name TEXT,
+        last_name TEXT,
+        age INTEGER
+    );
+    CREATE TABLE person_pet (
+        person_id INTEGER,
+        pet_id INTEGER
+    );
+    CREATE TABLE pet (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        breed TEXT,
+        age INTEGER,
+        dead INTEGER
+    );
+    sqlite> 
+
+This one's long so I'm going to break it down so you can track what's going on:
+
+- 1: I start up sqlite3 so I can get into the console with ex14.db.
+
+- 7: I then .read the code.sql file to setup the database like normal but doing it from within sqlite3.
+
+- 11: I enter BEGIN so I can start a transaction boundary.
+
+- 12: I run .read ex14.sql to run it, but remember it has an error so it aborts. My error was on line 5 but yours could be anywhere else.
+
+- 14: I then run .schema so you can see that some of the changes actually were made, and I'll want to undo them.
+
+- 16: Since the last command had an error I run ROLLBACK here to abort all the things I did since the BEGIN on line 11.
+
+- 18: To show that the database is back the way it should be, I do another .schema and you can see all that junk is now gone.
+
+## Extra Credit
+
+- Read the instructions on SQLite3 transactions to get an idea of what's possible.
+
+- Use transactions to bound some example UPDATES and INSERTS to see how those work too.
+
+- Try using the alternative syntax of BEGIN TRANSACTION, COMMIT TRANSACTION, and ROLLBACK TRANSACTION.
+
+## Portability Notes
+
+Some databases don't have the same rollback and commit semantics as other databases. Some also don't understand the syntax with the word TRANSACTION. They should universally abort everything you did, but again look at your manual to confirm this is true.

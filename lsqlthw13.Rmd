@@ -1,0 +1,89 @@
+---
+title: "lsqlthw13"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex13.html
+
+## Exercise 13: Migrating And Evolving Data
+
+This exercise will have you apply some skills you've learned. I'll have you take your database and "evolve" the schema to a different form. You'll need to make sure you know the previous exercise well and have your code.sql working as we'll be. If you don't have either of these then go back and get everything straightened out.
+
+To make sure you are in the right state to attempt this exercise, when you run your code.sql you should be able to run .schema like this:
+
+    $ sqlite3 ex13.db < code.sql
+    $ sqlite3 ex13.db .schema
+    CREATE TABLE person (
+        id INTEGER PRIMARY KEY,
+        first_name TEXT,
+        last_name TEXT,
+        age INTEGER
+    );
+    CREATE TABLE person_pet (
+        person_id INTEGER,
+        pet_id INTEGER
+    );
+    CREATE TABLE pet (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        breed TEXT,
+        age INTEGER,
+        dead INTEGER,
+        dob DATETIME
+    );
+
+Make sure your tables look like my tables, and if not then go back and remove any commands that are doing ALTER TABLE or anything from the last exercise.
+
+## The Assignment
+
+What you're tasked with doing is the following list of changes to the database:
+
+- Add a dead column to person that's like the one in pet.
+
+- Add a phone_number column to person.
+
+- Add a salary column to person that is float.
+
+- Add a dob column to both person and pet that is a DATETIME.
+
+- Add a purchased_on column to person_pet of type DATETIME.
+
+- Add a parent to pet column that's an INTEGER and holds the id for this pet's parent.
+
+- Update the existing database records with the new column data using UPDATE statements. Don't forget about the purchased_on column in person_pet relation table to indicate when that person bought the pet.
+
+- Add 4 more people and 5 more pets and assign their ownership and what pet's are parents. On this last part remember that you get the id of the parent, then set it in the parent column.
+
+- Write a query that can find all the names of pets and their owners bought after 2004. Key to this is to map the person_pet based on the purchased_on column to the pet and parent.
+
+- Write a query that can find the pets that are children of a given pet. Again look at the pet.parent to do this. It's actually easy so don't over think it.
+
+You should do this by writing a ex13.sql file with these new things in it. You then test it by resetting the database using code.sql and then running ex13.sql to alter the database and run the SELECT queries that confirm you made the right changes.
+
+Take your time working on this, and when you're done your schema should look like this:
+
+    $ sqlite3 mine.db < ex13.sql
+    $ sqlite3 mine.db .schema
+    CREATE TABLE person (
+        id INTEGER PRIMARY KEY,
+        first_name TEXT,
+        last_name TEXT,
+        age INTEGER
+    , dead INTEGER, phone_number TEXT, salary FLOAT, dob DATETIME);
+    CREATE TABLE person_pet (
+        person_id INTEGER,
+        pet_id INTEGER
+    , purchased_on DATETIME);
+    CREATE TABLE pet (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        breed TEXT,
+        age INTEGER,
+        dead INTEGER
+    , parent INTEGER);

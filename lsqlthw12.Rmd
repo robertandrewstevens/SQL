@@ -1,0 +1,116 @@
+---
+title: "lsqlthw12"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex12.html
+
+## Exercise 12: Destroying And Altering Tables
+
+You've already encountered DROP TABLE as a way to get rid of a table you've created. I'm going to show you another way to use it and also how to add or remove columns from a table with ALTER TABLE.
+
+    /* Only drop table if it exists. */
+    DROP TABLE IF EXISTS person;
+    
+    /* Create again to work with it. */
+    CREATE TABLE person (
+        id INTEGER PRIMARY KEY,
+        first_name TEXT,
+        last_name TEXT,
+        age INTEGER
+    );
+    
+    /* Rename the table to peoples. */
+    ALTER TABLE person RENAME TO peoples;
+    
+    /* Add a hatred column to peoples. */
+    ALTER TABLE peoples ADD COLUMN hatred INTEGER;
+    
+    /* Rename peoples back to person. */
+    ALTER TABLE peoples RENAME TO person;
+    
+    .schema person
+    
+    /* We don't need that. */
+    DROP TABLE person;
+
+I'm doing some fake changes to the tables to demonstrate the commands, but this is everything you can do in SQLite3 with the ALTER TABLE and DROP TABLE statements. I'll walk through this so you understand what's going on:
+
+### ex21.sql:2
+
+Use the IF EXISTS modifier and the table will be dropped only if it's already there. This suppresses the error you get when running you .sql script on a fresh database that has no tables.
+
+### ex21.sql:5
+
+Just recreating the table again to work with it.
+
+### ex21.sql:13
+
+Using ALTER TABLE to rename it to peoples.
+
+### ex21.sql:16
+
+Add a new column hatred that is an INTEGER to the newly renamed table peoples.
+
+### ex21.sql:19
+
+Rename peoples back to person because that's a dumb name for a table.
+
+### ex21.sql:21
+
+Dump the schema for person so you can see it has the new hatred column.
+
+### ex21.sql:24
+
+Drop the table to clean up after this exercise.
+
+## What You Should See
+
+If you run this script it should look something like this:
+
+   $ sqlite3 -echo ex12.db < ex12.sql
+   
+   DROP TABLE IF EXISTS person;
+   
+   CREATE TABLE person (
+       id INTEGER PRIMARY KEY,
+       first_name TEXT,
+       last_name TEXT,
+       age INTEGER
+   );
+   
+   ALTER TABLE person RENAME TO peoples;
+   ALTER TABLE peoples ADD COLUMN hatred INTEGER;
+   ALTER TABLE peoples RENAME TO person;
+   
+   .schema person
+   
+   CREATE TABLE "person" (
+       id INTEGER PRIMARY KEY,
+       first_name TEXT,
+       last_name TEXT,
+       age INTEGER
+   , hatred INTEGER);
+   
+   DROP TABLE person;
+   $
+
+I've added some extra spacing so you can read it easier, and remember to pass in the -echo argument so it prints out what it's run.
+
+## Extra Credit
+
+- Update your code.sql file you've been putting all the code in so that it uses the DROP TABLE IF EXISTS syntax.
+
+- Use ALTER TABLE to add a height and weight column to person and put that in your code.sql file.
+
+- Run your new code.sql script to reset your database and you should have no errors.
+
+## Portability Notes
+
+Typically ALTER TABLE is a mashup of just about everything a database vendor couldn't put into their SQL syntax. Some databases will let you do more with tables than other databases, so read up on the documentation and see what's possible.

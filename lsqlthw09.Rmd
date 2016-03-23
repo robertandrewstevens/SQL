@@ -1,0 +1,70 @@
+---
+title: "lsqlthw09"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex9.html
+
+## Exercise 9: Updating Data
+
+You now know the CRD parts of CRUD, and I just need to teach you the Update part to round out the core of SQL. As with all the other SQL commands the UPDATE command follows a format similar to DELETE but it changes the columns in rows instead of deleting them.
+
+    UPDATE person SET first_name = "Hilarious Guy"
+        WHERE first_name = "Zed";
+    
+    UPDATE pet SET name = "Fancy Pants"
+        WHERE id=0;
+    
+    SELECT * FROM person;
+    SELECT * FROM pet;
+
+In the above code I'm changing my name to "Hilarious Guy", since that's more accurate. And to demonstrate my new moniker I renamed my Unicorn to "Fancy Pants". He loves it.
+
+This shouldn't be that hard to figure out, but just in case I'm going to break the first one down:
+
+- Start with UPDATE and the table you're going to update, in this case person.
+
+- Next use SET to say what columns should be set to what values. You can change as many columns as you want as long as you separate them with commas like first_name = "Zed", last_name = "Shaw".
+
+- Then specify a WHERE clause that gives a SELECT style set of tests to do on each row. When the UPDATE finds a match it does the update and SETs the columns to how you specified.
+
+## What You Should See
+
+I'm resetting the database with my code.sql script and then running this:
+
+    $ sqlite3 mydata.db < code.sql
+    # ... output cut ...
+    $
+    $ sqlite3 -header -column -echo mydata.db < ex9.sql
+    UPDATE person SET first_name = "Hilarious Guy"
+        WHERE first_name = "Zed";
+    UPDATE pet SET name = "Fancy Pants"
+        WHERE id=0;
+    
+    SELECT * FROM person;
+    id          first_name     last_name   age       
+    ----------  -------------  ----------  ----------
+    0           Hilarious Guy  Shaw        37        
+    
+    SELECT * FROM pet;
+    id          name         breed       age         dead      
+    ----------  -----------  ----------  ----------  ----------
+    0           Fancy Pants  Unicorn     1000        0         
+    1           Gigantor     Robot       1           0         
+    $
+
+I've done a bit of reformatting by adding some newlines but otherwise your output should look like mine.
+
+## Extra Credit
+
+- Use UPDATE to change my name back to "Zed" by my person.id.
+
+- Write an UPDATE that renames any dead animals to "DECEASED". If you try to say they are "DEAD" it'll fail because SQL will think you mean 'set it to the column named "DEAD"', which isn't what you want.
+
+- Try using a subquery with this just like with DELETE.

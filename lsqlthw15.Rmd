@@ -1,0 +1,199 @@
+---
+title: "lsqlthw15"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex15.html
+
+## Exercise 15: Data Modeling
+
+    Note:  This is just a rough dump of my thoughts on designing a database. There will be terminology errors and statements of fact that are wrong. Just let me know if you find any and I'll fix them.
+
+In the world of programming we have this concept of "Don't Repeat Yourself" where programmers are admonished against duplicating code in their programs. Rather than copy-paste chunks of code into your source files or between them, you'll create a function that contains the code and use it. This creates one logical place to find everything thus reducing the chance of bugs and logical errors in your code while also making it easier to maintain and fix.
+
+In databases you have a similar concept called "normalization" where you try to craft a database schema so that it has reduced duplication and so that facts live in one place only. This is partly because of space requirements, but mostly because if you have the same data in multiple places it gives the database logical flaws and inconsistencies. By normalizing a database you take repeated data in columns and place them in other tables where they are only mentioned once. In database design this is called Normal Form and usually abbreviated with NF. Normal Form also has numeric levels to indicate how "well" normalized the database is with higher numbers being "better".
+
+However, there are a few more similarities between DRY and NF:
+
+- You can take DRY and NF too far until you have removed all the repetition but in the process make the system almost impossible to understand. This is similar to "compressing" the code with gzip. Sure there's no repetition, but then nobody can read it either.
+
+- You can add horrible inefficiency to the system by creating so many interlocking pieces that the weight of communication crushes any activity. In software this comes from continually moving every "repetition" into more indirect pieces of the code until doing simple things takes 10 function calls with 20 objects. In databases you see this when doing simple queries requires 10 tables and hundreds of rows and foreign keys.
+
+- You can remove repetition instead of redesigning the system with a new simpler design. You then end up with a system that is cleaner, but still flawed and is most likely more convoluted but nobody remembers the old system so there's no history to explain why it is what it is.
+
+## Aesthetic Guidelines
+
+Because there's no limit to what is logical or not, you can spend all your time removing repetition and making the system more and more convoluted to accomplish it. Instead of doing that, get it to a point that it is easily understood and maintainable, but is still direct, efficient and consistent. Let me break that down because it pertains to this lesson:
+
+- understandable: A person can figure out the system in some reasonable amount of time and can work with it daily without special tools like IDEs.
+
+- maintainable: Repairs and changes shouldn't require making the same change in multiple places or many small changes in lots of places.
+
+- direct: Favor direct communications between components over chains of indirection for no benefit. Also realize that "indirection" is not "abstraction", and that you can get rid of indirection by getting rid of optional features.
+
+- efficient: There shouldn't be wasted computation or storage in the system, but there should be evidence that a change has a statistically significant increase in performance if it destroys any of these other guidelines.
+
+- consistent: The system should be consistent such that facts about the system should live in one place only and they shouldn't contradict each other, but this should be balanced by attempting to reduce the facts necessary to understand the system.
+
+I consider these to be very high minded aesthetics and not "rules" you can follow. You can see that I've worded them so they are balanced such that if you go too crazy in on direction, another guideline kicks in to constrain it. For example, if you make a database totally direct then you'd denormalize all tables into one giant table, and that might also help efficiency, but you'd make it inconsistent and difficult to maintain or understand. Another example would be that you have software that's maintainable, but only because the original authors know the history of it and nobody else has to understand it.
+
+## Designing The Data Model
+With that out of the way, I can get into what Normal Form (NF) actually is on a practical level. I'm not going to get into the mathematics behind it, because honestly it's very confusing and not helpful. I learned it years ago then broke it down into a practical process that you can follow to create a good design:
+
+- conceptualize: Map out all "concepts" or objects in the system and their cardinality.
+
+- identify: Give the concepts all names and create unique integer primary keys.
+
+- relate: Draw a simple diagram showing how each concept is related.
+
+- itemize: Write down the cardinality of the relationships as many-to-many or one-to-one, rarely one-to-many.
+
+- atomize: Break out each concept into its attributes and parts.
+
+- reduce: Get rid of anything you don't actually need. It's easy to add later, harder to remove.
+
+- normalize: Move duplication around to improve consistency and reduce repetition.
+
+- denormalize: Denormalize tables if you must.
+
+I'll cover each step in order, but keep in mind these are meant to be done continually and for you to jump around as you refine the data model.
+
+## Conceptualize
+
+The first step is to figure out what you are talking about and develop a list of the concepts you'll need. These are going to be similar to the classes you'd make in an object oriented programming language and map to the tables you'll need in the database.
+
+One way to determine all your concepts is to do all of the screen prototypes first. If you can work out the user interface on paper and how people flow between them, then you can pull out all the major concepts fairly easily. This will also help you start to figure out logical problems in your user interfaces, and so building the database can help clean up and refine the UI. I typically first do the screens on paper, then pull out the concepts, then design the database, then go back and refine the screens and cycle over this for a while before building the real application.
+
+Then again, sometimes I just hack on it until I get what's in my head on the screen.
+
+## Identify
+
+Once you've identified the concepts, give them simple names that are singular. A huge misconception programmers have is thinking of a database table as a "bag of objects" and therefore naming the tables with plural names. This is like naming all of your classes with plural names. Instead, think of the tables as being like classes, and the rows as being like instances of that class or objects. The practical reason you give them singular names is that plurals in many languages are inconsistent, but singulars are usually more consistent. If you name a class Person, then name the table person and you have no translation issues in your ORMs.
+
+Remember, the name of the table is like the name of the class, the row in the table is an object.
+
+Once you have their identities, then remember that the very first column (attribute) you'll make is a unique primary key integer. Do not be tempted by the dark side and try to use a composite key. In fact, I'm not going to tell you what that is just so you don't try to use it. A composite key is where you try to use data from columns in a table to identify rows. These fail all the time because there's always a probability that the data is not unique, so it can't be relied on.
+
+## Relate
+
+Now that you've identified all the concepts, you need to relate them to each other to determine how they are connected. This should be simple but you may run into hairy relationship issues that you'll need to think through. First step is to create a diagram that has boxes for each concept, and then a line between them if they are connected somehow. When you have all the connections listed, give them names that are either the two tables (like person_pet, or some descriptive name if that makes sense like "owns".
+
+## Itemize
+
+I'm not sure why, but people just completely suck at "cardinality" so getting them to itemize how two things are related is difficult. To do this you have to fill in the following statement for each relation and the tables it refers to:
+
+    Y has (one|many) X, and X has (one|many) Y.
+
+Taking the example I've used in this book, I would say this:
+
+    Person has many Pet, and Pet has many Person.
+
+You can also see where some people get confused about plurals and table names. Your brain probably screams that "Person has many Pet" should be "People have many Pets". Then you'll be clever and go off naming your tables people and pets. The problem is the statement would really be "A Person may have more than one Pet, but a Pet may have more than one Person." The pluralized statement is actually false because not all people have many pets, but the last one I've written is true since they may have more than one pet. This is pedantic, but this is the kind of things you have to deal with in figuring this out. To simplify it, just write it down the way I have it and tell your brain to shut up since it's just a shorthand sentence.
+
+Force yourself to say this out loud as you do it and ask yourself if that's really true and possible. For example, can a pet actually have more than one owner? Sure, if they are part of a family then all the family members can be owners. Or, maybe you want there to be one owner and that's it. Be sure why you are making this decision, then come up with counter scenarios that prove you wrong.
+
+Once you have this list create a table on a sheet of paper that gives the cardinality of these relationships succinctly:
+
+- X: The X table on the left of your phrase.
+
+- ->: Table X's one or many cardinality to the table on the right.
+
+- <-: The table on the right's cardinality.
+
+- Y: The Y table on the right of your phrase.
+
+    Note: One thing that trips up programmers is they come from a world of objects and data structures where there are clear parent child relationships. In databases there's no such thing as all tables are equal semantically and you have to look at them to figure out how they relate. Don't make the mistake of attributing some "parent child" form to these relationships. They might be in your software, but in the database they are just tables connected by other tables and columns. There is no hierarchy.
+
+The final step in this subsection is to check for the following common problems:
+
+- Find any "asymmetric" relationships that are one-to-many or many-to-one (same thing) and consider changing them to many-to-many. Years of experience has taught me that almost every time someone swears up and down that two tables are one-to-many they end up changing it to many-to-many a week later and have to redesign the whole database. Just save yourself the trouble and really justify one-to-many and declare it permanent if it's really true.
+
+- Find any many-to-many relationships that seem to involve the same table and see if maybe that table should be an "attributed relation". I'll cover this later, but the idea is that the table is used to relate many other tables and also has a few attributes on it as well. Once you identify this you can simplify the design by using this one table as a single connector for all of them.
+
+- Look for any three tables that have "triangle" connections that seem to always exist, and consider making a single "ternary relation". A ternary relation is a single table that connects three other tables together, with the idea being that these three tables can only be connected all at once or not at all.
+
+## Atomize
+
+Once you're done with that you then need to figure out what attributes each table has and what data types they contain. Your first reaction will be to put limits on each one and pick the smallest type possible in an attempt to create efficiency and save space. I want you to instead pick the loosest biggest types you can and worry about efficiency later when you have a need. Trust me, it's just easier.
+
+My preferred tool for doing this is a simple text file with each table listed and then under it bullet points for each attribute (column) and the type. Nothing fancy just lines like "name TEXT".
+
+## Reduce
+
+Software is the inverse of carpentry. In carpentry you can't add wood back but you can take it away, so you try to leave as much as possible. In software it's hard to take features away, so you try to remove as much as possible. Databases are the same because if you have a table of data, someone will try to use it and then you'll never get rid of it or be able to change it. It's best to remove the stuff you don't need, keep notes about what you original designed, and then only add it later when you do need it.
+
+Once you remove the tables you don't really need you can start trimming attributes you don't need and other things you don't need. The only caveat is don't try to get rid of many-to-many tables as they will come back later as your database evolves.
+
+## Normalize
+
+If you've followed these steps closely your database should be almost entirely normalized and clean. Your job is to now go through all of the attributes and attempt to remove any duplication that makes sense. Here's how I go about it:
+
+- Find any group of attributes (columns) that might be concepts on their own, or are possible "parent child" relationships in disguise.
+
+- Take any columns that do not change often and consider making a table to store them as a list then reference them by id. I like to call these "enumeration tables" as they typically don't change and you can just load them into memory and cache them for long periods of time. An example would be a list of US states that only changes if there's an act of Congress.
+
+## Denormalize
+
+This last part is difficult to quantify, but when you're done normalizing you may have gone a little crazy with it. There may be tables that are better if they are denormalized and kept flat. Personally I try to build the database "correctly", and then if there's data that is better as a big flat blob then I either don't use a SQL database, use a view, or denormalize the table.
+
+The place to look for is any information that is heavily read. The basic information of a user on a website is a good example of this, as you'll potentially be querying their information every time they hit your website. Having to do joins across multiple tables for this information might pose problems and it could be better to just denormalize the 85% of the data you need all the time. Another place would be documents and their attributes. Databases are horrible at storing documents, so you're better off denormalizing their attributes or using something that is better at document storage.
+
+However, all of this advice must be constrained by me yelling at you to test your theories out first and justify denormalization with hard numbers and evidence. Many times people denormalize a set of tables to be lazy and just not write proper SQL queries, or because their database has badly configured indexes. You should first run some benchmarks, then try to tune the database and your queries, then try to denormalize the tables in question.
+
+Finally, sometimes doing some of the work in your code is a huge time savings over doing it in the database. I've done applications where I had to query across 5 or more tables, and letting the database do it made it take forever. When I just queried the tables directly and then did the "joins" in my code the process sped up several orders of magnitude. I remember one query that took 10 to 20 minutes to complete, but when moved into code took only a fraction of a second.
+
+Another way to say all of this is that denormalization is something you can't undo later, so before betting the farm on it just rule out other simpler solutions.
+
+## Implementing The SQL
+
+Once you've cycled over this and refined it so there's less duplication, you should sit down and write the SQL file that creates the database. Here's what you do:
+
+- Create all the tables and just their primary key ids. No other attributes. Get that working.
+
+- Now create all the relation tables, sticking to the convention of TABLE\_TABLE for each of them. Use columns named TABLE\_id for each of the relation tables columns. For example, I have a person\_pet relation table, with the columns person\_id and pet\_id.
+
+- Once you have this basic structure working, create a set of test queries that exercise each relation you've written down in your table of how tables are related. Take the time to cover as much of the connections as possible while you can shape the database.
+
+- After you get the relations solid, you go back through and add all the other attributes as columns and then rerun your sample queries to make sure they still work. If you've done everything right your queries will keep working after you add the attributes. If they break then your attributes need to be redesigned or corrected.
+
+- Finally, write some sample queries and data to test out that it works correctly.
+
+## Implementing With Object-Relational Mappers
+
+If your system is going to use an ORM, then instead of writing the SQL you would sit down and create the code for the ORM plus unit tests to validate your model. The process is nearly the same:
+
+- Create all the classes for your model and make sure it generates the right tables and only the ids.
+
+- Add all the relationships to the classes you've made.
+
+- Write unit tests for the basic relationships and make sure they make sense.
+
+- Add the attributes and make sure the unit tests keep working as expected. Remember your attributes shouldn't break any of your relations.
+
+- Finally, write higher level unit tests that validate the attributes and queries for them.
+
+I'm going to warn you against designing your database with the ORM and its quirks in mind. Do your design as if the ORM doesn't exist, then make the smallest number of changes necessary to integrate with the ORM. If you start with the ORM then you can end up with a convoluted "quirky" database that nothing else can talk to but your one little favorite programming platform. Frameworks come and go, but your database and its contents is typically the most valuable thing in your system and it'll be around for a very long time.
+
+## Final Steps
+
+You then want to cycle over this for as long as you can without getting crazy about it. You'll want to talk with domain experts and make them confirm the cardinality of everything. Simply reading the statements to them like, "John, so a Person can have multiple Pets right? Ok, can a Pet belong to multiple People?"
+
+Whatever you do, don't get frustrated if these people you're asking seem to freak out and can't answer your questions. Many times you are actually reverse engineering human thought and social structure. The sad part is most people have no idea why they believe or know what they do, and they definitely have no idea why they do the things they do. Asking them these questions forces them to become concrete about their thinking and for many people this is painful and annoying. They are much happier just feeling their way through their jobs letting their intuition handle all of the logical inconsistencies in their daily life.
+
+When you show up asking questions you are basically pointing out how stupid they are. They probably never realized that a person can have multiple purchase orders, even if they did it last Tuesday. When you ask that, they suddenly have to come to terms with the fact that they've been wrong the whole time. That can make some people angry so just note it down and continue on.
+
+## Extra Credit
+
+The extra credit for this exercise is huge. It's an application of nearly everything you've learned so far, but you should have to tools to attempt it. The goal isn't to get a perfect database, but to get you to make something small and try this process out. As you work on exercises you'll get more skills to make this easier and get more practice:
+
+- Design a database for a veterinary management system, or pick some system you want to build and design a database for it. Create the screens for it after and compare it to your database design. Keep it small.
+
+- Go draw up screens for a food delivery service, or something else you want to build. Again keep it small, nothing massive, but do the screens first. Now go and design the database using the screens to guide you.
+
+- Evaluate the two approaches and see which one you liked better or which one made the best results for both UI and database design.

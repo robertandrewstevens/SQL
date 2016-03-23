@@ -1,0 +1,75 @@
+---
+title: "lsqlthw07"
+author: "Robert A. Stevens"
+date: "March 23, 2016"
+output: pdf_document
+---
+
+http://sql.learncodethehardway.org/book/
+
+# Learn SQL The Hard Way
+
+http://sql.learncodethehardway.org/book/ex7.html
+
+## Exercise 7: Deleting Data
+
+This is the simplest exercise, but I want you to think for a second before typing the code in. If you had "SELECT * FROM" for SELECT, and "INSERT INTO" for INSERT, then how would you write the DELETE format? You can probably glance down but try to guess at what it would be then look.
+
+    /* make sure there's dead pets */
+    SELECT name, age FROM pet WHERE dead = 1;
+    
+    /* aww poor robot */
+    DELETE FROM pet WHERE dead = 1;
+    
+    /* make sure the robot is gone */
+    SELECT * FROM pet;
+    
+    /* let's resurrect the robot */
+    INSERT INTO pet VALUES (1, "Gigantor", "Robot", 1, 0);
+    
+    /* the robot LIVES! */
+    SELECT * FROM pet;
+
+I'm simply implementing a very complex update of the robot by deleting him and then putting the record back but with dead=0. In later exercises I'll show you how to use UPDATE to do this, so don't consider this to be the real way you'd do an update.
+
+Most of the lines in this script are already familiar to you, with the exception of line 5. Here you have the DELETE and it has nearly the same format as other commands. You give DELETE FROM table WHERE tests and a way to think about it is being like a SELECT that removes rows. Anything that works in a WHERE clause will work here.
+
+## What You Should See
+
+I'm going to reconstruct the entire database from scratch by replaying all of the exercises to this point that you need. This shows you how your work so far should continue to work as you go through the exercises.
+
+    $ rm ex3.db
+    $ sqlite3 ex3.db < ex2.sql
+    $ sqlite3 ex3.db < ex3.sql
+    $ sqlite3 ex3.db < ex4.sql
+    $ sqlite3 ex3.db < ex5.sql
+    0|Zed|Shaw|37
+    Fluffy|1000
+    Gigantor|1
+    Fluffy|1000
+    $ sqlite3 ex3.db < ex6.sql
+    0|Fluffy|1000|0
+    1|Gigantor|1|1
+    $ sqlite3 -echo ex3.db < ex7.sql
+    SELECT name, age FROM pet WHERE dead = 1;
+    Gigantor|1
+    DELETE FROM pet WHERE dead = 1;
+    SELECT * FROM pet;
+    0|Fluffy|Unicorn|1000|0
+    INSERT INTO pet VALUES (1, "Gigantor", "Robot", 1, 0);
+    SELECT * FROM pet;
+    0|Fluffy|Unicorn|1000|0
+    1|Gigantor|Robot|1|0
+    $
+
+Notice at the end I'm adding the sqlite3 -echo so you can see what statements run and what they produce.
+
+## Extra Credit
+
+- Go through the output from your run and make sure you know what table is produced for which SQL commands and how they produced that output.
+
+- Combine all of ex2.sql through ex7.sql into one file and redo the above script so you just run this one new file to recreate the database.
+
+- At the top of this new .sql file, add DROP TABLE commands to drop the tables you're about to recreate. Now your script can run without you needing to rm ex3.db. You'll need to go look up the syntax for DROP TABLE.
+
+- Add onto the script to delete other pets and insert them again with new values. Remember that this is not how you normally update records and is only for the exercise.
