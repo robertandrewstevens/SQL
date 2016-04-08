@@ -1,0 +1,8 @@
+Teach Yourself SQL in 21 Days, Second Edition
+Week 1 In ReviewAfter setting the stage with a quick survey of database history and theory, Week 1 moved right into the heart of SQL with the SELECT statement. The following summary of the SELECT statement syntax includes cross-references to the days on which the particular aspect was covered:- SELECT [DISTINCT | ALL] (Day 2) - Columns (Day 1), Functions (Day 4)- FROM (Day 2) - Tables or Views (Day 1), Aggregate Functions (Day 4)- WHERE (Day 5) - Condition (Day 3), Join (Day 6), Subquery (Day 7)- GROUP BY (Day 5) - Columns (Day 3)- HAVING (Day 5) - Aggregate Function (Day 4)- UNION | INTERSECT (Day 3) - (Placed between two SELECT statements)- ORDER BY (Day 5) - Columns (Day 1)
+If you build a million queries in your programming career, more than 80 percent of them will begin with SELECT. The other 20 percent will fall into the categories covered in Week 2.
+Preview
+The new skills you learn in Week 2 cover database administration. During Week 2 you will learn how to
+- Create and destroy tables
+- Assign permissions to your friends and prevent your enemies from even looking at your data
+- Update and delete data in tables

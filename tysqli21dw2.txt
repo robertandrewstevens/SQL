@@ -1,0 +1,13 @@
+Teach Yourself SQL in 21 Days, Second Edition
+Week 2 At A Glance 
+
+What's Covered This Week
+Week 1 covered the basic SQL query using the SELECT statement. Beginning with the simplest SELECT statement, you learned how to retrieve data from the database. Then you moved on to the SQL functions, which are useful in converting to money or date formats, for example. You quickly learned that you can retrieve data from a database in many ways. Clauses such as WHERE, ORDER BY, and GROUP BY enable you to tailor a query to return a specific set of records. You can use a join to return a set of data from a group of tables. Subqueries are especially useful when you need to execute several queries, each of which depends on data returned from an earlier query.
+Week 2 moves on to the more advanced uses of SQL:
+- Day 8 shows you how to modify data within a database. You may have been dreading the idea of typing in all your data, but manually entering data is not always necessary. Modern database systems often supply useful tools for importing and exporting data from various database formats. In addition, SQL provides several useful statements for manipulating data within a database.
+- Day 9 teaches you how to create and maintain tables within a database. You also learn how to create a database and manage that database's disk space.
+- Day 10 explains how to create, maintain, and use views and indexes within a database.
+- Day 11 covers transaction control. Transactions commit and roll back changes to a database, and the use of transactions is essential in online transaction processing (OLTP) applications.
+- Day 12 focuses on database security. A knowledge of your database's security capabilities is essential to manage a database effectively.
+- Day 13 describes how to use SQL within larger application programs. Embedded SQL is often used to execute SQL within a host language such as C or COBOL. In addition, the open database connectivity (ODBC) standard enables application programmers to write code that can use database drivers to connect with many database management systems. Day 13 also covers various advanced SQL topics.
+- Day 14 discusses dynamic uses of SQL and provides numerous examples that illustrate how SQL is used in applications.
