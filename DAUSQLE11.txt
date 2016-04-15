@@ -1,0 +1,986 @@
+CHAPTER
+11
+The Best-Fit Line: Linear Regression Models
+The previous chapter introduced data mining ideas using various types of models well suited to databases, such as look-alike models, lookup tables, and naïve Bayesian models. This chapter extends these ideas to the realm of more traditional statistical techniques: linear regression and best-fit lines.
+Unlike the techniques in the previous chapter, linear regression requires that the input and target variables all be numeric; the results are coefficients in a mathematical formula. A formal treatment of linear regression involves lots of mathematics and proofs. However, this chapter steers away from an overly theoretical approach.
+In addition to providing a basis for statistical modeling, linear regression has many applications. To understand relationships between different numeric quantities, regressions — especially best-fit lines — are the place to start. The examples in this chapter include estimating potential product pene- tration in zip codes, studying price elasticity (investigating the relationship between product prices and sales volumes), and quantifying the effect of monthly fee on yearly stop rates.
+The simplest linear regression models are best-fit lines that have one input and one target. Because the data can be plotted using a scatter plot, such models are readily understood visually. In fact, Excel builds linear regression models into charts using the best-fit trend line, one of six built-in types of trend lines.
+Excel can calculate best-fit lines in several ways. For the simplest case with one input and one target, there are several methods. The general function
+511
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼512 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼introduces a new class of Excel functions, because it needs to return values in several cells. Array functions, introduced in Chapter 4, solve this dilemma; an array function can return values in more than one cell.
+Apart from the built-in functions, there are two other ways to calculate the lin- ear regression formulas in Excel. These methods are more powerful than the built-in functions. One is a direct method, using somewhat complicated formu- las for the parameters in the model. The other uses the Solver capability to cal- culate the parameters. Solver is a general-purpose tool included with Excel that finds optimal solutions to problems. Its ability to build linear regression models is just one example of its power.
+Measuring how well the best-fit line fits the data introduces the idea of cor- relation. Correlation is easy to calculate. As with many statistical measures, it does what it does well, but it comes with some warnings. It is easy to over- interpret correlation values.
+Multiple regression extends the “best-fit line” regression by using more than one input variable. Fortunately, multiple regression is quite feasible in Excel. Unfortunately, it does not produce pretty scatter plots, because there are too many dimensions.
+SQL can also be used to build basic linear regression models, when there are one or two input variables. Unfortunately, standard SQL does not have built- in functions to do this, so the equations have to be entered explicitly. These equations become more complicated as more variables are added, as we’ll see with the two-variable example at the end of this chapter. The chapter begins not with complicated SQL statements, but rather with the best-fit line, which enables us to visualize linear regression.
+The Best-Fit Line
+The simplest case of the linear regression has one input variable and one target variable. This case is best illustrated with scatter plots, making it readily understandable visually and giving rise to the name “best-fit line.”
+Tenure and Amount Paid
+The first example of a best-fit line is for a set of customers in a subscription- based business. This example compares the relationship between the tenure of customers and the total amount the customers paid. In a subscription busi- ness, there is an evident relationship between these. The longer customers remain active, the more they pay.
+Figure 11-1 shows best-fit line for these customers, with the tenure on the X-axis and the amount paid on the Y-axis. The chart clearly shows the relation- ship; both the points and the best-fit line start low and slope upward to the right.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$250
+$225
+$200
+$175
+$150
+$125
+$100
+ $75
+ $50
+ $25
+$0
+Chapter 11 ■ The Best-Fit Line: Linear Regression Models 513
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 30
+60 90
+120 150 180 210 240 270 300 330 360 390
+Tenure
+Figure 11-1: This chart shows the best-fit line for a set of data points showing the relationship between customers’ tenures and the amount they have paid.
+One way to use the best-fit line is to estimate how much customers would pay if they survived to a given tenure. A typical customer with tenure of 240 days should pay about $125. Such an estimate could be used to estimate the amount to spend on customer acquisition. For instance, a typical customer seems to be worth $192.30 in the first year (which is the value for 365 days on the chart); this amount might direct acquisition budgets.
+This simple example shows that the best-fit line is a good way to visualize data and summarize the relationship between two variables. It can also be use- ful for estimating values.
+TIP The best-fit line can be seen in a chart by selecting a series, right-clicking, and adding a trend line. The linear best-fit line makes it possible to see trends in the data.
+Properties of the Best-fit Line
+There are many different possible lines that go near the data points. Of all these possible lines, the best-fit line is a very specific one. Figure 11-1 shows the ver- tical line segments, connecting each observed data point to the point on the line directly above or beneath it. The best-fit line is the one where the vertical dis- tances between the observed point and the line are as small as possible — for some definition of “small.”
+What Does Best-Fit Mean?
+The specific definition is that the best-fit line minimizes the sum of the squares of the distances between the observed data points and the line, along
+￼www.it-ebooks.info
+Amount Paid
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼514 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼the vertical dimension. In fact, one name for linear regression is ordinary least squares (OLS) regression.
+The sum of squares measures results in relatively simple calculations. Being simpler, these calculations were feasible before the era of computers, as explained in the aside “Ceres and Least Squares Regression.” This fact leads to another reason the method works well in practice: after centuries of use, the models are well understood. There are a plethora of measures to understand them and to determine when and whether they are working.
+The definition of the best-fit line is along the Y-dimension (all the line segments are vertical instead of being horizontal, for instance). Why the Y-dimension? The simple answer is that the Y-value is the thing we are try- ing to estimate.
+￼￼CERES AND LEAST SQUARES REGRESSION
+An asteroid and linear regression may not seem to have much to do with each other. However, the method of least squares regression was invented by Carl Friederich Gauss, and first applied to the problem of finding this celestial body.
+In January 1801, the Italian astronomer Joseph Piazzi discovered the asteroid Ceres and observed it until mid-February when it disappeared behind the sun. Based on his observations, astronomers rushed to figure out the full orbit of Ceres, so they could continue observations when Ceres reappeared.
+Of course, in those days, the telescopes were using mirrors ground by hand and the positions were recorded on paper, so the observations themselves were rather inexact. Gauss recognized several key aspects of the problem, some involving astronomy, but the most innovative part was dealing with the inaccuracy in the measurements.
+Based on only three of the observed positions, Gauss estimated the orbit and accurately predicted where Ceres would reappear from behind the sun. By the fall of 1801, Ceres did reappear, very close to where Gauss predicted and quite far from where other astronomers expected it to be. This reinforced the strength of Gauss’s methods.
+This history is interesting for several reasons. First, Gauss is considered by some to be the greatest mathematician ever, for his contributions to a wide range of subjects, including statistics.
+It is also interesting because the first problem was not a linear regression problem as explained in the text. Gauss was trying to estimate an ellipse rather than a line.
+The third reason is practical. Ordinary least squares regression uses the sum of the distances from the line, rather than the distances themselves. Perhaps this is because the distance is the square root of some quantity, so it is easier to calculate the distance squared than the distance itself. In a world where all the calculations have to be done by hand, Gauss may have preferred the simpler calculation that ignores taking the final square root.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 515
+￼￼Although the best-fit line is unique and well-understood, it is worth point- ing out that slight variations in the definition would result in different lines. If another distance were used, such as the horizontal distance, the resulting “best-fit” line would be different. If the lengths of the line segments were com- bined in a way other than by taking the sum of the squares, say by taking the sum of the distances instead, the resulting line would also be different. How- ever, the best-fit line is quite useful because it is so well understood and does capture important features of data.
+Formula for Line
+The best-fit line is a line that is defined by a formula that readers may recall from high school math:
+Y = m*X + b
+In this equation, m is the slope of the line and b is the Y-intercept, because this is where the line crosses the Y-axis. When the slope is positive, the values of Y increase as the values of X increase (positive correlation); when the slope is neg- ative, the line goes down instead (negative correlation). When the slope is zero, the line is horizontal. The goal of linear regression is to find the values of m and b that minimize the sum of the squares of vertical distance between the line and the observed points.
+The best-fit line in Figure 11-1 has a formula:
+  <amount paid> = $0.5512 * <tenure> - $8.8558
+This line defines a simple relationship between the two variables (tenure and amount paid). They are positively correlated. One easy way to calculate the values m and b is using the SLOPE() and INTERCEPT() functions in Excel.
+There is nothing special about calling the slope m and the intercept b. In fact, statisticians have different names for them. They use the Greek letter beta for the coefficients, calling the Y-intercept ß0 and the slope ß1. This notation has the advantage of being readily extensible to more coefficients.
+Renaming the coefficients (albeit for a good reason) is not the only oddity in standard statistical terminology. From that perspective, the Xs and Ys are con- stants, the betas are variables, and lines do not have to be straight. The aside “Some Strange Statistical Terminology” explains this in more detail.
+Expected Value
+For a given value of X, the equation for the line can be used to calculate a value of Y. This expected value represents what the model “knows” about the rela- tionship between X and Y, applied to a particular value of X.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼516 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼￼￼SOME STRANGE STATISTICAL TERMINOLOGY
+In the equation for the line, the “X”s and “Y”s are normally thought of as being variables and the coefficients as being constants. That is because we are thinking of using the line to estimate a Y-value given an X-value. In data analysis, though, the problem is estimating the values of the coefficients.
+The language of statistical modeling turns this terminology upside down. The Xs and Ys are constants, because they refer to known data points. There may be two data points or two million, but for all of them the X- and Y-values are known. On the other hand, the challenge in statistical modeling is to find the line, by finding coefficients that minimize the sum of the squares of the distances between the points and the line. The coefficients are the variables that need
+to be solved for.
+This inverse terminology actually explains why the following are also examples of “linear” models although the formulas do not look like the formula for a line:
+Y=ß1*X2 +ß0 ln(Y) = ß1*X + ß0 ln(Y) = ß1*X2 + ß0
+These are linear because they are linear in the coefficients. The fact that there
+are funky functions of Xs and Ys involved does not make a difference. The coefficients are what’s important. We know the values of X and Y; the coefficients are unknown.
+A good way to think about this is that all the observed data could be transformed. For example, in the first example, the X-value could be squared and called Z:
+Z = X2
+In terms of Y and Z, the first equation becomes:
+Y =ß1*Z +ß0
+This is a linear relationship between Y and Z. And Z is known as X is, because it is just the square of the X value.
+￼For example, Table 11-1 shows the expected values for various tenure values for the data in Figure 11-1. The expected values can be higher or lower than the actual values. They can also be out-of-range, in the sense that it makes no sense for the amount paid to be negative (and the expected values for small tenures are negative). On the other hand, all values of tenure have expected values, making it possible to estimate the value of a customer after one year. In this case, it is $192.30.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 517 Table 11-1: Some Expected Values for Best-fit Line in Figure 11-1
+￼￼￼￼TENURE
+5
+    8
+   70
+  140
+  210
+  365
+EXPECTED $$ (0.55*TENURE - $8.86)
+-$6.10
+-$4.45 $29.72 $68.30
+$106.88 $192.30
+ACTUAL $$
+$1.65
+$0.90 $15.75 $91.78 $71.45 None
+DIFFERENCE
+$7.75 $5.35 -$13.97 $23.48 -$35.43
+N/A
+￼￼￼￼￼￼In Excel, the expected value can be calculated directly from two columns of X- and Y-values using the FORECAST() function. This function takes three argu- ments: the value to make the estimate for, the Y-values, and the X-values. It returns the expected value, using a linear regression formula. FORECAST() applies the model, without producing any other information to determine how good the model is or what the model looks like.
+One rule of thumb when using best-fit lines is to use the line for interpolation rather than extrapolation. In English, this means calculating expected values only for values of X that are in the range of the data used to calculate the line.
+Error (Residuals)
+Of course, the expected value generally differs from the actual value, because the line does not perfectly fit the data. The difference between the two is called the error or residual. For the best-fit line, the sum of the residuals is zero, because all the positive values cancel out all the negative ones. Although the best-fit line is not the only line with this property, it also has the property that the sum of the squares of the residuals is as small as possible.
+There is a wealth of statistical theory about residuals. For instance, a model is considered a good fit on data when the residuals follow a normal distribu- tion (which was discussed in Chapter 3). The residuals should not be related to the X-values.
+Figure 11-2 plots the residuals from the data in Figure 11-1 against the X-values. As a general rule, the residuals should not exhibit any particular pattern. In par- ticular, long sequences of positive or negative residuals indicate that the model is missing something. Also, the residuals should not get bigger as the X-values get bigger.
+These residuals are pretty good, but not perfect. For instance, the initial residuals are almost all positive and relatively small. This is because the expected values are negative for small values of X, but the actual values are never negative. The model is not perfect, and this shouldn’t be surprising
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼518 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+because it is only taking tenure into account. Although tenure is important,
+other things also affect customers’ total payments.
+$75 $50 $25 $0
+-$25 -$50 -$75
+-$100
+0 30 60 90 120 150 180 210 240 270 300 330 360 390
+Tenure
+Figure 11-2: This chart shows the residuals for the data in Figure 11-1. Notice that the residuals tend to get larger as the X-values get larger.
+TIP CreatingascatterplotoftheresidualsandtheX-valuesinthemodelis one way to see if the model is doing a good job. In general, the scatter plot should look random, with no long sequences of positive or negative values.
+Preserving the Averages
+One very nice characteristic of best-fit lines (and linear regression models in general) is that they preserve averages. The average of the expected values of the original data is the same as the average of the observed values. Geometri- cally, this implies that all best-fit lines go through a particular point. This point is the average of the X-values and the average of the Y-values of the data used to build the model.
+In practical terms, best-fit lines preserve some key characteristics of the data used to build them. Applying the model does not “move” the center of the data. So, taking the average of a large number of expected values (such as for all customers) is usually a fairly accurate estimate of the average of the actual values, even if the individual estimates are different.
+Inverse Model
+Another very nice feature is the fact that the inverse can be readily con- structed. That is, given a value of Y it is possible to calculate the corresponding value of X, using the following formula:
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼X = (Y – b) / m
+www.it-ebooks.info
+Residual (Observed - Expected)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 519
+￼￼Such a model can calculate the value of X for any given value of Y.
+Note that the inverse model calculated this way is different from the inverse model calculated by reversing the roles of X and Y. For instance, for the best-fit
+line in Figure 11-1, the “mathematical” inverse is:
+  <tenure> = 1.8145 * <tenure> + 16.0687
+However, reversing the roles of X and Y generates a different line:
+  <tenure> = 1.5029 * <tenure> + 35.6518
+The fact that these two lines are different is interesting from a theoretical per- spective. Reversing the roles of X and Y is equivalent to using the horizontal dis- tance, rather than the vertical distance to calculate the best-fit line. For practical purposes, if we need the inverse relationship, then either works well enough.
+WARNING The inverse relationship for a linear regression model is easy to calculate from the model equation. However, this is not the same as building another model by swapping the X-values and the Y-values.
+Beware of the Data
+There are many ways of understanding how well a model fits a particular set of data. However, a model is only as good as the data used to build it. Alas, there are many fewer ways of determining whether the right data is being used for the model.
+The data used for the scatter plot in Figure 11-1 is missing an important subset of customers; the data excludes customers who never paid. Hence, the relationship between payment and tenure is only for the customers who make a payment, not for everyone.
+Almost half the customers in this sample never make a payment, because the customers come from the worst channel. When these freeloading customers are included, they have a small effect on the best-fit line, as shown in Figure 11-3. The non-payers are shown as the circles along the X-axis, and the best-fit line is the dashed line. The line has shifted a bit to the right and become a bit steeper.
+Before diving into the contents of the chart, it is worth commenting on how this chart is created. Although only two series are visible, the chart actually has three series. One is for all customers and is used to generate the dotted best-fit line. Although the trend line for this series is visible, the points are not. Another series is for the paying customers, shown in Figure 11-1. The best-fit line for this dataset is the solid gray line. Then, the third series is the non-payers, and is used to show the customers who never paid. The best-fit lines are also given names, to make them clearer in the legend.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼520 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼$250
+$225
+$200
+$175
+$150
+$125
+$100
+$75 $50 $25
+$0
+￼￼Best Fit Paying Customers
+￼￼Best Fit All Customers
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 30
+60 90
+120 150 180 210 240 270 300 330 360 390
+Tenure
+Figure 11-3: When non-paying customers are included, the best-fit line shifts a bit to the right and becomes a bit steeper.
+There are 226 customers, of which 108 are non-payers (48%). Including the non-payers has an effect on the line. Consider the following question: What is the expected revenue for a new customer who survives for one year? For the original data, the answer was $192.30. When all customers are included, the value is $194.41.
+The expected value has gone up by including customers who do not pay. This is counterintuitive. One could argue that linear regressions are not good for extrapolation. However, this example does not extrapolate beyond the end of the data, because there are data points beyond 365 days (although 365 days is among the higher tenure values). One could argue that the values are close and within some margin of error, which is undoubtedly true because there are just a couple hundred data points overall. The irony is, though, that we could add more and more non-paying customers to obtain almost any value at the one-year mark.
+With a bit more thought, the issue goes from counterintuitive to absurd. Consider using the model to estimate revenue for customers who survive for one year. If one hundred customers start and are expected to stay for one year, what is their expected revenue during the first year? Including all cus- tomers, the estimate is $19,441. However, only including customers who pay reduces the estimate to $19,230. Although the difference is small, it raises the question: how does including non-paying customers increase the one-year estimated revenue? And, as noted earlier, additional non-paying customers in the data used to calculate the line could push the estimate up even more.
+Something interesting is happening. A line is a rigid model. If a line goes down on one side, then either the whole line shifts downward (if the slope remains the same), or it goes up somewhere else. The freeloading customers all have low tenures, because non-payers stop (or are stopped) soon after starting.
+www.it-ebooks.info
+Amount Paid
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 521
+￼￼Hence, the non-paying customers are all on the left of the scatter plot. These customers pull down the best-fit line, which in turn gets steeper. And steeper lines produce higher values for longer tenures.
+One might ask which is the better estimate. The example shows that there are different factors at work, one for initial non-payment and one for the longer term trend. For paying customers, using the initial model makes more sense, because it is built using only paying customers. It is not distracted by the non-payers.
+The purpose of this example is to stress the importance of choosing the right data for modeling. Be aware of the effects of data on the resulting model.
+Trend Lines in Charts
+Best-fit lines are one of several types of trend lines supported in Excel’s charts. The purpose of trend lines is to see patterns in charts that may not be apparent when looking at disparate points. They are only available when there is one input and one target variable. Nevertheless, the trend lines are useful for seeing patterns in data; and the best-fit line is useful for under- standing linear regression.
+Best-fit Line in Scatter Plots
+A powerful and simple way to calculate a linear regression is directly within a chart using the best-fit trend line, as already shown in Figures 11-1 and 11-3. The following steps add the best-fit trend line:
+1. Left-clicktheseriestoselectit.
+2. Right-clickagaintobringupthe“FormatTrendline”dialogbox. 3. Choosethe“Linear”optionontheupperleft-handside.
+At this point, you can exit the dialog box, and the best-fit line appears between the first and the last X-values.
+The line appears in the chart as a solid black line. Because the trend line is generally less important than the data, it is a good idea to change its format to a lighter color or dotted pattern. When there is more than one series on the chart, make the color of the trend line the same color as the data. As with any other series, just click the series to change its format.
+TIP Whenplacingatrendlineinascatterplotorabubbleplot,changeits format to be lighter than the data points but similar in color, so the trend line is visible but does not dominate the chart.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼522 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+There are several useful options under the “Options” tab of the “Format
+Trendline” dialog box:
+■■ Togivethetrendlineanamethatappearsinthechartlegend,clickby “Custom” and type in the name.
+■■ By default, the trend line is only for the range of X-values in the data. To extend beyond this range, use the “Forecast” area and specify the number of units “Forward” after the last data point.
+■■ Toextendtherangetovaluesbeforethefirstdatapoint,usethe“Fore- cast” area and specify the number of units “Backward” before the first data point.
+■■ Toseetheformula,choose“Displayequationonchart.”Oncetheequa- tion appears, it is easy to modify the font and move it around.
+■■ Toseehowwellthemodelfitsthedata,choose“DisplayR-squared value on chart.” The R2 value is discussed later in this chapter.
+If you forget to add options when the trend line is created, double-click the trend line and choose “Format Trendline” to bring up the dialog box. One nifty feature is that the trend line itself can be formatted to be invisible, so only the equation appears on the chart. Also note that when the data in the chart changes, the trend line and its equation change as well.
+Logarithmic, Power, and Exponential Trend Curves
+Three types of trend curves are variations on the best-fit line, the difference being the shape used for the curve that fits the data is not a line:
+■■ Logarithmic: Y = ln(ß1*X + ß0)
+■■ Power: Y = ß0*X^ß1
+■■ Exponential: Y = exp(ß1*X + ß0)
+Fitting these curves has the same spirit as linear regression, because all three formulas have two coefficients that are analogous to the slope and intercept values for a line. Each of these curves has its own particular properties. The first two, the logarithmic and power curves, require that the X-values be posi- tive. The second two always produce Y-values that are positive (Excel does not allow ß0 to be negative for the power trend line).
+The logarithmic curve decreases slowly, much more slowly than a line does. So, doubling the X-value only increases the Y-value by a constant. The left side of Figure 11-4 shows the logarithmic trend line for the payment data. Because the data has a linear relationship, the logarithmic curve is not a particularly good fit.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$250
+$225
+$200
+$175
+$150
+$125
+$100
+$75 $50 $25
+$0
+$250
+$225
+$200
+$175
+$150
+$125
+$100
+$75 $50 $25
+0 30
+60 90
+120 150 180 210 240 270 300 330 360 390
+Tenure
+Chapter 11 ■ The Best-Fit Line: Linear Regression Models 523
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$0
+1 10 100 1000
+Tenure (log scale)
+Figure 11-4: When the X-axis has a logarithmic scale, the logarithmic trend line looks like a line.
+There is a relationship between the logarithmic trend line and the best-fit line. Changing the X-axis to be on a “logarithmic” scale (by clicking the “Loga- rithmic Scale” button on the “Scale” tab of the “Format axis” dialog box) makes the logarithmic curve look like a line. Figure 11-4 shows a side-by-side compar- ison of the same data, with one chart having the normal scale on the X-axis and the other, the logarithmic scale.
+The exponential curve increases very rapidly, much more rapidly than a line. Its behavior is similar to the logarithmic trend line, but with respect to the Y-axis rather than the X-axis. That is, when the Y-axis has a logarithmic scale, the exponential curve looks like a line.
+The power curve increases more slowly than the exponential. It looks like a line when both the X-axis and the Y-axis have a logarithmic scale. It also looks like a line under normal scaling when ß1 is close to one.
+￼￼￼￼￼￼￼www.it-ebooks.info
+Amount Paid Amount Paid
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼524 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼One way of thinking about these trend lines is that they are best-fit lines, but the data is transformed. This is, in fact, the method that Excel uses to cal- culate the curves. As we’ll see the later in the chapter, this method is useful practically, but it is an approximation. The results are a bit different from cal- culating the best-fit curves. Excel’s trend curves are good, but not the theoret- ically correct best-fit curves.
+Polynomial Trend Curves
+The polynomial curve is a bit more complicated because polynomial curves can have more than two coefficients. The form for these curves is:
+■■ Polynomial:Y =ßn*Xn + . . . +ß2*X2 +ß1*X +ß0
+The degree of the polynomial is the value of n in the equation, which is input into the box labeled “Order” on the “Type” tab of the “Format Trendline” dia- log box.
+Polynomial fitting can be quite powerful. In fact, for any given set of points, there is a polynomial that fits them exactly. This polynomial has a degree one less than the number of points. Figure 11-5 shows an example with five data points and polynomials of degree one (a line) through four. Higher degree polynomials capture more of the specific features of the data points, rather than the general features. This is an example of overfitting, which is when a model memorizes the detail of the training data without finding larger patterns of interest. Also notice that the equations for the poly- nomials have nothing to do with each other. So, finding the best-fit polyno- mial of degree two is not a simple matter of adding a squared term to the equation for the best-fit line.
+1.0 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0.0
+29.596x2 - 1.1807x + 0.6363
+35.867x2 + 8.0349x + 0.3871
+2.7459x2 - 2.4553x + 0.8815 y = -0.5044x + 0.7115
+￼y = 104.94x4 - 111.43x3 + y = 36.679x3 - y=
+￼￼￼￼Linear Trend Line
+X^2 Trend Line
+X^3 Trend Line
+X^4 Trend Line
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0.0 0.1
+0.2 0.3 0.4
+0.5 0.6
+0.7 0.8
+0.9 1.0
+Figure 11-5: A polynomial of sufficiently high degree can fit any set of data exactly. This example shows five points and the best-fit polynomials of degrees one through four. The fourth degree polynomial goes through all five points.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 525
+￼￼When the order of the polynomial is odd, the curve starts high and goes low or starts low and goes high. The typical example of this is the line, which either slants upwards or downwards, but all odd degree polynomials have this property.
+Polynomials of even degree either start and end high or start and end low. These have the property that there is either a minimum or maximum value, among the values. For some optimization applications, this is a very useful property.
+WARNING When fitting polynomial trend curve to data points, be sure that the degree of the polynomial is much smaller than the number of data points. This reduces the likelihood of overfitting.
+Moving Average
+After the best-fit line, probably the most useful type of trend line is the moving average. These are often used when the horizontal axis is time, because they can wash away variation within a week or within a month.
+Figure 11-6 shows starts by day for the subscription data. There is a lot of variation within the week, because some days have more starts than others. Human eyes tend to follow the maximum and minimum values, which might obscure what’s really happening. The trend line shows the 7-day moving aver- age, which eliminates the within-week variation, making the longer term trend more visible.
+8,000 7,000 6,000 5,000 4,000 3,000 2,000 1,000
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0
+2004 2004 2004 2004 2004 2004 2004 2004 2004 2004 2004 2004
+Figure 11-6: Starts by day are very jagged, because there are few starts on the weekend. The 7-day moving average does a better job of showing the trend during the year.
+￼￼Jan Feb Mar
+Apr May Jun Jul
+Aug Sep Oct
+Nov Dec
+www.it-ebooks.info
+Number of Starts
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼526 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼Sometimes moving averages can be used to spot very subtle patterns. This example looks at the relationship between the proportion of a zip code that has graduated from college and the proportion on public assistance, for zip codes in Minnesota. This data comes from the Zipcensus table, using the following query:
+  SELECT zipcode, (popedubach+popedumast+popeduprofdoct) as popcollege,
+         hhpubassist
+  FROM zipcensus
+  WHERE state = ‘MN’
+  ORDER BY 1
+The scatter plot in Figure 11-7 does not show an obvious pattern, although it does seem that zip codes where most adults have a college degree have rela- tively few residents on public assistance.
+￼￼￼￼￼￼40% 35% 30% 25% 20% 15% 10%
+5% 0%
+0% 10%
+20% 30%
+40% 50%
+60% 70% 80%
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼% College Grads
+Figure 11-7: The relationship between the proportion of a zip code with a college education and the proportion on public assistance in the state of Minnesota is not obvious.
+The top chart in Figure 11-8 shows one of the dangers when adding a moving average trend line. This chart applies the moving average directly to the data as pulled from the database, producing a zigzag line that bounces back and forth and makes no sense. The lower chart fixes this prob- lem by sorting the data by the X-values. Here, a pattern is visible, although the relationship is not a line. As zip codes have more college graduates, they have fewer households on public assistance.
+In general, when using moving averages, make sure that the data is sorted. Although this is always true for line charts, it may not be true for scatter plots and bubble charts. To sort the data in place, select the table to be sorted and use the Data ➪ Sort menu option (or type <alt>-D, <alt>-S) and choose the col- umn or columns for sorting. The sort dialog box allows you to sort by up to
+www.it-ebooks.info
+% Public Assistance
+￼10% 9% 8% 7% 6% 5% 4% 3% 2% 1% 0%
+0%
+10% 20%
+30% 40% 50% 60% 70% 80%
+% College Grads
+10% 9% 8% 7% 6% 5% 4% 3% 2% 1% 0%
+0%
+10% 20%
+30% 40% 50% 60% 70% 80%
+% College Grads
+Chapter 11 ■ The Best-Fit Line: Linear Regression Models 527
+three columns. If you need to sort by more columns, create an additional col- umn in the table, using the concatenation function to append the column val- ues together. Sorting is only needed for the moving average trend line; the other types are insensitive to the ordering of the data.
+% Public Assistance % Public Assistance
+Figure 11-8: A moving average can find patterns in the data, as shown in the lower chart where the X-values are sorted. However, if the data is not sorted, the moving average is a meaningless scribble.
+TIP When using the moving average trend line, be sure that the data is sorted by the X-values.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼528 Chapter 11 ■ The Best-Fit Line: Linear Regression Models Best-fit Using LINEST() Function
+Trend lines are not the only way to do linear regression in Excel. The function called LINEST() provides the full functionality of linear regression, including calculating various statistics that describe the goodness of fit. It returns the fol- lowing information:
+■■ The R2 value;
+■■ The standard error for the coefficients;
+■■ The standard error for the Y-estimate;
+■■ The degrees of freedom;
+■■ The sum of squares; and,
+■■ The sum of the squares of the residuals.
+This chapter discusses the first of these. The remaining are more advanced statistical measures, which are more appropriately discussed in a statistics book.
+Returning Values in Multiple Cells
+Before moving to the statistics and the calculation of these values, there is the issue of how a single function in Excel can return more than one value. All the functions we have seen so far reside in only a single cell. In fact, the intuitive def- inition of function is something that returns one value assigned in a single cell.
+The solution is array functions, as discussed in the aside “Excel Functions Returning More Than One Value.” The call to an array function that returns multiple values is in many ways similar to any other function. The call to LINEST() looks like:
+         =LINEST(<y-values>, <x-values>, TRUE, TRUE)
+The first argument is the target values (typically a column of values); the sec- ond argument is the input values (typically another column). The final two arguments are flags. The first flag says to do a normal linear regression (when FALSE, this would force the constant ß0 to have the value of zero, which is sometimes useful). The final flag says to calculate various statistics along with the coefficients.
+Although this is an Excel formula, it is not entered in quite the same way as other Excel formulas. First, the formula is entered for a group of cells rather than just one. In this particular case, the function calculates values in ten cells, two across by five down. The function LINEST() always returns values in five rows when the last argument is TRUE. In addition, there is one column for each input variable. With one column of X-values, there are two coefficients.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 529
+￼￼Another difference is that array formulas are entered using <control>- <shift>-<enter> rather than <enter>. Excel shows the formula surrounded by curly braces (“{” and “}”) to indicate that it is an array formula; however, these curly braces are not typed in when the formula is entered.
+Once the formula is in place, it can only be modified by highlighting all the cells where it appears. Attempts to modify a single cell in the array cause an error: “You cannot change part of an array.” Similarly, removing the formula requires selecting all the cells in the formula and hitting the <delete> key.
+WARNING When you try to change one cell in an array of cells that has an array function, Excel returns an error. Select the whole array of cells to delete or modify the formula.
+￼￼EXCEL FUNCTIONS RETURNING MORE THAN ONE VALUE
+Chapter 4 introduced array functions as a way of performing complicated arithmetic on columns of numbers. For instance, array functions can combine the functionality of IF() and SUM().
+Array functions not only have the ability to accept arrays of cells as arguments, they can also return arrays of values. In fact, almost any Excel function can be used in this fashion.
+Consider a simple situation, where columns A and B each contain 100 numbers and each cell in column C contains a formula that adds the values in the same row in columns A and B. Cells in column C have formulas that look like:
+=A1+B1 =A2+B2 ... =A100+B100
+The formula is repeated on every row; typically, the first formula is typed on the first row and then copied down using <control>-D.
+An alternative method of expressing this calculation is to use an array function. After selecting the first 100 rows in column C, the array function can be entered as:
+   =A1:A100+B1:B100
+And then completed using <control>-<shift>-<enter>, rather than just <enter>. Excel recognizes this as an array function and puts curly braces around the formula to indicate this:
+   {=A1:A100+B1:B100}
+￼www.it-ebooks.info
+Continued on next page
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼530 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼￼￼EXCEL FUNCTIONS RETURNING MORE THAN ONE VALUE (CONTINUED)
+There is one function for all 100 rows.
+Excel recognizes the array function and figures out that the range of 100 cells
+in the A column matches the 100 cells in the B column and this also matches the 100 cells in the C column containing the array formula. Because all these ranges match, Excel figures out to iterate over the values in the cell ranges. So the formula is equivalent to C1 containing A1+B1 and C2 containing A2+B2 and so on to C100.
+This simple example of an array formula is not particularly useful, because in this case (and many similar cases), the appropriate formula can simply be copied down the column. One advantage of array formulas is that they take up less storage space, because an array formula is stored only once, rather than once for every cell. This can make a difference when there are thousands of rows in the array.
+There are a handful of functions that are designed to work as array functions because they return values in arrays of cells. This chapter discusses LINEST(), which is one such function. A similar function, LOGEST(), is also an array function. It fits an exponential curve to data, rather than a line.
+Excel also has functions that support matrix operations. Three of these are array functions that return values in a group of cells: TRANSPOSE(), MINVERSE(), and MMULT().
+￼Calculating Expected Values
+Although staring at the coefficients and statistics that describe a linear regression model may be interesting, probably the most important thing to do with a model is to apply it to new data. Because LINEST() produces coefficients for a line, it is simple enough to apply the model using the formula for a line:
+  =$D$2*A2+$D$3
+Where $D$2 and $D$3 contain the coefficients calculated by LINEST(). Notice that the last coefficient is the constant.
+Excel offers several different ways of calculating the coefficients. For instance, the formula produced in a chart for the best-fit line is the same as the one calculated by LINEST(). In addition, there are several other functions in Excel that can be used to calculate the expected value for a line that has one input variable:
+  =SLOPE(<y-values>, <x-values>)*A2+INTERCEPT(<y-values>, <x-values>)
+  =FORECAST(A2, <y-values>, <x-values>)
+  =TREND(<y-values>, <x-values>, A2, TRUE)
+The first method calculates the slope and intercept separately, using the func- tions SLOPE() and INTERCEPT(). The second and third use two functions that
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 531
+￼￼are almost equivalent. The only difference is that TREND() takes a final argu- ment specifying whether or not to force the Y-intercept to be zero. The advan- tage of using the formula explicitly with LINEST() is that it generalizes to more variables. The advantage to the other methods is that all the calculations are in one cell.
+The difference between the actual value and the expected value is called the residual. Figure 11-2 showed a plot of the residuals by X-value. For a good model, the points should look random. When there is an evident pattern, such as the residuals getting bigger as the X-values getting bigger or many of the residuals being the same size, then the model is not as good as it could be.
+LINEST() for Logarithmic, Exponential, and Power Curves
+The logarithmic, exponential, and power curves are the three types of trend lines that are related to the best-fit line, and these formulas can be approxi- mated using LINEST() as well. The results are not exact, but they are useful.
+The key is to transform the X-values, Y-values, or both using logs and expo- nential functions. To understand how this works, recall how logarithms and exponentiation work. These functions are inverses of each other, so EXP(LN(<any number>)) is the original number. A useful property of logarithms is that the sum of the logs of two numbers is the same as the log of the product of the numbers.
+The first example shows how to calculate the coefficients for the logarithmic curve by transforming the variables. The idea is to calculate the best-fit line for the X-values and the exponentiation of the Y-values. The resulting equation is:
+EXP(Y) = ß1*X + ß0
+By taking the logarithm of both sides, this equation is equivalent to the
+following:
+Y = LN(ß1*X + ß0)
+This is the formula for the logarithmic trend line. The coefficients calculated with the transformed Y-values are the same as the coefficients calculated in the chart.
+The transformation for the exponential is similar. Instead of using EXP(Y), use LN(Y), so the resulting best-fit equation is for:
+LN(Y) = ß1*X + ß0
+When “undoing” the log by taking the exponential, the formula becomes:
+Y = EXP(ß1*X + ß0) = EXP(ß0)*EXP(ß1*X)
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼532 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼This is very similar to the formula for the exponential trend line. The only dif- ference is that the ß0 coefficient produced this way is the log of the coefficient given in the chart.
+Finally, the transformation for the power curve uses the log of both the X- values and the Y-values:
+LN(Y) = ß1*LN(X) + ß0 = LN(EXP(ß0)*X^ß1) Undoing the log on both sides produces:
+Y = EXP(ß0)*X^ß1
+The only difference between these coefficients and the ones in the chart is that the ß0 calculated using LINEST() is the logarithm of the value calculated in the chart.
+There is an additional Excel function LOGEST() that fits the exponential curve. The coefficients are related to the coefficients in the charts. In this case, the ß0 is the same, but log of ß1 is the corresponding coefficient in the chart.
+When calculated in any of these methods — in the charts, using LOGEST(), or by transforming the original data — the resulting coefficients are only approxi- mations of the correct values. The problem is that transforming the Y-value also changes the distance metric. Hence, what is the “best-fit” for the transformed data may not quite be the “best-fit” on the original data, although the answers are usually similar. However, the transformation method does make it possible to fit these curves in a “quick and dirty” way. To obtain more exact answers in Excel, use the Solver method described later in this chapter.
+TIP The exponential, logarithmic, and power curve trend lines, as well as LOGEST(), are approximately correct. The coefficients are not optimal, but they are close.
+Measuring Goodness of Fit Using R2
+How good is the best-fit line? Understanding this is as important as building the model in the first place. Scatter plots of some data looks a lot like a line; in such cases, the best-fit line fits the data quite well. In other cases, the data looks like a big blob, and the line is not very descriptive. Fortunately, there is a simple but somewhat flawed measure of how good the fit is. This is called the R2 value.
+The R2 Value
+R2 is a measure of how well the best-fit line fits the data. When the line does not fit the data at all, the value is zero. When the line is a perfect fit, the value is one.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 533
+￼￼The best way to understand this measure is to see it in action. Figure 11-9 shows four sets of data artificially created to illustrate different scenarios. The two on the top have an R2 value of 0.9; the two on the bottom have an R2 value of 0.1. The two on the left have positive correlation, and the two on the right have negative correlation.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼y
+= -0.9201
+￼R2 =
+Negative Correlation, R^2=0.9
+x + 10.248
+￼0.9
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼Positive Correlation, R^2=0.9
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼y = 0.9942x +
+1.7111
+R2
+= 0.9
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼P
+ositive Correlation, R^2=0.1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼y = 0.3125x +
+4.3699
+R2
+= 0.1
+￼￼￼￼Negative Correlation, R^2=0.1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼y = -0.3733x + 7.9484
+￼￼￼R2 = 0.1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 11-9: The four examples here show the different scenarios of positive and negative correlation among the data points, and examples with R2 of 0.1 (loose fit) and 0.9 (tight fit).
+Visually, when the R2 value is close to one, the points are quite close to the best-fit line. They differ a little bit here and there, but the best-fit line is doing a good job of capturing the trend in the data. Another way to think about this is that moving or removing one or two points would not have a big impact on the resulting line. When the R2 value is close to one, the model is stable in the sense that changing the values of a few points has a small effect on the best-fit line.
+On the other hand, when the R2 value is close to zero, the resulting line does not have much to do with the data. This is probably because the X-values do not contain enough information to estimate the Y-values very well, or because there is enough information, but the relationship is not linear. In this case, changing a few data points could have a big impact on the best-fit line.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼534 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+So, the R2 tells us how tightly the data points fit around the best-fit line. This
+information gives a good description of how well the line fits the data.
+Limitations of R2
+R2 measures how good the best-fit line (or best-fit curve in other cases) describes the data. It does not tell us whether there is a relationship between the X- and Y-values. Conversely, there may be an obvious relationship, even when the R2 value is zero.
+Figure 11-10 shows two such cases. In the chart on the left, the data forms a U-shape. There is an obvious relationship, and yet the best-fit line has an R2 value of zero. This is actually true for any symmetric pattern flipped around a vertical line. Although there is a pattern, it is not captured by the best-fit line.
+￼￼Zero Correlation (Symmetry)
+￼￼￼￼￼￼￼￼￼￼y = 3.5625
+￼￼￼￼￼￼￼￼￼R2 = 0.0000
+￼Zero Correlation
+(Outlier)
+y = 6.8333
+R2 = 0.0000
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 11-10: There may be an obvious relationship even when the R2 value is zero. The relationship is not the best-fit line, however.
+The chart on the right side of Figure 11-10 shows what can happen with out- liers. For any given set of data, it is possible to add one data point that makes the R2 value be zero. This occurs when the additional data point causes the best-fit line to be horizontal.
+These examples are intended to show the limits of R2. When the value is close to one, the regression line explains the data well. When the value is close to zero, the particular regression does not explain what is happening.
+TIP When the R2 value is close to one, the particular model explains the relationship between the input variables and the target. When the value is close to zero, the particular model does not explain the relationship, but there may be some other relationship between the variables.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 535 What R2 Really Means
+The R2 value has a very specific meaning. It is the ratio of two values. The numer- ator is the total variation in the Y-values explained by the model. The denomina- tor is the total variation the Y-values. The ratio describes how much of the total variation in the data is explained by the model.
+Simple enough. Excel can calculate the value using the CORREL() function. This function calculates the Pearson correlation coefficient, which is called r. As its name implies, R2 is the square of r.
+The R2 value can also be calculated directly from the data. The numerator is the sum of the squares of the differences between the expected Y-values and the average Y-value; that is, the numerator measures how far the expected values are from the overall average. The denominator is the sum of the squares of the differences between the observed Y-values and the average Y-value. The denom- inator measures how far the observed values are from the overall average.
+Table 11-2 walks through the calculation for the example on the right of Fig- ure 11-10 where the R2 value is zero. Columns two and three have the observed Y-value and the expected Y-value. Columns four and six have the differences between these and the average. Columns five and seven have the squares. The R2 value is then the ratio of the sums of these squared values.
+￼￼Table 11-2: Example of an R2 Calculation
+￼X Y
+1.0 5.5 2.0 6.0 3.0 6.5 4.0 7.0 5.0 7.5 6.0 8.0 7.0 8.5 8.0 9.0 9.0 9.5
+10.0 0.8
+Sum R2
+YEXP YEXP-YAVG
+6.83 0.0 6.83 0.0 6.83 0.0 6.83 0.0 6.83 0.0 6.83 0.0 6.83 0.0 6.83 0.0 6.83 0.0 6.83 0.0
+0.0 55.00 0.0
+(YEXP-YAVG)2
+Y-YAVG (Y-YAVG)2
+0.0 -1.3 1.78 0.0 -0.8 0.69 0.0 -0.3 0.11 0.0 0.2 0.03 0.0 0.7 0.44 0.0 1.2 1.36 0.0 1.7 2.78 0.0 2.2 4.69 0.0 2.7 7.11 0.0 -6.0 36.00
+￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼536 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼This table explains what happens when the R2 value is zero. The expected value is a constant, and this constant is the average of the Y-values (one of the properties of the best-fit line is that it goes through the point that is the aver- age of the X-values and the average of the Y-values). The R2 value can only be zero when the expected value is always constant. Similarly, when the R2 value is small, the expected values do not vary very much.
+Notice that the R2 value can never be negative, because the sums of squares are never negative. However, the Pearson correlation (r) can be negative, with the sign indicating whether the relationship is positive correlation (as X gets bigger, Y gets bigger) or negative correlation (as X gets bigger, Y gets smaller).
+The R2 value only makes sense for the best-fit line. For an arbitrary line, the value can be greater than one, although this never happens for the best-fit line.
+Direct Calculation of Best-Fit Line Coefficients
+This section delves into the arithmetic for calculating the coefficients of the best-fit line. There are two reasons for explaining the arithmetic. Directly cal- culating the coefficients makes it possible to do the calculation in SQL as well as Excel. More importantly, though, there is a bit of functionality missing from Excel, and this functionality is quite useful. This is the ability to do a weighted best-fit line.
+Doing the Calculation
+Calculating the best-fit line means finding the values of the coefficients ß1 and ß0 in the equation for the line. The mathematics needed for the calculation is simple addition, multiplication, and division. There is nothing magical about the calculation itself, although the proof that it works is beyond the scope of this book.
+The calculation uses the following easily calculated intermediate results:
+■■ Sx is the sum of the X-values;
+■■ Sy is the sum of the Y-values;
+■■ Sxx is the sum of the squares of the X-values; and,
+■■ Sxy is the sum of each X-value multiplied by the corresponding Y- value.
+The first coefficient, ß1, is calculated using the following formula: ß1 = (n*Sxy – Sx*Sy) / (n*Sxx – Sx*Sx)
+The second coefficient has the following formula:
+￼ß0 = (Sy/n) – beta1*Sx/n
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 537
+￼￼Table 11-3 shows the calculation for the data used in the R2 example. The top portion of this table contains the data points, along with the squares and prod- ucts needed. The sums and subsequent calculation are at the bottom of the table.
+Table 11-3: Direct Calculation of the Coefficients X Y
+1.0 5.5 2.0 6.0 3.0 6.5 4.0 7.0 5.0 7.5 6.0 8.0 7.0 8.5 8.0 9.0 9.0 9.5
+10.0 0.8
+VARIABLE SX SY
+X^2 X*Y
+1.00 5.5 4.00 12.0 9.00 19.5
+16.00 28.0 25.00 37.5 36.00 48.0 49.00 59.5 64.00 72.0 81.00 85.5
+100.00 8.3
+SXX SXY
+385.0 375.8
+￼￼￼￼￼￼￼￼￼￼￼￼Sum n*Sxy-Sx*Sy n*Sxx-Sx*Sx Beta1 Beta0
+55.0 68.3
+0.00 825.00 0.0000 6.8333
+￼￼￼￼￼Calculating the Best-Fit Line in SQL
+Unlike Excel, SQL does not have functions built-in to calculate the coefficients for a linear regression formula. The calculations can be done explicitly, using the preceding formulas. The following query does this for the Minnesota example in Figure 11-7:
+  SELECT (1.0*n*Sxy - Sx*Sy)/(n*Sxx - Sx*Sx) as beta1,
+         (1.0*Sy - Sx*(1.0*n*Sxy - Sx*Sy)/(n*Sxx - Sx*Sx))/n as beta0,
+         POWER(1.0*n*Sxy - Sx*Sy, 2)/((n*Sxx-Sx*Sx)*(n*Syy-Sy*Sy)) as r2,
+         b.*
+  FROM (SELECT COUNT(*) as n,
+               SUM(popcollege) as Sx,
+               SUM(hhpubassist) as Sy,
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼538 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼￼               SUM(popcollege*popcollege) as Sxx,
+               SUM(popcollege*hhpubassist) as Sxy,
+               SUM(hhpubassist*hhpubassist) as Syy
+        FROM (SELECT (popedubach+popedumast+popeduprofdoct) as popcollege,
+                     hhpubassist
+              FROM zipcensus
+              WHERE state = ‘MN’) a
+)b
+The innermost subquery calculates of the Sx, Sy, Sxx, Sxy, and Syy (the latter is needed for R2). These are then combined in the next level into the coefficients. This query also calculates the R2 value, using an alternative formula that does the calculation directly, rather than by first calculating expected values.
+The values produced by this are in Table 11-4. Although the moving average suggests a relationship, the R2 value suggests that the relationship is not a line.
+Table 11-4: Coefficients for Relationship College Education and Public Assistance in Minnesota Zip Codes
+￼￼￼￼￼￼￼￼COEFFICIENT/STATISTIC
+N Sx Sy Sxx Sxy Syy Beta1 Beta0 R2
+Price Elasticity
+VALUE
+868 148.8791 27.9332 36.8076 4.2998 1.7657 -0.0436 0.0397 0.0247
+￼￼￼￼￼￼￼￼￼Price elasticity is the economic notion that product prices and product sales are inversely related to each other. As prices go up, sales go down, and vice versa. In practice, price elasticity provides information about the impact of raising or lowering prices. Although the economic relationship is approximate, and sometimes quite weak, price elasticity is useful for what-if analyses that inves- tigate the effects of changing prices.
+The subject of price elasticity opens up the subject of prices in general. Typi- cally, a product has a full price. Customers may pay the full price, or they may pay a discounted price for a variety of reasons — the item may be on sale, the customer may have a loyalty relationship with an associated discount, the item
+www.it-ebooks.info
+￼100,000
+10,000
+1,000
+100
+10
+1
+CALENDAR
+BOOK
+GAME
+ARTWORK
+APPAREL
+OTHER
+OCCASION
+Chapter 11 ■ The Best-Fit Line: Linear Regression Models 539
+may be bundled with other products, the customer may have a group discount, and so on.
+This section starts by investigating prices, first by product group and then more specifically for books whose full price is $20. It then shows how basic regression analysis can be used to estimate elasticity effects. These effects are only approximate, because demand is based on more than pricing (what com- petitors are doing, marketing programs, and so on). Even so, regression analy- sis sheds some light on the subject.
+Price Frequency
+Visualizing the relationship between sales volume and price is a good place to start. A price frequency chart shows how often products are sold at a given price. The horizontal axis is the price; the vertical axis is the frequency, so each point shows the number of products sold at a particular price. A pricing fre- quency chart might use the full price, the average price, or a bar showing the range of prices.
+Figure 11-11 shows a full price frequency chart broken out by product groups. Because the range of values is so large and values are always positive, both axes use a logarithmic scale. The seven symbols represent the seven prod- uct groups of interest. Each point in the chart is an instance of products in the product group having a particular full price.
+Frequency (log scale)
+$1 $10 $100
+Price (log scale)
+$1,000
+$10,000
+Figure 11-11: This pricing frequency chart shows the relationship between sales volume and full price by product group.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼540 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼As a whole, the chart gives an idea of the relationship between full prices, product groups, and demand. The circled point at the top, for instance, indi- cates that there are 17,517 orders that contain ARTWORK products whose full price is $195. Although not shown on the chart, this point actually corresponds to 670 different products in the product table, all in the ARTWORK group and all having the same full price.
+The pricing frequency chart has other interesting information. The most commonly sold items are ARTWORK products having a full price of $195 (the circled point is the highest point in the chart). Although relatively expensive, the ARTWORK products selling at this price are inexpensive relative to other ARTWORK products. The products in this category typically cost more, as seen by the fact that the ARTWORK products (labeled with “x”s) are to the right of the highlighted marker.
+Almost all the expensive products are ARTWORK, with the exception of one BOOK and one CALENDAR (and these may be examples of misclassification). On the other hand, the BOOK group is quite well represented as having many products selling in more than one thousand orders — these are the solid squares on the upper left of the chart. Books are also generally moderately priced. The least expensive products are further to the left. These include many GAMES and CALENDARS. FREEBIES, which are by definition free, are not included in the chart.
+The pricing frequency chart is a good way to visualize the relationship between pricing and sales. With respect to price elasticity, its use is limited. The best selling books, for instance, have a price point pretty much in the middle of the book prices. Books that are more expensive sell fewer copies. But also, books that are less expensive sell fewer copies. Clearly and unsurprisingly, something besides price is important for book sales.
+The following query gathers the data for the chart:
+  SELECT productgroupname, fullprice, COUNT(*)
+  FROM orderline ol JOIN product p ON ol.productid = p.productid
+  WHERE fullprice > 0
+  GROUP BY productgroupname, fullprice
+  ORDER BY 3 DESC
+This query uses the Orderline table to calculate the total number of orders and the Product table to get the FULLPRICE. This query counts the number of lines in orders, which is reasonable. Another possibility would be to count the num- ber of units.
+The results are broken out by product group, because this is a natural way to compare products. To create the chart, there is a separate column for each product group. The FULLPRICE is placed in the appropriate column for each row, with NA() going in the other columns. A scatter plot is created from the pivoted data.
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 541 Price Frequency for $20 Books
+Seeing the range of prices and sales volumes is interesting. For elasticity, though, it is better to look at a single product or group of similar products. This section investigates products in the BOOK category whose full price is $20. Even though the full price is $20, these are often discounted, using marketing techniques such as coupons, clearance offers, product bundles, and customer loyalty discounts.
+Price elasticity suggests that when prices are lower, there should be more orders and when prices are higher, there should be fewer orders. Of course, this is economic theory, and a lot of things get in the way in the real world. Prices lower than the full price may indicate special promotions for the prod- uct that further increase demand, beyond the change in price. Or, low prices may indicate inventory clearance sales for the last few copies of otherwise popular books. In such a case, demand might be high, but there are few sales because there is insufficient inventory to fulfill all demand.
+A good summary for this investigation is prices and sales by month:
+■■ The average price of $20 full-price books sold in the month.
+■■ The total units sold in the month for these products.
+Just to be clear, the full price is $20, but customers may be getting a discount of one form or another. Also, a given book always has the same full price, which is in the Product table, not the Orders table. In the real world, products may have different full prices at different times. If this is the case, the Orders table should include the full price as well as the price the customer pays.
+The following query does this summarization:
+  SELECT YEAR(orderdate) as year, MONTH(orderdate) as mon,
+         COUNT(DISTINCT ol.productid) as numprods,
+         AVG(unitprice) as avgprice, SUM(ol.numunits) as numunits
+  FROM orders o JOIN orderline ol ON o.orderid = ol.orderid JOIN
+       (SELECT *
+FROM product
+        WHERE productgroupname = ‘BOOK’ and fullprice = 20) p
+       ON ol.productid = p.productid
+  GROUP BY YEAR(orderdate), MONTH(orderdate)
+  ORDER BY 1, 2
+The scatter plot in Figure 11-12 shows the results, with the horizontal axis being the price in the month and the vertical axis being the total units sold. Each point in the scatter plot is the summary of one month of data for $20 books. The chart does not show which point corresponds to which month, because the purpose is to look at the relationship between average price and volume, not to see trends over time.
+In most months, the books have an average price over $17, as seen by the prevalence of points on the lower right. During these months, the sales are
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼542 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼often on the low side, particularly as the average increases toward $20. This does suggest a relationship between price and demand. During some months, the average price is absurdly low, less than $10, suggesting that many $20 books are sometimes sold at a hefty discount.
+   350
+   300
+   250
+   200
+   150
+   100
+50
+0
+$0 $2 $4 $6 $8 $10 $12 $14 $16 $18 $20
+Average Sales Price of $20 Books by Month
+Figure 11-12: This scatter plot shows the actual prices of books whose full price is $20. Each point is the average price by month and the average sales by month.
+The best-fit line is also shown in the chart. This line is not a particularly good fit, but it does suggest that as the price increases, demand decreases. The slope of the line is minus 5.7, which means that for every dollar increase in price, the demand decreases by 5.7 units per month.
+There is no a priori reason to believe that the relationship is a simple line, which implies that more sophisticated models might be needed. On the other hand, a line produces a very handy number — minus 5.7 — that can be used to direct pricing and discounting efforts.
+One complication is the fact that there are different numbers of products for sale at that price in any given month, and there are different amounts of inven- tory for those products. When inventory is an issue, demand may be repre- sented by customers wanting to purchase the product, even if they cannot because there is insufficient inventory. The relationship between price and demand is interesting to investigate; it is also related to many other factors that can make it challenging to tease out a particular formula.
+Price Elasticity Model in SQL
+The coefficients for the line can also be calculated in SQL. The following query performs the same analysis, finding the relationship between the price of $20 full-price books and the volume of sales on a monthly basis:
+  SELECT (1.0*n*Sxy - Sx*Sy)/(n*Sxx - Sx*Sx) as beta1,
+         (1.0*Sy - Sx*(1.0*n*Sxy - Sx*Sy)/(n*Sxx - Sx*Sx))/n as beta0,
+￼￼y = -5.6789x + 147.93 R2 = 0.1099
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+Sales Volume
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 543
+￼￼￼         POWER(1.0*n*Sxy - Sx*Sy, 2)/((n*Sxx-Sx*Sx)*(n*Syy-Sy*Sy)) as R2
+  FROM (SELECT COUNT(*) as n,
+               SUM(x) as Sx,
+               SUM(y) as Sy,
+               SUM(x*x) as Sxx,
+               SUM(x*y) as Sxy,
+               SUM(y*y) as Syy
+        FROM (SELECT YEAR(orderdate) as year, MONTH(orderdate) as mon,
+                     1.0*SUM(ol.numunits) as y,
+AVG(unitprice) as x
+FROM orders o JOIN orderline ol ON o.orderid = ol.orderid JOIN
+                   (SELECT *
+                    FROM product
+                    WHERE productgroupname = ‘BOOK’ and fullprice = 20
+)p
+                   ON ol.productid = p.productid
+              GROUP BY YEAR(orderdate), MONTH(orderdate)
+)a )b
+The innermost query summarizes the appropriate orders by month. Subquery A is basically the same query used for the scatter plot, with minor cosmetic dif- ferences. One is that the columns are named X and Y, which recognizes the roles that these columns play in the calculation of the coefficients. Also, the Y-value is multiplied by 1.0 so it is not treated as an integer in the calculation. Reassuringly, this SQL calculates the same coefficients as the best-fit line in Excel’s charts.
+Price Elasticity Average Value Chart
+Price elasticity models estimate the amount of demand at a given price point. As discussed in the previous chapter, the average value chart is a good way to evaluate a model whose target is numeric. This chart divides the expected num- ber of sales into ten deciles, and then shows the actual number of sales and the expected number of sales in each group. Figure 11-13 shows the average value chart corresponding to the best-fit line for estimating demand based on price.
+The average value chart shows that the model is not working well (which we already suspected because of the low R2 value). The expected number of sales decreases as the deciles increase, with the expected number being rather flat after the first three deciles. However, the actual sales start high, dip, then go up again. The top two deciles also have much lower average prices than the rest of the deciles ($8.31 and $13.77 versus over $17 in the remaining months). This suggests that in months when the average prices are very low, something is going on besides just the change in price.
+A big reason why the model has a low R2 value is because of deciles 4 and 5, where the actual volume is much larger than the expected volume (or alter- natively that demand for the first three deciles is much lower than it should
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼544 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼be). Despite the low R2 value, there does seem to be a relationship between price and volume, albeit with exceptions. The model results suggest that pric- ing discounts on the books are not the only factor driving sales. Some dis- counts are intended to drive sales of popular books even higher. Other discounts are intended to sell the last copies of books that happen to still be in stock. When it comes to estimating sales volume, price is only one factor affecting the volume of sales.
+   110
+   100
+    90
+    80
+    70
+    60
+    50
+    40
+    30
+    20
+    10
+     0
+Figure 11-13: This average value chart shows the relationship between the expected number of sales and the actual number of sales by sales price for books whose full price is $20.
+Weighted Linear Regression
+Bubble charts are a typical way to visualize summarized data. The data is located on the chart according to X- and Y-values, and the size of each bubble is the frequency count. Alas, when Excel calculates the best-fit line in a bubble chart, it does not take into account the sizes of bubbles. The resulting best-fit line does a poor job showing trends in the data.
+WARNING When Excel calculates best-fit lines in bubble charts, it does not take the size of the groups into account. This can significantly skew the resulting line. The desired line requires doing a weighted linear regression.
+The way to solve this problem is by using a technique called weighted linear regression, which takes the sizes of the bubbles into account. Unfortunately, this capability is not built into Excel directly. There are two ways to do the cal- culation. One is to apply the formulas from the previous section, adjusting the
+￼￼￼￼￼￼￼￼Actual
+￼￼￼￼￼￼￼￼Expected
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼1 2 3 4 5 6 7 8 9 10 ($8.31) ($13.77) ($17.05) ($17.71) ($17.98) ($18.36) ($18.74) ($19.09) ($19.35) ($19.80)
+Avg Actual Price Decile
+￼￼www.it-ebooks.info
+Number of Sales in Month
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 545
+￼￼various intermediate sums for the frequencies. The other uses special function- ality in Excel called Solver, which is a general-purpose tool that can be used for this specific need.
+This section starts with a basic business problem where weighted linear regression is needed. It then discusses various ways to address the problem in Excel and SQL.
+Customer Stops during the First Year
+Is there a relationship between the monthly fee (in the subscription data) and the stops during the first year? The hypothesis is that each increment in the monthly fee has an effect on the overall stop rate.
+The bubble chart in Figure 11-14 shows the monthly fee on the horizontal axis and the proportion of customers who stop during the first year on the ver- tical axis. The size of each bubble is the number of customers in the group. Many bubbles are so small that they do not appear in the chart. For instance, there are two customers who started with a monthly fee of $3, and one of them stopped. However, they are not on the chart because a bubble for two cus- tomers is simply too small to see on a chart where the largest bubbles represent hundreds of thousands of customers.
+60% 50% 40% 30% 20% 10%
+0%
+￼￼￼￼￼￼￼y = 0.0001x + 0.4856 R2 = 0.0009
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$0 $20
+$40 $60
+$80 $100 $120
+Monthly Fee
+$140 $160
+$180 $200
+Figure 11-14: This bubble chart shows the relationship between the initial monthly fee (horizontal axis) and the stop rate during the first year for customers who started in 2004 and 2005. The size of the bubble is the number of customers.
+The chart itself includes the best-fit line for the data, as produced in Excel. The best-fit line is almost horizontal, suggesting that there is almost no rela- tionship between the monthly fee and the stop rate. The lack of relationship is corroborated by the miniscule R2 value, which suggests that any relationship that does exist is not linear.
+www.it-ebooks.info
+One Year Stop Rate
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼546 Chapter 11 ■ The Best-Fit Line: Linear Regression Models The following query provides the data for the bubble chart:
+         SELECT monthly_fee,
+                AVG(CASE WHEN tenure < 364 AND stop_type IS NOT NULL THEN 1.0
+                         ELSE 0 END) as stoprate,
+                COUNT(*) as numsubs
+         FROM subs
+         WHERE start_date BETWEEN ‘2004-01-01’ and ‘2005-12-31’
+         GROUP BY monthly_fee
+         ORDER BY 1
+This query simply aggregates all the customers who started in 2004 and 2005, keeping track of those who stopped during the first year.
+Weighted Best Fit
+Table 11-5 shows the data used to create the bubble chart. This table highlights the fact that most of the groups are quite small. Over half have fewer than three hundred customers, and these do not even show up on the chart. When Excel calculates the best-fit line, it does not take into account the size of the bubbles, so these invisible points are worth as much as the visible ones, which have 99.9% of the customers. This is true both for the best-fit line in the charts and for the LINEST() function.
+￼￼￼￼￼￼￼￼￼￼Table 11-5: First Year Stop Rate and Count by Initial Monthly Fee
+￼￼￼￼￼￼￼￼￼￼MON- THLY FEE
+$0
+$7 $10 $12 $13 $15 $16 $18 $19 $20 $22
+# SUB- MON- STOP SCRI- THLY
+RATE BERS FEE
+# SUB- MON- STOP SCRI- THLY
+RATE BERS FEE
+# SUB- STOP SCRI- RATE BERS
+￼￼￼￼100% 1 $25 46% 2,901 $80
+0% 1 $90 32% 79
+26% 7,903
+￼$27 57% 7
+$30 21% 803,481
+$35 19% 276,166
+$37 100% 1
+$40 34% 797,629
+$45 14% 39,930
+$50 35% 193,917
+$60 21% 48,266
+$70 52% 35,379
+$75 17% 22,160
+￼18% 1,296 $100 100% 1 $117 50% 2 $120 89% 38 $130 100% 1 $150 50% 2 $160 100% 3 $200
+43% 34,510 0% 1 33% 3,106 81% 26 45% 11,557 100% 4 58% 6,117 10% 241 100% 6
+￼￼￼￼￼￼￼15% 120,785 67% 9
+$300 $360
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 547
+￼￼This is a problem, because some bubbles are clearly more important than others. One approach is to filter the data, and choose only the bubbles that exceed a certain size. To do this, select the cells and turn on filtering using the Data ➪ Filter ➪ AutoFilter menu option (or the sequence of three keys, <alt>- D <alt>-F <alt>-F). When the filter appears, apply a “(Custom...)” filter in the NUMSUBS column to select the rows that have a count greater than, say, 1000. When the data is filtered, the chart automatically updates both the data and the best-fit line. The resulting R2 value increases to 0.4088, suggesting that there is a relationship between monthly fee and surviving the first year.
+TIP Whenfilteringrowsofdatathathaveanassociatedchartonthesame worksheet, be sure that the chart is either above or below the data. Otherwise, the filters might reduce the height of the chart, or cause it to disappear altogether.
+Using filters is an ad hoc approach, because it depends on choosing an arbi- trary threshold. A better approach is to use all the data to calculate a weighted best-fit line. Before diving into the calculations, the weighted best-fit is used when data is summarized, and the groups have different sizes. This is a com- mon occurrence, particularly when summarizing data from large databases and analyzing the data in Excel.
+The calculations for the weighted best-fit is quite similar to the calculations for the best-fit line. The only difference is that the formulas take the weights into account when calculating the various intermediate sums.
+Table 11-6 shows the calculation of ß1, ß0, and R2 for the best-fit line with and without weights. The calculation of N, the total number of points, shows the difference. In the unweighted case, there are 33 points, because there are 33 dif- ferent values of monthly fee. These groups correspond to 2.4 million customers, which is the value of N using the weights. The 1,296 customers who initially paid $10 and have a stop rate of 17.6% are instead treated as 1,296 rows with the same information.
+￼Table 11-6: Comparison of Calculations with and without Weights
+￼COEFFICIENT/STATISTIC
+N Sx Sy Sxx Sxy Syy
+UNWEIGHTED
+33.00 2,453.00 16.33 404,799.00 1,241.02 11.68
+WEIGHTED
+2,405,526.00 94,203,540.00 647,635.68 4,394,117,810.00 27,310,559.03 190,438.85
+Continued on next page
+￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼548 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼Table 11-6 (continued)
+COEFFICIENT/STATISTIC UNWEIGHTED
+Beta1 0.00 Beta0 0.49
+R2 0.0009
+WEIGHTED
+0.00 0.16 0.3349
+￼￼￼￼The resulting best-fit line now has the following characteristics:
+■■ slope = 0.0028
+■■ intercept = 0.2665
+■■ R2 = 0.3349
+The slope indicates that for each dollar that the monthly fee increases, the stop rate increases by 0.28%. Without the weighting, the increase was a negligible 0.01%. The R2 value suggests that the pattern is of medium strength, not dom- inant, but potentially informative. Without the weights there was no dis- cernible pattern.
+So, based on this analysis, if the company were to raise the monthly fee by $10 for new customers, it would expect an additional 2.8% of them to leave during the first year. Whether this is financially viable depends on the busi- ness needs of the company.
+Weighted Best-Fit Line in a Chart
+Being able to plot the weighted best-fit line in a chart is useful, even though Excel’s charts do not support this functionality directly. We have to trick the software into doing what we want.
+The idea is to insert another series in the chart corresponding to the best-fit line, add the line for the series, and make the new series invisible so only the line is visible:
+1. Foreachmonthlyfee,applytheweightedbest-fitformulatogetthe expected value.
+2. Add a new data series to the chart with the monthly fee and the expected value. Because this is a bubble chart, be sure to include a size for the bubbles as well.
+3. Add the trend line for the new monthly fee series.
+4. Formattheseriessoitisinvisible,eithermakingthepatternandareabe transparent or by making the width of the bubbles equal to zero.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 549
+￼￼Figure 11-15 shows the original data with the two trend lines. Clearly, the sloping trend line that takes into account the sizes of the bubbles does a better job of capturing the information in the chart.
+60% 50% 40% 30% 20% 10%
+0%
+￼￼￼￼￼0.0026x
++ 0.0324
+y = 0.0001x
++ 0.4856
+￼y=
+￼￼￼Unweighted Best Fit Line
+Weighted Best Fit Line
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$0 $20
+$40 $60
+$80 $100 $120
+Monthly Fee
+$140 $160
+$180 $200
+Figure 11-15: The weighted best-fit line does a much better job of capturing the patterns in the data points.
+Weighted Best-Fit in SQL
+The following query uses the same ideas to calculate the coefficients and R2 value directly in SQL for a weighted linear regression:
+  SELECT (1.0*n*Sxy - Sx*Sy)/(n*Sxx - Sx*Sx) as beta1,
+         (1.0*Sy - Sx*(1.0*n*Sxy - Sx*Sy)/(n*Sxx - Sx*Sx))/n as beta0,
+         (POWER(1.0*n*Sxy - Sx*Sy, 2)/((n*Sxx-Sx*Sx)*(n*Syy-Sy*Sy))
+         )as Rsquare
+  FROM (SELECT SUM(cnt) as n,
+               SUM(x*cnt) as Sx,
+               SUM(y*cnt) as Sy,
+               SUM(x*x*cnt) as Sxx,
+               SUM(x*y*cnt) as Sxy,
+               SUM(y*y*cnt) as Syy
+        FROM (SELECT monthly_fee as x,
+                     AVG(CASE WHEN tenure < 364 THEN 1.0 ELSE 0 END) as y,
+                     COUNT(*) as cnt
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼FROM subs
+WHERE start_date BETWEEN ‘2004-01-01’ and ‘2005-12-31’
+GROUP BY monthly_fee) a
+￼￼￼)b
+www.it-ebooks.info
+One Year Stop Rate
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼550 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼The only difference between this query and the unweighted query is the cal- culation of the intermediate values in the middle subquery. This query returns the same results at the Excel calculation.
+Weighted Best-Fit Using Solver
+Using the formulas is one way to calculate the coefficients of the weighted best-fit line. However, this does not work with more than one input variable, not to mention the fact that remembering the formulas is onerous.
+This section discusses an alternative approach using an Excel add-in called Solver (this is included for free with Excel). The fundamental idea behind Solver is to set up a spreadsheet model, where certain cells are inputs and one cell is an output. Solver then finds the right set of inputs to obtain the desired output — very powerful functionality. The question is how to set up a spreadsheet model that does the weighted best-fit line.
+The Weighted Best-Fit Line
+So far, this chapter has approached the problem of finding the coefficients for a best-fit line by applying complicated mathematical formulas. How- ever, a spreadsheet could calculate the sum of the squares of the distances between the data points and any given line. The spreadsheet would have two input cells for the coefficients. The distance from each point to the line can be calculated, and the total error added up in another cell. By trying out different values for the coefficients, we could manually attempt to minimize the total error.
+Such a spreadsheet is an example of a spreadsheet model. As with the mod- els discussed in this chapter and the previous chapter, it takes inputs (the coef- ficients in the input cells) and calculates an output (the total error value). What happens in between depends on the data and calculations in the spreadsheet.
+Setting up a spreadsheet model for the basic best-fit line is not useful, because there are built-in functions that do exactly what is needed. However, no such functions exist for the weighted version, making this a better example. Figure 11-16 shows a spreadsheet that contains the grouped data with fre- quency counts, various columns that do calculations, two cells for input (I3 and I4), and one that has the error (I5).
+The first of the additional columns contains the expected value, which is calculated using the input cells:
+  =<beta1>*<monthly_fee>+<beta0>
+The next column has the error, which is the absolute value of difference between the expected value and the actual value, and the column after that, the error squared. The final column calculates the square of the error times the
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 551 count. The total error cell contains the sum of these squares, which is what the
+best-fit line minimizes.
+Figure 11-16: This is a spreadsheet model for calculating the error between a given line and the data points (taking the weight into account).
+Modifying the values in cells I3 and I4 changes the error value. One way to minimize the error is to manually try different combinations of values. Because there are two values, this can be tricky. However, the spreadsheet recalculates very quickly and there are only two cells, so a person can get rea- sonably close to the minimum value.
+Solver Is Better Than Guessing
+Solver uses the same spreadsheet model. However, instead of guessing the val- ues of the coefficients that minimize the error, Solver finds the coefficients auto- matically. Although Solver comes with Excel, the functionality is not automatically available. To load Solver into Excel, use the menu item Tools ➪ AddIns(<alt>-T <alt>-I),click“Solver,”andthen“OK.”Onceinstalled,Solver is available under the menu Tools ➪ Solver or using the keys strokes <alt>-T then <alt>-V.
+The “Solver Parameters” dialog box, shown in Figure 11-17, has several prompts for information. At the top is the entry “Set Target Cell” to specify the target cell. The goal can be to minimize, maximize, or to set it to a partic- ular value.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼552 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼￼Figure 11-17: The “Solver Parameters” dialog box has areas for the cell to optimize, the type of optimization, the cells whose values can change, and any constraints on the problem.
+The list of cells that Solver can change is in the area called “By Changing Cells.” In addition, Solver allows you to set constraints on the cells, such as requiring that all values be positive or in some range. This is not functionality needed for finding the weighted best-fit line.
+Clicking “Solve” causes Excel to try many different combinations of coeffi- cients looking for the optimal value. In this case, the problem is not particularly complicated, and Solver finds the right solution quickly, placing the optimal coef- ficients in the input cells. Solver finds the best-fit line using the spreadsheet model. The aside “Discussion of Solver” discusses this add-in in a bit more detail.
+More Than One Input Variable
+Linear regression has been introduced using the best-fit line, which has one input and one target variable. In practice, there is usually more than one possible input variable. This section touches on the topic. So-called multiple regression pushes the abilities of SQL. In general, such problems are better solved with statistics tools rather than Excel.
+Multiple Regression in Excel
+The function LINEST() can take more than one input column, although the input columns do need to be adjacent. The function call is the same, except for the size of the array containing the returned values. The width of this array should be the number of different input variables plus one. The array should always have five rows.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 553
+￼￼￼￼DISCUSSION OF SOLVER
+Solver is an add-in developed by the company Frontline Systems (www.solver.com). A basic version of Solver has been bundled with Excel since 1991. More advanced versions are offered by Frontline Systems.
+The idea of finding the optimal value is to find the coefficients that minimize or maximize some objective function. For our purposes, the objective function simply means the value in the target cell, such as the example in the text for the total error for the weighted best-fit line. The objective function can be quite complicated, because it can depend directly on the input cells or there could be many intermediate calculations, using other cells in the spreadsheet.
+The weighted best-fit line is a particularly simple type of problem to solve, because it is in a class called convex conic quadratics. The simplest example of this, a parabola, has a single minimum value, and by analyzing information at any point along the curve, it is possible to determine whether the minimum is to the left or right of that point. Solver guesses the solution and then refines the guess, getting closer and closer each time.
+Making even small changes to the spreadsheet model can change the structure of the problem. So, changing the objective function to something more complicated could have a big impact on the efficiency of the algorithm. A small change could result in Solver taking much more time to find the optimal solution.
+The Solver software is quite powerful. It can detect when a problem is easy to solve and solve it using the appropriate methods. More complicated problems have more complicated methods, which can take longer to solve.
+Finding the coefficients for a best-fit line is only a taste of what Solver can do. One interesting class of problems is resource allocation. This occurs when there are many constraints and the goal is to maximize profit. An example of this is dividing the marketing budget to bring in new customers in various channels. Different channels have different costs for acquiring customers. The customers who come in may behave differently, and different times of year may have better response or different mixes, and each channel has a maximum or minimum capacity. It is possible to set up a spreadsheet that, given a mix of customers, is able to calculate the profit. Then, the overall profit can be maximized using Solver. Of course, the result is only as good as the assumptions going into the worksheet model, and these assumptions are only estimates about what might happen in the future.
+This type of resource allocation problem is called a linear programming problem (for technical reasons; it is not related to linear regression), and Solver knows how to solve such problems quite efficiently.
+￼Getting the Data
+In the orders data, there is a relationship between the penetration of a zip code and the average household income, the proportion college educated, and the
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼554 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼proportion of people on public assistance. Such relationships can be investi- gated further using multiple regression.
+This example uses zip codes that have more than one thousand households and that have at least one order. The query calculates the variables needed for this example:
+  SELECT o.zipcode, numorders * 1.0/hh as pen,
+         hhmedincome, hhpubassist, pcoll
+  FROM (SELECT zc.*, (popedubach + popedumast + popeduprofdoct) as pcoll
+        FROM zipcensus zc) zc JOIN
+       (SELECT zipcode, COUNT(*) as numorders
+        FROM orders o
+        GROUP BY zipcode) o
+       ON zc.zipcode = o.zipcode
+  WHERE hh >= 1000
+The returned data has 9,947 rows. The second column PEN is the Y-value. The last three columns are X-values.
+Investigating Each Variable Separately
+A good first step is to investigate each of the variables one-by-one. The best-fit- line and R2 values for each variable can be calculated using the functions SLOPE(), INTERCEPT(), and CORREL().
+Table 11-7 shows this information. There are several things to note about these values. First, the best variable is the proportion of the zip code in college. This is the best because it has the highest R2 value. This variable does a better job than the others in predicting product penetration.
+Table 11-7: Relationship between Three Variables Individually and Product Penetration
+￼￼￼￼￼￼￼￼￼￼￼￼￼HH Median Income
+% HH On Public Assistance College Percent
+SLOPE
+0.0000 -0.0324 0.0186
+INTERCEPT
+-0.00436 0.00347 -0.00268
+R-SQUARE
+0.2406 0.0325 0.2751
+￼￼￼The signs of the slope are interesting. Positive slope means that as the input value increases, the target value increases. So, penetration increases as median income goes up and as the proportion who graduated college goes up. On the other hand, penetration decreases as a greater proportion of the population is on public assistance.
+It would seem that variables with larger slope (steeper lines) would have a bigger impact on the target. Unfortunately, the sizes of the slope do not pro- vide any information about which variables are better or which have a bigger
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 555
+￼￼impact on the target. The reason is that the original variables have very differ- ent ranges. The median income is measured in thousands of dollars, so its coef- ficient is going to be very close to zero. The other two variables are proportions which vary between zero and one, so their coefficients are higher.
+This is unfortunate, because it is useful to know which variable is having a greater effect on the target. Standardizing the inputs fixes this problem. As explained in Chapter 3, standardizing variables calculates the number of stan- dard deviations that a value is from the average, and this is easily done in Excel, using a formula such as:
+  =(A1 – AVERAGE($A$1:$A9947)/STDEV($A$1:$A9947)
+This formula is then copied down the column to get standardized value for all inputs.
+TIP Ifyouwanttocomparetheeffectsofavariableonthetarget(inalinear regression), standardize the input value before calculating the coefficients.
+Table 11-8 shows the results with the standardized values. The R2 values remain the same, although the slopes and intercepts have changed. Standard- izing the inputs has no impact on how good the resulting line is.
+Table 11-8: Relationship between Standardized Values and Product Penetration
+￼￼HH Median Income
+% HH On Public Assistance College Percent
+SLOPE
+0.0025 -0.0010 0.0029
+INTERCEPT
+0.0025 0.0025 0.0025
+R-SQUARE
+0.2406 0.0325 0.2751
+￼￼￼The constant in the formula (ß0) is the same for all three formulas. This is not a coincidence. When doing the linear regression on standardized input values, the constant is always the average of the Y-values. The converse is not true, however. If the intercept happens to be the average, this does not mean that the X-values are standardized.
+The bigger the slope (either positive or negative) on the standardized values, the bigger the impact on the predicted penetration.
+Building a Model with Three Input Variables
+Building a model with all three input variables is as easy as building a model with one, except for one thing. The function LINEST() is an array function that returns values in an array of cells. The number of columns in this array is one more than the number of variables in the model. The number of rows is always five.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼556 Chapter 11 ■ The Best-Fit Line: Linear Regression Models The call to LINEST() looks like:
+         =LINEST(‘T11-07’!D14:D9960, ‘T11-07’!E14:G9960, TRUE, TRUE)
+Remember, this is an array function. Because there are three input variables (in columns E, F, and G), the function needs to be entered into an array of four cells across and five cells down, as shown in the screen shot in Figure 11-18. All the cells in the array have the same formula, shown in the formula bar. The curly braces are not part of the formula; Excel includes them to indicate that the formula is an array formula.
+Figure 11-18: The call to LINEST() with three input columns requires entering the formula in an array four columns wide and five rows down.
+How does this model compare to the models with a single variable? The R2 value is in the middle cell in the first column. The value is higher, so by that mea- sure the model is better. Of course, the R2 value is only 0.32, which is not a big increase over the best single variable model, which had an R2 value of 0.275. Adding new variables may produce a model that is only marginally better.
+The coefficients for this model are all positive, which is interesting. When used in the model alone, the coefficient for the proportion of the population on public assistance is negative, meaning that it is negatively correlated with penetration. With other variables in the model, this variable becomes positively correlated. Whatever else, this illustrates that the coefficients can change dramatically as new variables are added into the regression. How and why does this happen?
+This is an important question. The answer is at once simple and rather pro- found. The simple answer is that the other variables overcompensate for the proportion of the population on public assistance. That is, all the variables are trying to determine what makes a good zip code for penetration, and it seems to be wealthier, better educated zip codes. The other variables do a better job of finding these, so when they are included, the effect of the public assistance variable changes dramatically.
+More formally, the mathematics of multiple regression assume that the vari- ables are independent. This has a specific meaning. It means that the correla- tion coefficient — the CORREL() function in Excel — is zero (or very close to zero) for any two input variables. The correlation between the household median income and the proportion of the population on public assistance is –0.55. It is negative because as one goes up the other goes down (wealthier
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 557
+￼￼people tend to have fewer neighbors on public assistance). The correlation is rather strong, so the variables are somewhat redundant.
+In fact, when doing linear regression, it is easy to forget the fact that the tech- nique works best when the variables are independent. This is because, in prac- tice, input variables are rarely independent unless we make them so. One way of doing that is by using a technique called principal components, which is beyond the scope of this book, although it is included in many statistics packages.
+Using Solver for Multiple Regression
+Just as Solver was used for weighted regression, Solver can also be used for multiple regression. The coefficients are entered into one area of the spread- sheet. The spreadsheet calculates the expected values and total error. Solver can be used to minimize the total error to find the optimal coefficients.
+There are several reasons why this is useful. First, it makes it easy to create more complicated expressions, such as ones using logarithms, or exponentials, or other fancy mathematical functions. Second, using Solver makes it possible to incorporate weights, which is just as useful for multiple regression as for the one-input variety.
+The third reason is more esoteric but perhaps the most important. The methods that Excel uses to calculate the values returned by LINEST() are numerically unstable. This means that when intermediate values get very large, the results are prone to errors caused by the computer not being able to keep enough significant digits during the computation.
+As an example, when the multiple regression is run on the standardized inputs rather than the non-standardized inputs, the coefficients are different from the results using Solver as shown in Table 11-9.
+Table 11-9: Comparison of Coefficients Using Three Variables, by LINEST() and Solver
+￼Intercept
+Collegep HHPubAssist HHMedInc
+SOLVER
+0.002501 0.002076 0.000871 0.001717
+LINEST()
+0.002501 0.000000 0.000000 0.002076
+￼￼￼￼The coefficients on the standardized data do not make sense, because two of the variables have coefficients of zero, so there is effectively only one variable in the equation. Yet, the coefficient for the variable is different (0.002076) from the coefficient when this is the only variable in the equation (0.002907). This is not reasonable. Solver calculates the correct value, which is also verified by looking at the total error for the model.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼558 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼￼WARNING The method that Excel uses to calculate the results for LINEST() is numerically unstable. When there are many rows of data, it is better to use Solver to find the coefficients.
+Choosing Input Variables One-By-One
+One powerful way of using regression is to choose the variables one at a time, first the best variable, then the next best, and so on. This is called forward selection and is particularly useful when there are many potential variables, such as the many variables that describe zip codes.
+Excel is not the optimal tool for doing forward selection, because the LINEST() function requires that the X-values all be in adjacent columns. This means that essentially every combination of variables needs to be placed into a separate set of adjacent columns.
+Different pairs of variables can be tested manually. The idea is to build the regression on a set of adjacent columns, and then copy in the data from the orig- inal columns. However, instead of copying in the data, the OFFSET() function can be used with a column offset. Changing the value of the column offset changes the data in the column.
+With this set up, it is easy to try different pairs of columns by changing the offset values and looking at the resulting R2 value. It would be convenient to find the optimal offsets using Solver. Unfortunately, the version of Solver pro- vided with Excel cannot handle this type of optimization. Frontline Systems does offer other versions that do.
+Multiple Regression in SQL
+As more variables are added into the regression formula, it becomes more and more complicated. The problem is that solving the regression requires matrix algebra, in particular, inverting a matrix. When there is one input variable, the problem is a two-by-two matrix, which is pretty easy to solve. Two input vari- ables require a three-by-three matrix, which is at the edge of solving explicitly, as this section demonstrates. And for larger numbers of variables, standard SQL is simply not the best tool.
+Solving the equation for two input variables (X1 and X2) requires quite a bit more arithmetic than for one. In this case, there are three coefficients (ß0, ß1, and ß2), and more intermediate sums. The following combinations are needed to calculate the coefficients:
+■■ Sx1, which is the sum of the X1-values;
+■■ Sx2, which is the sum of the X2-values;
+■■ Sx1x1, which is the sum of the squares of the X1-values;
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 559
+￼￼■■ Sx2x2, which is the sum of the product of X1-values and X2-values;
+■■ Sx2x2, which is the sum of the squares of X2 values;
+■■ Sx1y,whichisthesumoftheproductsoftheX1-valuesandY-values;
+■■ Sx2y,whichisthesumoftheproductsofX2-valuesandY-values;and
+■■ Sy,whichisthesumoftheY-values.
+And a few more similar variables are needed for R2. These then need to be combined in very complicated ways.
+The following example calculates the coefficients for penetration, using HHMEDINCOME and PCOLL as the two input variables. The purpose of this example is to demonstrate that such mathematical manipulations are possible in SQL. The innermost subquery renames these to Y, X1, and X2, so the arith- metic in the outer subqueries is generic.
+  SELECT beta0, beta1, beta2,
+         (1-(Syy-2*(beta1*Sx1y+beta2*Sx2y+beta0*Sy) +
+          beta1*beta1*Sx1x1+beta2*beta2*Sx2x2+beta0*beta0*n +
+          2*(beta1*beta2*Sx1x2+beta1*beta0*Sx1+beta2*beta0*Sx2))/
+         (Syy-Sy*Sy/n)) as rsquare
+  FROM (SELECT (a11*Sy+a12*Sx1y+a13*Sx2y)/det as beta0,
+               (a21*Sy+a22*Sx1y+a23*Sx2y)/det as beta1,
+               (a31*Sy+a32*Sx1y+a33*Sx2y)/det as beta2, c.*
+        FROM (SELECT (n*(Sx1x1*Sx2x2-Sx1x2*Sx1x2) -
+                      Sx1*(Sx1*Sx2x2-Sx1x2*Sx2) +
+                      Sx2*(Sx1*Sx1x2-Sx1x1*Sx2)) as det,
+                     (Sx1x1*Sx2x2-Sx1x2*Sx1x2) as a11,
+                     (Sx2*Sx1x2-Sx1*Sx2x2) as a12,
+                     (Sx1*Sx1x2-Sx2*Sx1x1) as a13,
+                     (Sx1x2*Sx2-Sx1*Sx2x2) as a21,
+                     (n*Sx2x2-Sx2*Sx2) as a22, (Sx2*Sx1-n*Sx1x2) as a23,
+                     (Sx1*Sx1x2-Sx1x1*Sx2) as a31,
+                     (Sx1*Sx2-n*Sx1x2) as a32,
+                     (n*Sx1x1-Sx1*Sx1) as a33,
+                     b.*
+              FROM (SELECT COUNT(*) as n, SUM(x1) as Sx1, SUM(x2) as Sx2,
+                           SUM(y) as Sy, SUM(x1*x1) as Sx1x1,
+                           SUM(x1*x2) as Sx1x2, SUM(x2*x2) as Sx2x2,
+                           SUM(x1*y) as Sx1y, SUM(x2*y) as Sx2y,
+                           SUM(y*y) as Syy
+                    FROM (SELECT o.zipcode, numorders * 1.0/hh as y,
+                                 hhmedincome as x1, pcoll as x2
+                          FROM (SELECT zc.*,
+                                       (popedubach + popedumast +
+                                        popeduprofdoct) as pcoll
+                                FROM zipcensus zc) zc JOIN
+                               (SELECT zipcode, COUNT(*) as numorders
+                                FROM orders o
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼560 Chapter 11 ■ The Best-Fit Line: Linear Regression Models
+￼￼￼      GROUP BY zipcode) o
+ON zc.zipcode = o.zipcode
+WHERE hh >= 1000) a
+￼￼￼)b )c
+￼￼)d
+Embedded within the query are aliases such as A11 and A12. These values repre- sent cells in a matrix. In any case, after all the arithmetic, the results are in Table 11-10. These results match the results in Excel using the same two variables.
+Table 11-10: Coefficients for Regression of HHMEDINCOME, PCOLL, to Predict Penetra- tion, Calculated Using SQL
+￼COEFFICIENT/STATISTIC
+beta0 beta1 beta2 R2
+VARIABLE
+Intercept HHMedInc Pcoll R-square
+VALUE
+-0.0043317186 0.0000000683 0.0126225403 0.3029921767
+￼￼￼￼Understanding the particular arithmetic is not important. At this point, though, we have clearly pushed the limits of what can be accomplished with SQL, and adding more variables is not feasible. Doing more complicated regressions requires the use of statistics tools that support such functionality.
+Lessons Learned
+This chapter introduces the ideas of linear regression (best-fit lines) from the perspective of SQL and Excel. Linear regression is an example of a statistical model and is similar to the models discussed in the previous chapter.
+There are several ways to approach linear regressions using the combination of SQL and Excel. Excel has at least four ways to create such models for a given set of data. Excel charting has a very nice feature where a trend line can be added to a chart. One of the types of trend lines is the best-fit line, which can be included on a chart along with its equation and statistics describing the line. Other types of trend lines—polynomial fits, exponential curves, power curves, logarithmic curves, and moving averages — are also quite useful for capturing and visualizing patterns in data.
+A second way to estimate coefficients for a linear regression is with the array function LINEST() and various other functions that return individual coeffi- cients, such as SLOPE() and INTERCEPT(). LINEST() is more powerful than the
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 11 ■ The Best-Fit Line: Linear Regression Models 561
+￼￼best-fit line in charts, because it can support more than one X-variable. How- ever, all these functions use numerically unstable methods that fail to produce accurate results when there is a large amount of data (although the methods work quite well for many problems).
+The third way is to calculate the coefficients explicitly, using the formulas from mathematics. And, the fourth way is to set up the linear regression prob- lem as a spreadsheet model. The coefficients are in input calls and the target cell has the sum of the squares of the differences between the expected values and the actual values. The coefficients that minimize the sum define the model. The optimization process is handled by an Excel add-in called Solver. The advantage to this approach is that it supports regressions on summarized data by doing weighted regressions. This is quite powerful, and not otherwise supported in Excel.
+Regression has many variations. Besides weighted regression, there is multiple regression, which includes more than one input variable. A good way to choose variables is using forward selection. That is, selecting one variable at a time to maximize the R2 value. The mathematics behind regression work when all input variables are statistically independent. However, that is rarely true in the real world.
+For one or two input variables, the calculations can be set up in SQL as well as Excel. This has the advantage of overcoming the limits of the spreadsheet. However, the arithmetic quickly becomes too complicated to express in SQL, and most dialects do not have built-in support for multiple regression.
+Although Excel is quite useful for getting started, the serious user will want to use statistical packages for this type of work. The next and final chapter of this book recognizes that SQL and Excel cannot solve all problems. Some prob- lems require more powerful tools. Setting up the data for these tools — the topic in the next chapter — is an area that takes advantage of the power of SQL.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

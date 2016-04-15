@@ -1,0 +1,1053 @@
+CHAPTER
+12
+Building Customer Signatures for Further Analysis
+The combination of SQL and Excel is powerful for manipulating data, visual- izing trends, exploring interesting features, and finding patterns. However, SQL is still a language designed for data access, and Excel is still a spreadsheet designed for investigating relatively small amounts of data. Although power- ful, the combination has its limits.
+The solution is to use more powerful data mining and statistical tools, pro- vided by vendors such as SAS, SPSS, and Insightful (among others, including open source software). Because the data typically resides in a relational data- base, SQL can play an important role in transforming it into the format needed for further analysis.
+Preparing the data for such applications is where customer signatures fit in. A customer signature summarizes the attributes of a customer, putting impor- tant information in one place. The model sets discussed in the previous two chapters are examples of customer signature tables. Signatures are useful beyond sophisticated modeling, having their roots in customer information files and marketing information files developed for reporting purposes.
+Customer signatures are powerful because they summarize both customer behavior and customer demographics in one place. The term “customer” should not be taken too literally. In some businesses, for instance, prospecting is much more important than customers. So, the “customer” may be a prospect and “customer behavior” may be exposure to marketing campaigns.
+563
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼564 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼The word “signature” comes from the notion that customers are unique in the specific behavior and demographic traces that each leaves behind in data- bases. This is an intriguing notion of human individuality. Unlike human sig- natures, though, uniquely identifying each individual is not our purpose. The purpose is descriptive, often to enhance marketing efforts to individuals and groups of individuals.
+A customer signature is more than a summary of customer behavior. It is a summary designed for analytic purposes that takes special care with regards to the naming of columns, the time frame of the data going into the signature, and similar considerations.
+Even though other tools offer more advanced analytics, SQL has an advantage for data preparation: databases exploit parallel processing. In simple terms, this means that database engines can keep multiple disks spinning, multiple proces- sors active, and lots of memory filled while working on a single query.
+Even for smaller amounts of data, SQL has an advantage. It is possible to do all the data processing for a customer signature in a single query, eliminating the need for intermediate tables.
+Many of the ideas in this chapter have been discussed in earlier chapters. Here, the ideas are brought together around the concept of a customer signa- ture, information that summarizes customers along multiple dimensions. This chapter starts by explaining customer signatures and time frames in more detail. It then discusses the technical operations for building signatures, and interesting attributes to include in them.
+What Is a Customer Signature?
+A customer signature is a row in a table that satisfies certain conditions mak- ing it more useful for analysis. The table is important, but the process that cre- ates it more so. There is not a single signature for a customer, but a family of signatures used for different purposes.
+This section introduces customer signatures, how they are used, and why they are important. The process of building customer signatures should make it possible to reconstruct what customers look like at any point in time. This may be a snapshot on the same date for all customers, or a different date for each customer, such as one year after the customer starts, when the customer first complains, or when the customer enrolled in the loyalty program.
+TIP The process for creating customer signatures should be customizable to take a snapshot of customers any point in time or relative to events during the customer tenure. The process for building a customer signature is as important as the table itself.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 565
+￼￼Another way to think about customer signatures is that they contain longi- tudinal information. Here, longitudinal does not mean the distance east or west of Greenwich, England. Longitudinal is a word borrowed from medical research where it describes keeping track of patients over time including all the treatments and things that happen to the patients. Almost everything is of interest to medical researchers, because they are often dealing with life and death issues. Although information about customers is not typically quite so detailed and personal, customer signatures serve a similar purpose in the busi- ness world.
+What Is a Customer?
+The definition of customer permeates all the earlier chapters. Chapter 1 brought up the difficulties of identifying customers, and Chapter 8 discussed difficulties in tracking them over time, which is one of the critical capabilities needed for creating signatures. As we’ve seen, there are different answers to the question of “what is a customer?” Four typical answers are:
+■■ An anonymous transaction;
+■■ An account;
+■■ An individual; and,
+■■ A household.
+From the perspective of identifying customers in the database, accounts and anonymous transactions are usually easy; individuals and households require more work.
+The ability to define the customer is not merely theoretical. Information is often most useful when it can be tied back to customers. Different definitions have different strengths and weaknesses.
+When “account” is the level used to define the customer, one quickly dis- covers that individuals and households can have multiple account relation- ships. Multiple accounts belonging to the same customer result in operational inefficiencies — multiple contacts to the same household, for instance. These multiple accounts can interfere with analysis. For instance, when trying to understand why customers stop, summaries at the account level may miss the fact that people are really remaining customers — on another account.
+On the other hand, when using individuals and households to define cus- tomer, a lot of work goes into identifying the same customer across multiple transactions and accounts. This results in a dependence on the methods used for the identification.
+In the case of households, this is a particularly acute problem, due to the fact that households change over time. These changes are important because house- holds whose composition changes (due to marriage, divorce, children moving in, children moving out, and so on) often present marketing opportunities.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼566 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼The purchases dataset contains a customer id table that provides lookups for the household for any account. These customer IDs tie disparate transac- tions together over time. In many cases, customer ids are assigned by match- ing names and addresses on the transactions. These are then grouped together into households, assigned by a third-party householding vendor. If more com- plete data were available, these household ids would have effective dates on them, identifying when the household information is active and when the information changes.
+Sources of Data for the Customer Signature
+Data about customers is located in many different tables, some of which do not even know that they help describe customers. For instance, the Product table in the purchases dataset is intended to describe products, not customers. Yet, when combined with transaction information, this table can help answer ques- tions such as:
+■■ Which customers only purchase products at discounted prices?
+■■ Does a customer have an affinity with a particular product group?
+■■ Does this affinity change over time?
+These questions highlight the interplay between different types of data. Information about customers comes from diverse subject areas. Figure 12-1 shows conceptually different types of information collected about customers that go into a customer signature. This section discusses these types of infor- mation. One particularly important attribute is the time frame for each item of
+data. The time frame is when the data becomes known for analysis purposes.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Summary Initial Customer Customer
+External
+Neighbors Transaction and Summaries
+Neighbor Summaries
+Self-Reported
+Figure 12-1: Customer signatures are records that describe customers, containing information from different subject areas.
+Current Customer Snapshot
+There is often a table that describes the current customers (and perhaps former customers as well), containing information such as:
+■■ Customer id;
+■■ Customer name;
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 567
+￼￼■■ Original start date or first purchase date;
+■■ Current product or most recent purchase date;
+■■ Totalspending;and,
+■■ Current contact information.
+This information is a snapshot of what customers look like at the present time. Such a snapshot is a good starting point for a customer signature, because it has useful information and is at the right level of granularity. The most useful columns in it are the ones that do not change over time.
+For instance, the customer id and original start date do not change. The contact information does change over time, although slowly, so the summary contains the current contact information. Total spending, most recent product, and most recent purchase date all change frequently. “Frequently,” of course, depends on the business. Updates on automobile purchases might change over a period of years; updates on telephone usage, every month or even more frequently.
+In a poorly designed data warehouse, snapshot information might contain data elements not otherwise available in transaction tables. In one such sys- tem, the customer snapshot contained a column called dunning level, which described customers as they became later and later in paying their bills. This information was only kept current in the snapshot information, with no his- torical transaction table. Although quite important for understanding cus- tomers and a driver of important behaviors, the dunning level could not be used for analysis, because the values could not be reconstructed in the past.
+The solution was simple enough. On the analysis side, we could capture the dunning level periodically from the current snapshot, and create a dunning transaction table for analysis purposes.
+Initial Customer Information
+Initial customer information remains constant for the duration of the customer relationship (except when households merge or split). This information includes:
+■■ When the customer first becomes a customer;
+■■ Initial products and spending amounts;
+■■ Channel and marketing promotions that led to the initial relationship; and,
+■■ Other relevant information (underwriting, credit scores, and so on).
+For many businesses, the initial customer relationship is quite important, because it sets expectations about the ongoing relationship. Exceeding expec- tations can result in delighted customers who survive for long periods of time. On the other hand, unfulfilled expectations can lead to disappointed cus- tomers who were, perhaps, never in the target market in the first place, but were led to start by aggressive marketing tactics.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼568 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼￼TIP Initial customer information, both demographic and behavioral, is quite valuable for understanding customers, because the initial interactions set customers’ longer term expectations.
+Self-Reported Information
+Customers explicitly provide some valuable data. Basic contact information, such as name, address, telephone number, and/or email address is provided when they start. Addresses used for billing and delivery lead to geocoding and associ- ated geographic information. Email addresses contain domain information. Names suggest gender and ethnicity. Credit cards provide credit card types.
+In addition, customers may complete application forms, provide informa- tion for credit checks, and respond to questionnaires and surveys. These are additional sources of self-reported information, although such data is often available only for a minority of customers. One challenge is to extend learn- ings from this subset to all customers. A survey might find an interesting sub- set of customers; the next problem is to find similar customers in the overall data. Similarity models described in Chapter 10 are one way to approach this.
+Self-reported information has a time frame associated with it. Some is avail- able at the beginning of the customer relationship, because such information is part of the application process. Some is only available sporadically after cus- tomers begin.
+External Data (Demographic and So On)
+External data is typically purchased from outside bureaus that specialize in demographic data; another source of external data is business partners who share the information. Such information is usually a current snapshot of customers. Unfortunately, reconstructing what a customer used to look like is difficult.
+Changes in such information can be quite informative. When a couple mar- ries, the woman often legally changes her name. After a period of time, the newlyweds often unify their financial accounts into a single household account. This offers an opportunity to the wife’s bank, because it receives notice of the name change (either from the customer or from an external source). However, more often than not, a name change gets recorded in a data- base as the current name, and the previous name is simply forgotten, or at least unavailable outside operational systems.
+When a customer moves from one neighborhood to another, the neighbor- hood demographics change. The address is usually updated, and the old address forgotten (or at least not readily available for analysis). Without the ability to compare neighborhood demographics, it is not possible to know if the customer is moving up or moving down, into a good school district or into a retirement community.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 569
+￼￼Banks usually know when customers reach retirement age. Do the banks cease marketing to customers who are no longer eligible to contribute to indi- vidual retirement accounts (IRAs)? Customers are no longer eligible for these once they reach retirement age.
+The time frame for demographic information usually represents a compro- mise, because the information is not maintained over time. Only the current snapshot of data is available for current customers, and the last snapshot is available for stopped customers.
+About Their Neighbors
+Some information does not tell us directly about customers, but instead about the neighborhoods where they live. This information comes in two forms. Much information is available for free from the Census Bureau and other sources. Other “neighborhood” information consists of dynamic summaries of customer behavior, projected onto the neighborhood level. Although neighbor- hood does usually refer to geography, it could refer to similarity in other ways (such as all customers who arrived via a particular marketing campaign).
+Using geographic data requires geocoding addresses to find the specific geographic areas — typically census block groups — where an individual lives. Zip codes are a poor man’s geocoding, and they do not work as well as the census geographies for understanding customers.
+Census blocks typically change every ten years, but not in between. Some data within the blocks may be updated between the decennial censuses; how- ever, both the data and the geographic definitions are updated every ten years. If you are looking at customers over long periods of time, maintaining the his- tory of the census variables can be useful for understanding how neighbor- hoods and customers are evolving.
+Neighborhood information has a hybrid time frame. The information itself is typically static (updated every ten years). However, the geography may be the most recent geography for the customer, and customers may move several times between census refreshes.
+Census information is also used for developing marketing clusters, of which the best known are probably Claritas’s Prizm codes. These are descriptions of the people living in particular areas using catchy names such as “Young Digerati,” “Kids & Cul-de-Sacs,” “Shotguns and Pickups,” and “Park Bench Seniors,” that are based primarily on census data augmented with market research data (you can look up your zip code at http://www.claritas.com/ MyBestSegments/Default.jsp.
+Transaction Summaries
+Transactions are the most voluminous of the data sources, at least by num- ber of rows of data. Transactions contain a wealth of information, because
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼570 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼they describe customers’ behaviors. However, the information is not readily apparent.
+The key to effectively using transactional history is summarization. There are some basic methods of summarization, such as taking sums and averages and counts. Then there are more advanced types of summaries, where particular behaviors are identified and the presence, absence, or extent of these behaviors are recorded in the signature. These types of summaries can prove very useful.
+Transaction history is quite amenable to the use of time frames, assuming that enough data is available. Shifting the time frame is simply a matter of taking transactions before a certain date and then summarizing them appropriately.
+Using Customer Signatures
+Customer signatures summarize customer behavior and demographics. Such summaries have a variety of uses.
+Predictive and Profile Modeling
+Customer signatures provide the inputs to models, including predictive models and profiling models. The signature can also be useful for clustering and segmentation. The signatures would typically be placed in a table accessed by more advanced analysis tools, or perhaps exported as a file and re-imported into those tools.
+Ad Hoc Analysis
+Customer signatures provide a location where many types of information about customers are brought together in one place. Transactional summaries are available with demographics and so on. Reporting systems do a good job of slicing and dicing business information along important dimensions, such as geography, customer type, department, product, and so on. However, it is difficult to develop reporting systems for customer longitudinal data, because the volume of data is so large and the data is quite complex.
+As a consequence, customer signatures are often used for ad hoc analysis on customers, typically using the most recent snapshot of customer behavior.
+Repository of Customer-Centric Business Metrics
+Some of the columns in a customer signature may go beyond merely gathering data from other tables. Customer signatures are a place to put interesting met- rics, particularly derived information that describes customer behaviors.
+For instance, the history of marketing efforts might include attempted con- tacts by email, telephone, direct mail, and other channels. One of the attributes
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 571
+￼￼in the signature might be “email responsiveness.” Customers who responded to email offers in the past would have high email responsiveness scores. Cus- tomers who have been contacted many times and never responded would have low email responsiveness scores.
+This idea can extend beyond the channel preference, of course. The times when customers shop might be summarized to determine who is a “weekend” shopper, who is a “weekday” shopper, and who is an “after-work” shopper. The times when customers go to the web site might distinguish between “work browsers” and “home browsers.” Customers who buy the newest prod- ucts without a discount might be “leading edge” shoppers. Credit card cus- tomers might be classified as revolvers (keep a high balance and pay interest), transactors (pay off the bill every month), or convenience users (charge up for a vacation or furniture or something and then pay the balance over several months). And so on.
+These types of business metrics and customer categories might be developed on an ad hoc basis. Once developed, placing them in a customer signature makes them available for other purposes.
+TIP Customer signatures are a good place to incorporate important measures about customers that might otherwise go undocumented and be forgotten.
+Designing Customer Signatures
+Before going into the details of the data manipulations, there are some key ideas in designing customer signatures. These ideas ensure that they work well for analytic purposes, and that they can be generated to be as-of arbitrary points in time.
+Column Roles
+The columns in a customer signature have various roles, related to how the columns are used in modeling. From our perspective, the roles are important to consider because they affect how the columns are created. Of course, columns that are not useful for a particular purpose — such as customer IDs for predic- tive modeling — do not have to be used even though they are in the signature.
+Identification Columns
+Some columns uniquely identify each customer. These identification columns are important, because they provide a link back to the actual customer infor- mation. There may be more than one such column. For instance, the customer
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼572 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼id in the data warehouse is different from the customer id in the operational systems. Sometimes external vendors return match keys, which are different from the keys used internally.
+What is important about an identification column is that it uniquely identi- fies each customer for the duration of the data in the customer signature. The identification column prevents customers from being confused with each other.
+Input Columns
+Most columns in the customer signature are input columns. These are columns that describe customer characteristics and are intended for use as inputs in modeling. Input columns are all defined by a cutoff date. No information from after the cutoff date should be included in the inputs.
+This date may be a single date for the entire customer signature. In this case, the customer signature is a snapshot of what customers look like on a particular date. Alternatively, the cutoff date could be defined individually for each cus- tomer. For instance, it could be one year after the customer starts, or when the customer adds a particular product, or the first time that the customer complains.
+Target Columns
+When present, the target columns are the goals of the modeling effort, typi- cally something related to interesting customer behaviors, such as response, cross-selling, managing risk, or stopping. In the subscription data, targets might be the customer tenure or the type of stop. In the purchases data, an appropriate target would be the time to the next purchase, the type of pur- chase, or whether the customer made a purchase during the most recent year. There can be more than one target in the data, because different aspects of the business have different needs.
+Although the discussion of customer signatures is centered on modeling, tar- get columns are actually optional. The signature might be used for reporting purposes. Or, the target columns might be provided through another data source not in the database. Or, the desired modeling may be undirected, meaning that the purpose is to find groups of similar customers without any particular goal in mind.
+Foreign Key Columns
+Some columns are used to look up additional information. Usually, the addi- tional information is simply added in by joining other tables or subqueries. The key used for the join might remain in the signature, although it is not usu- ally as useful as the data brought in from other tables.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 573
+￼￼Some data sources may not be available in the database. In this case, the cus- tomer signature is not going to be complete and subsequent processing out- side the database would add additional columns using a foreign key.
+Cutoff Date
+The cutoff date should be included in each customer signature record. This date may be fixed for all customers, or it may vary. The purpose of including the cut- off date is to inform subsequent analysis. It should not be used as an input col- umn for modeling. The cutoff date refers to the cutoff date for the input columns; target information may come from after the cutoff.
+Profiling versus Prediction
+Chapter 10 introduced the distinction between a profiling model set and a pre- diction model set. In a profiling model set, the inputs and the targets come from the same time frame. In a prediction model set, the inputs come from a time frame strictly before the target. That is, the inputs are known before the target. The same ideas hold for customer signatures.
+This chapter focuses on creating prediction model sets, because this is the more general situation. In a profiling model set, the target variables can simply be created in the same way as the input variables. In a prediction model set, the cutoff date is for the input variables, and the target comes from a time frame after the cutoff date.
+Time Frames
+One of the key questions in designing customer signatures is: “What do we know and when did we know it?” All the inputs in the signature come from a time frame before the cutoff date. In addition, each column has a time frame associated with it, because each value in a database becomes known at some point in time and the value in the column may be replaced at a later point in time. Columns are only available for analysis when the cutoff date for the cus- tomer signature is during the time frame for the values in those columns.
+TIP “Whatdoweknow?”and“Whendoweknowit?”arekeyquestions about columns going into customer signatures.
+The reason this is called a time frame and not simply “load time” is because data can have an end time as well as an available time; at some point, a new value may come along superseding the previous value. This can occur for many reasons. The most common is because the data values change. A cus- tomer’s current address is only current until the customer moves. A column in
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼574 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼the customer signature for the current address would have different values depending on the cutoff date for the signature. Other data columns may be purchased and only available for a specific period of time.
+The goal of using time frames is to be able to create the customer signature with arbitrary cutoff dates. This goal has some consequences in terms of naming columns, handling dates and times, and incorporating seasonality.
+Naming of Columns
+Column names need to respect the fact that the cutoff date for the customer signature may occur at any point in time. The process for creating the signature should take the cutoff date as an input. Column names should not be tied to particular dates or date ranges. Instead they should be relative. Good examples of columns are:
+■■ Sales in the customer’s first year;
+■■ Average number of weekend visits to a web site; and,
+■■ Most recent month billing invoice.
+On the other hand, bad examples of columns specify particular dates (such as months and years) that would not be relevant in another time frame.
+Eliminating Seasonality
+Columns that include data from explicit dates and times cause problems in customer signatures, because they interfere with generating the signatures for different time frames. Instead of including explicit dates, tenures and time spans are better:
+■■ Instead of the start date, include the number of days before the cutoff date when the customer started.
+■■ Instead of the date of the first purchase and the second purchase, include the number of days from one to the next.
+■■ Instead of the date when a customer enrolled in a program, include the tenure of the customer at that time.
+■■ Instead of the date of the most recent complaint, include the tenure of the customer on the first complaint and on the most recent complaint.
+As a general rule, specific dates are less important relative to the calendar time line than relative to the customer life cycle time line. Dates on the calen- dar time line should be turned into numbers of days before the cutoff date for the signature.
+www.it-ebooks.info
+￼Chapter 12 ■ Building Customer Signatures for Further Analysis 575
+This also eliminates many effects of seasonality. For instance, many cell phone customers sign up in the holiday season. Many pre-paid customers stop in May, which is four or five months after the phones are activated. These are customers who never replenish their phone account.
+This peak in May is not really related to the month of May. Instead, it is related to the peak in starts during the preceding December and January and the business rules that define churn for pre-paid customers. On the customer time line, the same proportion stops after four or five months regardless of when they started. A peak in starts, though, does result in a peak of stops sev- eral months later.
+Having the tenure of the customer in the customer signature rather than the dates themselves makes signature independent of such inadvertent seasonal- ity effects.
+Adding Seasonality Back In
+Of course, some seasonality is useful and informative. For instance, purchases in August are related to back-to-school events. As customers, students may behave differently from other customers. They may be more likely to change brands, more responsive to certain types of promotions, and have fewer finan- cial resources.
+Some of this information could be captured by including information in the customer signature, such as the season when a customer started. Cus- tomers who start during the back-to-school season may be different from customers who start at other times. In fact, in the subscription data, there is a slight difference in survival for customers who start in August and Sep- tember versus December, as shown in Figure 12-2. The important point here is just that customers who start during different seasons may have different behaviors.
+100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Figure 12-2: Survival can differ based on the month when customers start.
+Survival
+December (317,764)
+September (264,675)
+August (286,263)
+0 90 180 270 360 450 540 630
+Tenure (days)
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼576 Chapter 12 ■ Building Customer Signatures for Further Analysis
+The following are some examples of seasonality variables that might be added
+in to capture particular characteristics that might be important to the business:
+■■ Quarter of the year when a customer started;
+■■ Proportion of transactions on the weekend;
+■■ Websitevisitsduringthetraditionalworkday;
+■■ Volumeofpurchasesduringtheprecedingholidayseason;and,
+■■ Day of the week of the start and stop.
+The idea is to first wash seasonality out of the data, to get a better picture of what customers are doing independently of the calendar year. This makes it easier to focus on customers, rather than on extraneous events. Of course, sea- sonality can be quite important; seasonal effects should go into the customer signature intentionally rather than accidentally. For this reason, separate vari- ables that capture seasonality information are more useful than having it mixed in with other data.
+Multiple Time Frames
+For predictive modeling purposes, it is beneficial to have multiple time frames included in the customer signature. This prevents the models from “memoriz- ing” one particular time frame. Figure 12-3 shows an example.
+nov dec jan feb mar apr may jun july aug
+￼￼￼￼INPUT COLUMNS
+￼￼￼TAR GET
+￼￼INPUT COLUMNS
+￼￼￼TAR GET
+￼￼INPUT COLUMNS
+￼￼￼￼TAR GET
+Figure 12-3: Customer signature tables can mix signatures from different time frames. Having multiple time frames is actually a best practice for prediction model sets.
+Adding multiple time frames is not difficult. There are two methods. One is to build separate customer signatures for each time frame. These can then be merged to create a single customer signature table.
+An alternative method is to assign different cutoff dates to different cus- tomers. This makes it possible to define the customer signature in a single step. However, the resulting SQL can be a bit more complicated.
+www.it-ebooks.info
+￼Chapter 12 ■ Building Customer Signatures for Further Analysis 577
+When adding multiple time frames into a signature, the same customer can appear more than once. In general, this is not a big problem, although in general, it is better to not have too many duplicates in a table of customer signatures used for modeling.
+Operations to Build a Customer Signature
+Building customer signatures is about bringing data together from disparate data sources. Figure 12-4 shows conceptually what needs to be done. Some data is already in the right format, and at the right granularity. This data merely needs to be copied. Some fields are keys into other tables, where information can be looked up. Other data is in the format of regular time series that can be pivoted. Irregular time series, such as transactions, need to be summarized. This section describes these operations in the context of building customer signatures.
+COPYING
+PIVOTING
+SUMMARIZING
+LOOKING UP
+LOOKING UP, SUMMARIZING
+CALCULATING
+Multiple rows in the source data correspond to the same customer, and each customer has approximately the same number of rows. The data is copied into multiple columns in the customer signature.
+The source table does not exist; it is created from summaries of customers.
+Each row in the source table corresponds to zero or more customers. The data is copied into the customer signature.
+The most valuable columns are often combinations of other columns.
+Each row in the source data corresponds to one row in the customer signature. The data is copied directly into the customer signature.
+Multiple rows in the source data correspond to the same customer, and each customer has different numbers of rows. The data is summarized into columns in the customer signature.
+Figure 12-4: The data in customer signatures needs to be brought together using a variety of processing methods.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼578 Chapter 12 ■ Building Customer Signatures for Further Analysis Driving Table
+The first step in building a customer signature is identifying the correct group of customers and the cutoff date for each one. A customer signature has a set of conditions that determine whether any given customer should be in the signa- ture. The table that defines these customers is the driving table, which may be an actual table or a subquery.
+If the customer signature is based on an event during the customer life cycle, the customer signature applies only to customers who have that event. Other customers, although interesting for other purposes, are not part of this signature.
+The driving table maintains the information about the correct group of cus- tomers for the signature and additional date information. Each customer has a cutoff date, whether the signature is event-based or time-based.
+In an ideal situation, all other subqueries would simply be joined into the drivingtableusingLEFT OUTER JOINs.Theoverallquerywouldschematically look like:
+         SELECT *
+         FROM (<driving table>) dt LEFT OUTER JOIN
+              (SELECT customerid, <summary information>
+               FROM <other table>
+               GROUP BY customerid) t1
+              ON dt.customerid = t1.customerid LEFT OUTER JOIN
+              <ref table> rt
+              ON rt.<key> = dt.<key>
+That is, the driving table would be joined to summaries and reference tables to calculate the columns in the customer signature. This ensures that the correct set of customers remain in the customer signature.
+However, the conditions that define the driving table, particularly the cutoff date, are needed for the summaries as well. For performance reasons, the dri- ving table might be created and well-indexed on the customer id column, because this column gets used extensively. When all customers have the same cutoff date, then the cutoff date can be included in the subqueries, eliminating the need to join in the driving table.
+Using an Existing Table as the Driving Table
+Often, the driving table is readily available, because there is a table with the right level of granularity. In such cases, not all the fields are necessarily appro- priate for the table.
+Consider the Subs table as an example. A first attempt only uses information about customers when they start, such as start date, channel, and market.
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 579 Information that occurs after the customer start date is not appropriate. The
+following query provides an example of a driving table using Subs:
+  SELECT customer_id, rate_plan as initial_rate_plan,
+         monthly_fee as initial_monthly_fee,
+         market as initial_market, channel as initial_channel,
+         DATEDIFF(dd, start_date, cutoff_date) as days_ago_start,
+         cutoff_date
+  FROM subs s CROSS JOIN
+       (SELECT ‘2005-01-01’ as cutoff_date) const
+  WHERE start_date < cutoff_date
+This query has several interesting features. First, there is a cutoff date, which is joinedinusingaCROSS JOINonatablecontainingconstants.Thiscanbeause- ful way to incorporate constants into queries (note that the syntax of the Const subquery varies among databases). Only customers who started before cutoff date are included in the driving table. Start dates are also transformed into tenures, as of the cutoff date. And, only columns whose value is known at the beginning of the customer relationship are included in the query.
+TIP The CROSS JOIN operation is a convenient way to incorporate constants into queries, by using a subquery that defines the constants and that returns one row.
+Often, an existing table is really a snapshot of a customer at a given point in time. Some columns may still be usable for the driving table, assuming they are modified for different cutoff dates. For instance, the TENURE and STOP_TYPE columns could also be included, but they have to be modified to take the CUT- OFF_DATE into account. The following SELECT shows how this is handled:
+  SELECT customer_id, rate_plan as initial_rate_plan,
+         monthly_fee as initial_monthly_fee,
+         market as initial_market, channel as initial_channel,
+         DATEDIFF(dd, start_date, cutoff_date) as days_ago_start,
+         DATEDIFF(dd, start_date,
+                  (CASE WHEN stop_date IS NOT NULL AND
+                             stop_date < cutoff_date
+                        THEN stop_date ELSE cutoff_date END)) as tenure,
+         (CASE WHEN stop_date IS NOT NULL AND stop_date < cutoff_date
+               THEN stop_type ELSE ‘’ END) as stop_type
+  FROM subs s CROSS JOIN
+       (SELECT ‘2005-01-01’ as cutoff_date) const
+  WHERE start_date < cutoff_date
+The logic says that customers who stopped after the cutoff date are considered active as of the cutoff date, and customers who stopped before the cutoff date are considered stopped. For the customers who are stopped, the stop type does not change.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼580 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼Some columns in a snapshot table simply cannot be used directly in the cus- tomer signature. These columns contain information that cannot be rolled back in time, such as total number of purchases, the date of the last complaint, and the customer’s billing status. These have to be derived again from trans- action tables.
+Derived Table as the Driving Table
+Sometimes, the appropriate table is not available. In this case, the driving table needs to be derived. For example, the household level is a very reasonable level of granularity for customer signatures for the purchases dataset. How- ever, there is no household table in the database. It needs to be derived from other tables.
+The same ideas apply when using a summary for the driving table. No input columns from after the cutoff date can be used. The table only includes house- holds known before the cutoff date. Care must also be taken to remove current snapshot columns.
+The following query provides a basic summary of households, based on the Customer and Orders tables:
+  SELECT householdid, COUNT(DISTINCT c.customerid) as numcustomers,
+         SUM(CASE WHEN gender = ‘M’ THEN 1 ELSE 0 END) as nummales,
+         SUM(CASE WHEN gender = ‘F’ THEN 1 ELSE 0 END) as numfemales,
+         MIN(first_orderdate) as first_orderdate,
+         DATEDIFF(dd, MIN(first_orderdate),
+                  MIN(cutoff_date)) as days_since_first_order,
+         MIN(cutoff_date) as cutoff_date
+  FROM customer c JOIN
+       (SELECT customerid, MIN(orderdate) as first_orderdate
+        FROM orders o
+        GROUP BY customerid) o
+      ON c.customerid = o.customerid CROSS JOIN
+      (SELECT ‘2016-01-01’ as cutoff_date) const
+  WHERE o.first_orderdate < const.cutoff_date
+  GROUP BY householdid
+This query looks up the earliest order date for customers. Only customers with an order before the cutoff date are included in the driving table. Notice that the cutoff date is included as a constant date, using a CROSS JOIN and Const subquery.
+Looking Up Data
+Looking up data uses the JOIN operation. There are actually two forms of lookup, one using a fixed table that describes features that do not change. The
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 581
+￼￼other type summarizes customers along various dimensions and incorporates this information back into the customer signature. Such historical summaries along business dimensions can be very valuable.
+Fixed Lookup Tables
+Fixed lookup tables contain information that does not change over time. Therefore, these tables can be included without reference to the cutoff date. The classic example is census information and other reference tables in the database. The data from the 2000 Census is the data from the 2000 Census. Although this data does not change, the 2010 Census data will supersede it, just as the 2000 Census data replaced the 1990 data.
+The following information from the census data would be useful in a cus- tomer signature for purchases:
+■■ Household median income;
+■■ Education variables; and,
+■■ Number of households.
+Using this information requires a zip code for each customer. Often, the zip code (and other geocoded information) would be a column in a household table and hence part of the driving table. This example uses the most recent zip code in each household, obtained from the following query:
+  SELECT householdid, RIGHT(datezip, 5) as firstzip
+  FROM (SELECT householdid, MAX(cal.iso+zipcode) as datezip
+        FROM customer c JOIN orders o ON o.customerid = c.customerid JOIN
+             calendar cal ON o.orderdate = cal.date CROSS JOIN
+             (SELECT ‘2016-01-01’ as cutoff_date) const
+        WHERE SUBSTRING(zipcode, 1, 1) BETWEEN ‘0’ AND ‘9’ AND
+              SUBSTRING(zipcode, 2, 1) BETWEEN ‘0’ AND ‘9’ AND
+              SUBSTRING(zipcode, 3, 1) BETWEEN ‘0’ AND ‘9’ AND
+              SUBSTRING(zipcode, 4, 1) BETWEEN ‘0’ AND ‘9’ AND
+              SUBSTRING(zipcode, 5, 1) BETWEEN ‘0’ AND ‘9’ AND
+              LEN(zipcode) = 5 AND
+              orderdate < cutoff_date
+        GROUP BY householdid) h
+Notice that “most recent zip code” really means “most recent zip code before the cutoff date,” so the cutoff date is needed. This query converts the order date to a string of the form “YYYYMMDD,” using the Calendar table. It then appends the zip code to this value, and then takes the maximum value. The result is the most recent order date before the cutoff date with its zip code. The last five char- acters from this maximum value constitute the most recent zip code. This method was discussed in Chapter 2.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼582 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼This query only considers zip codes that contain five digits, because some zip codes have invalid values. Some households do not have a correspond- ing zip code.
+Note that the expression in the WHERE clause that chooses the appropriate zip codes is not:
+  zipcode BETWEEN ‘00000’ AND ‘99999’
+The problem is that poorly formed zip codes such as ‘1ABC9’ would fall into this range. Each digit needs to be tested separately.
+With the appropriate zip code, the lookup then takes the form:
+  SELECT householdid, zc.*
+  FROM (<hh first zip subquery>) hhzip LEFT OUTER JOIN
+        zipcensus zc
+        ON hhzip.firstzip = zc.zipcode
+This query simply takes the zip code query, joins in Zipcensus, and extracts the columns of interest.
+Customer Dimension Lookup Tables
+Some very powerful lookup tables are summaries of customer behavior along various dimensions. For example, the following might be interesting for vari- ous applications:
+■■ Penetration by zip code;
+■■ Average transaction amount by channel;
+■■ Average transaction amount in the state; and,
+■■ Stop rate by channel, market, and monthly fee.
+These are examples of summaries of customer behavior that are looked up along specific dimensions.
+It is tempting to create the summaries using simple aggregations. Resist this temptation, because this is the wrong approach. All the data in the summaries have to be from a period before the cutoff date to meet the requirements of the input variables. A simple aggregation over all the data includes information from the same time frame as the target.
+WARNING Whensummarizingvariablesforcustomersignatures—suchas historical churn rates by handset type or historical purchases by zip code — be sure that the data in the summary table comes from a time frame before the target variables’.
+￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 583
+￼￼As an example, let’s consider penetration by zip code, which is the number of households in a zip code that have an order divided by the number of households in the zip code. For the purpose of this discussion, only the num- ber of households needs to be calculated, because the penetration is simply this number divided by the number of households in the zip code.
+The following query is the basic query for this type of information when there is a constant cutoff date:
+  SELECT zipcode, COUNT(DISTINCT householdid) as numhhwithorder
+  FROM customer c JOIN orders o ON c.customerid = o.customerid
+  GROUP BY zipcode
+This query simply counts the number of households in a zip code.
+There are two problems with this summary, one obvious and one subtle. The obvious problem is that it does not use the cutoff date. This means that the resulting columns include information from the target time frame. The subtle problem is that as the cutoff date changes, different amounts of time are used to determine the penetration. As a result, customer signatures with more recent cutoff dates necessarily have larger penetrations than customer signa-
+tures with earlier cutoff dates. The penetration can only grow over time. The following query solves both these problems:
+  SELECT zipcode, COUNT(DISTINCT householdid) as numhh
+  FROM customer c JOIN orders o ON c.customerid = o.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoffdate) const
+  WHERE DATEDIFF(dd, orderdate, cutoffdate) BETWEEN 1 AND 365
+  GROUP BY zipcode
+This query calculates the number of households in each zip code that make a purchase in the year before the cutoff date. Using a fixed period of time before the cutoff date makes the variable more comparable for different cutoff dates.
+The preceding approach works for a fixed cutoff date. When the cutoff date differs for each household, the driving table is needed to get the date:
+  SELECT zipcode, COUNT(DISTINCT dt.householdid) as numhh
+  FROM (<driving table>) dt LEFT OUTER JOIN
+       (SELECT c.householdid, o.*
+        FROM customer c JOIN orders o ON c.customerid = o.customerid) c
+       ON c.householdid = dt.householdid AND
+          DATEDIFF(dd, orderdate, cutoff_date) BETWEEN 1 AND 365
+  GROUP BY zipcode
+This query is similar to the previous query. The difference is that the cutoff date is not constant. Instead, it comes from the driving table. Using the cut- off date ensures that future information is not accidentally incorporated into the signature.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼584 Chapter 12 ■ Building Customer Signatures for Further Analysis Initial Transaction
+A lot of information about customers is available in the first transaction. This might include the sections of the web page on the first visit, the contents of the market basket on the first purchase, or the subject of the first complaint. This example brings in information from the first transaction into the Orders table.
+Without Window Functions
+Unfortunately, SQL does not have direct support for joining in the first trans- action. With the purchases data, it is possible to do something quite close, because the driving table includes the customer start date, which is also the first order date. This can be used to join in the orders data:
+         SELECT dt.householdid, firsto.*
+         FROM (<driving table>) dt LEFT OUTER JOIN
+              (SELECT c.householdid, o.*
+               FROM customer c JOIN orders o
+                    ON c.customerid = o.customerid) firsto
+              ON firsto.householdid = dt.householdid AND
+                 firsto.orderdate = dt.first_orderdate
+Although this looks like a good idea, the problem is that some customers have multiple orders on the first day. There are several approaches to solving the problem:
+■■ Fix the orders data so the order date has a time stamp in addition to a date stamp.
+■■ Treatallordersonthefirstdayasasingleorder. ■■ Choose a single, reasonable first day transaction.
+The first possibility is generally a non-starter. Data analysis projects often find situations where the source data could be better. Alas, fixing data problems is usually outside the scope of such projects.
+The second approach requires combining multiple orders on the same day. The problem is that data such as the original channel and the original payment type need to be combined from more than one order. There is no obvious way to do this consistently.
+The preferred solution is to choose a single, reasonable first day transaction. We have already encountered his problem of having multiple transactions on the same date in Chapter 8. To review, this is a cumbersome query that requires the following steps:
+1. Findtheearliestorderdateforeachhousehold;
+2. Findtheminimumorderidforeachhouseholdonthatorderdate; and then,
+￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 585 3. Usetheminimumorderidtoidentifythecorrectorderforthecustomer
+signature.
+Figure 12-5 shows the dataflow diagram for the following query:
+  SELECT householdid, o.*
+  FROM (SELECT ho.householdid, MIN(o.orderid) as minorderid
+        FROM (SELECT householdid, MIN(orderdate) as orderdate
+              FROM customer c JOIN orders o ON o.customerid = c.customerid
+              GROUP BY householdid) ho JOIN
+             customer c
+             ON ho.householdid = c.householdid JOIN
+             orders o
+             ON c.customerid = o.customerid AND
+                o.orderdate = ho.orderdate
+        GROUP BY ho.householdid) firstorder JOIN
+       orders o
+       ON o.orderid = firstorder.minorderid
+This query follows the structure just described. The innermost query finds the first order date. The next subquery identifies the first order id on the first order date, which is then used to select the columns of interest from the first order.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼ho
+￼READ
+orders
+￼￼AGGREGATE
+group by householdid
+minoorddate = MIN(orderdate)
+￼￼￼READ
+customer
+JOIN
+on customerid
+READ
+customer
+READ
+orders
+￼￼￼JOIN
+on householdid
+JOIN
+on customerid
+orderdate = minorddate
+READ
+orders
+JOIN
+on customerid
+orderid = minorid
+￼￼￼￼￼￼￼￼￼￼￼￼AGGREGATE
+group by householdid
+minorderidd = MIN(orderid)
+￼￼firstorder
+Figure 12-5: This dataflow diagram finds the first order for each household. www.it-ebooks.info
+OUTPUT
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼586 Chapter 12 ■ Building Customer Signatures for Further Analysis With Window Functions
+Window ranking functions greatly simplify finding the first transaction, because they make it easy to assign a sequence number to the orders based on the order date:
+         SELECT h.*
+         FROM (SELECT householdid, o.*,
+                      ROW_NUMBER() OVER (PARTITION BY householdid
+                                         ORDER BY orderdate, orderid) as seqnum
+               FROM customer c JOIN orders o ON o.customerid = c.customerid) h
+         WHERE seqnum = 1
+The subquery uses the ROW_NUMBER() window function to assign a sequence number to the orders. This function assigns numbers to orders within each household, starting with the first one (defined by the earliest ORDERDATE and smallest ORDERID). The first order is simply the one whose sequence number is one.
+Sequence numbers can be quite convenient for analytic purposes. They make it easier to determine what happens first and next and right before something else. For this reason, it can be a good idea to include them when creating a data warehouse. If they are not there, then window functions can calculate them.
+TIP Sequence numbers on transactions are useful for finding the first transaction (as well as the next and previous ones). They can be added easily using the ROW_NUMBER() window function.
+Pivoting
+Pivoting is a common, special case of summarizing data. It is the process of taking customer transactions that follow a regular pattern and placing them into buckets along a specified dimension. Each pivot column corresponds to a particular value or group of values, such as transactions during a month or transactions containing a particular product. The columns themselves contain basic summaries, such as:
+■■ Counts of orders;
+■■ Sum of dollar amounts;
+■■ Averageofdollaramounts;or,
+■■ Counts of some distinguishing feature (such as counts of distinct orders).
+The examples in this section calculate the first of these.
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 587 The purchases dataset has several obvious pivots along purchase dimensions:
+■■ Payment type pivot — summarizing the transactions by payment type.
+■■ Campaign pivot — summarizing the transactions by campaign.
+■■ Time pivot — summarizing the transactions by time period.
+■■ Product pivot — summarizing the transactions by product information.
+This section walks through the process of adding all these pivots to the cus- tomer signature.
+￼￼￼￼USING EXCEL TO GENERATE SQL CODE
+Creating pivot columns requires repetitive code that can be quite cumbersome to type in. Chapter 2 contains examples of using SQL to generate code. Excel can also be used to generate SQL statements.
+For example, the payment type pivot contains several SELECT statements similar to:
+   SUM(CASE WHEN paymenttype = ‘VI’ THEN 1 ELSE 0 END) as pt_vi,
+Assume that the various payment type values are in one column (for instance, the column B) and the preceding statement in cell $A$1. To get the appropriate statement in column C, use the following formula:
+   =SUBSTITUTE($A$1, “VI”, $B2)
+And copy this down the appropriate rows in column C. These values can then be copied into the SQL expression. Notice that the resulting SQL expression includes the column name.
+It is a good idea to include extra spaces before the SUM() for aesthetic reasons. Also, the final comma may need to be removed from the last expression to prevent a syntax error in the SQL.
+The ability to generate code in Excel is useful for other purposes as well. For instance, sometimes character strings contain unrecognized characters and we might want to look at the actual numeric values (these are typically ASCII values on most modern computers). For this, the SELECT statement might look like:
+SELECT ASCII(SUBSTRING(<str>, 1, 1)), SUBSTRING(<str>, 1, 1), ASCII(SUBSTRING(<str>, 2, 1)), SUBSTRING(<str>, 2, 1) ...
+Each expression extracts one character from the string and converts it to the ASCII code. The character itself is also included after the code.
+Generating all these SELECT statements is cumbersome. Excel can make this much easier, using basically the same process explained previously. The only difference is that column B contains the numbers 1, 2, 3, and so on, rather than values from the database.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼588 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼SQL does have a shortcoming when it comes to pivoting columns. There is no automatic pivot statement that creates multiple columns. Each column has to be created independently. Although this is a hassle, it only needs to be done once. When there are large numbers of columns, Excel can be used to auto- matically generate the code, as discussed in the aside “Using Excel to Generate SQL Code.”
+Payment Type Pivot
+The first example of a pivot is by payment type. This is the simplest, because it is simply an attribute of an order, independent of time. There are six different payment types, which are shown in Table 12-1.
+Table 12-1: Payment Types in Orders Table
+￼PAYMENT TYPE
+?? AE DB MC OC VI
+# ORDERS
+313 47,382 12,739 47,318 8,214 77,017
+DESCRIPTION
+Unknown American Express Debit Card MasterCard Other Credit Card Visa
+￼￼￼￼￼￼The two smallest groups, “OC” and “??,” can be combined into a single group, indicating some other credit card. The following query does the pivot:
+  SELECT householdid,
+         SUM(CASE WHEN paymenttype = ‘VI’ THEN 1 ELSE 0 END) as pt_vi,
+         SUM(CASE WHEN paymenttype = ‘MC’ THEN 1 ELSE 0 END) as pt_mc,
+         SUM(CASE WHEN paymenttype = ‘AX’ THEN 1 ELSE 0 END) as pt_ax,
+         SUM(CASE WHEN paymenttype = ‘DB’ THEN 1 ELSE 0 END) as pt_db,
+         SUM(CASE WHEN paymenttype IN (‘??’, ‘OC’) THEN 1 ELSE 0 END
+            ) as pt_oc
+  FROM orders o JOIN customer c ON o.customerid = c.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoff_date) const
+  WHERE orderdate < cutoff_date
+  GROUP BY householdid
+The pivoting aspect of the query simply uses the CASE statement to calculate columns based on the payment type and assigning them reasonable names. Because the results are for the customer signature, the aggregation is at the household level, which requires joining in the Customer table. The cutoff date is also needed to restrict orders to those before the cutoff date.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 589 Channel Pivot
+The next step is to add in the channel pivot into the same query. This is only slightly more complicated, because the channel is in the Campaign table, so an additional join is needed. Table 12-2 shows the campaigns with the num- ber of orders.
+￼￼Table 12-2: Channels in Orders Table CHANNEL
+PARTNER WEB
+AD
+INSERT REFERRAL MAIL
+BULK CATALOG EMPLOYEE EMAIL INTERNAL CONFERENCE SURVEY
+COUNT
+84,518 53,362 40,652
+7,333 2,550 1,755 1,295
+710 642 128
+34 3 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼As with many categorical columns, a small number are quite common and many are uncommon. There are pivot columns for the first three, with the remaining going into an “OTHER” column.
+The channel pivot can be added right onto the query for the payment type pivot, as in the query:
+  SELECT householdid,
+         SUM(CASE WHEN paymenttype = ‘VI’ THEN 1 ELSE 0 END) as pt_vi,
+...
+SUM(CASE WHEN channel = ‘PARTNER’ THEN 1 ELSE 0 END) as ca_partner, SUM(CASE WHEN channel = ‘WEB’ THEN 1 ELSE 0 END) as ca_web, SUM(CASE WHEN channel = ‘AD’ THEN 1 ELSE 0 END) as ca_ad, SUM(CASE WHEN channel NOT IN (‘PARTNER’, ‘WEB’, ‘AD’) THEN 1
+                  ELSE 0 END) as ca_other
+  FROM orders o JOIN campaign ca ON o.campaignid = ca.campaignid JOIN
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼590 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼￼￼￼       customer c ON o.customerid = c.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoff_date) const
+  WHERE orderdate < cutoff_date
+  GROUP BY householdid
+This query joins in the campaign table to get the channel code. It would be more fitting to use LEFT OUTER JOIN rather than a regular JOIN, because this explicitly preserves all the rows in the Orders table. However, in this case, the JOIN never has an unmatched value, because all campaign ids in the orders table are present in the lookup table.
+Year Pivot
+The next example of pivoting is by time. The cutoff date used for the driving table is 2016-01-01. The idea is to summarize the number of orders placed in each year. A first attempt at doing this might have column names such as ORDERS2013, ORDERS2014, and ORDERS2015. This works when the cutoff date is in 2016, but not for other cutoff dates.
+Instead, the column names should be relative to the cutoff date. The fol- lowing query adds the appropriate SELECT clauses onto the payment type/ channel pivot:
+  SELECT householdid,
+         . . .,
+         SUM(CASE WHEN DATEDIFF(YY, orderdate, cutoff_date) = 0 THEN 1
+                  ELSE 0 END) as yr_1,
+         SUM(CASE WHEN DATEDIFF(YY, orderdate, cutoff_date) = 1 THEN 1
+                  ELSE 0 END) as yr_2,
+         SUM(CASE WHEN DATEDIFF(YY, orderdate, cutoff_date) = 2 THEN 1
+                  ELSE 0 END) as yr_3,
+         SUM(CASE WHEN DATEDIFF(YY, orderdate, cutoff_date) = 3 THEN 1
+                  ELSE 0 END) as yr_4
+  FROM orders o JOIN campaign ca ON o.campaignid = ca.campaignid JOIN
+       customer c ON o.customerid = c.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoff_date) const
+  WHERE orderdate < cutoff_date
+  GROUP BY householdid
+This pivot calculates the number of years before the cutoff date using the DATEDIFF() function with the YY argument. Calculating the number of years between two dates is a bit complicated because of leap years. For instance, there is one year from Feb 28, 2001 to Feb 28, 2002. Is there one year from Feb 28, 2000 to Feb 27, 2001? There are the same number of days between both pairs of dates. This formulation leaves the business rules for dealing with leap years to the database.
+TIP Whenpossible,leavedatecalculationsuptothedatabase,forthingslike calculating the number of months or years between two dates.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 591 Order Line Information Pivot
+The goal of the product pivot is to count the number of orders having a prod- uct in each of the eight product groups, which are summarized in Table 12-3. It is desirable to include the order line information in the same subquery as the order information, because order lines are logically related to orders. This also limits the number of places where the query needs to lookup HOUSEHOLDID and apply the date restriction.
+￼￼Table 12-3: Product Group Information in Orders PRODUCT GROUP NUMBER OF ORDER LINES
+BOOK 113,210 ARTWORK 56,498 OCCASION 41,713 FREEBIE 28,073 GAME 18,469 APPAREL 12,348 CALENDAR 9,872 OTHER 5,825 #N/A 9
+NUMBER OF ORDERS
+86,564 45,430 37,898 22,261 11,972 10,976 8,983 5,002 9
+￼￼￼￼￼￼￼￼￼￼Ignoring the desire to include the product pivot in the ongoing pivot query, the following subquery summarizes the order line information:
+  SELECT householdid,
+         SUM(CASE WHEN p.productgroupname = ‘BOOK’ THEN 1 ELSE 0 END
+            ) as pg_book,
+         SUM(CASE WHEN p.productgroupname = ‘ARTWORK’ THEN 1 ELSE 0 END
+            ) as pg_artwork,
+         SUM(CASE WHEN p.productgroupname = ‘OCCASION’ THEN 1 ELSE 0 END
+            ) as pg_occasion,
+         SUM(CASE WHEN p.productgroupname = ‘FREEBIE’ THEN 1 ELSE 0 END
+            ) as pg_freebie,
+         SUM(CASE WHEN p.productgroupname = ‘GAME’ THEN 1 ELSE 0 END
+            ) as pg_game,
+         SUM(CASE WHEN p.productgroupname = ‘APPAREL’ THEN 1 ELSE 0 END
+            ) as pg_apparel,
+         SUM(CASE WHEN p.productgroupname = ‘CALENDAR’ THEN 1 ELSE 0 END
+            ) as pg_calendar,
+         SUM(CASE WHEN p.productgroupname = ‘OTHER’ THEN 1 ELSE 0 END
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼) as pg_other
+www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼592 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼￼￼￼  FROM orderline ol JOIN product p ON ol.productid = p.productid JOIN
+       orders o ON ol.orderid = o.orderid JOIN customer c
+       ON c.customerid = o.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoff_date) const
+  WHERE orderdate < cutoff_date
+  GROUP BY c.householdid
+This query works, but not as part of the pivot query we’ve been building. Just joining in the Orderline table causes problems, because there are multiple orderlinesineachorder.Inotherwords,theSUM(CASE . . . )statementsend up counting order lines instead of orders, which is not the intention.
+There are two ways to include the product group pivot in the pivoting query. One method is to include the Orderline and then change all the previous SUM(CASE . . . )expressionstoCOUNT(DISTINCT CASE . . . orderid).This counts all the distinct ORDERIDs and hence orders rather than order lines.
+This is a clever solution, and it works for a handful of columns. However, changing the structure of the previous query is generally not a good idea, because such changes make queries less clear and less maintainable. In addi- tion, counting distinct order ids is likely to be slower than simply adding up a bunch of ones and zeros.
+A better approach is to summarize the order line data twice, once at the orders level and then again at the household level. The following query shows the summary at the order level:
+  SELECT orderid,
+         MAX(CASE WHEN p.productgroupname = ‘BOOK’ THEN 1 ELSE 0 END
+            ) as pg_book,
+         MAX(CASE WHEN p.productgroupname = ‘ARTWORK’ THEN 1 ELSE 0 END
+            ) as pg_artwork,
+         MAX(CASE WHEN p.productgroupname = ‘OCCASION’ THEN 1 ELSE 0 END
+            ) as pg_occasion,
+         MAX(CASE WHEN p.productgroupname = ‘FREEBIE’ THEN 1 ELSE 0 END
+            ) as pg_freebie,
+         MAX(CASE WHEN p.productgroupname = ‘GAME’ THEN 1 ELSE 0 END
+            ) as pg_game,
+         MAX(CASE WHEN p.productgroupname = ‘APPAREL’ THEN 1 ELSE 0 END
+            ) as pg_apparel,
+         MAX(CASE WHEN p.productgroupname = ‘CALENDAR’ THEN 1 ELSE 0 END
+            ) as pg_calendar,
+         MAX(CASE WHEN p.productgroupname = ‘OTHER’ THEN 1 ELSE 0 END
+            ) as pg_other
+  FROM orderline ol JOIN product p ON ol.productid = p.productid
+  GROUP BY orderid
+This query uses MAX() to create an indicator of whether each order has a par- ticular product group, rather than SUM(), which counts the order lines. This query does not join in the HOUSEHOLDID, nor does it apply the restriction on ORDERDATE. These restrictions can be applied at the next level, because a
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 593
+￼￼single order has the same household id and order date. On the other hand, the database is doing additional processing, summarizing the order lines for orders that are not part of the final result. So, in some circumstances, including the restrictions is useful.
+Summarizing the order lines at the order level is only half the work. This order summary needs to be summarized again at the household level. The result is that the final summarization of the order information has the form:
+SELECT householdid, ...
+         SUM(pg_book) as pg_book,
+         SUM(pg_artwork) as pg_artwork,
+         SUM(pg_occasion) as pg_occasion,
+         SUM(pg_freebie) as pg_freebie,
+         SUM(pg_game) as pg_game,
+         SUM(pg_apparel) as pg_apparel,
+         SUM(pg_calendar) as pg_calendar,
+         SUM(pg_other) as pg_other
+  FROM orders o JOIN campaign ca
+       ON o.campaignid = ca.campaignid LEFT OUTER JOIN
+       (<order summary query>) olsum
+       ON olsum.orderid = o.orderid JOIN
+       customer c
+       ON o.customerid = c.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoff_date) const
+  WHERE orderdate < cutoff_date
+  GROUP BY householdid
+The order line subquery is joined in using a LEFT
+that orders are not lost, even if those orders have no order lines. This is good practice, even though all orders do have order lines in this case.
+By the way, the subquery that summarizes the order lines at the order level could use SUM() to count order lines rather than MAX() to create an indicator flag. The outer query would need to count orders using a slightly different expression:
+  SUM(CASE WHEN pg_book > 0 THEN 1 ELSE 0 END) as pg_book
+These two forms are equivalent, but the first way has slightly simpler code. On the other hand, the second produces an intermediate result that could be used for other purposes.
+Although this query looks complicated, it is actually composed of well- defined pieces, carefully sewn together. It is worth emphasizing again that this structure works for a couple of reasons. First, each subquery is created subject to the constraints of the customer signature. Also, each table and subquery is carefully joined in with consideration of how it affects the number of rows in the final result. Care is taken not to lose rows or to multiply rows inadvertently.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+OUTER JOIN. This ensures
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼594 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼￼WARNING When joining tables together for a customer signature, be very careful that there are no duplicate rows in the tables being joined into the driving table. Duplicate rows can inadvertently multiply the number of rows in the customer signature table.
+Summarizing
+Pivoting data is one method of summarizing transactions, basically aggregating information along various dimensions. There are other ways to summarize data. Some fit directly into the pivoting query built in the previous section. Some are a bit more complicated and provide an opportunity to add in customer-centric business measures.
+Basic Summaries
+Basic summaries of the orders data include information such as:
+■■ Totalnumberoforders;
+■■ Totalnumberofunitsordered;
+■■ Totaldollaramountoforders;and,
+■■ Average dollar amount.
+These summaries can be calculated in the same way as the pivoted data. The only difference is the particular expressions used for calculating the values.
+More Complex Summaries
+There are interesting indicators of customer behavior lurking inside cus- tomer transactions. For instance, one credit card company tracks how often a customer spends more than $100 at a restaurant more than 50 miles from the customer’s home.
+In the purchases data, the following are potentially interesting questions:
+■■ How many of the customer’s orders are over $200?
+■■ What is the maximum number of different products in any one order?
+■■ How many different products has the customer ordered over time?
+■■ What is the longest duration between the order date and the ship date?
+■■ How often has the ship date been more than one week after the order date?
+These are posed as questions. However, they suggest customer attributes that might be useful for the customer signature.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 595 The following query calculates answers to the questions:
+  SELECT householdid,
+         COUNT(DISTINCT CASE WHEN o.totalprice > 200 THEN o.orderid END
+) as numgt2000,
+COUNT(DISTINCT productid) as numhhprods,
+MAX(op.numproducts) as maxnumordprods,
+MAX(DATEDIFF(dd, o.orderdate, ol.shipdate)) as maxshipdelay, COUNT(DISTINCT CASE WHEN DATEDIFF(dd, o.orderdate, ol.shipdate) > 7
+                             THEN o.orderid END)
+  FROM customer c JOIN orders o ON c.customerid = o.customerid JOIN
+       orderline ol ON o.orderid = ol.orderid JOIN
+       (SELECT o.orderid, COUNT(DISTINCT productid) as numproducts
+        FROM orders o JOIN orderline ol ON o.orderid = ol.orderid
+        GROUP BY o.orderid) op
+       ON o.orderid = op.orderid
+  GROUP BY householdid
+This version of the query has the same problem as some of the earlier queries. It does not take the cutoff date into account. Adding the Const subquery fixes this. In addition, the WHERE clause needs to take into account that both ORDER- DATE and SHIPDATE should be before the cutoff date:
+  SELECT householdid,
+         COUNT(DISTINCT CASE WHEN o.totalprice > 200 THEN o.orderid END
+) as numgt2000,
+COUNT(DISTINCT productid) as numhhprods,
+MAX(op.numproducts) as maxnumordprods,
+MAX(DATEDIFF(dd, o.orderdate, ol.shipdate)) as maxshipdelay, COUNT(DISTINCT CASE WHEN DATEDIFF(dd, o.orderdate, ol.shipdate) > 7
+                             THEN o.orderid END)
+  FROM customer c JOIN orders o ON c.customerid = o.customerid JOIN
+       orderline ol ON o.orderid = ol.orderid JOIN
+       (SELECT o.orderid, COUNT(DISTINCT productid) as numproducts
+        FROM orders o JOIN
+             orderline ol
+             ON o.orderid = ol.orderid
+        GROUP BY o.orderid) op
+       ON o.orderid = op.orderid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoffdate) const
+  WHERE o.orderdate < cutoffdate AND
+        ol.shipdate < cutoffdate
+  GROUP BY householdid
+Instead of a constant cutoff date, the driving table could be joined in on the household id to get a cutoff date for each customer.
+Clearly, only orders whose order date precedes the cutoff date should be included in the customer signature. However, it is not clear if the ship date should have this restriction. The decision depends on how the data is loaded
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼596 Chapter 12 ■ Building Customer Signatures for Further Analysis
+into and updated in the database. To understand how to handle the ship date,
+it helps to understand how it is created. The following are possibilities:
+■■ Only completed orders are in the data. An order is completed when the last item is shipped.
+■■ All orders are in the data; order lines have ship dates that are updated as new information is available.
+■■ All orders are in the data, but order lines are available only after they ship.
+These different scenarios affect the relationship between the ship date and the cutoff date. If the first is true, then orders are only available after the last ship date, so the signature should only include orders whose last ship date is before the cutoff date. If the second scenario is true, then it is okay to ignore the ship date. Future ship dates are “intended ship dates.” If the third is true, then very recent orders should be smaller than orders even a week old. In addition, some orders might have no order lines.
+Understanding the relationship between dates in the database and when the data is loaded is important. We could imagine a scenario where order lines are only available after they ship, although the corresponding orders are already in the database. An analysis might “discover” that the most recent orders are smaller than expected. This fact would merely be an artifact of how the data is loaded into the database, because not all order lines have shipped for the most recent orders (in this scenario).
+WARNING It is important to understand the process of loading the database. This process leaves artifacts in the data that might be discovered when analyzing the data.
+Extracting Features
+In some data sources, the most interesting features are the descriptions of products and channels, markets and retailers. These descriptions include more complex data types, such as text and geographic position. The information in these columns can be quite informative. This section discusses some ideas about extracting information for geographic and character data types.
+Geographic Location Information
+Geographic location information is represented as latitudes and longitudes. When mapped, this information is quite interesting. However, maps do not fit well into customer signatures nor are they well-suited for statistical and data mining algorithms.
+￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 597
+￼￼Longitudes and latitudes are generated when addresses are geocoded. The most obvious address is the customer address. However, there are addresses for retailers, and ATM machines, and city centers, and phone lines, and Inter- net service provider points-of-presence, and so on. Such geocoding leads to questions such as:
+■■ How far is a customer from the center of the nearest MSA (metropolitan statistical area)?
+■■ How many purchases were made more than 100 miles from home?
+■■ What proportion of ATM transactions is within 10 miles of home?
+■■ What is the direction from the customer to the nearest MSA center?
+These questions readily turn into customer attributes.
+There are two basic types of information. The most common is distance,
+which was discussed in Chapter 4, along with formulas for calculating the dis- tance between two geographic points.
+The other type of information is directional. This is calculated using a basic trigonometric formula:
+  direction = ATAN(vertical distance/horizontal distance))*180/PI()
+Calculating distances was discussed in Chapter 4.
+Date Time Columns
+Customer behavior varies by time of day and day of week and season of the year. These behaviors can distinguish between customers. Some businesses classify their customers as “weekday lunch buyers” or “weekend shoppers” or “Monday complainers.” These are examples of business classifications that can be captured in the customer signature.
+TIP Thetimingofcustomerbehaviorisagoodexampleofabusinessmetric to incorporate in the customer signature.
+The customer signature can capture the raw information by pivoting date and time information. For instance, the following SELECT statement can be added to the pivot query to add up the number of orders made on different days of the week:
+SELECT householdid, ...
+         SUM(CASE WHEN cal.dow = ‘Mon’ THEN 1 ELSE 0 END) as dw_mon,
+         SUM(CASE WHEN cal.dow = ‘Tue’ THEN 1 ELSE 0 END) as dw_tue,
+         SUM(CASE WHEN cal.dow = ‘Wed’ THEN 1 ELSE 0 END) as dw_wed,
+         SUM(CASE WHEN cal.dow = ‘Thu’ THEN 1 ELSE 0 END) as dw_thu,
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼598 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼￼￼￼SUM(CASE WHEN cal.dow = ‘Fri’ THEN 1 ELSE 0 END) as dw_fri, SUM(CASE WHEN cal.dow = ‘Sat’ THEN 1 ELSE 0 END) as dw_sat, SUM(CASE WHEN cal.dow = ‘Sun’ THEN 1 ELSE 0 END) as dw_sun, ...
+  FROM orders o JOIN campaign ca ON o.campaignid = ca.campaignid JOIN
+       calendar cal ON o.orderdate = cal.date JOIN
+       customer c ON o.customerid = c.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoff_date) const
+  WHERE orderdate < cutoff_date
+  GROUP BY householdid
+This query uses the Calendar table to find the day of the week. An alternative is to use a database function, such as DATENAME(dw, <col>). Using the Calendar table makes further refinements possible, such as distinguishing holidays from non-holidays.
+If ORDERDATE had a time component, the following SELECT statement would add up the number of orders during from midnight to 3:59:59.999 a.m.:
+  SELECT SUM(CASE WHEN DATEPART(hh, orderdate) BETWEEN 0 AND 3
+                  THEN 1 ELSE 0 END) as hh00_03
+This is the same idea as the earlier pivot statements, but applied to times.
+Patterns in Strings
+Character strings contain descriptions that often have interesting information embedded in them. SQL has only rudimentary string manipulation functions, but these are often sufficient for extracting interesting features. Although the LIKE operator can be useful, it is often quite inefficient and can be replaced with more efficient functions. This section contains some examples of feature extraction.
+TIP Descriptions and names often contain very interesting information. However, this needs to be extracted feature by feature to be most useful for the customer signature.
+Email Addresses
+An email address has the form “<user name>@<domain name>”, where the domain name has an extension, such as “.com,” “.uk,” or “.gov.” The domain name and domain name extension can be interesting features about users.
+The following code extracts these features from an email address:
+  SELECT LEFT(emailaddress, CHARINDEX(‘@‘, emailaddress)-1) as username,
+         SUBSTRING(emailaddress, CHARINDEX(‘@‘, emailaddress)+1, 1000
+                  ) as domain,
+         RIGHT(emailaddress, CHARINDEX(‘.’, REVERSE(emailaddress))
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼) as extension
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 599
+￼￼The user name takes all characters up to the “@,” and the domain is all charac- ters after it. The domain extension is everything after the last period. This expression uses a trick to find the position of the last period by finding the position of the first period in the reversed string.
+Addresses
+Addresses are complicated strings that are difficult to understand. Geocoding them provides one set of information. However, the address line itself might provide information about customers:
+■■ Is the address is for an apartment?
+■■ Is the address is for a PO Box?
+The following code identifies whether there is an apartment number in an address or a post office box, assuming that there is a column called ADDRESS:
+  SELECT (CASE WHEN CHARINDEX(‘#‘, address) > 0 OR
+                    CHARINDEX(‘apt.’, LOWER(address)) > 0 OR
+                    CHARINDEX(‘ apt ‘, LOWER(address)) > 0 OR
+                    CHARINDEX(‘ unit ‘, LOWER(address)) > 0 THEN 1
+               ELSE 0 END) as hasapt,
+         (CASE WHEN LEFT(REPLACE(UPPER(address), ‘.’, ‘’), 6) = ‘PO BOX’
+To find an apartment indicator, the query looks for “ apt.” or “apt ” (rather than “apt”) to avoid matching street names such as “Sanibel-Captiva Road,” “Captains Court,” and “Baptist Camp Road.” For post office boxes, the address should start with “PO BOX” or “P.O. Box.”
+Product Descriptions
+Product descriptions often contain information such as:
+■■ Color;
+■■ Flavor; and,
+■■ Special attributes (such as organic, low calories, and so on).
+Interesting attributes can be turned into flags, by determining whether the description contains a particular string. For instance:
+  (CASE WHEN CHARINDEX(‘diet’, desc) > 0 THEN 1 ELSE 0 END) as is_diet,
+  (CASE WHEN CHARINDEX(‘red’, desc) > 0 THEN 1 ELSE 0 END) as is_red,
+  (CASE WHEN CHARINDEX(‘organic’, desc) > 0 THEN 1 ELSE 0 END) as is_org
+These cases look for particular substrings in the description.
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼600 Chapter 12 ■ Building Customer Signatures for Further Analysis
+A product description might have a specific format. For instance, the first
+word may be the product group name. It can be extracted using:
+         SUBSTRING(desc, CHARINDEX(‘ ‘, desc), 1000) as productgroup
+Or, the last word might be something interesting such as the price:
+         RIGHT(desc, CHARINDEX(‘ ‘, REVERSE(desc)), 1000) as price
+Discovering what is interesting is a manual process that often involves reading through the descriptions and making judgments as to what is important for distinguishing among customers.
+Credit Card Numbers
+Credit card numbers are useful for analysis in two ways. The first is by identify- ing the type of credit card. The second is by identifying whether the same card is used over time. The first few digits of a credit card indicate the type of card, as discussed in Chapter 2, which has both the table mapping credit card numbers to credit card types and a SQL query for transforming the information.
+Comparing credit card numbers on different payment transactions is as easy as comparing two columns. However, storing credit card numbers in analytic databases poses a security risk, so it is not a good idea to store them explicitly.
+An alternative is to convert the credit card number to something that is not recognizable as a credit card number. One way is to have a master table that contains credit card numbers, with no duplicates. The row number in this table is stored instead of the credit card number, and very few people have access to the master table.
+Another approach uses hashing. There are many different hashing algorithms. One very simple algorithm that works well is something like the following:
+1. Treatthecreditcardnumberasanumber.
+2. Multiplythenumberbyalargeprimenumber. 3. Add another prime number.
+4. Dividebyyetanotherandtaketheremainder.
+This works because two different numbers very, very, very rarely get mapped to the same number. In addition, it is very difficult to extract the original credit card number unless you know the specific primes used in the formula.
+For instance, the following is an example of a formula to encode credit card numbers:
+         (ccnum*367373 + 101) % 2147483647
+All the constants used in this calculation are prime numbers.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 601 Summarizing Customer Behaviors
+The customer signature has been presented as a place to put lots of data ele- ments and basic summaries. It is also a place to put more complex summaries of customer behaviors that rise to being customer-centric business metrics.
+This section discusses three examples. The first is calculating the slope, the beta value, for series of transactions. The second is identifying weekend shop- pers, and the third is applying metrics to identify customers whose usage is decreasing.
+Calculating Slope for Time Series
+Pivoting numeric values creates time series, such as the dollar amount of pur- chases in a series of months. Using the ideas from Chapter 11, we can calculate the slope for these numbers.
+Most households in the purchases data have one order, which does not pro- vide a good example for finding a trend. Instead, the example is a related sum- mary at the zip code level: Which zip codes have seen an increase in customers in the years before the cutoff date? Notice that this question is still about what hap- pens before the cutoff date, so the resulting measures can be included in the customer signature.
+This section answers the question three different ways. The first is to use the pivoted values to calculate the slope. This is possible, but the SQL is messy. The second way is to summarize each year of data for the zip codes. The third method generalizes the second for any series of values.
+Calculating Slope from Pivoted Time Series
+Pivoted data has a separate column for each period of time. The following query calculates the number of households who place an order in each year for each zip code.
+  SELECT zipcode, COUNT(*) as cnt,
+         FLOOR(DATEDIFF(yy, ‘2009-01-01’, MIN(cutoffdate))) as numyears,
+         COUNT(DISTINCT (CASE WHEN DATEDIFF(yy, orderdate, cutoffdate) = 1
+                              THEN householdid END)) as year1,
+         COUNT(DISTINCT (CASE WHEN DATEDIFF(yy, orderdate, cutoffdate) = 2
+                              THEN householdid END)) as year2,
+         COUNT(DISTINCT (CASE WHEN DATEDIFF(yy, orderdate, cutoffdate) = 3
+                              THEN householdid END)) as year3,
+         COUNT(DISTINCT (CASE WHEN DATEDIFF(yy, orderdate, cutoffdate) = 4
+                              THEN householdid END)) as year4,
+         COUNT(DISTINCT (CASE WHEN DATEDIFF(yy, orderdate, cutoffdate) = 5
+                              THEN householdid END)) as year5,
+         COUNT(DISTINCT (CASE WHEN DATEDIFF(yy, orderdate, cutoffdate) = 6
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼602 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼￼￼                              THEN householdid END)) as year6,
+         COUNT(DISTINCT (CASE WHEN DATEDIFF(yy, orderdate, cutoffdate) = 7
+                              THEN householdid END)) as year7
+  FROM orders o JOIN customer c ON o.customerid = c.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoffdate) const
+  GROUP BY zipcode
+This query is carefully dependent on the cutoff date, so the results can be used in the customer signature. The number of years of data is contained in the col- umn NUMYEARS. The remaining columns contain the summaries by year.
+Chapter 11 provided the formula for the slope:
+  slope = (n*Sxy – Sx*Sy) / (n*Sxx – Sx*Sx)
+In the case of pivoted data, there are no explicit X-values. However, the X-values can be assumed to be a sequence of numbers starting with one for the oldest value. The resulting slope can be interpreted as the average num- ber of additional households that make a purchase in each succeeding year.
+The following query calculates the intermediate values and then the slope:
+  SELECT (n*Sxy - Sx*Sy)/(n*Sxx - Sx*Sx), a.*
+  FROM (SELECT zipcode, cnt,
+               numyears*1.0 as n,
+               numyears*(numyears+1)/2 as Sx,
+               numyears*(numyears+1)*(2*numyears+1)/6 as Sxx,
+               (CASE WHEN numyears < 2 THEN NULL
+WHEN numyears = 3 THEN year3 + year2 + year1
+WHEN numyears = 4 THEN year4 + year3 + year2 + year1 WHEN numyears = 5 THEN year5 + year4 + year3 + year2 +
+year1
+WHEN numyears = 6 THEN year6 + year5 + year4 + year3 +
+                                            year2 + year1
+                     ELSE year7 + year6 + year5 + year4 + year3 + year2 +
+                          year1 END) as Sy,
+               (CASE WHEN numyears < 2 THEN NULL
+                     WHEN numyears = 3 THEN 1*year3 + 2*year2 + 3*year1
+                     WHEN numyears = 4 THEN 1*year4 + 2*year3 + 3*year2 +
+                                            4*year1
+                     WHEN numyears = 5 THEN 1*year5 + 2*year4 + 3*year3 +
+                                            4*year2 + 5*year1
+                     WHEN numyears = 6 THEN 1*year6 + 2*year5 + 3*year4 +
+4*year3 + 5*year2 + 6*year1 ELSE 1*year7 + 2*year6 + 3*year5 + 4*year4 + 5*year3 +
+                          6*year2 + 7*year1 END) as Sxy
+        FROM (<zip summary query>) z) a
+This follows the logic from Chapter 11. The slope represents the growth in terms of the number of additional customers who make purchases each year in a zip code.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 603 Eliminating the intermediate sums makes the query even more cumber-
+some and prone to error:
+  SELECT (CASE WHEN numyears < 2 THEN NULL
+               WHEN numyears = 3
+               THEN numyears*(1*year3 + 2*year2 + 3*year1)-
+                    (numyears*(numyears+1)/2)*(year3 + year2 + year1)
+               WHEN numyears = 4
+               THEN numyears*(1*year4 + 2*year3 + 3*year2 + 4*year1)-
+(numyears*(numyears+1)/2)*(year4 + year3 + year2 + year1) WHEN numyears = 5
+THEN numyears*(1*year5 + 2*year4 + 3*year3 + 4*year2 +
+                    5*year1) - (numyears*(numyears+1)/2)*(year5 + year4 +
+                    year3 + year2 + year1)
+               WHEN numyears = 6
+               THEN numyears*(1*year6 + 2*year5 + 3*year4 + 4*year3 +
+                    5*year2 + 6*year1) -
+                   (numyears*(numyears+1)/2)*(year6 + year5 + year4 +
+                   year3 + year2 + year1)
+               ELSE numyears*(1*year7 + 2*year6 + 3*year5 + 4*year4 +
+                    5*year3 + 6*year2 + 7*year1) -
+                   (numyears*(numyears+1)/2)*(year7 + year6 + year5 +
+year4 + year3 + year2 + year1)
+END) / (1.0*numyears * numyears*(numyears+1)*(2*numyears+1)/6
+               - ((numyears*(numyears+1)/2))*(numyears*(numyears+1)/2)
+        ) as slope, z.*
+  FROM (<zip summary query>) z
+Under these circumstances, keeping the intermediate sums is preferable, even though they are not useful for modeling. One simplification is to remove the complicated CASE statement by assuming that all the pivot columns have data, but this assumption may not be true.
+Calculating Slope for a Regular Time Series
+An alternative approach that does not use the pivot columns is to change the summary used for the slope calculation, by creating a table with a separate row for each zip code and year:
+  SELECT zipcode, DATEDIFF(yy, orderdate, cutoffdate) as yearsago,
+         DATEDIFF(yy, ‘2009-01-01’, MIN(cutoffdate)) as numyears,
+         (DATEDIFF(yy, ‘2009-01-01’, MAX(cutoffdate)) -
+          DATEDIFF(yy, orderdate, cutoffdate)) as x,
+         COUNT(DISTINCT householdid) as y
+  FROM orders o JOIN customer c ON o.customerid = c.customerid CROSS JOIN
+       (SELECT ‘2016-01-01’ as cutoffdate) const
+  WHERE orderdate < cutoffdate
+  GROUP BY zipcode, DATEDIFF(yy, orderdate, cutoffdate)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼604 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼When there are no sales, the data is simply missing from this summary. The slope calculated this way may be a bit different from the slope calculated on the pivoted data (for zip codes that have years with no customers).
+The following query calculates the intermediate values and slope:
+  SELECT ((CASE WHEN n = 1 THEN 0
+               ELSE (n*Sxy - Sx*Sy)/(n*Sxx - Sx*Sx) END) as slope, b.*
+  FROM (SELECT zipcode, MAX(numyears) as numyears, COUNT(*)*1.0 as n,
+               SUM(x) as Sx,
+               SUM(x*x) as Sxx,
+               SUM(x*y) as Sxy,
+               SUM(y) as Sy
+        FROM (<zipcode-year subquery>) zy
+GROUP BY zipcode )b
+  ORDER BY n DESC
+This query is much simpler than the previous query. Instead of using the piv- oted time series, it calculates the X-value implicitly from the years before the cutoff date. The CASE statement in the SELECT assigns a value for slope when there are purchases in only one year; otherwise, the query would result in a divide-by-zero error. Note that the results from this query are slightly different from the pivoted version, because the pivoted version treats years with no data as having zero sales, whereas this excludes such years from the calculation.
+Calculating Slope for an Irregular Time Series
+The previous calculation can be extended to irregular time series as well as regular time series. An irregular time series is one where the spacing between the X-values is not constant. Purchases for customers are a typical example, and determining the trend can be quite useful.
+The query for this is essentially the same as the query the previous example, except the X-values would represent some other value in the data.
+Weekend Shoppers
+There may be certain behaviors that are of particular interest, such as weekend shoppers. Consider what a shopper who only makes purchases on weekends looks like. Such a “perfect” weekend shopper has the following characteristics:
+■■ All of their shopping by number of orders is on Saturday or Sunday.
+■■ All of their shopping by dollar value is on Saturday or Sunday.
+■■ All of their shopping by number of units is on Saturday or Sunday.
+For the perfect weekender, these are all equivalent, because all shopping on the weekends implies that all units, orders, and dollars are spent on the
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 605
+￼￼weekends. They also suggest defining a metric that defines how close a cus- tomer is to being a “perfect” weekender.
+Table 12-4 shows some examples of customers with multiple orders: one is a perfect weekender, one a partial weekender, and one a never weekender.
+Table 12-4: Examples of Transactions for Weekend and Non-Weekend Shoppers
+￼￼HOUSEHOLD ID
+21159179 21159179 21159179 36207142 36207142 36207142 36207142 36207142 36528618 36528618 36528618 36528618
+ORDER ID
+1102013 1107588 1143702 1089881 1092505 1084048 1186443 1206093 1013609 1057400 1059424 1074857
+ORDER DATE
+2013-08-17 2013-09-16 2014-08-03 2013-06-13 2013-11-27 2013-12-23 2014-12-05 2014-12-31 2011-01-29 2012-11-25 2012-11-25 2013-12-14
+DAY OF
+WEEK DOLLARS
+UNITS
+Sat $40.00 3 Mon $67.00 5 Sun $90.00 6 Thu $10.00 1 Wed $8.00 1 Mon $49.00 3 Fri $5.00 2 Wed $7.00 1 Sat $182.00 2 Sun $195.00 1 Sun $195.00 1 Sat $570.00 2
+￼￼￼￼￼￼￼￼￼￼￼￼The following ratios help distinguish among these groups:
+■■ Proportion of all orders that are on weekends;
+■■ Proportion of all dollars spent on weekends; and,
+■■ Proportion of all units on weekends.
+These all vary from zero (no evidence of weekend shopping behavior) to one (always a weekend shopper). Table 12-5 shows the summaries with this information.
+Table 12-5: Some Shoppers and Their Weekend Shopping Behavior # ORDERS DOLLARS
+# UNITS
+ALL WEEKEND
+14 64.3% 8 0.0% 6 100.0%
+￼￼￼￼￼HOUSEHOLD
+21159179 36207142 36528618
+ALL WEEKEND ALL WEEKEND
+3 66.7% $197 66.0% 5 0.0% $79 0.0% 4 100.0% $1,142 100.0%
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼606 Chapter 12 ■ Building Customer Signatures for Further Analysis Recalling some ideas from probability, these can be combined into a single
+likelihood measure. The following SQL query does this calculation:
+         SELECT h.*,
+                (CASE WHEN weekend_orders = 1 OR weekend_units = 1 OR
+                           weekend_dollars = 1 THEN 1
+                      ELSE (weekend_orders/(1-weekend_orders))*
+                           (weekend_units/(1-weekend_units))*
+                           (weekend_dollars/(1-weekend_dollars)) END) as weekendp
+         FROM (SELECT householdid,
+                      SUM(CASE WHEN cal.dow IN (‘Sat’, ‘Sun’) THEN 1.0
+                               ELSE 0 END)/COUNT(*) as weekend_orders,
+                      SUM(CASE WHEN cal.dow IN (‘Sat’, ‘Sun’) THEN numunits*1.0
+                               ELSE 0 END)/SUM(numunits) as weekend_units,
+                      SUM(CASE WHEN cal.dow IN (‘Sat’, ‘Sun’) THEN totalprice
+                               ELSE 0 END)/SUM(totalprice) as weekend_dollars
+               FROM orders o JOIN calendar cal ON o.orderdate = cal.date JOIN
+                    customer c ON o.customerid = c.customerid CROSS JOIN
+                    (SELECT ‘2016-01-01’ as cutoff_date) const
+               WHERE orderdate < cutoff_date AND
+                     numunits > 0 AND
+                     totalprice > 0
+               GROUP BY householdid) h
+This query calculates the “probabilities” of being a weekend shopper along the three dimensions of orders, units, and price. The likelihood of someone being a weekend shopper is one minus the product of one minus each of these propor- tions, a method of combining probabilities discussed in Chapter 10 in the con- text of naïve Bayesian models. Although these are not independent, the combination still gives an overall measure of being a weekend shopper.
+This method for calculating the weekend shoppers has a problem when cus- tomers have very few purchases. The aside “Incorporating Prior Information” discusses a method for handling this.
+Declining Usage Behavior
+Declining usage is often a precursor to customers stopping. However, there are many ways to specify declining usage. One way is to use the beta value (slope) of a usage measure — such as dollars spent per month or web visits per week.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼INCORPORATING PRIOR INFORMATION
+The definition of weekend shopper works well when there is a lot of data for each customer. However, it does not work well when there are only a few transactions. For instance, should the score of someone who has made one purchase that is on the weekend be the same as someone who has made one hundred purchases, all on the weekend?
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 607
+￼￼￼￼INCORPORATING PRIOR INFORMATION (CONTINUED)
+Intuitively, the answer is “no,” because there is much more evidence accumulated for the second customer. How can the weekend shopper score reflect this intuition?
+There is a way to handle this situation. The idea is to assume that everyone has a score of being a weekend shopper that is between zero and one. Orders on the weekend take this score into account. Such an assumption is called a prior, and this is a central notion in Bayesian statistics.
+For this discussion, let’s consider using only the proportion of transactions as the indicator for a weekend shopper (rather than the combined likelihood value). What is an appropriate value for the prior? The appropriate prior is the overall proportion of weekend orders in the data, which is 21.6%. That means that given no other information, we are making the assumption that someone has a weekend shopper score of 21.6%, even before they make any purchases.
+The next question is how to combine information from orders with the prior. The way to approach this is incrementally. What is the estimate for being a weekend shopper for someone who has exactly one purchase on the weekend? Remember, the method in the text gives this person a perfect 100% score, which seems a bit too high.
+The idea is to combine the prior estimate with the new evidence, using a weighted average:
+   new estimate = ((prior*K) + 1)/(K+1)
+The value K represents how much weight we put on the prior. If the value is zero, the result is the same as in the text. A reasonable value is one, which results in the score of 60.8% for the customer with one weekend purchase.
+What happens for the next weekend purchase? The reasoning is the same, except the value of K is incremented by one, because there is an additional observation. Because the prior now includes one data point, it gets weighted more heavily.
+The following table shows the scores for customers who make only weekend purchases and no weekend purchases:
+￼ONLY WEEKEND SHOPPER
+NON-WEEKEND SHOPPER
+￼￼￼# ORDERS K
+0 1 1 2 23 34 45 56
+SCORE
+21.6% 60.8% 73.9% 80.4% 84.3% 86.9%
+# ORDERS K
+SCORE
+0 1 21.6% 1 2 10.8% 23 7.2% 34 5.4% 45 4.3% 56 3.6%
+￼￼￼￼￼￼www.it-ebooks.info
+Continued on next page
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼608 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼￼￼INCORPORATING PRIOR INFORMATION (CONTINUED)
+So, a customer who has made five weekend purchases has a score of 86.9%. A customer who has made five weekday purchases has a score of 3.6%. These seem reasonable.
+The previous formulas explain how the prior is used in the calculation. However, there is a simpler formula based on the number of observations and the average observed value:
+   Est = (K*prior + number * average)/(K + number)
+Using this formula, we can calculate what happens to a customer who has 100 purchases all on the weekend. In this case, the number is 100 and the average is 1. Using the same values as before, the score is 99.2%.
+This method of incorporating priors requires both finding an appropriate prior estimate to use when there is no evidence, and a way of combining new evidence with the prior. The use of priors does not require complicated formulas. It does, however, produce more intuitive scores than directly using the proportion.
+￼However, the beta value can be misleading, because it fits a long-term trend to the data. Often, customer behaviors are relatively steady (varying within a range) and then declining. Other measures of declining behavior include:
+■■ Ratioofrecentactivitytohistoricalactivity,suchasmostrecentmonth of usage divided by usage twelve months ago;
+■■ Number of recent months where usage is less than the month before; and,
+■■ Ratioofthemostrecentmonthtotheaverageoverthepreviousyear.
+These are all reasonable measures of declining usage.
+These measures are all possible to implement in SQL. We’ll investigate such
+measures by looking at the corresponding quantities for zip codes by year:
+■■ Ratio of most recent number of customers to the year before;
+■■ Ratio of the most recent number of customers to the average of preced- ing years (the index value); and,
+■■ Number of recent years where the number of customers is declining. The following query calculates these quantities from the pivoted zip code
+columns:
+  SELECT z.*,
+         (CASE WHEN year2 > 0 THEN year1 / year2 END) as year1_2_growth,
+         (CASE WHEN (COALESCE(year1, 0) + COALESCE(year2, 0) +
+                     COALESCE(year3, 0) + COALESCE(year4, 0) +
+                     COALESCE(year5, 0) + COALESCE(year6, 0) +
+                     COALESCE(year7, 0)) = 0 THEN 1
+￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 12 ■ Building Customer Signatures for Further Analysis 609
+￼￼￼               ELSE year1 / ((COALESCE(year1, 0) + COALESCE(year2, 0) +
+                              COALESCE(year3, 0) + COALESCE(year4, 0) +
+                              COALESCE(year5, 0) + COALESCE(year6, 0) +
+                              COALESCE(year7,0))/7.0) END) as year1_index,
+         COALESCE(CASE WHEN numyears < 2 OR year1 >= year2 THEN 0 END,
+                  CASE WHEN numyears < 3 OR year2 >= year3 THEN 1 END,
+                  CASE WHEN numyears < 4 OR year3 >= year4 THEN 2 END,
+                  CASE WHEN numyears < 5 OR year4 >= year5 THEN 3 END,
+                  CASE WHEN numyears < 6 OR year5 >= year6 THEN 4 END,
+                  CASE WHEN numyears < 7 OR year6 >= year7 THEN 5 END,
+                  6) as years_of_declining_sales,
+  FROM (<zip code summary query>) z
+The calculation for growth is fairly obvious; it uses a CASE statement to prevent division by zero. If there were no customers the previous year, the growth is undefined.
+The index calculation does a direct calculation of the average over the pre- vious seven years. This is the explicit approach. A simpler approach would be to calculate the sum or average in the subquery. However, the preceding query uses the zip code summary subquery exactly as originally written.
+The number of years of declining sales uses the COALESCE() function extensively. This function returns the first non-null value. So, the logic pro- ceeds as follows:
+1. IftheYEAR1>=YEAR2thenthefirstvalueiszeroandCOALESCE() returns this value. Otherwise, the value is NULL and processing continues.
+2. IfYEAR2>=YEAR3thenthesecondvalueisone.Thismeansthatthe previous condition was met, so there is one year of declining values. Otherwise, the value is NULL and processing continues.
+3. And so on.
+An alternative to the COALESCE() function is a more complicated CASE state- ment. These values can then be included in the customer signature as indica- tors of declining usage.
+TIP TheCOALESCE()functioncanbeveryusefulforcalculatingindexes,counts, and averages in sets of columns where some of the values may be NULL.
+Lessons Learned
+When analytic needs go beyond the capabilities of SQL and Excel, customer signatures can be used to summarize customer behavior and demographic
+￼￼￼￼￼￼￼￼￼￼￼z.*
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼610 Chapter 12 ■ Building Customer Signatures for Further Analysis
+￼￼information for use in other tools. SQL has an advantage for building customer signatures, because it has powerful data manipulation capabilities.
+The customer signature should be based on a cutoff date, only incorporating input columns from before the date. For predictive modeling, the targets come from a time frame after the cutoff date. A customer signature consists of a set of columns coming from many different tables. Most columns are input columns. The customer signature might also include target columns, identifi- cation columns, and the cutoff date.
+Creating customer signatures requires gathering information from many different sources. Some columns might be copied directly. Others might come from fixed lookup tables. Yet others might come from dynamic lookup tables that summarize customer behavior along customer dimensions. And others come from pivoting and summarizing the most voluminous part of the data, customer transactions. These operations can be combined to create very pow- erful features for data mining purposes.
+Combining information from multiple columns makes it possible to add very powerful features. For instance, trends over time can be added by incorporat- ing the slope of the best fit line, an idea discussed in the previous chapter.
+The customer signature provides a structure for understanding customers and using many of the techniques described in earlier chapters. Much of the effort in data analysis is in bringing the data together and understanding the contents. The ability of SQL to express very complex data manipulations, and the ability to optimize the resulting queries on large hardware, makes it a natural choice for creating customer signatures.
+As earlier chapters have shown, the combination of SQL and Excel is a pow- erful analysis tool itself for understanding customers. When the combination is not powerful enough, they provide the foundation for bringing the right data into even more sophisticated tools.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

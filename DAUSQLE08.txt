@@ -1,0 +1,1268 @@
+CHAPTER
+8
+Customer Purchases and Other Repeated Events
+Subscription-type customer relationships have well-defined starts and stops. This chapter moves from these types of relationships to those defined by multiple events that take place over time, such as purchases and web site visits, donations and clicks. Such relationships do not necessarily have a defi- nite end because any particular event could be the customer’s last, or it could be just another in a long chain of events.
+The biggest challenge with repeated events is correctly assigning events to the same customer. Sometimes we are lucky and customers identify them- selves using an account. Even in this case, identification can be challenging or confusing. Consider the example of Amazon.com and a family account. The purchase behavior — and resulting recommendations — might combine a teenage daughter’s music preferences with her mother’s technical pur- chases with a pre-teen son’s choice of games.
+Disambiguating customers within one account is a challenge; identifying the same customer over time is another. When there is no associated account, fancy algorithms match customers to transactions using name matching and address matching (and sometimes other information). This chapter looks at how SQL can help facilitate building and evaluating such techniques.
+Sometimes, the events occur so frequently that they actually represent subscription-like behaviors. For instance, prescription data consists of drug purchases. Tracking patients who are taking a particular drug requires com- bining the purchases over time into one patient view. Web sites, such as
+347
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼348 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼Yahoo! and eBay, have a similar conundrum. Users typically visit often; how- ever, they do not signal the end of their relationship by politely closing their accounts. They stop visiting, emailing, bidding, or offering. At the other extreme are rare events. Automobile manufacturers trying to understand long-term customer relationships must deal with purchase intervals that stretch into multiple years.
+This chapter focuses on retail purchase patterns that are in-between — not too frequent and not too rare. In addition to being a common example of repeated events, these purchases provide a good foundation for understand- ing the opportunities with such data. Because of this focus on retail data, the examples in this chapter use the purchases dataset exclusively.
+The traditional method for understanding retail purchasing behaviors over time uses a technique which is called RFM analysis, which is explained later in this chaper. This is a good background for understanding customers and some of their behaviors over time. Unfortunately, RFM focuses on three specific dimensions of the customer relationship, leaving out many others.
+Customer behaviors change over time, and tracking and measuring these changes is important. There are several approaches, such as comparing the most recent behavior to the earliest behaviors and fitting a trend line to each customer’s interactions. Survival analysis is yet another alternative for addressing the question: how long until the next interaction? The answer in turn depends on the particular customer and what has happened in the past. If too much time has elapsed, perhaps it is time to start worrying about how to get the customer back. The place to begin, however, is the identification of cus- tomers on different transactions.
+Identifying Customers
+Identifying different transactions as belonging to the same customer is challeng- ing, both for retail customers (individuals and households) and for business customers. Even when customers have an ongoing relationship, such as a loy- alty card, there is the question of whether they always use their identification number. This section discusses the definition of customer and how it is repre- sented in the data. The next section looks at other types of data, such as addresses, that are not in this database.
+Who Is the Customer?
+The transactions in the purchases dataset are the orders. The database has several ways to tie transactions together over time. Each contains an
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 349 ORDERID, which leads to a CUSTOMERID, and a HOUSEHOLDID. The fol-
+lowing query provides the counts of orders, customers, and households:
+  SELECT COUNT(*) as numorders, COUNT(DISTINCT c.customerid) as numcusts,
+         COUNT(DISTINCT householdid) as numhh
+  FROM orders o LEFT OUTER JOIN customer c ON o.customerid = c.customerid
+This query shows that the data contains 192,983 orders for 189,559 customers comprising 156,258 households. So, there are about 1.02 orders per customer and about 1.2 customers per household. This data has some examples of repeat- ing customers, but not very many.
+There is a slightly different way to answer the same question, by directly counting the number of households, customers, and orders in subqueries:
+  SELECT numorders, numcusts, numhh
+  FROM (SELECT COUNT(*) as numorders FROM orders) o CROSS JOIN
+       (SELECT COUNT(*) as numcusts, COUNT(DISTINCT householdid) as numhh
+        FROM customer) c
+NotethatthisqueryusestheCROSS JOINoperator,whichcreatesallcombina- tions of rows from two tables (or subqueries). The CROSS JOIN is sometimes useful when working with very small tables, such as the two one-row sub- queries in this example.
+The two approaches could yield different results. The first counts CUS- TOMERIDs and HOUSEHOLDIDs that have orders. The second counts all of the ones that are in the database, even those that have no orders.
+TIP Even a seemingly simple question such as “how many customers are there” can have different answers depending on specifics: “how many customers have placed an order” and “how many households are in the database” may have very different answers.
+The purchases data already has the customer and household columns assigned. The database intentionally does not contain identifying information (such as last name, address, telephone number, or email address), but it does contain gender and first name.
+How Many?
+How many customers are in a household? This is a simple histogram question on the Customer table:
+  SELECT numinhousehold, COUNT(*) as numhh,
+         MIN(householdid), MAX(householdid)
+  FROM (SELECT householdid, COUNT(*) as numinhousehold
+        FROM customer c
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼350 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼￼￼￼GROUP BY householdid )h
+  GROUP BY numinhousehold
+  ORDER BY 1
+Table 8-1 shows the results, which emphasize that most households have only one customer. At the other extreme, two have over 100 customers each. Such large households suggest an anomaly in the householding algorithm. In fact, in this dataset, business customers from the same business are grouped into a single household. Whether or not this is correct depends on how the data is used.
+￼￼￼Table 8-1: Histogram of Household Sizes
+￼ACCOUNTS IN HOUSEHOLD
+1 2 3 4 5 6 7 8 9
+      10
+      11
+      12
+      13
+      14
+      16
+      17
+      21
+      24
+      28
+      38
+169 746
+NUMBER OF HOUSEHOLDS
+134,293 16,039 3,677 1,221 523 244 110 63 28 18 9 14 4 4 2 2 2 1 1 1 1 1
+CUMULATIVE CUMULATIVE NUMBER PERCENT
+134,293 85.9% 150,332 96.2% 154,009 98.6% 155,230 99.3% 155,753 99.7% 155,997 99.8% 156,107 99.9% 156,170 99.9% 156,198 100.0% 156,216 100.0% 156,225 100.0% 156,239 100.0% 156,243 100.0% 156,247 100.0% 156,249 100.0% 156,251 100.0%
+156,253 100.0%
+156,254 100.0%
+156,255 100.0%
+156,256 100.0%
+156,257 100.0%
+156,258 100.0%
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 351 How Many Genders in a Household
+We might expect there to be only two genders assigned to customers, but one never knows what the values are until one looks at the data. Table 8-2 shows the results of the following simple histogram query:
+  SELECT gender, COUNT(*) as numcusts, MIN(customerid), MAX(customerid)
+  FROM customer
+  GROUP BY gender
+  ORDER BY 2 DESC
+TIP Lookingatthedataistheonlywaytoseewhatvaluesreallyareina column;theanswerisahistogramcreatedusingGROUP BY.
+￼￼￼￼￼￼￼￼￼￼Table 8-2: Genders and Their Frequencies
+￼GENDER
+M F
+FREQUENCY
+96,481 76,874 16,204
+PROPORTION
+50.9% 40.6% 8.5%
+￼￼￼These results have the two expected genders, male and female. However, the field contains a third value that looks blank. Blanks in output are ambigu- ous. The column value could be NULL (some databases return NULL values as blank, although Microsoft SQL uses the string “NULL”), blank, or, perhaps, a string containing a space, or some other unorthodox value. The following vari- ation on the query provides more clarity:
+SELECT (CASE WHEN gender IS NULL THEN ‘NULL’ WHEN gender = ‘’ THEN ‘EMPTY’ WHEN gender = ‘ ‘ THEN ‘SPACE’
+               ELSE gender END) as gender, COUNT(*) as numcusts
+  FROM customer
+  GROUP BY gender
+  ORDER BY 2 DESC
+For further refinement, the function ASCII() returns the actual numeric value of any character. The results show that the third gender is actually the empty string (‘’) as opposed to the other possibilities. This query has an interesting feature;theGROUP BYexpressiondiffersfromtheSELECTexpression.
+Thisisworthabitofdiscussion.SQLdoesallowtheGROUP BYexpressionto differ from the corresponding SELECT expression, although this capability is rarely used. Consider the following query, which classifies the genders as
+￼￼￼￼￼￼￼www.it-ebooks.info
+￼352 Chapter 8 ■ Customer Purchases and Other Repeated Events “GOOD”and“BAD.”Inthefirstversion,theGROUP BYclauseandtheSELECT
+use the same expression:
+         SELECT (CASE WHEN gender IN (‘M’, ‘F’) THEN ‘GOOD’ ELSE ‘BAD’ END) as g,
+                COUNT(*) as numcusts
+         FROM customer
+         GROUP BY (CASE WHEN gender IN (‘M’, ‘F’) THEN ‘GOOD’ ELSE ‘BAD’ END)
+AslightvariationusesonlytheGENDERvariableintheGROUP BYclause:
+         SELECT (CASE WHEN gender IN (‘M’, ‘F’) THEN ‘GOOD’ ELSE ‘BAD’ END) as g,
+                COUNT(*) as numcusts
+         FROM customer
+         GROUP BY gender
+The first version returns two rows, one for “GOOD” and one for “BAD.” The second returns three rows, two “GOOD” and one “BAD”; the two “GOOD” rows are for males and females. Figure 8-1 shows the dataflow diagrams that describe each of these cases. The difference is whether the CASE statement is calculated before or after the aggregation.
+READ APPEND
+AGGREGATE group by gendergroup
+num = COUNT(*)
+customer
+gendergroup = <big case>
+READ customer
+OUTPUT
+Customer ID Gender Customer ID
+Gender Group Gender Group
+Count 173,355
+47149 M 104162
+47355 F 125694 M 104156 M
+...
+Customer ID Gender
+104162 47355 125694 104156 ...
+AGGREGATE group by gendergroup
+num = COUNT(*)
+BAD GOOD GOOD GOOD
+APPEND gendergroup = <big case>
+BAD
+47149
+104162 F
+47355 F 125694 M 104156 M
+.. .
+76,874 GOOD 76,874 16,204 GOOD 96,481
+OUTPUT
+Gender
+47149 M GOOD GOOD 16,204
+Figure 8-1: These dataflow diagrams show the difference in processing between aggregating first and then calculating an expression versus aggregating on the calculated value.
+F M M
+Gender
+M M 96,481 BAD 16,204
+www.it-ebooks.info
+Count
+Gender Group
+Count
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 353
+￼￼For this example, the only difference is two or three rows in the result set. However, in some situations there can be a big difference. For instance, the SELECT statement might assign values into ranges. If the corresponding GROUP BY does not have the same expression, the aggregation might not reduce the number of rows.
+WARNING When using an expression in the SELECT statement of an aggregationquery,becarefultothinkaboutwhethertheGROUP BYshould contain the full expression or just the variable. In most cases, the full expression is the correct approach.
+The relationship between genders and households leads to the next question: How many households have one gender, two genders, and three genders? This question does not require knowing the specific genders, just how many are in the house- hold. Answering this question is fairly easy, but one question often leads to another. Because a household with only one member has only one gender, there is a relationship between household size and the number of genders. A related question is more interesting: For each household size (by number of customers), how many households have one gender, two genders, and three genders? The following SQL answers this question:
+  SELECT numcustomers, COUNT(*) as numhh,
+         SUM(CASE WHEN numgenders = 1 THEN 1 ELSE 0 END) as gen1,
+         SUM(CASE WHEN numgenders = 2 THEN 1 ELSE 0 END) as gen2,
+         SUM(CASE WHEN numgenders = 3 THEN 1 ELSE 0 END) as gen3
+  FROM (SELECT householdid, COUNT(*) as numcustomers,
+               COUNT(DISTINCT gender) as numgenders
+        FROM customer c
+        GROUP BY householdid) hh
+  GROUP BY numcustomers
+ORDER BY 1
+The results in Table 8-3 look suspicious. One would not expect 94.1% of households with two people to have only one gender. Further, in almost all these cases, the households consist of people with the same first name. The logical conclusion is that the identification of individuals does not work well. One customer gets assigned multiple values of CUSTOMERID. For this rea- son, and for others discussed later in this chapter, the HOUSEHOLDID is preferable for identifying customers over time.
+￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼354 Chapter 8 ■ Customer Purchases and Other Repeated Events Table 8-3: Count of Households by Number of Customers and Genders
+￼￼￼CUSTOMERS IN HOUSEHOLD
+1 2 3 4 5 6 7 8 9
+      10
+      11
+      12
+      13
+      14
+      16
+      17
+      21
+      24
+      28
+      38
+169 746
+NUMBER OF HOUSEHOLDS
+134,293 16,039 3,677 1,221 523 244 110 63 28 18 9 14 4 4 2 2 2 1 1 1 1 1
+1 GENDER
+134,293 15,087 3,305 1,102 478 209 99 57 24 16 8 13 3 4 2 2 2 1 1 0 1 0
+2 GENDERS
+0 952 370 118 43 35 11 6 4 2 1 1 1 0 0 0 0 0 0 0 0 0
+3 GENDERS
+     0
+     0
+     2
+     1
+     2
+     0
+     0
+     0
+     0
+     0
+     0
+     0
+     0
+     0
+     0
+     0
+     0
+     0
+     0
+     1
+     0
+     1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Investigating First Names
+Something is awry when households consist of multiple customers having the same first name. These households probably have one individual being assigned multiple CUSTOMERIDs. To investigate this, let’s ask the question: How many households consist of “different” customers that have the same first name and the same gender?
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 355
+￼￼Two approaches to answering this question are presented here. One way is to enumerate the number of values of GENDER and of FIRSTNAME in each household and then count the number of households that have one of each:
+  SELECT COUNT(*) as numhh,
+         SUM(CASE WHEN numgenders = 1 AND numfirstnames = 1 THEN 1 ELSE 0
+             END) as allsame
+  FROM (SELECT householdid, COUNT(*) as numcustomers,
+               COUNT(DISTINCT gender) as numgenders,
+               COUNT(DISTINCT firstname) as numfirstnames
+        FROM customer c
+        GROUP BY householdid) hh
+  WHERE numcustomers > 1
+The second approach is to compare the minimum and maximum values of the two columns. When these are the same, there is only one value in the household:
+  SELECT COUNT(*) as numhh,
+         SUM(CASE WHEN minfname = maxfname AND mingender = maxgender
+                  THEN 1 ELSE 0 END) as allsame
+  FROM (SELECT householdid, COUNT (*) as cnt,
+               MIN(firstname) as minfname, MAX(firstname) as maxfname,
+               MIN(gender) as mingender, MAX(gender) as maxgender
+        FROM customer
+        GROUP BY householdid) hh
+  WHERE numcustomers > 1
+Table 8-4 shows the results broken out by the number of customers in the household (by adding NUMCUSTOMERS to the SELECT clause and replacing the WHERE clause with GROUP BY numcustomers). It suggests that many house- holds with multiple customers seem to consist of one individual who is assigned multiple customer IDs.
+These queries may not be doing exactly what we expect when there are NULL values in the columns. If FIRSTNAME only contains NULL values for a given household, COUNT DISTINCT returns a value of zero, rather than one. So, in the first query, that household does not get counted as having all values identical. The second query produces the same result, but for a different reason. In this case, the minimum and maximum values are both NULL and these fail the equality test.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼356 Chapter 8 ■ Customer Purchases and Other Repeated Events Table 8-4: Customers with Same Identifying Information in Household
+￼￼￼NUMBER OF CUSTOMERS
+1 2 3 4 5 6 7 8 9
+     10
+     11
+     12
+     13
+     14
+     16
+     17
+     21
+     24
+     28
+     38
+169 746
+NUMBER OF HOUSEHOLDS
+134,293 16,039 3,677 1,221 523 244 110 63 28 18 9 14 4 4 2 2 2 1 1 1 1 1
+SAME GENDER AND FIRST NAME
+134,293 14,908 3,239 1,078 463 202 97 52 24 14 8 13 3 4 2 2 2 1 1 0 0 0
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Similarly, if a household consists of customers with a mixture of NULL and one non-NULL value, the household gets counted as having only one customer. This is because COUNT DISTINCT counts the non-NULL values, and MIN() and MAX() ignore NULL values. To count NULL values separately, use the COALESCE() function to assign another value:
+COALESCE(firstname, ‘<NULL>’)
+This conversion then treats NULL as any other value; be careful that the second
+argument to COALESCE() is not a valid value. www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 357
+￼￼￼WARNING Using standard SQL, NULL values tend not to be counted when looking at the number of values a column takes on. Use an expression such as COALESCE(<column>, ‘<NULL>’)tocountallvaluesincludingNULLs.
+Counts of first names are interesting, but examples of first names are even better. What are some examples of first names from each household where all members have the same genders? The following query does a good job of getting examples:
+  SELECT householdid, MIN(firstname), MAX(firstname)
+  FROM customer
+  GROUP BY householdid
+  HAVING MIN(firstname) <> MAX(firstname) AND MIN(gender) = MAX(gender)
+This query selects households that have multiple names all of the same gender. By using the HAVING clause, no subqueries or joins are needed. The MIN() and MAX() functions provide the examples of values in the column.
+As with the previous query, households with NULL first names are not included in the results. To include them, the HAVING clause would be modified using the COALESCE() function:
+  HAVING (MIN(COALESCE(firstname, ‘<NULL>’)) <>
+          MAX(COALESCE(firstname, ‘<NULL>’))) AND . . .
+This query returns 301 rows; the following are examples of customer names that appear in the same household:
+■■ “T.” and “THOMAS”
+■■ “ELIAZBETH” and “ELIZABETH”
+■■ “JEFF” and “JEFFREY”
+■■ “MARGARET” and “MEG”
+These four examples are probably referring to the same individual, but with variations on the name caused by:
+■■ Use of an initial rather than the full name;
+■■ Shortened version of a name;
+■■ Misspellings; and,
+■■ Nicknames.
+Such are examples of the complications in matching customers using names. There are some ways to mitigate this problem. When a household contains a name that is an initial of another name, ignore the initial. Or, when the first part of one name exactly matches another name, ignore the shorter one. These are reasonable rules for identifying what look like the same names on
+different records.
+￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼358 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼The rules are easy to express. However, implementing them in SQL is per- haps more challenging than one might think. The idea behind the SQL imple- mentation is to introduce a new column for each name, called ALTFIRSTNAME, which is the full form of the name gleaned from other names on the household. Calculating ALTFIRSTNAME requires a self-join on the HOUSEHOLDID, because every name in a household has to be compared to every other name in the household:
+  SELECT c1.householdid, c1.customerid, c1.firstname, c1.gender,
+         MAX(CASE WHEN LEN(c1.firstname) >= LEN(c2.firstname) THEN NULL
+                  WHEN LEFT(c1.firstname, 1) = LEFT(c2.firstname, 1) AND
+                       SUBSTRING(c1.firstname, 2, 1) = ‘.’ AND
+                       LEN(c1.firstname) = 2
+THEN c2.firstname
+WHEN LEFT(c2.firstname, LEN(c1.firstname)) = c1.firstname THEN c2.firstname
+ELSE NULL END) as altfirstname
+  FROM customer c1 JOIN customer c2 ON c1.householdid = c2.householdid
+  GROUP BY c1.householdid, c1.customerid, c1.firstname, c1.gender
+This query implements the first two rules, the ones for the initial and for the shortened version of names. Adding rules for misspellings and nicknames is more difficult because these need a lookup table to rectify the spellings.
+These rules highlight issues about working with names and other short text data. Values are often subject to misspellings and interpretations (such as whether “T.” is for “Thomas” or “Theodore” or “Tiffany”) making it more challenging to extract information from the columns. SQL string and text pro- cessing functions are quite rudimentary. However, combined with SQL’s data processing capability and the CASE statement, it is possible to use SQL to make some sense out of such data.
+Other Customer Information
+A database with identified customers would normally also have full name, address, and possibly telephone numbers, email addresses, and social secu- rity numbers. None of these are ideal for matching customers over time, because customers move and change names. In the United States, even social security numbers may not be unique due to issues such as employment fraud. This section discusses these types of data.
+First and Last Names
+Some names, such as James and Gordon, George and John, Kim and Kelly and Lindsey, are common as both first and last names. Other names, though, almost always fall in one or the other categories. When the FIRSTNAME column con- tains values such as “ABRAHAMSOM,” “ALVAREZ,” “ROOSEVELT,” and
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 359
+￼￼“SILVERMAN,” it is suspicious that the first and last names are being inter- changed on some records. This might either be a customer input error or a data processing error.
+When both first name and last name columns are available, it is worth checking to see if they are being swapped. In practice, it is cumbersome to look at thousands of names and impossible to look at millions of them. A big help is to look at every record with a first and last name and calculate the suspicion that the names might be swapped. A convenient definition of this suspicion is the following:
+  suspicion = firstname as lastname rate + lastname as firstname rate
+That is, a name is suspicious based on how suspicious the value in the FIRST- NAME column is and how suspicious the value in the LASTNAME column is. The following query calculates the first name suspicion value, assuming the existence of a LASTNAME column, and outputs the results in order by high-
+est suspicion:
+  SELECT c.householdid, c.firstname, susp.lastrate as firstnamesuspicion
+  FROM customer c JOIN
+       (SELECT name,
+               SUM(lastname) / (SUM(firstname)+SUM(lastname)) as lastrate,
+SUM(firstname) / (SUM(firstname)+SUM(lastname)) as firstrate FROM ((SELECT firstname as name, 1 as firstname, 0.0 as lastname
+               FROM customer c)
+              UNION ALL
+             (SELECT lastname as name, 0 as firstname, 1.0 as lastname
+              FROM customer c)) a
+        GROUP BY name) susp
+        ON c.firstname = susp.name
+  ORDER BY 3 DESC
+The key to this query is calculating LASTRATE, which is the proportion of times that a particular name is used as a last name among all occurrences of the name. So, “Smith” might occur 99% of the time in the last name column. If we see “Smith” in the first name column, it has a suspicion value of 99%.
+The subquery that gathers the occurrences of a name in both the first and last name columns needs to include all occurrences of a name; this suggests usingtheUNION ALLoperator,asopposedtoajoin.Theresultsarethenaggre- gated by the new column NAME, which counts all occurrences as both a first name and as a last name. The first name suspicion is the proportion of times that the name occurs as a last name. If the name is always a first name, the suspicion is zero. If the name is almost always a last name, the suspicion is close to one.
+Calculating the suspicion for the last name is the same process, and doing both together in the same query requires joining in another Susp subquery
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼360 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼joined on the last name rather than the first name. The overall row suspicion is then the sum of the two values, all calculated using SQL. The best way to look at the results is by sorting suspicion in reverse order.
+As an alternative to using proportions, it is also possible to calculate the chi-square value associated with a name. The calculation is a bit more cum- bersome, but following the guidelines in Chapter 3, it is possible to use this measure as well.
+Addresses
+Address matching is a cumbersome process that often uses specialized soft- ware or outside data vendors. There are many ways of expressing an address. The White House is located at “1600 Pennsylvania Avenue, NW.” Is this the same as “1600 Pennsylvania Ave. NW”? “Sixteen Hundred Pennsylvania Avenue, Northwest”? The friendly Post Office recognizes all these as the same physical location, even though the addresses have subtle and not-so-subtle differences.
+Address standardization transforms addresses by replacing elements such as “Street,” “Boulevard,” and “Avenue” with abbreviations (“ST,” “BLVD,” and “AVE”). Street names that are spelled out (“Second Avenue” or “First Street”) are usually changed to their numeric form (“2 AVE” and “1 ST”). The United States Post Office has a standard address format (http://pe.usps.gov/ cpim/ftp/pubs/Pub28/pub28.pdf).
+Standardization only solves part of the problem. Addresses in apartment buildings, for instance, should include apartment numbers. Determining whether an address should have an apartment number requires comparing addresses to a master list that knows whether or not the building is multi-unit.
+Fully disambiguating addresses is difficult. However, even an approximate solution can be helpful to answer questions such as:
+■■ Are external householding algorithms capturing all individuals in the same household?
+■■ How much duplicate mail is being sent out to the same household?
+■■ Approximately how many households have made a purchase this year?
+■■ Did prospects who received a marketing message respond through other channels?
+■■ About how many new customers are returning customers?
+These questions can help in evaluating assignments of household ids. They can also provide a very rudimentary way to understand which addresses belong in the same household when no household ids are available.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 361
+￼￼Using clever rules, rudimentary householding with names and addresses is possible. The following are simple rules that together identify many individu- als in the one household:
+■■ The last names are the same.
+■■ The zip codes are the same.
+■■ The first five characters in the address are the same.
+The following SQL creates household keys using these rules:
+  SELECT lastname+ ‘: ‘+zip+’: ‘+LEFT(address, 5) as tempkey, c.*
+  FROM customer c
+This is not perfect and has some obvious failings (married couples with differ- ent last names, neighborhoods with high proportions of people with similar names, and so on). This is not a complete solution. The idea is to find individ- uals that look similar so they can be verified manually.
+Other Identifying Information
+Other types of identifying information such as telephone numbers, email addresses, and credit card numbers are also useful for providing hints to iden- tify that the same customer made multiple transactions. For instance, a cus- tomer might make two online purchases, one at work and one at home. The accounts could be different, with goods being sent to the work address during one purchase transaction and being sent to the home address during another. However, if the customer uses the same credit card, the credit card number can be used to tie the transactions together.
+WARNING Do not store clear-text credit card numbers in an analysis database. Keep the first six digits to identify the type of credit card, and store the number using an id or hash code so the real value is hidden.
+Of course, each type of identifying information has its own peculiarities. Telephone numbers might change through no fault of the customer, simply because the area code changes. Email addresses might change through no fault of the customer simply because one company purchases another and the domain changes. Credit cards expire and the replacement card may have a dif- ferent number.
+These challenges are aggravated by the fact that households themselves change over time. Individuals get married, and couples divorce. Children grow up, and move out. And sometimes, older children and elderly relatives move in. Although identifying the economic unit is a useful idea, there are many challenges, including the fact that such economic units shift over time as individuals combine into households and split apart.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼362 Chapter 8 ■ Customer Purchases and Other Repeated Events How Many New Customers Appear Each Year?
+Regardless of the method used to identify customers, a basic question is: How many new customers appear each year? This section discusses this question and related questions about customers and purchase intervals.
+Counting Customers
+The basic question is almost a trick question, easy if we think about it the right way, difficult if we think about it the wrong way. It is tempting to answer the question by determining all the customers who place an order in a given year and then filtering out those who made any purchase in previous years. Imple- menting such a query requires a complicated self-join on the Orders table. This is not unreasonable. But, there is a simpler line of reasoning.
+From the perspective of the customer and not the date, every customer makes an initial purchase, which is determined by MIN(ORDERDATE). The year of the minimum of the order date is the year that the new customer appears, an observation that results in a simple query:
+         SELECT firstyear, COUNT(*) as numcusts,
+                SUM(CASE WHEN numyears = 1 THEN 1 ELSE 0 END) as year1,
+                SUM(CASE WHEN numyears = 2 THEN 1 ELSE 0 END) as year2
+         FROM (SELECT customerid, MIN(YEAR(orderdate)) as firstyear,
+                      COUNT(DISTINCT YEAR(orderdate)) as numyears
+FROM orders o
+               GROUP BY customerid) a
+         GROUP BY firstyear
+ORDER BY 1
+This query also calculates the number of years when a customer id placed an order. It turns out that all customer ids are valid only during one year, shed- ding some light on why households are a better level for tracking customers.
+Revising the query for households requires joining in the Customer table to get the HOUSEHOLDID:
+         SELECT firstyear, COUNT(*) as numcusts,
+                SUM(CASE WHEN numyears = 1 THEN 1 ELSE 0 END) as year1,
+                SUM(CASE WHEN numyears = 2 THEN 1 ELSE 0 END) as year2,
+                MIN(householdid), MAX(householdid)
+         FROM (SELECT householdid, MIN(YEAR(orderdate)) as firstyear,
+                      COUNT(DISTINCT YEAR(orderdate)) as numyears
+               FROM orders o JOIN customer c ON o.customerid = c.customerid
+               GROUP BY householdid) a
+         GROUP BY firstyear
+ORDER BY 1
+Figure 8-2 shows a significant variation in attracting new customers/ households from year to year.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 363
+￼￼40,000 35,000 30,000 25,000 20,000 15,000 10,000
+5,000 0
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼2009 2010 2011
+2012 2013
+2014 2015 2016
+Figure 8-2: The number of new households that make purchases varies considerably from one year to another.
+The next variation on the question is more difficult: What proportion of cus- tomers who place orders in each year are new customers? This question is more dif- ficult because all transactions in the year need to be taken into account, not just the ones with new customers. There is a shortcut, because the number of new customers and the number of total customers can be calculated in sepa- rate subqueries:
+  SELECT theyear, SUM(numnew) as numnew, SUM(numall) as numall,
+         SUM(numnew*1.0)/SUM(numall) as propnew
+  FROM ((SELECT firstyear as theyear, COUNT(*) as numnew, 0 as numall
+         FROM (SELECT householdid, MIN(YEAR(orderdate)) as firstyear
+FROM orders o JOIN customer c ON o.customerid = c.customerid GROUP BY householdid) a
+         GROUP BY firstyear)
+        UNION ALL
+        (SELECT YEAR(orderdate) as theyear, 0 as numnew,
+                COUNT(DISTINCT householdid) as numall
+         FROM orders o JOIN customer c ON o.customerid = c.customerid
+         GROUP BY YEAR(orderdate))
+)a
+GROUP BY theyear
+ORDER BY 1
+The first subquery calculates the new households in the year. The second cal- culates the number of households that make a purchase each year, using COUNT DISTINCT. Perhaps the most interesting aspect of the query is the UNION ALL and subsequent GROUP BY at the outermost level. It is tempting to write this using a join:
+  SELECT theyear, n.numnew, a.numall
+  FROM (<first subquery>) n JOIN
+       (<second subquery>) a
+       ON n.firstyear = a.theyear
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+New Households
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼364 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼However, there might be years where one or the other groups have no data — years where there are no new customers, for instance. The join eliminates these years. Although this problem is unlikely with yearly summaries, the UNION ALL method is safer. This version does work with the FULL OUTER JOIN operator, rather than the JOIN.
+The first row of the results in Table 8-5 shows that households that made purchases during the earliest year are all new households (as expected). After that, the proportion of new households tends to decrease from year to year, falling to less than 85%.
+Table 8-5: New and All Customers by Year NUMBER NEW
+TOTAL NUMBER OF CUSTOMERS
+7,077 17,082 24,336
+18,693 26,111 39,814 27,302 14,087
+￼￼YEAR
+2009 2010 2011 2012 2013 2014 2015 2016
+CUSTOMERS
+7,077 16,291 22,357 16,488 23,658 35,592 22,885 11,910
+% NEW
+100.0% 95.4% 91.9% 88.2% 90.6% 89.4% 83.8% 84.5%
+￼￼￼￼￼￼￼￼Span of Time Making Purchases
+Households make multiple purchases over the course of several years. Dur- ing how many years do households make purchases? This question is different from the total number of purchases a household makes, because it is asking about the number of years when a household is active. The following query answers the question:
+  SELECT numyears, COUNT(*), MIN(householdid), MAX(householdid)
+  FROM (SELECT householdid, COUNT(DISTINCT YEAR(orderdate)) as numyears
+        FROM orders o JOIN customer c ON o.customerid = c.customerid
+        GROUP BY householdid) a
+  GROUP BY numyears
+ORDER BY 1
+ThenumberofyearsiscalculatedusingCOUNT DISTINCTinthesubquery.
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 365
+￼￼Table 8-6 shows that there are thousands of households that make purchases during more than one year. This is reassuring, because repeat business is usu- ally important.
+Table 8-6: Number of Years when Households Make Purchases NUMBER OF YEARS COUNT 1 142,111 2 11,247 3 2,053 4 575 5 209 6 50 7 11 82
+The next question relates to the frequency of these purchases during the years that have purchases. Figure 8-3 shows several customers on the calendar time line. This chart, incidentally, is a scatter plot where the clip art for a shop- ping basket has been copied onto the points. To do this, adjust any picture to be the right size (which is usually quite small), select the series by clicking it, and type <control>-V to paste the image.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Calendar Time cutoff date Figure 8-3: Customers make purchases at irregular frequencies over time.
+Some households make purchases every year. Some make purchases occa- sionally. One way to measure the purchase frequency is to divide the total
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼366 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼span of years by the number of years with purchases. So, a customer who makes three purchases over five years has a purchase frequency of 60%. The following query calculates the purchase frequency, broken out by the span in years from the first purchase to the last purchase and the number of purchases:
+  SELECT lastyear - firstyear + 1 as span, numyears, COUNT(*) as numhh,
+         MIN(householdid), MAX(householdid)
+  FROM (SELECT householdid, MIN(YEAR(orderdate)) as firstyear,
+               MAX(YEAR(orderdate)) as lastyear,
+               COUNT(DISTINCT YEAR(orderdate)) as numyears
+        FROM orders o JOIN customer c ON o.customerid = c.customerid
+        GROUP BY householdid) a
+  GROUP BY lastyear - firstyear + 1, numyears
+  ORDER BY 1, 2
+Figure 8-4 shows the results as a bubble chart, which shows that even cus- tomers who make purchases over large spans of time are often making pur- chases only during two particular years. A note about the bubble chart: Because there are many customers who make only one purchase and they have a span of one year, these are not included in the chart. Also, Excel elimi- nates the very smallest bubbles, because they are too small to see.
+82 74 63 5
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼27 49 118
+239 443
+7 20 29 51 84
+150
+￼￼￼￼￼120
+184
+409
+869
+￼￼￼￼764 5,850 2,547
+207 534 1,356
+￼￼￼￼￼￼￼￼￼￼4 3 2 1 0
+11 15 23 32
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼1 2 3 45 6 7 8
+Years from First Purchase to Last Purchase
+Figure 8-4: This bubble chart shows the number of years when customers make purchases versus the span of time from the earliest purchase to the latest purchase.
+Households that made purchases long ago have had more opportunity to make a repeat purchase than households that started recently. This observa- tion leads to another question: What is the potential span for households? The potential span is the potential number of years when a customer could have
+www.it-ebooks.info
+Num Years With Purchases
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 367
+￼￼made a purchase. That is, it is the number of years from the first purchase to the last year in the data, 2016. The only change to the previous query is to change the definition of span to:
+  2016 – firstyear + 1 as potentialspan
+ThischangeaffectsboththeSELECTclauseandtheGROUP BYclause.Theresults for the potential span are also heavily affected by the fact that most households only make a single purchase.
+Average Time between Orders
+Closely related to the span of time covered by orders is the average time between orders, defined for those customers who have more than one order. The query uses the subquery in the previous examples:
+  SELECT FLOOR(DATEDIFF(dd, mindate, maxdate) / (numorders-1)),
+         COUNT(*) as numhh
+  FROM (SELECT householdid, MIN(orderdate) as mindate,
+               MAX(orderdate) as maxdate, COUNT(*) as numorders
+        FROM orders o JOIN customer c ON o.customerid = c.customerid
+        GROUP BY householdid
+        HAVING COUNT(*) > 1) a
+  GROUP BY FLOOR(DATEDIFF(dd, mindate, maxdate) / (numorders-1))
+  ORDER BY 1
+This query calculates the total span and then divides it by one less than the number of orders. The result is the average spacing of the orders. The query uses the HAVING clause to limit the results only to households with at least two orders, preventing a divide by zero error.
+The cumulative proportion, which is the cumulative sum for the first n days divided by the total for all days, is calculated in Excel. This cumulative sum shows how fast customers are placing orders (on average). Figure 8-5 shows the average time to purchase for customers with two or more purchases, strat- ified by the number of purchases. This curve has some unexpected properties.
+The curve for six purchases is very ragged because there are relatively few households with six purchases. This curve peaks at about 490 days, hitting 100%. That means that all customers with six purchases have an average time between purchase of 490 days or less. All the curves show an increase around the one-year mark, consisting of customers who make purchases once per year, probably during the holiday season.
+At the 600-day mark, the curves are in the right order. The curve for six orders is at 100%, followed by five, four, three, and two. An interesting feature of the two-order households is the lack of marked increase around one year. This could be because customers who make two purchases one year apart are likely to make yet another purchase the following year.
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼368 Chapter 8 ■ Customer Purchases and Other Repeated Events
+100% 90%
+6 Orders
+5 Orders
+80% 4 Orders
+70% 60% 50% 40% 30% 20% 10%
+0%
+3 Orders
+2 Orders
+0 30
+60 90
+120 150 180 210 240 270 300 330 360 390 420 450 480 510 540 570 600
+Time Between Purchases
+Figure 8-5: This chart shows the time to purchase (in days) stratified by the number of purchases a customer makes.
+In addition, the curve for two-order households starts off very steep, indicat- ing that many households with two orders make the purchases in rapid suc- cession. So, 50% of the households with two purchases make the purchases within 136 days of each other. For households with more purchases, the median average time-to-purchase is closer to three hundreds days, or twice as long.
+If the purchases were randomly distributed, the households with two orders would have a longer average purchase time than households with more than two. This is because the two-order households could make a purchase on the earliest date and on the latest date, in which case the span would be about seven years. If a household has three orders, one on the earliest date, one on the latest date, and one in-between, the average time between purchases is then about three and a half years.
+One likely explanation for the speed of purchase results is marketing efforts directed at people who just made a purchase. A customer buys some- thing and there is a coupon or offer that arrives with the purchase, spurring another purchase.
+The average time between purchases is one way to measure purchase velocity. Later in this chapter, we’ll use survival analysis to calculate time-to-next pur- chase, an alternative measure.
+TIP Normally,weexpecttheaveragetimebetweenorderstobesmallerfor customers who have more orders.
+www.it-ebooks.info
+￼Chapter 8 ■ Customer Purchases and Other Repeated Events 369 Purchase Intervals
+Related to the average time between purchases is the average time from the first purchase to any other purchase. This shows cycles in customer purchas- ing patterns. For instance, Figure 8-6 shows the number of days from the first purchase in a household to any other purchase. If a household has several pur- chases, all of them are included.
+   250
+   200
+   150
+   100
+50
+0
+0 90 180 270 360 450 540 630 720 810 900 990 1080 1170
+Days From First Purchase to Any Purchase
+Figure 8-6: This chart shows the time from the first purchase to every other purchase; the wave pattern indicates customers who make a purchase at the same time every year.
+This chart shows that there is a yearly cycle in the household purchasing behavior, as illustrated by peaks around 360 days and 720 days and even after that. These yearly peaks become smaller and smaller over time. One reason is because the data contains all customers. Some of them make their first pur- chase just one year before the cutoff; these customers do not have the oppor- tunity to make repeated purchases at two years and three years and so on. On the other hand, customers who start in the beginning of the data have the opportunity for several years.
+To calculate the data for the chart, subtract the first date of a household order from all other order dates:
+  SELECT DATEDIFF(dd, h1.mindate, ho.orderdate) as days,
+         COUNT(*) as numorders
+  FROM (SELECT householdid, MIN(orderdate) as mindate
+        FROM orders o JOIN customer c ON o.customerid = c.customerid
+        GROUP BY householdid
+        HAVING MIN(orderdate) < MAX(orderdate)) h1 JOIN
+       (SELECT c.householdid, o.*
+        FROM orders o JOIN customer c ON o.customerid = c.customerid) ho
+       ON h1.householdid = ho.householdid
+  GROUP BY DATEDIFF(dd, h1.mindate, ho.orderdate)
+  ORDER BY 1
+Number of Orders
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼370 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼This query calculates the first order date in the first subquery for households that have orders on different dates. The second subquery contains all orders, and these in turn are aggregated by the difference between the order date and the first order date.
+RFM Analysis
+RFM is a traditional approach to analyzing customer behavior in the retailing industry; the initials stand for recency, frequency, monetary analysis. This type of analysis divides customers into groups, based on how recently they have made a purchase, how frequently they make purchases, and how much money they have spent. RFM analysis has its roots in techniques going back to the 1960s and 1970s.
+The purpose of discussing RFM analysis is not to encourage its use because there are often better ways of modeling customers for marketing efforts. RFM is worthwhile for other reasons. First, it is based on simple ideas that are applicable to many different industries and situations. Second, it is an oppor- tunity to see how these ideas can be translated into useful technical measures that can be calculated using SQL and Excel. Finally, RFM introduces the idea of scoring customers by placing them in RFM cells; the idea of scoring customers is extended in the last three chapters.
+The following observations explain why RFM is of interest to retailing businesses:
+■■ Customers who have recently made a purchase are more likely to make another purchase soon.
+■■ Customers who frequently make purchases are more likely to make more purchases.
+■■ Customers who spend lots of money are more likely to spend more money.
+Each of these observations corresponds to one of the RFM dimensions. This section discusses these three dimensions and how to calculate them in SQL and Excel.
+The Dimensions
+RFM divides each of the three dimensions into equal sized chunks (which are formally called quantiles) and places customers in the corresponding chunk along each dimension. The examples here use five quantiles for each dimension (quintiles), although there is nothing magic about five. Figure 8-7 illustrates what is happening. The RFM cells form a large cube consisting of 125 subcubes. Each customer is assigned to a unique subcube based on his or her attributes along the three dimensions. This section discusses each of these dimensions and shows how to calculate the values as of a cutoff date, such as January 1, 2016.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 371
+￼￼￼recency
+Figure 8-7: The RFM dimensions can be thought of as placing customers into small subcubes along the dimensions.
+Recency
+Recency is the amount of time since the most recent purchase. Figure 8-8 shows a cumulative histogram of recency, as of the cutoff date of January 1, 2016 (orders after that date are ignored). This chart shows that 20% of the households have placed an order within the previous 380 days. The chart also has the four breakpoints that are used for defining the five recency quintiles.
+Recency is calculated at the household level. The most recent purchase is the one with the maximum order date before the cutoff, as calculated by the fol- lowing query:
+  SELECT DATEDIFF(dd, maxdate, ‘2016-01-01’) as recency, COUNT(*)
+  FROM (SELECT householdid, MIN(orderdate) as mindate,
+               MAX(orderdate) as maxdate, COUNT(*) as numorders
+        FROM orders o JOIN customer c ON o.customerid = c.customerid
+        WHERE orderdate < ‘2016-01-01’
+        GROUP BY householdid) h
+  GROUP BY DATEDIFF(dd, maxdate, ‘2016-01-01’)
+  ORDER BY 1
+The cumulative histogram, calculated in Excel, makes it possible to identify the four breakpoints. The following SQL query then uses these breakpoints to assign a recency quintile to each household:
+  SELECT (CASE WHEN recency <= 380 THEN 1 WHEN recency <= 615 THEN 2
+               WHEN recency <= 1067 THEN 3 WHEN recency <= 1686 THEN 4
+               ELSE 5 END) as recbin, h.*
+  FROM (SELECT householdid,
+               DATEDIFF(dd, MAX(orderdate) , ‘2016-01-01‘) as recency
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+monetary
+frequency
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼372 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼￼￼￼￼        FROM orders o JOIN customer c ON o.customerid = c.customerid
+        WHERE orderdate < ‘2016-01-01’
+        GROUP BY householdid) h
+The breakpoints are explicitly used in the CASE statement in the SELECT clause. Finding the breakpoints using SQL and Excel is cumbersome. Fortunately, there are functions in SQL that make it possible to do all the work within the
+database, as discussed in the aside “SQL Ranking Functions.”
+￼￼100%
+90%
+80%
+70%
+60%
+50%
+40%
+30%
+20%
+10%
+0%
+1696
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼1067
+￼￼￼￼380
+615
+￼￼0 180 360 540 720 900 1080 1260 1440 1620 1800 1980 2160 380
+Figure 8-8: To break the recency into five equal sized buckets, look at the cumulative histogram and break it into five groups. The resulting four breakpoints are shown on the chart.
+￼￼SQL RANKING FUNCTIONS
+ANSI SQL has a special function, NTILE(), supported by SQL Server and Oracle, that assigns quantiles to values in a column. Because these are part of standard SQL and useful, other databases should eventually also include them.
+NTILE() does exactly what we need it to do for finding quintiles. It divides the recency values into five equal sized groups and assigns them the values one through five. We might expect the syntax for NTILE() to look something like:
+   NTILE(recency, 5)
+Alas, it is not that simple.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 373
+￼￼￼￼SQL RANKING FUNCTIONS (CONTINUED)
+NTILE() is an example of a special class of functions called window functions. These functions combine information from multiple rows and use the information to do the calculation. The particular group of rows is the window being used. For recency, the correct syntax is:
+   NTILE(5) OVER (ORDER BY recency)
+The argument “5” to NTILE() is a number that specifies the number of bins. The window specification says to include all values in all rows. The ORDER BY clause specifies the variable (or variables) that define the bins, and the ordering (whether 1 is high or low). Although this syntax may seem cumbersome, it is actually quite powerful for expressing many different transformations. Examples later in this chapter apply window functions to very different problems.
+Putting this together into a query looks like:
+   SELECT h.*, NTILE(5) OVER (ORDER BY recency)
+   FROM (SELECT householdid,
+                DATEDIFF(dd, MAX(orderdate) , ‘2016-01-01’) as recency
+         FROM orders o JOIN customer c ON o.customerid = c.customerid
+         WHERE orderdate < ‘2016-01-01’
+         GROUP BY householdid) h
+This syntax is definitely much simpler than the other alternatives. The subquery is necessary, because window functions do not interact gracefully with GROUP BYs. Using window functions and aggregations together results in a syntax error. Fortunately, subqueries are an easy work-around.
+It is also worth noting that window functions can be used multiple times in the same statement. So, we can produce bins for multiple variables in the same SELECT statement.
+In addition to NTILE(), there are three other ranking functions:
+   ROW_NUMBER() OVER (ORDER BY recency)
+   RANK() OVER (ORDER BY recency)
+   DENSE_RANK() OVER (ORDER BY recency)
+The first of these simply enumerates the rows by order of recency, assigning numbers starting at one. The other two differ from ROW_NUMBER() when two or more rows have the same value. In this case, RANK() gives all rows with
+the same value the same ranking and then skips the subsequent values. So, the ranking values might look like 1, 1, 1, 4, 5, 6, . . . if there are three ties for first place. DENSE_RANK() does almost the same thing, but without skipping intermediate values. It would produce the values 1, 1, 1, 2, 3, 4 in this case.
+In the preceding example, the smallest value of recency gets the value of 1. To reverse this so the largest value gets a recency of one simply requires using theDESCmodifierintheORDER BYclause,tosortthingsintheoppositeorder.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼374 Chapter 8 ■ Customer Purchases and Other Repeated Events Frequency
+Frequency is the rate at which customers make purchases, calculated as the length of time since the earliest purchase divided by the number of pur- chases (sometimes it is calculated as the total number of purchases over all time). The breakpoints are determined the same way as for recency, and are shown in Table 8-7.
+Table 8-7: Breakpoint Values for Recency, Frequency, and Monetary Bins
+￼￼￼BREAK POINT
+20% 40% 60% 80%
+RECENCY FREQUENCY
+MONETARY
+380 372 13
+615 594 20 1067 974 28 1696 1628 59
+￼￼￼￼The frequency itself is calculated in a way very similar to the span-of-time queries:
+SELECT FLOOR(DATEDIFF(dd, mindate, ‘2016-01-01’)/numorders) as frequency, COUNT(*)
+FROM (SELECT householdid, MIN(orderdate) as mindate, COUNT(*) as numorders FROM orders o JOIN customer c ON o.customerid = c.customerid
+WHERE orderdate < ‘2016-01-01’
+GROUP BY householdid) h
+  GROUP BY FLOOR(DATEDIFF(dd, mindate, ‘2016-01-01’)/numorders)
+  ORDER BY 1
+This query calculates the total span of time between the cutoff date and the earliest purchase, and then divides by the number of purchases. Note that low values for frequency and recency are both associated with good customers, whereas high values are associated with poor customers.
+Monetary
+The last RFM variable is the monetary variable. Traditionally, this is the total amount of money spent by households. However, this definition is usually highly correlated with frequency, because customers who make more pur- chases have larger total amounts. A better variable is the average amount of each order:
+  SELECT FLOOR(money) as dollars, COUNT(*)
+  FROM (SELECT householdid, AVG(totalprice) as money
+        FROM orders o JOIN customer c ON o.customerid = c.customerid
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 375
+￼￼￼￼￼        WHERE orderdate < ‘2016-01-01’
+        GROUP BY householdid) h
+  GROUP BY FLOOR(money)
+ORDER BY 1
+The difference between using the average or the total is simply changing the definition of MONEY from AVG(totalprice) to SUM(totalprice). Excel can then be used to find the four breakpoints that divide the values into five equal sized bins, which are shown in Table 8-7. Note that unlike recency and frequency, low values for monetary are associated with worse customers.
+Calculating the RFM Cell
+The RFM cell combines the bins used for recency, frequency, and monetary. The cell has a tag that looks like a number, so 155 corresponds to the cell with the highest recency value and the lowest frequency and monetary values. The tag is just a label; it is not sensible to ask whether bin 155 is greater than or less than another bin, say 244.
+Although the customers are divided into equal sized chunks along each dimension, the 125 RFM cells are not equal sized. In fact, some of them are empty, such as cell 155. Others are quite large, such as cell 522, the largest, which has 5.6% of the customers. This cell consists of customers who have not made a purchase in a long time (worst recency). The household is highly infre- quent, so the household probably made only one purchase. And, the purchase was on the high end of the monetary scale.
+Cell sizes differ because the three measures are not independent. Good cus- tomers make frequent purchases that are higher in value, corresponding to one set of RFM values. One-time customers make few purchases (one) that might not be recent and are smaller in value.
+Attempting to visualize the RFM cells is challenging using Excel chart capa- bilities. What we really want is a three-dimensional bubble chart, where each axis corresponds to one of the RFM dimensions. The size of the bubbles would be the number of households in that cell. Unfortunately, Excel does not offer a three-dimensional bubble plot capability.
+Figure 8-9 shows a compromise using a two-dimensional bubble plot. The vertical axis has the recency bin and the horizontal axis has a combination of the frequency and monetary bins. The largest bubbles are along the diagonal, which shows that recency and frequency are highly correlated. This is espe- cially true for customers who have made only one purchase. A one-time, recent purchase implies that the frequency is quite high. If the purchase was a long time ago, the frequency is quite low. In this data, most households have made only one purchase, so this effect is quite noticeable. By the way, when creating scatter plots and bubble plots using Excel, the axes need to be num- bers rather than strings.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼376 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼￼WARNING In Excel, bubble plots and scatter plots require that the axes be numbers rather than text values. Using text values results in all values being treated as zeros and sequential numbers placed on the axis.
+￼￼￼￼￼￼￼5 4 3 2 1 0
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0-0 1-0
+2-0 3-0 4-0 5-0
+Frequency-Monetary
+Figure 8-9: This chart shows the RFM cells, with the recency on the vertical axis and the frequency and monetary dimensions on the horizontal axis.
+The following query calculates the sizes of the RFM bins for all customers:
+  SELECT recbin * 100 + freqbin * 10 + monbin as rfm, COUNT(*)
+  FROM (SELECT (CASE WHEN r <= 380 THEN 1 WHEN r <= 615 THEN 2
+                     WHEN r <= 1067 THEN 3 WHEN r <= 1686 THEN 4
+                     ELSE 5 END) as recbin,
+               (CASE WHEN f <= 372 THEN 1 WHEN f <= 594 THEN 2
+                     WHEN f <= 974 THEN 3 WHEN f <= 1628 THEN 4
+                     ELSE 5 END) as freqbin,
+               (CASE WHEN m <= 13 THEN 1 WHEN m <= 20 THEN 2
+                     WHEN m <= 28 THEN 3 WHEN m <= 59 THEN 4
+                     ELSE 5 END) as monbin
+        FROM (SELECT householdid, MIN(orderdate) as mindate,
+                     DATEDIFF(dd, MAX(orderdate), ‘2016-01-01’)as r,
+                     FLOOR(DATEDIFF(dd, MIN(orderdate), ‘2016-01-01’)/
+                           COUNT(*) ) as f,
+                     SUM(totalprice) / COUNT(*) as m
+              FROM orders o JOIN customer c ON o.customerid = c.customerid
+              WHERE orderdate < ‘2016-01-01’
+              GROUP BY householdid) a ) b
+  GROUP BY recbin * 100 + freqbin * 10 + monbin
+  ORDER BY 1
+The inner query assigns the RFM values, and the outer query then aggregates bins to count the values in each cell.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+Recency
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 377 Utility of RFM
+RFM is a methodology that encourages the use of testing, and it encourages businesses to think about customers migrating from one cell to another. These two advantages of RFM are good ideas that are worth discussing in more detail.
+A Methodology for Marketing Experiments
+The RFM methodology encourages a test-and-learn approach to marketing. Because marketing efforts incur some cost, companies do not want to contact every possible person; instead, they want to contact the customers or prospects who are most likely to respond. The RFM solution is to divide the customers into RFM cells and then to track the response of each cell. Once the process is up and running, the following happens:
+■■ The customers in the RFM cells with the highest response rate in the previous campaign are included in the next campaign.
+■■ A sample of customers in other RFM cells is included in the campaign, so there is information about all cells moving forward.
+The first item is a no-brainer. The point of using a methodology such as RFM is to identify customers who are more likely to respond, so better responders can be included in the next campaign.
+It is the second part that encompasses experimentation. Typically, the best- responding cells are the ones in the best bins, particularly recency. Other cells might not have the chance to prove themselves as having valuable customers. And, during the next iteration, these customers have not had encouragement to make a recent purchase, so they fall farther behind along the recency dimen- sion and into even less valuable cells.
+The solution is to include a sample of customers from all cells, even those cells that are not chosen for the marketing effort. This means that all cells can be tracked over time.
+TIP For companies that have ongoing marketing campaigns, including test cells is highly beneficial and worth the effort in the long term. Even though such cells incur a cost in the short term, they provide the opportunity to learn about customers over the long term.
+Including such a sample of customers does have a cost, literally. Some cus- tomers are being contacted even though their expected response rate is lower than the threshold. Of course, not all the customers are contacted, just a sample, but this is still a cost for any given campaign. The benefit is strategic: over time, the lessons learned apply to all customers rather than to the smaller number who would be chosen for each campaign.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼378 Chapter 8 ■ Customer Purchases and Other Repeated Events Customer Migration
+The second advantage of RFM is that it encourages thinking about customers who migrate from one cell to another. Customers fall into particular RFM cells at the beginning of 2015 (which are based on different breakpoints). However, based on customer behavior, the cells may change during the course of the year. What is the pattern of RFM cell migration from the beginning of 2015 to 2016?
+This question can be answered by a SQL query. One way to write the query would be to calculate the RFM bins for 2015 in one subquery and then calcu- late the RFM bins for 2016 and then join the results together. There is a more efficient way to do the calculation. The bins for the two years can be calculated in one subquery, although this requires judicious use of the CASE statement to select the right data for each year:
+         SELECT rfm.recbin2015*100+rfm.freqbin2015*10+rfm.monbin2015 as rfm2015,
+                rfm.recbin2016*100+rfm.freqbin2016*10+rfm.monbin2016 as rfm2016,
+                COUNT(*), MIN(rfm.householdid), MAX(rfm.householdid)
+         FROM (SELECT householdid,
+                      (CASE WHEN r2016 <= 380 THEN 1 WHEN r2016 <= 615 THEN 2
+                            WHEN r2016 <= 1067 THEN 3 WHEN r2016 <= 1686 THEN 4
+                            ELSE 5 END) as recbin2016,
+                      (CASE WHEN f2016 <= 372 THEN 1 WHEN f2016 <= 594 THEN 2
+                            WHEN f2016 <= 974 THEN 3 WHEN f2016 <= 1628 THEN 4
+                            ELSE 5 END) as freqbin2016,
+                      (CASE WHEN m2016 <= 13 THEN 1 WHEN m2016 <= 20 THEN 2
+                            WHEN m2016 <= 28 THEN 3 WHEN m2016 <= 59 THEN 4
+                            ELSE 5 END) as monbin2016,
+                      (CASE WHEN r2015 is null THEN null
+                            WHEN r2015 <= 174 THEN 1 WHEN r2015 <= 420 THEN 2
+                            WHEN r2015 <= 807 THEN 3 WHEN r2015 <= 1400 THEN 4
+                            ELSE 5 END) as recbin2015,
+                      (CASE WHEN f2015 IS NULL THEN NULL
+                            WHEN f2015 <= 192 THEN 1 WHEN f2015 <= 427 THEN 2
+                            WHEN f2015 <= 807 THEN 3 WHEN f2015 <= 1400 THEN 4
+                            ELSE 5 END) as freqbin2015,
+                      (CASE WHEN m2015 IS NULL THEN NULL
+                            WHEN m2015 <= 13 THEN 1 WHEN m2015 <= 19 THEN 2
+                            WHEN m2015 <= 28 THEN 3 WHEN m2015 <= 53 THEN 4
+                            ELSE 5 END) as monbin2015
+               from (SELECT householdid,
+                            DATEDIFF(dd, MAX(CASE WHEN orderdate < ‘2015-01-01’
+                                                  THEN orderdate END),
+                                     ‘2015-01-01’) as r2015,
+                            FLOOR(DATEDIFF(dd,
+                                           MIN(CASE WHEN orderdate < ‘2015-01-01’
+                                                    THEN orderdate END),
+                                          ‘2015-01-01’)/
+                                  SUM(CASE WHEN orderdate < ‘2015-01-01’
+                                           THEN 1.0 END)) as f2015,
+                            (SUM(CASE WHEN orderdate < ‘2015-01-01’
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 379
+￼￼￼                               THEN totalprice END) /
+                      SUM(CASE WHEN orderdate < ‘2015-01-01’ THEN 1.0 END
+                          )) as m2015,
+                     DATEDIFF(dd, MAX(orderdate) , ‘2016-01-01’) as r2016,
+                     FLOOR(DATEDIFF(dd, MIN(orderdate), ‘2016-01-01’)/
+                           COUNT(*)) as f2016, AVG(totalprice) as m2016
+              FROM orders o JOIN customer c ON o.customerid = c.customerid
+              WHERE orderdate < ‘2016-01-01’
+              GROUP BY householdid) a
+        ) rfm
+  GROUP BY rfm.recbin2015, rfm.freqbin2015, rfm.monbin2015,
+           rfm.recbin2016, rfm.freqbin2016, rfm.monbin2016
+  ORDER BY COUNT(*) DESC
+This query uses explicit thresholds to define the quintiles for the two years. This is for convenience. The thresholds could also be defined using RANK().
+Households that first appear in 2016 have no previous RFM cell, so these are given the value NULL for 2015. The new households arrive in only five cells, as shown in Table 8-8.
+￼￼￼￼￼￼￼￼￼￼￼￼Table 8-8: RFM Bins for New Customers in 2016 2016 RFM BIN
+114 115 113 112 111
+COUNT
+6,241 6,021 5,410 4,909 4,416
+￼￼￼￼￼￼These five cells all have the highest values along the recency dimension for 2016, which is not surprising because these households have all made a recent purchase. They are also highest along the frequency dimension for the same reason. Only the monetary dimension is spread out, and it is skewed a bit toward higher monetary amounts. In fact, 53.4% are in the two highest mone- tary buckets, rather than the 40% that would be expected. So, new customers in 2016 seem to be at the higher end of purchase values.
+The biggest interest is customers who change from the bad bins (high values along all dimensions) to good bins (low values along the dimensions). This brings up the question: What campaigns in 2016 are converting long-term dormant customers into active customers? This question could be answered by diving into the RFM bins. However, it is easier to rephrase the question by simply asking about customers who made no purchases in, say, the two years before January 1, 2015. This is easier than calculating all the RFM information, and probably just as accurate.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼380 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼Figure 8-10 shows the channel of the first purchase made in 2016 as a 100% stacked, column chart. The purchases are split by the number of years since the household made a previous purchase. This chart suggests that email is a strong channel for bringing customers back. Unfortunately, the email channel is also extremely small, with only sixteen households making a first 2016 purchase in that channel, because email is used only for some small marketing tests.
+100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Figure 8-10: The channel of first purchases in 2016 shows that some channels are better at attracting new customers and others at bringing dormant customers back.
+Of the significant channels, Partner seems to be the best in reactivating dor- mant customers. A total of 5.6% of the households that place an order in 2016 in the Partner channel are older than two years. By comparison, only 2.2% of the Web channel customers are older than two years.
+RFM Limits
+RFM is an interesting methodology because it breaks customers into segments, promotes good experimental design (by requiring test cells in marketing), and encourages thinking about changes in customer behavior over time. However, the underlying methodology does have its limits.
+One issue with RFM is that the dimensions are not independent. Customers who make frequent purchases have also, generally, made recent purchases. The example in this section uses five cells along each axis; of the 125 cells 15 have no customers at all. At the other extreme, the 12 most populated cells have over half the customers. In general, RFM does a good job of distinguishing the best customers from the worst. However, it does not do a good job of distinguishing among different groups of customers.
+And, this is not surprising. Customer behavior is complex. The three dimensions of recency, frequency, and monetary value are important for understanding the customers’ purchasing behaviors — which is why this sec- tion discusses them. However, RFM does not include the multitude of other
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+year6 year5 year4 year3 year2 year1 newcusts
+￼AD BULK
+CATALOG EMAIL
+EMPLOYEE INSERT
+INTERNAL MAIL
+PARTNER REFERRAL
+SURVEY WEB
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 381
+￼￼behaviors that describe customers, such as geography and the products pur- chased. These other aspects of the customer relationship are also critical for understanding customers.
+Which Households Are Increasing
+Purchase Amounts Over Time?
+This section discusses a common question: Are purchase amounts increasing or decreasing over time for each household? This question can be answered in several ways. The most sophisticated is to define a trend for each household, using the slope of the line that best fits that household’s purchase patterns. Two other methods are also discussed. The first compares the earliest and latest spending values, using a ratio or difference for the comparison. The second uses the average of the earliest few purchases and compares them to the average amount of the last few purchases.
+Comparison of Earliest and Latest Values
+The first and last purchase values for each household contain information about how customer purchase patterns change over time. There are two com- ponents to this analysis. The first is calculating the values themselves. The sec- ond is deciding how to compare them.
+Calculating the Earliest and Latest Values
+What is the order amount for the earliest and latest order in each household (that has more than one order)? One approach to answering this question is the “find- the-transaction” method, which works with traditional SQL. Another approach uses clever aggregation, which is often more efficient and results in simpler SQL code. The third uses SQL window functions, which are not avail- able in all databases.
+“Find-the-Transaction” (Standard SQL Approach)
+The standard SQL approach is to find the order that has the household’s min- imum (or maximum) ORDERDATE, as in the following query that looks for the order in a household having the smallest order date:
+  SELECT c.householdid, o.*
+  FROM orders o JOIN customer c ON o.customerid = c.customerid
+  WHERE o.orderdate IN
+            (SELECT MIN(orderdate)
+             FROM orders o1 JOIN customer c1
+                  ON o1.customerid = c1.customerid
+             WHERE c1.householdid = c1.householdid)
+￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼382 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼This query uses a correlated subquery for the IN statement. Correlated sub- queries can always be rewritten as joins (and we’ll shortly see an example). This query is simple enough, but there is a catch. There might be more than one order on the minimum date.
+The following query calculates the number of orders on the minimum date:
+  SELECT nummindateorders, COUNT(*) as numhh,
+         MIN(householdid), MAX(householdid)
+  FROM (SELECT c.householdid, MIN(o.orderdate) as mindate,
+               COUNT(*) as nummindateorders
+        FROM orders o JOIN customer c ON o.customerid = c.customerid JOIN
+             (SELECT householdid, MIN(orderdate) as mindate
+              FROM orders o JOIN customer c ON o.customerid = c.customerid
+              GROUP BY householdid) minhh
+             ON c.householdid = minhh.householdid AND
+                o.orderdate = minhh.mindate
+        GROUP BY c.householdid) h
+  GROUP BY nummindateorders
+  ORDER BY 1 DESC
+This calculation uses two subqueries. The first aggregates the order informa- tion by HOUSEHOLDID and ORDERDATE to get the number of orders on each date for each household. The second aggregates by HOUSEHOLDID to get the smallest ORDERDATE for each household. These are then joined together to get count on the minimum order date.
+The counts are shown in Table 8-9. Although the vast majority of house- holds do have only one order on their earliest order date, over one thousand have more than one. The strategy of looking for the one and only order on the minimum order date does not work correctly.
+￼￼￼￼￼￼￼￼￼￼￼￼￼Table 8-9: Number of Orders on Household’s First Order Date NUMBER OF PURCHASES NUMBER OF
+ON FIRST DAY HOUSEHOLDS
+1 155,016 2 1,184 345 49 51 62 81
+PROPORTION
+99.21% 0.76% 0.03% 0.01% 0.00% 0.00% 0.00%
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 383
+￼￼Fixing this requires adding another level of subqueries. The innermost query finds the earliest order date for each household. The next level finds one ORDERID on that date for the household. The outermost then joins in the order information. Using JOINs instead of INs, the resulting query looks like:
+  SELECT c.householdid, o.*
+  FROM orders o JOIN customer c ON o.customerid = c.customerid JOIN
+       (SELECT c.householdid, MIN(o.orderid) as minorderid
+        FROM orders o JOIN customer c ON o.customerid = c.customerid JOIN
+             (SELECT householdid, MIN(orderdate) as minorderdate
+              FROM orders o JOIN customer c ON o.customerid = c.customerid
+              GROUP BY householdid) ho
+             ON ho.householdid = c.householdid AND
+                ho.minorderdate = o.orderdate
+        GROUP BY c.householdid) hhmin
+       ON hhmin.householdid = c.householdid AND
+          hhmin.minorderid = o.orderid
+This is a rather complicated query for a rather simple question. Without an incredible SQL optimizer, it requires joining the Orders and Customer tables three times for what seems like a relatively direct question.
+This query could be simplified if we assumed that the smallest ORDERID in a household occurred on the earliest ORDERDATE. This condition is defi- nitely worth checking for, as done by the following query:
+SELECT COUNT(*) as numhh,
+SUM(CASE WHEN o.orderdate = minodate THEN 1 ELSE 0 END) as numsame
+  FROM (SELECT householdid, MIN(orderdate) as minodate,
+               MIN(orderid) as minorderid
+        FROM orders o JOIN customer c ON o.customerid = c.customerid
+        GROUP BY householdid
+        HAVING COUNT(*) > 1) ho JOIN
+orders o
+       ON ho.minorderid = o.orderid
+  ORDER BY 1
+This query looks only at households that have more than one order. For those, it compares the minimum order date to the date of the order with the mini- mum order id.
+This query finds 21,965 households with more than one order. Of these, 18,973 have the order date associated with the smallest id being the same as the earliest order date. There remain 2,992 households whose minimum order date differs from the order date on the minimum order id. Although it would simplify queries to assume that the minimum ORDERID occurred on the earliest ORDERDATE, this is simply not true.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼384 Chapter 8 ■ Customer Purchases and Other Repeated Events Clever Aggregation
+The clever aggregation approach uses aggregations rather than complex sub- queries. The specific aggregation function that we want might look some- thing like:
+         MIN(orderid) WHERE (orderdate = MIN(orderdate))
+Alas, this is fantasy SQL that simply does not exist. However, clever tricks with string values approximate the fantasy SQL. This method was first introduced in Chapter 3, but we’ll review it here again.
+The idea is to convert ORDERDATE to a string of the form YYYYMMDD (with or without hyphens). This string has the nice characteristic that it sorts alphabetically in the same order as the original date. So, the minimum value of these strings is the minimum value of the original date. The clever idea is to append something onto the end of the string. Now, the minimum value is dominated by the first part of the string, so it corresponds to the date. The basic expression looks like:
+         SUBSTRING(MIN(CAST(YEAR(orderdate)*10000+MONTH(orderdate)*100+
+                            DAY(orderdate) as CHAR)+(CAST(totalprice as CHAR))),
+9, 100)+0
+The order date is first converted to a number, which is cast to a character value, and then TOTALPRICE is appended onto the end. The minimum value for this composite value is determined by the date which comes first, with the TOTAL- PRICE carried along. Extract the total price by taking the string from position nine onwards. The final “+0” converts the value back into a number.
+The following SQL uses this technique:
+         SELECT ho.householdid, numorders,
+                DATEDIFF(dd, mindate, maxdate) as daysdiff,
+                (lasttotalprice – firsttotalprice) as pricediff
+         FROM (SELECT householdid, MIN(orderdate) as mindate,
+                      MAX(orderdate) as maxdate, COUNT(*) as numorders,
+                      CAST(SUBSTRING(MIN(CAST(YEAR(orderdate)*10000 +
+                                              MONTH(orderdate)*100 +
+                                              DAY(orderdate) as CHAR)+
+                                         CAST(totalprice as CHAR)), 9, 100
+                                    ) AS DECIMAL) as firsttotalprice,
+                      CAST(SUBSTRING(MAX(CAST(YEAR(orderdate)*10000 +
+                                              MONTH(orderdate)*100 +
+                                              DAY(orderdate) as CHAR)+
+                                         CAST(totalprice as CHAR)), 9, 100
+                                    ) AS DECIMAL) as lasttotalprice
+               FROM orders o JOIN customer c ON o.customerid = c.customerid
+               GROUP BY householdid
+               HAVING MIN(orderdate) < MAX(orderdate) ) ho
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 385
+￼￼Although it uses a complicated set of functions for getting the maximum and minimum TOTALPRICE, this query requires no extra joins or aggregations. The technical aside “SQL Window Functions” discusses the third method, which uses window functions to solve the problem.
+￼￼SQL WINDOW FUNCTIONS
+The ranking functions discussed earlier in this chapter are examples of SQL window functions. SQL window functions are similar to aggregation functions in that they calculate summary values. However, instead of returning a smaller set of summary rows, the summary values are appended onto each row in the original data.
+For example, the following statement appends the average order amount onto each order record:
+   SELECT AVG(totalprice) OVER (PARTITION BY NULL), o.*
+   FROM orders o
+The syntax is similar to the syntax for the ranking functions. The OVER keyword indicates that this is a window aggregation function rather than a group by aggregation function. The part in parentheses describes the window of rows that the AVG() works on. In this case, there is no partition, so the statement takes the average of all rows.
+ThepartitioningstatementactslikeaGROUP BY.So,thefollowingcalculates the average order amount for each household:
+   SELECT AVG(totalprice) OVER (PARTITION BY c.householdid), o.*
+   FROM orders o JOIN customer c ON o.customerid = c.customerid
+Unlike grouping aggregation functions, though, the household average is appended onto every row.
+Window aggregation functions are quite powerful and quite useful. The simplest way to get the first and last values would be to use the FIRST() and LAST() functions:
+   SELECT FIRST(totalprice) OVER (PARTITION BY c.householdid
+                                  ORDER BY orderdate) as pricefirst,
+          LAST(totalprice) OVER (PARTITION BY c.householdid
+                                 ORDER BY orderdate) as pricelast,
+          o.*
+   FROM orders o JOIN customer c ON o.customerid = c.customerid
+Unfortunately, these functions are not available in SQL Server (although they are available in Oracle). Other functions such as MIN(), MAX(), and AVG() do not dowhatwewant.TheyignoretheORDER BYclauseandreturntheminimum, maximum, or average value of the order amount.
+www.it-ebooks.info
+Continued on next page
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼386 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼￼￼SQL WINDOW FUNCTIONS (CONTINUED)
+There is a relatively simple work-around, using the ROW_NUMBER() function
+to enumerate the orders in each household. This information can then be used to find the first and last values:
+   SELECT householdid,
+          MAX(CASE WHEN i = 1 THEN totalprice END) as pricefirst,
+          MAX(CASE WHEN i = n THEN totalprice END) as pricelast
+   FROM (SELECT o.*, c.householdid,
+                COUNT(*) OVER (PARTITION BY c.householdid) as n,
+                ROW_NUMBER() OVER (PARTITION BY c.householdid
+                                   ORDER BY orderdate ASC) as i
+FROM orders o JOIN customer c ON o.customerid = c.customerid )h
+   GROUP BY householdid
+The window aggregation functions are very useful, but their functionality can usually be expressed using other SQL constructs (this is not true of the ranking window functions). They are equivalent to doing the following:
+1. Doing a GROUP BY aggregation on the partition columns; and then,
+2. Joining the resulting table back to the original on the partition columns.
+However, window functions are a significant improvement over this process
+for two reasons. First, they allow values with different partitioning columns to be calculated in the same SELECT statement. Second, the ranking window functions introduce a new level of functionality that is much harder to replicate without the functions.
+￼Comparing the First and Last Values
+Given the order amounts on the earliest and latest dates, what is the best way to compare these values? Four possibilities are:
+■■ The difference between the earliest and latest purchase amounts. This is useful for determining the households whose spending is increasing (positive differences) and decreasing (negative differences).
+■■ The ratio of the latest purchase amount to the earliest purchase amount. This is similar to the difference. Ratios between zero and one are decreas- ing and ratios over one are increasing.
+■■ The difference divided by the time units. This makes it possible to say that the customer is increasing their purchase amounts by so many dol- lars every day (or week or month or year).
+■■ The ratio raised to the power of one divided by the number of time units. This makes it possible to say that the customer is increasing their purchase amounts by some percentage every day (or week or month or year).
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 387
+￼￼What do the differences look like? This is a reasonable question. There are only about twenty thousand households that have more than one order. This is a small enough number to include on an Excel scatter plot.
+Figure 8-11 shows the distribution of the differences, because the differences provide more information. The cumulative percent crosses the $0 line at about 67%, showing that more households have decreasing order amounts than increasing order amounts. The summaries for the chart are done in Excel.
+5,000 ￼ ￼ ￼ ￼ ￼ 100%
+4,500 ￼ 90% 4,000 ￼ ￼ ￼ ￼ 80% 3,500 ￼ ￼ 70% 3,000 ￼ ￼ 60% 2,500 ￼ 50% 2,000 ￼ ￼ 40% 1,500 ￼ ￼ 30% 1,000 20%
+500 ￼ 10% 0 ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ 0%
+-$300 -$250 -$200 -$150 -$100 -$50 $0 $50 $100 $150 $200 $250 $300
+Difference in $$ from First to Last Order
+Figure 8-11: The distribution of the differences in total price between the first order and the last order shows that more households have decreases than increases in the order amounts.
+What Happens as Customer Span Increases
+Figure 8-12 shows what happens to the difference as the span between the first and last purchases increases. There are two curves on the chart, one for the total number of households whose purchases have that span (in 30-day incre- ments) and one for the average price difference.
+For the shortest differences in time, the second purchase has a lower value than the first for a strong majority of households. However, after about six months, the breakdown is more even. As the time span between the first pur- chase and last purchase increases, the later purchase is more likely to be larger than the first. This count of purchases has a wave pattern that fades over time, corresponding to households that make purchases at the same time of the year.
+The SQL for making this chart uses the subquery that finds the first and last total price amounts. The outer query does the aggregation:
+  SELECT FLOOR(daysdiff/30)*30 as daystopurchase,
+         COUNT(*) as num, AVG(pricediff) as avgdiff
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+Number of Orders
+Cumulative Percent
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼388 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼￼￼￼￼FROM (<subquery>) ho
+GROUP BY FLOOR(daysdiff/30)*30
+ORDER BY 1
+￼￼2,500 2,000 1,500 1,000
+500 0
+0
+$125
+$100
+$75
+$50
+$25
+$0 -$25
+-$50 -$75
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼90 180 270 360 450 540 630 720 810 900 990 1080 1170
+Span of Days between Purchases
+Figure 8-12: As the customer time span increases, the amount that customers increase their spending also increases.
+The chart itself uses a trick to align the horizontal grid lines; this is challeng- ing because the count on the left-hand axis has only positive values, and the dol- lar amount on the right-hand axis has both positive and negative values. The grid lines are lined up, by making the left-hand axis go from –1,500 to +2,500 and the right hand from –$75 to +$125. The left-hand axis spans 4,000 units, which is a multiple of the 200 spanned by the right-hand axis, making it easier to align the horizontal grid lines on both sides. The left-hand axis does not show negative values, because these make no sense for counts, by using a special number for- mat, “#,##0;”. This number format says “put commas in numbers greater than or equal to zero and don’t put anything for negative numbers.”
+TIP Whentheleftandrightaxeshavedifferentscales,makethehorizontal grids line up. This is easiest if the range on one axis is a multiple of the range on the other axis.
+What Happens as Customer Order Amounts Vary
+The alternative viewpoint is to summarize the data by the difference in TOTALPRICE between the later order and the earliest order. This summary
+￼www.it-ebooks.info
+Count
+Dollar Increase or Decrease
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 389
+￼￼works best when the difference is placed into bins. For this example, the bins are the first number of the difference following by a sufficient number of zeros, so the bins look like: $1, $2, $3, . . ., $8, $9, $10, $20, $30, . . . $90, $100, $200, and so on. Formally, these bins are powers of ten times the first digit of the difference. Other binning methods are possible, such as equal-sized bins. However, binning by the first digit makes the bins easy to read and easy to communicate what is happening.
+The chart in Figure 8-13 shows the number of households in each bin and the average time between orders. The number of households is quite spiky, because of the binning process. Every power of ten, the size of the bin sud- denly jumps by a factor of ten. The range of $90–$100 is in one bin. The next is not $100–$110, it is instead $100–$200, which is ten times larger. One way to eliminate the spikiness is to show the cumulative number of households, rather than the number in the bin itself. This eliminates the spikiness but may be less intuitive for people looking at the chart.
+2,500 2,500 2,000 2,000 1,500 1,500 1,000 ￼ ￼ ￼ 1,000
+500 ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ 500 00
+Difference between First and Last Purchase
+Figure 8-13: The span of time that customers make purchases is related to the average difference in dollar amounts between the first and last orders.
+The average time span tends to increase as the difference increases. This suggests that the longer a customer is active, the more the customer is spend- ing, on average. However, this effect is most pronounced for the most negative differences. Customers whose purchases decrease dramatically are making purchases during relatively short time spans.
+The query that generates the data for this chart is similar to the previous query,exceptfortheGROUP BYclause:
+  SELECT (CASE WHEN pricediff = 0 THEN ‘$0’
+               WHEN pricediff BETWEEN -1 and 0 THEN ‘$-0’
+               WHEN pricediff BETWEEN 0 AND 1 THEN ‘$+0’
+               WHEN pricediff < 0
+               THEN ‘$-‘+LEFT(-pricediff, 1)+
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+Average Number of Days
+$-6,000 $-4,000 $-2,000
+$-900 $-700 $-500 $-300 $-100
+$-80 $-60 $-40 $-20
+$-9 $-7 $-5 $-3 $-1 $0 $1 $3 $5 $7 $9
+$20
+$40
+$60
+$80
+$100
+$300
+$500
+$700
+$900
+$2,000 $5,000
+Count
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼390 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼￼                    LEFT(‘000000000’, FLOOR(LOG(-pricediff)/LOG(10)))
+               ELSE ‘$’+LEFT(pricediff, 1)+
+                    LEFT(‘000000000’, FLOOR(LOG(pricediff)/LOG(10)))
+          END) diffgroup,
+         COUNT(*) as numhh, AVG(daysdiff) as avgdaysdiff
+  FROM (<subquery>) ho
+GROUP BY (CASE WHEN pricediff = 0 THEN ‘$0’ ...
+            END)
+  ORDER BY MIN(pricediff)
+The two notable features in the query are the CASE statement for binning the difference in values and the ORDER BY statement. The bin definition uses the first digit of the difference and then turns the rest of the digits into zeros, so “123” and “169” go into the “100” bin. The first digit is extracted using the LEFT() function, which takes the first digit of a positive numeric argument. The remaining digits are set to zero, by calculating the number of digits using a particular mathematical expression. The number of zeros is the log in base 10 of the difference, and the log in base 10 is the log in any base divided by the log of 10 in that base (so the expression works even in databases where LOG() calculates the natural log). The process is the same for negative differences, except the absolute value is used and a negative sign prepended to the result.
+The purpose of the ORDER BY clause is to order the bins numerically. An alphabetical order would order them as “$1,” “$10,” “$100,” “$1000,” and these would be followed by “$2.” To get a numeric ordering, we extract one value from the bin, the minimum value, and order by this. Actually, any value would do, but the minimum is convenient.
+Comparison of First Year Values and Last Year Values
+The previous section compared the first order amount value to the last order amount. This section makes a slightly different comparison: How does the aver- age household’s purchase change from the first year they make a purchase to the most recent year?
+Table 8-10 contains the difference between the average order amount dur- ing the earliest year and during the latest year. When the purchases are on successive years, the difference is almost always negative. However, as the time span grows, the difference becomes positive indicating that the order sizes are growing, although this might be due to prices increasing during this time.
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 391 Table 8-10: Difference between Average First and Last Year Order Amounts
+￼￼￼YEAR
+2009 2010 2011 2012 2013 2014 2015
+2010 2011
+$7.54 $2.29 -$17.44 $1.76 -$0.02 $1.49
+2012
+$22.49 $24.59 $16.42 -$1.66
+-$21.26 -$14.28
+2013
+$34.83 $10.07 $12.63
+$9.54 -$11.36 -$7.05 -$41.56
+2014
+$29.31 $17.08 $7.49 $45.75 $36.26
+2015 2016
+$47.24 $46.38 $30.22
+$27.44
+￼￼￼￼￼￼￼Figure 8-14 shows these results as a scatter plot, where the horizontal axis is the purchase amount on the earlier date and the vertical axis is the purchase amount on the later date. The diagonal line divides the chart into two regions. Below the line, purchases are decreasing over time and above the line, purchases are increasing over time. The lowest point in the chart shows the households whose earliest purchase was in 2009 and whose latest purchase was in 2011; the earlier purchase average was about $35 and the later was about $37. An interest- ing feature of the chart is that all the points below the line come from either one- or two-year spans. The longer the time span, the larger the later purchases.
+$140
+$130
+$120
+$110
+$100
+ $90
+ $80
+ $70
+ $60
+ $50
+ $40
+ $30
+equal amounts
+￼￼￼line of
+￼￼￼￼￼￼￼￼￼￼1 Year
+￼￼￼￼￼2 Year
+￼￼￼￼￼￼￼￼￼3 Year
+￼￼4 + Year
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$30 $40 $50 $60 $70 $80 $90 $100 $110 $120 $130 $140 $150
+Earliest Purchase Amount
+Figure 8-14: This scatter plot shows the average order amount for the earliest orders and latest orders for households. Households below the diagonal line have decreasing orders; those above have increasing orders.
+www.it-ebooks.info
+Latest Purchase Amount
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼392 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼The query calculates the average purchase size for pairs of years, the first and last years that households make purchases. Each row also contains the average size of the purchase during the first year and the average size during the second year:
+  SELECT minyear, maxyear, AVG (avgearliest) as avgearliest,
+         AVG(avglatest) as avglatest, COUNT(*) as numhh
+  FROM (SELECT hy.householdid, minyear, maxyear,
+               AVG(CASE WHEN hy.theyear = minyear THEN avgprice END
+                  ) as avgearliest,
+               AVG(CASE WHEN hy.theyear = maxyear THEN avgprice END
+                  ) as avglatest
+        FROM (SELECT householdid, MIN(YEAR(orderdate)) as minyear,
+                     MAX(YEAR(orderdate)) as maxyear
+              FROM orders o JOIN customer c ON o.customerid = c.customerid
+              GROUP BY householdid
+              HAVING MIN(YEAR(orderdate)) < MAX(YEAR(orderdate))
+             ) hminmax JOIN
+             (SELECT householdid, YEAR(orderdate) as theyear,
+                     SUM(totalprice) as sumprice,
+                     AVG(totalprice) as avgprice
+              FROM orders o JOIN customer c ON o.customerid = c.customerid
+              GROUP BY householdid, YEAR(orderdate) ) hy
+             ON hy.householdid = hminmax.householdid AND
+                (hy.theyear = hminmax.minyear OR
+                 hy.theyear = hminmax.maxyear)
+        GROUP BY hy.householdid, minyear, maxyear) h
+  GROUP BY minyear, maxyear
+This query aggregates the orders data in two subqueries, as shown in the dataflow diagram in Figure 8-15. The first is by HOUSEHOLDID to get the ear- liest and latest years with orders. The second is by HOUSEHOLDID and the year of the ORDERDATE to get the average order size in each year. These two subqueries are joined together to get the average order size in the first and last years, and this final result is again aggregated by the first and last year.
+Trend from the Best Fit Line
+This section goes one step further by calculating the slope of the line that best fits the TOTALPRICE values. This calculation relies on some mathematical manipulation, essentially implementing the equation for the slope in SQL. The advantage to this approach is that it takes into account all the purchases over time, instead of just the first and last ones.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼READ orders
+READ customer
+READ orders
+READ customer
+JOIN
+on customerid
+AGGREGATE group by householdid, YEAR(orderdate)
+avgprice = avg(totalprice)
+AGGREGATE group by householdid
+minyear = MIN(YEAR(orderdate)) maxyear = MAX(YEAR(orderdate))
+JOIN
+on householdid, (year = minyear or year = maxyear)
+hminmax
+FILTER minyear < maxyear
+APPEND
+earliest = (case when year = minyear
+then totalprice end) latest = (case when year = maxyear
+then totalprice end)
+AGGREGATE
+group by householdid, minyear, maxyear
+avgearliest = avg(earliest) avglatest = avg(latest)
+AGGREGATE group by minyear, maxyear
+avgearliest = avg(avgearliest) avglatest = avg(latest)
+OUTPUT
+Chapter 8 ■ Customer Purchases and Other Repeated Events 393 ho
+JOIN
+on customerid
+Figure 8-15: This dataflow diagram shows the processing necessary to get the average household purchases during the first and last year of purchases.
+Using the Slope
+The purchases in this household have increased over time, although irregu- larly. Figure 8-16 shows the purchases for two households over several years. One household has seen their orders increase over time; the other has seen them decrease. The chart also shows the best fit line for each household. The household with increasing purchases has a line that goes up, so the slope is positive. The other line decreases, so its slope is negative. Chapter 11 discusses best fit lines in more detail.
+The slope of the best fit line connecting the household with increasing pur- chases is 0.464, which means that for each day, the expected value of an order from the household increases by $0.46, or about $169 per year. The slope pro- vides a simple summary of purchases over time. This summary can be useful for reporting purposes, although it works better when there are more data points. Slopes are better at summarizing data collected monthly, rather than at irregular, highly spaced transactions.
+Calculating the Slope
+The formula for any straight line is written in terms of its slope and Y-intercept. If we knew the formula for the best fit line, the slope would fall out of it. Fortu-
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼394 Chapter 8 ■ Customer Purchases and Other Repeated Events
+￼￼nately, the best fit line is not difficult to calculate in SQL. Each data point — each order — needs an X-coordinate and a Y-coordinate. The Y-coordinate is the TOTALPRICE on the order at that point in time. The X-coordinate should be the date. However, dates do not work particularly well in mathematical calcu- lations, so instead we’ll use the number of days since the beginning of 2000. The idea is to use these X- and Y-coordinates to calculate the trend (slope) of the best fit line.
+$1,000 $900 $800 $700 $600 $500 $400 $300 $200 $100 $0
+Dec Jun Dec Jun Dec Jun Dec Jun Dec Jun Dec Jun Dec Jun 2009 2010 2010 2011 2011 2012 2012 2013 2013 2014 2014 2015 2015 2016
+Date of Order
+Figure 8-16: These customers have different purchase trends over time. The formula requires five aggregation columns:
+■■ N: the number of data points
+■■ SUMX: the sum of the X-values of the data points
+■■ SUMXY: the sum of the product of the X-value times the Y-value
+■■ SUMY: sum of the Y-values
+■■ SUMYY: sum of the squares of the Y-values
+The slope is then the ratio between two numbers. The numerator is n*SUMXY
+– SUMX*SUMY; the denominator is n*SUMXX – SUMX*SUMX. The following query does this calculation:
+  SELECT h.*, (1.0*n*sumxy - sumx*sumy)/(n*sumxx - sumx*sumx) as slope
+  FROM (SELECT householdid, COUNT(*) as n,
+               SUM(1.0*days) as sumx, SUM(1.0*days*days) as sumxx,
+               SUM(totalprice) as sumy, SUM(days*totalprice) as sumxy
+        FROM (SELECT o.*, DATEDIFF(dd, ‘2000-01-01’, orderdate) as days
+              FROM orders o
+             ) o JOIN customer c ON o.customerid = c.customerid
+        GROUP BY householdid
+        HAVING MIN(orderdate) < MAX(orderdate) ) h
+￼￼￼￼￼y = 0.4641x - 18627
+￼y = -0.4192x + 17665
+Customer 1
+Customer 2
+Customer 1 Linear Trend
+Customer 2 Linear Trend
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+Amount
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 395
+￼￼The innermost subquery defines DAYS, which is the difference between the order date and the beginning of 2000. Then the five variables are defined in another subquery, and finally SLOPE in the outermost:
+The slope is defined only when a household has orders on more than one day. So, this query also limits the calculation to households where the span between the earliest date and the latest date is greater than zero. This elimi- nates households with only one purchase, as well as those with multiple pur- chases all on the same day.
+Time to Next Event
+The final topic in this chapter combines the ideas from survival analysis with repeated events. This topic is quite deep, and this section introduces the ideas as they can be implemented in SQL and Excel. The question is: How long until a customer places another order?
+Idea behind the Calculation
+To apply survival analysis to repeated events, we need the date of the next order in the household (if any) appended to every order. The order date and next order date provide the basic information needed for time-to-event sur- vival analysis, although the definitions for survival analysis are inverted from the last two chapters:
+■■ The “start” event is when a customer makes a purchase.
+■■ The “end” event is either the next purchase date or the cutoff date.
+This terminology is backwards. “Survival” ends up meaning the survival of the customer’s “non-purchase” state. In fact, we are interested in the exact opposite of survival, 100%-Survival, which is the cumulative probability that customers have made a purchase up to some given point in time.
+Figure 8-17 shows the overall time-to-next purchase curve for all house- holds along with the daily “hazard” that a customer makes a purchase. The first thing to note is that after three years, only about 20% of customers have made another purchase. This is consistent with the fact that most households have only one order.
+The hazards show an interesting story. There are clearly peaks after one year with echoes at two years and three years. These are customers making pur- chases once per year, most likely holiday shoppers. It suggests that there is a segment of such shoppers.
+￼www.it-ebooks.info
+￼396 Chapter 8 ■ Customer Purchases and Other Repeated Events 25%
+Daily Probability
+20% Cumulative Households
+0.25% 0.20% 0.15% 0.10% 0.05% 0.00%
+Daily Probability
+15% 10% 5% 0%
+Cumulative Households
+0 90 180 270 360 450 540 630 720 810 900 990
+Days to Next Order
+Figure 8-17: This chart shows the time to next order, both as a cumulative proportion of customers (1-Survival) and as a daily “risk” of making a purchase (hazard probability).
+Calculating Next Purchase Date Using SQL
+The hardest part of answering the question is appending the date of the next order. Figure 8-18 shows a dataflow diagram of the logic for appending the next date. First, the Orders table and Customer table are joined together to append the HOUSEHOLDID to every order. This table is then joined to itself, so every order in a household is paired with every other one. The resulting self-joined table is aggregated by the original HOUSEHOLDID and ORDER- DATE. The next order is the minimum of the order date that occurs after the original ORDERDATE. The key idea here is to do a self-join and then aggrega- tion to calculate the “next” date.
+The following SQL accomplishes this:
+  SELECT o1.householdid, o1.orderdate as firstdate,
+         MIN(CASE WHEN o2.orderdate > o1.orderdate THEN o2.orderdate END
+            ) as nextdate,
+         COUNT(*) as numords,
+         MAX(CASE WHEN o2.orderdate > o1.orderdate THEN 1 ELSE 0 END
+            ) as hasnext
+  FROM (SELECT c.householdid, o.*
+        FROM orders o JOIN customer c ON o.customerid = c.customerid
+       ) o1 LEFT OUTER JOIN
+       (SELECT c.householdid, o.*
+        FROM orders o JOIN customer c ON o.customerid = c.customerid) o2
+       ON o1.householdid = o2.householdid
+  GROUP BY o1.householdid, o1.orderdate
+This SQL follows the same logic as the dataflow, joining Orders and Customer, then doing a self-join, then the aggregation. This logic can be extended to do other things, such as calculating the total number of orders and the number of
+www.it-ebooks.info
+￼Chapter 8 ■ Customer Purchases and Other Repeated Events 397 orders before the first one. The total number of orders is simply COUNT(*). The
+number of orders before the first one can also be calculated:
+  SUM(CASE WHEN o2.orderdate < o1.orderdate THEN 1
+           ELSE 0 END) as numbef
+Doing a self-join and aggregation is quite powerful, because it provides the means to calculate many different, interesting variables. However, it is prob- ably not very efficient, and SQL extensions might be more efficient for the same calculation.
+READ orders
+READ customer
+READ orders
+READ customer
+JOIN
+on customerid
+LEFT OUTER JOIN
+on householdid, o1.orderdate < o2.orderdate
+AGGREGATE
+group by householdid, o1.orderdate
+nextdate = MIN(o2.orderdate)
+APPEND
+tenure = COALESCE(nextdate, <cutoffdate>-o1.orderdate isstop = (nextdate is NULL)
+AGGREGATE group by tenure
+pop = COUNT(*) stops = SUM(isstop)
+JOIN
+on customerid
+o1
+o2
+Figure 8-18: This dataflow diagram shows the processing needed to append the next order date to a specific order.
+From Next Purchase Date to Time-to-Event
+The time to next purchase is calculated as follows:
+■■ The days to next purchase is the next order date minus the order date.
+■■ When the next purchase date is NULL, use the cutoff date of Sep 20, 2016.
+This is the duration in days. In addition, a flag is needed to specify whether the event has occurred.
+www.it-ebooks.info
+OUTPUT
+￼398 Chapter 8 ■ Customer Purchases and Other Repeated Events
+The following query aggregates by the days to the next purchase, summing the number of orders with that date and the number of times when another order occurs (as opposed to hitting the cutoff date):
+  SELECT DATEDIFF(dd, firstdate, ISNULL(nextdate, ‘2016-09-20’)) as days,
+         COUNT(*),
+SUM(CASE WHEN numbef = 1 THEN 1 ELSE 0 END) as ord1, ...
+SUM(CASE WHEN numbef = 5 THEN 1 ELSE 0 END) as ord5, SUM(hasnext) as hasnext,
+SUM(CASE WHEN numbef = 1 THEN hasnext ELSE 0 END) as hasnext1, ...
+SUM(CASE WHEN numbef = 5 THEN hasnext ELSE 0 END) as hasnext5
+  FROM (<subquery>) a
+  GROUP BY DATEDIFF(dd, firstdate, ISNULL(nextdate, ‘2016-09-20’))
+  ORDER BY 1
+The calculation then proceeds by calculating the hazard, survival, and 1-S values for the data in the same way used in the previous two chapters. In addi- tion to survival, the spreadsheet also calculates 1-S, because this is the more interesting number.
+Stratifying Time-to-Event
+As with the survival calculation, the time-to-event can be stratified. For instance, Figure 8-19 shows the time-to-next-event stratified by the number of orders that the customer has already made. These curves follow the expected track: the more often that someone places orders, the sooner they make another order.
+70% 60% 50% 40% 30% 20% 10%
+0%
+5 Prev Orders
+4 Prev Orders
+3 Prev Orders
+2 Prev Orders
+1 Prev Order
+Cumulative Households
+0 90 180 270 360 450 540 630 720 810 900 990
+Days to Next Order
+Figure 8-19: This chart shows the time to next purchase stratified by the number of previous purchases.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 8 ■ Customer Purchases and Other Repeated Events 399 Of course, the number of previous orders is only one variable we might
+want to use. We can also stratify by anything that is known at the order time:
+■■ Has the time-to-next order varied for orders placed in different years?
+■■ Does the time-to-next order vary depending on the size of an order?
+■■ Do customers make a repeat order sooner or later when a particular item is in their basket?
+All of these are simple extensions of the idea of doing a self-join and then aggregating the data to get the next order date.
+Lessons Learned
+This chapter introduces repeated events, using the purchases data. Repeated events are customer interactions that occur at irregular intervals.
+The first challenge with repeated events is determining whether separate transactions belong to the same customer. In this chapter, we learned that the CUSTOMERID column is basically useless, because it is almost always unique. A better column for identifying transactions over time is HOUSEHOLDID.
+Matching customers on transactions using names and addresses is chal- lenging and often outsourced. Even so, it is useful to be able to use SQL to val- idate the results. Do the customers in the households make sense?
+The classic way of analyzing repeated events is using RFM analysis, which stands for recency, frequency, monetary. This analysis is feasible using SQL and Excel, particularly when using the ranking functions in SQL. However, RFM is inherently limited, because it focuses on only three dimensions of cus- tomer relationships. It is a cell-based approach, where customers are placed into cells and then tracked over time.
+An important topic in looking at repeated events is whether the sizes of pur- chases change over time. There are different ways of making the comparison, including simply looking at the first and last order to see whether the size is growing or shrinking. The most sophisticated way presented in this chapter is to calculate the slope of the best fit line connecting the orders. When the slope is positive, order sizes are increasing; when the slope is negative, order sizes are decreasing.
+The final topic in the chapter applies survival analysis to repeated events, addressing the question of how long it takes a customer to make the next order. This application is quite similar to survival analysis for stopped customers, except that the important customers — the ones who make the purchase — are the ones who do not survive.
+The next chapter continues analysis of repeated events, but from a perspective that is not covered in this chapter at all. It discusses the actual items purchased in each order and what this tells us about the items and the customers.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

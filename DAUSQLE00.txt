@@ -1,0 +1,424 @@
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Data Analysis Using
+SQL and Excel®
+Gordon S. Linoff
+￼￼￼￼￼￼www.it-ebooks.info
+Wiley Publishing, Inc.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Data Analysis Using SQL and Excel®
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Data Analysis Using
+SQL and Excel®
+Gordon S. Linoff
+￼￼￼￼￼￼www.it-ebooks.info
+Wiley Publishing, Inc.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Data Analysis Using SQL and Excel®
+Published by
+Wiley Publishing, Inc. 10475 Crosspoint Boulevard Indianapolis, IN 46256 www.wiley.com
+Copyright © 2008 by Wiley Publishing, Inc., Indianapolis, Indiana Published simultaneously in Canada
+ISBN: 978-0-470-09951-3
+Manufactured in the United States of America 10 9 8 7 6 5 4 3 2 1
+No part of this publication may be reproduced, stored in a retrieval system, or transmitted in any form or by any means, electronic, mechanical, photocopying, recording, scanning, or otherwise, except as permitted under Sections 107 or 108 of the 1976 United States Copyright Act, without either the prior written permission of the Publisher, or authorization through payment of the appropriate per-copy fee to the Copyright Clearance Center, 222 Rosewood Drive, Danvers, MA 01923, (978) 750-8400, fax (978) 646-8600. Requests to the Publisher for permission should be addressed to the Legal Department, Wiley Publishing, Inc., 10475 Crosspoint Blvd., Indianapolis, IN 46256, (317) 572-3447, fax (317) 572-4355, or online at http://www.wiley.com/go/permissions.
+Limit of Liability/Disclaimer of Warranty: The publisher and the author make no representations or warranties with respect to the accuracy or completeness of the contents of this work and specif- ically disclaim all warranties, including without limitation warranties of fitness for a particular purpose. No warranty may be created or extended by sales or promotional materials. The advice and strategies contained herein may not be suitable for every situation. This work is sold with the understanding that the publisher is not engaged in rendering legal, accounting, or other profes- sional services. If professional assistance is required, the services of a competent professional per- son should be sought. Neither the publisher nor the author shall be liable for damages arising herefrom. The fact that an organization or Website is referred to in this work as a citation and/or a potential source of further information does not mean that the author or the publisher endorses the information the organization or Website may provide or recommendations it may make. Further, readers should be aware that Internet Websites listed in this work may have changed or disap- peared between when this work was written and when it is read.
+For general information on our other products and services or to obtain technical support, please contact our Customer Care Department within the U.S. at (800) 762-2974, outside the U.S. at (317) 572-3993, or fax (317) 572-4002.
+Library of Congress Cataloging-in-Publication Data: Linoff, Gordon.
+Data analysis using SQL and Excel / Gordon S. Linoff. p. cm.
+Includes index.
+ISBN 978-0-470-09951-3 (paper/website)
+1. SQL (Computer program language) 2. Querying (Computer science) 3. Data mining. 4. Microsoft Excel (Computer file) I. Title.
+QA76.73.S67L56 2007 005.75'85--dc22
+2007026313
+Trademarks: Wiley, the Wiley logo, and related trade dress are trademarks or registered trademarks of John Wiley & Sons, Inc. and/or its affiliates, in the United States and other countries, and may not be used without written permission. Excel is a registered trademark of Microsoft Corporation in the United States and/or other countries. All other trademarks are the property of their respective own- ers. Wiley Publishing, Inc., is not associated with any product or vendor mentioned in this book.
+Wiley also publishes its books in a variety of electronic formats. Some content that appears in print may not be available in electronic books.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼To Giuseppe for sixteen years, five books, and counting . . .
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼vi
+About the Author
+Gordon Linoff (gordon@data-miners.com) is a recognized expert in the field of data mining. He has more than twenty-five years of experience working with companies large and small to analyze customer data and to help design data warehouses. His passion for SQL and relational databases dates to the early 1990s, when he was building a relational database engine designed for large corporate data warehouses at the now-defunct Thinking Machines Cor- poration. Since then, he has had the opportunity to work with all the leading database vendors, including Microsoft, Oracle, and IBM.
+With his colleague Michael Berry, Gordon has written three of the most pop- ular books on data mining, starting with Data Mining Techniques for Marketing, Sales, and Customer Support. In addition to writing books on data mining, he also teaches courses on data mining, and has taught thousands of students on four continents.
+Gordon is currently a principal at Data Miners, a consulting company he and Michael Berry founded in 1998. Data Miners is devoted to doing and teaching data mining and customer-centric data analysis.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Credits
+Acquisitions Editor
+Robert Elliott
+Development Editor
+Ed Connor
+Technical Editor
+Michael J. A. Berry
+Production Editor
+William A. Barton
+Copy Editor
+Kim Cofer
+Editorial Manager
+Mary Beth Wakefield
+Production Manager
+Tim Tate
+Vice President and Executive Group Publisher
+Richard Swadley
+Vice President and Executive Publisher
+Joseph B. Wikert
+Project Coordinator, Cover
+Lynsey Osborn
+Graphics and Production Specialists
+Craig Woods, Happenstance Type-O-Rama
+Oso Rey, Happenstance Type-O-Rama
+Proofreading
+Ian Golder, Word One
+Indexing
+Johnna VanHoose Dinse
+Anniversary Logo Design
+Richard Pacifico
+vii
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Contents
+Foreword xxvii Acknowledgments xxxi
+Introduction Chapter 1
+xxxiii
+A Data Miner Looks at SQL 1
+Picturing the Structure of the Data 2 What Is a Data Model? 3 What Is a Table? 3
+Allowing NULL Values 5
+Column Types 6 What Is an Entity-Relationship Diagram? 7 The Zip Code Tables 8 Subscription Dataset 10 Purchases Dataset 11
+Picturing Data Analysis Using Dataflows 12 What Is a Dataflow? 13 Dataflow Nodes (Operators) 15
+READ: Reading a Database Table 15 OUTPUT: Outputting a Table (or Chart) 15 SELECT: Selecting Various Columns in the Table 15 FILTER: Filtering Rows Based on a Condition 15 APPEND: Appending New Calculated Columns 15 UNION: Combining Multiple Datasets into One 16 AGGREGATE: Aggregating Values 16 LOOKUP: Looking Up Values in One Table in Another 16 CROSSJOIN: General Join of Two Tables 16 JOIN: Join Two Tables Together Using a Key Column 16 SORT: Ordering the Results of a Dataset 17
+Dataflows, SQL, and Relational Algebra 17
+www.it-ebooks.info
+ix
+￼
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼x Contents
+￼￼Chapter 2
+SQL Queries 18 What to Do, Not How to Do It 18 A Basic SQL Query 19 A Basic Summary SQL Query 20 What it Means to Join Tables 22
+Cross-Joins: The Most General Joins 23 Lookup: A Useful Join 24 Equijoins 26 Nonequijoins 27 Outer Joins 28
+Other Important Capabilities in SQL 29 UNION ALL 30 CASE 30 IN 31
+Subqueries Are Our Friend 32 Subqueries for Naming Variables 33 Subqueries for Handling Summaries 34 Subqueries and IN 36
+Rewriting the “IN” as a JOIN 36 Correlated Subqueries 37 The NOT IN Operator 38
+Subqueries for UNION ALL 39 Lessons Learned 40
+What’s In a Table? Getting Started with Data Exploration 43
+What Is Data Exploration? 44 Excel for Charting 45 A Basic Chart: Column Charts 45 Inserting the Data 46 Creating the Column Chart 47 Formatting the Column Chart 49 Useful Variations on the Column Chart 52 A New Query 52 Side-by-Side Columns 52 Stacked Columns 54 Stacked and Normalized Columns 54 Number of Orders and Revenue 54 Other Types of Charts 56 Line Charts 56 Area Charts 57 X-Y Charts (Scatter Plots) 57 What Values Are in the Columns? 59 Histograms 60 Histograms of Counts 64 Cumulative Histograms of Counts 66 Histograms (Frequencies) for Numeric Values 67
+Ranges Based on the Number of Digits, Using
+Numeric Techniques 68
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Contents xi
+￼￼Chapter 3
+Ranges Based on the Number of Digits, Using
+String Techniques 69
+More Refined Ranges: First Digit Plus Number of Digits 69
+Breaking Numerics into Equal-Sized Groups 71 More Values to Explore — Min, Max, and Mode 72 Minimum and Maximum Values 72 The Most Common Value (Mode) 73 Calculating Mode Using Standard SQL 73 Calculating Mode Using SQL Extensions 74 Calculating Mode Using String Operations 75 Exploring String Values 76 Histogram of Length 76 Strings Starting or Ending with Spaces 76 Handling Upper- and Lowercase 77 What Characters Are in a String? 77 Exploring Values in Two Columns 79 What Are Average Sales By State? 79 How Often Are Products Repeated within a Single Order? 80 Direct Counting Approach 80 Comparison of Distinct Counts to Overall Counts 81 Which State Has the Most American Express Users? 83
+From Summarizing One Column to Summarizing
+All Columns 84
+Good Summary for One Column 84 Query to Get All Columns in a Table 87 Using SQL to Generate Summary Code 88
+Lessons Learned 90
+How Different Is Different? 91
+Basic Statistical Concepts 92 The Null Hypothesis 93 Confidence and Probability 94 Normal Distribution 95
+How Different Are the Averages? 99 The Approach 99 Standard Deviation for Subset Averages 100 Three Approaches 101
+Estimation Based on Two Samples 102
+Estimation Based on Difference 104 Counting Possibilities 104 How Many Men? 105 How Many Californians? 110 Null Hypothesis and Confidence 112 How Many Customers Are Still Active? 113 Given the Count, What Is the Probability? 114 Given the Probability, What Is the Number of Stops? 116 The Rate or the Number? 117
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xii Contents
+￼￼Chapter 4
+Ratios, and Their Statistics 118 Standard Error of a Proportion 118 Confidence Interval on Proportions 120 Difference of Proportions 121 Conservative Lower Bounds 122
+Chi-Square 123 Expected Values 123 Chi-Square Calculation 124 Chi-Square Distribution 125 Chi-Square in SQL 127 What States Have Unusual Affinities for Which
+Types of Products? 128 Data Investigation 129 SQL to Calculate Chi-Square Values 130 Affinity Results 131
+Lessons Learned 132
+Where Is It All Happening? Location, Location, Location 133
+Latitude and Longitude 134 Definition of Latitude and Longitude 134 Degrees, Minutes, Seconds, and All That 136 Distance between Two Locations 137
+Euclidian Method 137 Accurate Method 139 Finding All Zip Codes within a Given Distance 141 Finding Nearest Zip Code in Excel 143
+Pictures with Zip Codes 145 The Scatter Plot Map 145 Who Uses Solar Power for Heating? 146 Where Are the Customers? 148
+Census Demographics 149 The Extremes: Richest and Poorest 150 Median Income 150 Proportion of Wealthy and Poor 152 Income Similarity and Dissimilarity Using Chi-Square 152 Comparison of Zip Codes with and without Orders 156 Zip Codes Not in Census File 156 Profiles of Zip Codes with and without Orders 157 Classifying and Comparing Zip Codes 159 Geographic Hierarchies 162 Wealthiest Zip Code in a State? 162 Zip Code with the Most Orders in Each State 165 Interesting Hierarchies in Geographic Data 167 Counties 167 Designated Marketing Areas (DMAs) 168 Census Hierarchies 168 Other Geographic Subdivisions 169
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Contents xiii
+￼￼Chapter 5
+Calculating County Wealth 170 Identifying Counties 170 Measuring Wealth 171
+Distribution of Values of Wealth 172 Which Zip Code Is Wealthiest Relative to Its County? 173 County with Highest Relative Order Penetration 175
+Mapping in Excel 177 Why Create Maps? 178 It Can’t Be Done 179 Mapping on the Web 180 State Boundaries on Scatter Plots of Zip Codes 180
+Plotting State Boundaries 180
+Pictures of State Boundaries 182 Lessons Learned 183
+It’s a Matter of Time 185
+Dates and Times in Databases 186 Some Fundamentals of Dates and Times in Databases 187 Extracting Components of Dates and Times 187 Converting to Standard Formats 189 Intervals (Durations) 190 Time Zones 191 Calendar Table 191 Starting to Investigate Dates 192 Verifying that Dates Have No Times 192 Comparing Counts by Date 193 Orderlines Shipped and Billed 193 Customers Shipped and Billed 195 Number of Different Bill and Ship Dates per Order 196 Counts of Orders and Order Sizes 197 Items as Measured by Number of Units 198 Items as Measured by Distinct Products 198 Size as Measured by Dollars 201 Days of the Week 203 Billing Date by Day of the Week 203 Changes in Day of the Week by Year 204 Comparison of Days of the Week for Two Dates 205 How Long between Two Dates? 206 Duration in Days 206 Duration in Weeks 208 Duration in Months 209 How Many Mondays? 210 A Business Problem about Days of the Week 210 Outline of a Solution 210 Solving It in SQL 212 Using a Calendar Table Instead 213
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xiv Contents
+￼￼Chapter 6
+Year-over-Year Comparisons 213 Comparisons by Day 213 Adding a Moving Average Trend Line 214 Comparisons by Week 215 Comparisons by Month 216 Month-to-Date Comparison 218 Extrapolation by Days in Month 220 Estimation Based on Day of Week 221 Estimation Based on Previous Year 223 Counting Active Customers by Day 224 How Many Customers on a Given Day? 224 How Many Customers Every Day? 224 How Many Customers of Different Types? 226 How Many Customers by Tenure Segment? 227 Simple Chart Animation in Excel 231 Order Date to Ship Date 231 Order Date to Ship Date by Year 234 Querying the Data 234 Creating the One-Year Excel Table 235 Creating and Customizing the Chart 236 Lessons Learned 238
+How Long Will Customers Last? Survival Analysis
+to Understand Customers and Their Value 239 Background on Survival Analysis 240
+Life Expectancy 242 Medical Research 243 Examples of Hazards 243
+The Hazard Calculation 245 Data Investigation 245 Stop Flag 245 Tenure 247 Hazard Probability 249 Visualizing Customers: Time versus Tenure 250 Censoring 251 Survival and Retention 253 Point Estimate for Survival 254 Calculating Survival for All Tenures 254 Calculating Survival in SQL 256 Step 1. Create the Survival Table 257 Step 2: Load POPT and STOPT 257 Step 3: Calculate Cumulative Population 258 Step 4: Calculate the Hazard 259 Step 5: Calculate the Survival 259 Step 6: Fix ENDTENURE and NUMDAYS in Last Row 260 Generalizing the SQL 260
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Contents xv
+￼￼Chapter 7
+A Simple Customer Retention Calculation 260 Comparison between Retention and Survival 262 Simple Example of Hazard and Survival 262
+Constant Hazard 263 What Happens to a Mixture 264 Constant Hazard Corresponding to Survival 266
+Comparing Different Groups of Customers 267 Summarizing the Markets 267 Stratifying by Market 268 Survival Ratio 270 Conditional Survival 272
+Comparing Survival over Time 272 How Has a Particular Hazard Changed over Time? 273 What Is Customer Survival by Year of Start? 275 What Did Survival Look Like in the Past? 275
+Important Measures Derived from Survival 278 Point Estimate of Survival 278 Median Customer Tenure 279 Average Customer Lifetime 281 Confidence in the Hazards 282
+Using Survival for Customer Value Calculations 284 Estimated Revenue 285 Estimating Future Revenue for One Future Start 286
+SQL Day-by-Day Approach 287
+SQL Summary Approach 288 Estimated Revenue for a Simple Group of Existing Customers 289 Estimated Second Year Revenue for a Homogenous Group 289 Pre-calculating Yearly Revenue by Tenure 291 Estimated Future Revenue for All Customers 292 Lessons Learned 295
+Factors Affecting Survival: The What and
+Why of Customer Tenure 297 What Factors Are Important and When 298
+Explanation of the Approach 298 Using Averages to Compare Numeric Variables 301 The Answer 301 Answering the Question in SQL 302 Extension to Include Confidence Bounds 304 Hazard Ratios 306 Interpreting Hazard Ratios 306 Calculating Hazard Ratios 307 Why the Hazard Ratio 308 Left Truncation 309 Recognizing Left Truncation 309 Effect of Left Truncation 311
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xvi Contents
+￼￼Chapter 8
+How to Fix Left Truncation, Conceptually 313 Estimating Hazard Probability for One Tenure 314 Estimating Hazard Probabilities for All Tenures 314
+Time Windowing 316 A Business Problem 317 Time Windows = Left Truncation + Right Censoring 318
+Calculating One Hazard Probability Using a Time Window 318 All Hazard Probabilities for a Time Window 319 Comparison of Hazards by Stops in Year 320
+Competing Risks 321 Examples of Competing Risks 322 I=Involuntary Churn 322 V=Voluntary Churn 323 M=Migration 323 Other 324 Competing Risk “Hazard Probability” 324 Competing Risk “Survival” 326 What Happens to Customers over Time 327 Example 327 A Cohort-Based Approach 328 The Survival Analysis Approach 330 Before and After 332 Three Scenarios 333 A Billing Mistake 333 A Loyalty Program 333 Raising Prices 335 Using Survival Forecasts 335 Forecasting Identified Customers Who Stopped 336 Estimating Excess Stops 336 Before and After Comparison 337 Cohort-Based Approach 338 Direct Estimation of Event Effect 341 Approach to the Calculation 341 Time-Varying Covariate Survival Using SQL and Excel 342 Lessons Learned 344
+Customer Purchases and Other Repeated Events 347
+Identifying Customers 348 Who Is the Customer? 348 How Many? 349 How Many Genders in a Household 351 Investigating First Names 354 Other Customer Information 358 First and Last Names 358 Addresses 360 Other Identifying Information 361
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Contents xvii
+￼￼Chapter 9
+How Many New Customers Appear Each Year? 362 Counting Customers 362 Span of Time Making Purchases 364 Average Time between Orders 367 Purchase Intervals 369
+RFM Analysis 370 The Dimensions 370 Recency 371 Frequency 374 Monetary 374 Calculating the RFM Cell 375 Utility of RFM 377 A Methodology for Marketing Experiments 377 Customer Migration 378 RFM Limits 380
+Which Households Are Increasing Purchase
+Amounts Over Time? 381
+Comparison of Earliest and Latest Values 381 Calculating the Earliest and Latest Values 381 Comparing the First and Last Values 386
+Comparison of First Year Values and Last Year Values 390 Trend from the Best Fit Line 392 Using the Slope 393 Calculating the Slope 393 Time to Next Event 395 Idea behind the Calculation 395 Calculating Next Purchase Date Using SQL 396 From Next Purchase Date to Time-to-Event 397 Stratifying Time-to-Event 398 Lessons Learned 399
+What’s in a Shopping Cart? Market Basket Analysis
+and Association Rules 401 Exploratory Market Basket Analysis 402
+Scatter Plot of Products 402 Duplicate Products in Orders 403 Histogram of Number of Units 407 Products Associated with One-Time Customers 408 Products Associated with the Best Customers 410 Changes in Price 413
+Combinations (Item Sets) 415 Combinations of Two Products 415 Number of Two-Way Combinations 415 Generating All Two-Way Combinations 417 Examples of Combinations 419 Variations on Combinations 420 Combinations of Product Groups 420 Multi-Way Combinations 422
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xviii Contents
+￼￼Chapter 10
+Households Not Orders 424 Combinations within a Household 424 Investigating Products within Households but
+Not within Orders 425 Multiple Purchases of the Same Product 426 The Simplest Association Rules 428 Associations and Rules 428 Zero-Way Association Rules 429 What Is the Distribution of Probabilities? 429 What Do Zero-Way Associations Tell Us? 430 One-Way Association Rules 431 Example of One-Way Association Rules 431 Generating All One-Way Rules 433 One-Way Rules with Evaluation Information 434 One-Way Rules on Product Groups 436
+Calculating Product Group Rules Using an
+Intermediate Table 438
+Calculating Product Group Rules Using
+Window Functions 440
+Two-Way Associations 441 Calculating Two-Way Associations 441 Using Chi-Square to Find the Best Rules 442
+Applying Chi-Square to Rules 442 Applying Chi-Square to Rules in SQL 444 Comparing Chi-Square Rules to Lift 445 Chi-Square for Negative Rules 447
+Heterogeneous Associations 448 Rules of the Form “State Plus Product” 448 Rules Mixing Different Types of Products 450
+Extending Association Rules 451 Multi-Way Associations 451 Rules Using Attributes of Products 452 Rules with Different Left- and Right-Hand Sides 453 Before and After: Sequential Associations 454
+Lessons Learned 455
+Data Mining Models in SQL 457
+Introduction to Directed Data Mining 458 Directed Models 459 The Data in Modeling 459
+Model Set 459 Score Set 461 Prediction Model Sets versus Profiling Model Sets 461
+Examples of Modeling Tasks 463 Similarity Models 463 Yes-or-No Models (Binary Response Classification) 463
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Contents xix
+￼￼Chapter 11
+Yes-or-No Models with Propensity Scores 464 Multiple Categories 465 Estimating Numeric Values 465
+Model Evaluation 465 Look-Alike Models 466 What Is the Model? 466 What Is the Best Zip Code? 466 A Basic Look-Alike Model 468 Look-Alike Using Z-Scores 469 Example of Nearest Neighbor Model 473 Lookup Model for Most Popular Product 475 Most Popular Product 475 Calculating Most Popular Product Group 475 Evaluating the Lookup Model 477 Using a Profiling Lookup Model for Prediction 478 Using Binary Classification Instead 480 Lookup Model for Order Size 481 Most Basic Example: No Dimensions 481 Adding One Dimension 482 Adding More Dimensions 484 Examining Nonstationarity 484 Evaluating the Model Using an Average Value Chart 485 Lookup Model for Probability of Response 487 The Overall Probability as a Model 487 Exploring Different Dimensions 488 How Accurate Are the Models? 490 Adding More Dimensions 493 Naïve Bayesian Models (Evidence Models) 495 Some Ideas in Probability 495 Probabilities 496 Odds 497 Likelihood 497 Calculating the Naïve Bayesian Model 498 An Intriguing Observation 499 Bayesian Model of One Variable 500 Bayesian Model of One Variable in SQL 500 The “Naïve” Generalization 502 Naïve Bayesian Model: Scoring and Lift 504 Scoring with More Attributes 505 Creating a Cumulative Gains Chart 506 Comparison of Naïve Bayesian and Lookup Models 507 Lessons Learned 508
+The Best-Fit Line: Linear Regression Models 511
+The Best-Fit Line 512 Tenure and Amount Paid 512
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xx Contents
+￼￼Properties of the Best-fit Line 513 What Does Best-Fit Mean? 513 Formula for Line 515 Expected Value 515 Error (Residuals) 517 Preserving the Averages 518 Inverse Model 518
+Beware of the Data 519 Trend Lines in Charts 521 Best-fit Line in Scatter Plots 521 Logarithmic, Power, and Exponential Trend Curves 522 Polynomial Trend Curves 524 Moving Average 525 Best-fit Using LINEST() Function 528 Returning Values in Multiple Cells 528 Calculating Expected Values 530 LINEST() for Logarithmic, Exponential, and Power Curves 531 Measuring Goodness of Fit Using R2 532 The R2 Value 532 Limitations of R2 534 What R2 Really Means 535 Direct Calculation of Best-Fit Line Coefficients 536 Doing the Calculation 536 Calculating the Best-Fit Line in SQL 537 Price Elasticity 538 Price Frequency 539 Price Frequency for $20 Books 541 Price Elasticity Model in SQL 542 Price Elasticity Average Value Chart 543 Weighted Linear Regression 544 Customer Stops during the First Year 545 Weighted Best Fit 546 Weighted Best-Fit Line in a Chart 548 Weighted Best-Fit in SQL 549 Weighted Best-Fit Using Solver 550 The Weighted Best-Fit Line 550 Solver Is Better Than Guessing 551 More Than One Input Variable 552 Multiple Regression in Excel 552 Getting the Data 553 Investigating Each Variable Separately 554 Building a Model with Three Input Variables 555 Using Solver for Multiple Regression 557 Choosing Input Variables One-By-One 558 Multiple Regression in SQL 558
+Lessons Learned
+560
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Contents xxi
+￼￼Chapter 12
+Building Customer Signatures for Further Analysis 563
+What Is a Customer Signature? 564 What Is a Customer? 565 Sources of Data for the Customer Signature 566
+Current Customer Snapshot 566 Initial Customer Information 567 Self-Reported Information 568 External Data (Demographic and So On) 568 About Their Neighbors 569 Transaction Summaries 569
+Using Customer Signatures 570 Predictive and Profile Modeling 570 Ad Hoc Analysis 570 Repository of Customer-Centric Business Metrics 570
+Designing Customer Signatures 571 Column Roles 571 Identification Columns 571 Input Columns 572 Target Columns 572 Foreign Key Columns 572 Cutoff Date 573 Profiling versus Prediction 573 Time Frames 573 Naming of Columns 574 Eliminating Seasonality 574 Adding Seasonality Back In 575 Multiple Time Frames 576 Operations to Build a Customer Signature 577 Driving Table 578 Using an Existing Table as the Driving Table 578 Derived Table as the Driving Table 580 Looking Up Data 580 Fixed Lookup Tables 581 Customer Dimension Lookup Tables 582 Initial Transaction 584 Without Window Functions 584 With Window Functions 586 Pivoting 586 Payment Type Pivot 588 Channel Pivot 589 Year Pivot 590 Order Line Information Pivot 591 Summarizing 594 Basic Summaries 594 More Complex Summaries 594
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xxii Contents
+￼￼Appendix
+Extracting Features 596 Geographic Location Information 596 Date Time Columns 597 Patterns in Strings 598
+Email Addresses 598 Addresses 599 Product Descriptions 599 Credit Card Numbers 600
+Summarizing Customer Behaviors 601 Calculating Slope for Time Series 601 Calculating Slope from Pivoted Time Series 601 Calculating Slope for a Regular Time Series 603 Calculating Slope for an Irregular Time Series 604 Weekend Shoppers 604 Declining Usage Behavior 606 Lessons Learned 609
+Equivalent Constructs Among Databases 611
+String Functions 612 Searching for Position of One String within Another 612 IBM 612 Microsoft 613 mysql 613 Oracle 613 SAS proc sql 613 String Concatenation 614 IBM 614 Microsoft 614 mysql 614 Oracle 614 SAS proc sql 614 String Length Function 614 IBM 614 Microsoft 615 mysql 615 Oracle 615 SAS proc sql 615 Substring Function 615 IBM 615 Microsoft 615 mysql 615 Oracle 616 SAS proc sql 616 Replace One Substring with Another 616
+IBM Microsoft
+616 616
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Contents xxiii
+￼￼mysql 616 Oracle 616 SAS proc sql 616
+Remove Leading and Trailing Blanks 617 IBM 617 Microsoft 617 mysql 617 Oracle 617 SAS proc sql 617
+RIGHT Function 617 IBM 617 Microsoft 617 mysql 618 Oracle 618 SAS proc sql 618
+LEFT Function 618 IBM 618 Microsoft 618 mysql 618 Oracle 618 SAS proc sql 619
+ASCII Function 619 IBM 619 Microsoft 619 mysql 619 Oracle 619 SAS proc sql 619
+Date Time Functions 619 Date Constant 619 IBM 620 Microsoft 620 mysql 620 Oracle 620 SAS proc sql 620 Current Date and Time 620 IBM 620 Microsoft 620 mysql 621 Oracle 621 SAS proc sql 621 Convert to YYYYMMDD String 621 IBM 621 Microsoft 621 mysql 621 Oracle 621 SAS proc sql 621
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xxiv Contents
+￼￼Year, Month, and Day of Month 622 IBM 622 Microsoft 622 mysql 622 Oracle 622 SAS proc sql 623
+Day of Week (Integer and String) 623 IBM 623 Microsoft 623 mysql 623 Oracle 623 SAS proc sql 623
+Adding (or Subtracting) Days from a Date 623 IBM 624 Microsoft 624 mysql 624 Oracle 624 SAS proc sql 624
+Adding (or Subtracting) Months from a Date 624 IBM 624 Microsoft 624 mysql 624 Oracle 625 SAS proc sql 625
+Difference between Two Dates in Days 625 IBM 625 Microsoft 625 mysql 625 Oracle 625 SAS proc sql 625
+Difference between Two Dates in Months 625 IBM 626 Microsoft 626 mysql 626 Oracle 626 SAS proc sql 626
+Extracting Date from Date Time 626 IBM 626 Microsoft 626 mysql 627 Oracle 627 SAS proc sql 627
+Mathematical Functions 627 Remainder/Modulo 627
+IBM Microsoft
+627 627
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼mysql Oracle SAS proc
+Power IBM
+Microsoft mysql Oracle SAS proc
+Floor IBM
+Microsoft mysql Oracle SAS proc
+627
+627 sql 628 628 628 628 628 628 SQL 628 628 628 628 629 629 sql 629 “Random” Numbers 629 IBM 629 Microsoft 629 mysql 629 Oracle 629 SAS proc sql 630 Left Padding an Integer with Zeros 630 IBM 630 Microsoft 630 mysql 630 Oracle 630 SAS proc sql 630 Conversion from Number to String 630 IBM 630 Microsoft 631 mysql 631 Oracle 631 SAS proc sql 631 Other Functions and Features 631 Least and Greatest 631 IBM 631 Microsoft 632 mysql 632 Oracle 632 SAS proc sql 632 Return Result with One Row 632 IBM 632 Microsoft 633 mysql 633 Oracle 633 SAS proc sql 633
+www.it-ebooks.info
+Contents xxv
+￼￼
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xxvi Contents
+￼￼Index
+Return a Handful of Rows 633 IBM 633 Microsoft 633 mysql 633 Oracle 634 SAS proc sql 634
+Get List of Columns in a Table 634 IBM 634 Microsoft 634 mysql 634 Oracle 634 SAS proc sql 635
+ORDER BY in Subqueries 635 IBM 635 Microsoft 635 mysql 635 Oracle 635 SAS proc sql 635
+Window Functions 635 IBM 635 Microsoft 635 mysql 636 Oracle 636 SAS proc sql 636
+Average of Integers 636
+IBM Microsoft mysql Oracle
+SAS proc sql
+ 636
+ 636
+ 636
+ 636
+ 636
+637
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼oreword
+F
+Gordon Linoff and I have written three and a half books together. (Four, if we get to count the second edition of Data Mining Techniques as a whole new book; it didn’t feel like any less work.) Neither of us has written a book without the other before, so I must admit to a tiny twinge of regret upon first seeing the cover of this one without my name on it next to Gordon’s. The feeling passed very quickly as recollections of the authorial life came flooding back — vacations spent at the keyboard instead of in or on the lake, opportunities missed, rela- tionships strained. More importantly, this is a book that only Gordon Linoff could have written. His unique combination of talents and experiences informs every chapter.
+I first met Gordon at Thinking Machines Corporation, a now long-defunct manufacturer of parallel supercomputers where we both worked in the late eighties and early nineties. Among other roles, Gordon managed the imple- mentation of a parallel relational database designed to support complex ana- lytical queries on very large databases. The design point for this database was radically different from other relational database systems available at the time in that no trade-offs were made to support transaction processing. The require- ments for a system designed to quickly retrieve or update a single record are quite different from the requirements for a system to scan and join huge tables. Jettisoning the requirement to support transaction processing made for a cleaner, more efficient database for analytical processing. This part of Gor- don’s background means he understands SQL for data analysis literally from the inside out.
+Just as a database designed to answer big important questions has a different structure from one designed to process many individual transactions, a book about using databases to answer big important questions requires a different
+xxvii
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xxviii Foreword
+￼￼approach to SQL. Many books on SQL are written for database administrators. Others are written for users wishing to prepare simple reports. Still others attempt to introduce some particular dialect of SQL in every detail. This one is written for data analysts, data miners, and anyone who wants to extract maxi- mum information value from large corporate databases. Jettisoning the require- ment to address all the disparate types of database user makes this a better, more focused book for the intended audience. In short, this is a book about how to use databases the way we ourselves use them.
+Even more important than Gordon’s database technology background, is his many years as a data mining consultant. This has given him a deep under- standing of the kinds of questions businesses need to ask and of the data they are likely to have available to answer them. Years spent exploring corporate databases has given Gordon an intuitive feel for how to approach the kinds of problems that crop up time and again across many different business domains:
+■■ How to take advantage of geographic data. A zip code field looks much richer when you realize that from zip code you can get to latitude and longitude and from latitude and longitude you can get to distance. It looks richer still when your realize that you can use it to join in census bureau data to get at important attributes such as population density, median income, percentage of people on public assistance, and the like.
+■■ How to take advantage of dates. Order dates, ship dates, enrollment dates, birth dates. Corporate data is full of dates. These fields look richer when you understand how to turn dates into tenures, analyze purchases by day of week, and track trends in fulfillment time. They look richer still when you know how to use this data to analyze time-to- event problems such as time to next purchase or expected remaining lifetime of a customer relationship.
+■■ How to build data mining models directly in SQL. This book shows you how to do things in SQL that you probably never imagined possible, including generating association rules for market basket analysis, build- ing regression models, and implementing naïve Bayesian models and scorecards.
+■■ How to prepare data for use with data mining tools. Although more than most people realize can be done using just SQL and Excel, eventu- ally you will want to use more specialized data mining tools. These tools need data in a specific format known as a customer signature. This book shows you how to create these data mining extracts.
+The book is rich in examples and they all use real data. This point is worth saying more about. Unrealistic datasets lead to unrealistic results. This is frus- trating to the student. In real life, the more you know about the business con- text, the better your data mining results will be. Subject matter expertise gives
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Foreword xxix
+￼￼you a head start. You know what variables ought to be predictive and have good ideas about new ones to derive. Fake data does not reward these good ideas because patterns that should be in the data are missing and patterns that shouldn’t be there have been introduced inadvertently. Real data is hard to come by, not least because real data may reveal more than its owners are will- ing to share about their business operations. As a result, many books and courses make do with artificially constructed datasets. Best of all, the datasets used in the book are all available for download at the companion web site and from www.data-miners.com.
+I reviewed the chapters of this book as they were written. This process was very beneficial to my own use of SQL and Excel. The exercise of thinking about the fairly complex queries used in the examples greatly increased my under- standing of how SQL actually works. As a result, I have lost my fear of nested queries, multi-way joins, giant case statements, and other formerly daunting aspects of the language. In well over a decade of collaboration, I have always turned to Gordon for help using SQL and Excel to best advantage. Now, I can turn to this book. And you can too.
+— Michael J. A. Berry
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Acknowledgments
+Although this book has only one name on the cover, there are many people over a long period of time who have helped me both specifically on this book and more generally in understanding data, analysis, and presentation.
+Michael Berry, my business partner and colleague since 1998 at Data Miners, has been tremendously helpful on all fronts. He reviewed the chapters, tested the SQL code in the examples, and helped anonymize the data. His insights have been helpful and his debugging skills have made the examples much more accurate. His wife, Stephanie Jack, also deserves special praise for her patience and willingness to share Michael’s time.
+Bob Elliott, my editor at Wiley, and the Wiley team not only accepted my original idea for this book, but have exhibited patience and understanding as I refined the ideas and layout.
+Matt Keiser, President of Datran Marketing, and Howard Lehrman (for- merly of Datran) were kind enough to provide computing power for testing many of the examples. Nick Drake, also of Datran, inspired the book, by ask- ing for a SQL reference focused on data analysis.
+Throughout the chapters, the understanding of data processing is based on dataflows, which Craig Stanfill of Ab Initio Corporation first introduced me to, once upon a time when we worked together at Thinking Machines Corporation.
+Stuart Ward and Zaiying Huang (from the New York Times) have spent countless hours over the past several years explaining statistical concepts to me. Harrison Sohmer, also of the New York Times, taught me many Excel tricks, some of which I’ve been able to include in the book.
+Anne Milley of SAS Institute originally suggested that I learn survival analy- sis. Will Potts, now at CapitalOne, taught me much of what I know about the subject, including helping to develop two of the earliest survival analysis–based
+xxxi
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xxxii Acknowledgments
+￼￼forecasts (and finally convincing me that hazard probabilities really can’t be neg- ative). Brij Masand, a colleague at Data Miners, helped extend this knowledge to practical forecasting applications.
+Jamie MacLennan and the SQL Server team at Microsoft have been helpful in answering my questions about the product.
+There are a handful of people whom I’ve never met in person who have helped in various ways. Richard Stallman invented emacs and the Free Soft- ware Foundation; emacs provided the basis for the calendar table. Rob Bovey of Applications Professional, Inc. created the X-Y chart labeler used in several chapters. Robert Clair at the Census Bureau answered some questions via email. Juice Analytics inspired the example for Worksheet bar charts in Chap- ter 5 (and thanks to Alex Wimbush who pointed me in their direction). Edwin Straver of Frontline Systems answered several questions about Solver, intro- duced in Chapter 11.
+Over the years, many colleagues, friends, and students have provided inspi- ration, questions, and answers. There are too many to list all of them, but I want to particularly thank Eran Abikhzer, Michael Benigno, Emily Cohen, Carol D’Andrea, Sonia Dubin, Lounette Dyer, Josh Goff, Richard Greenburg, Gregory Lampshire, Fiona McNeill, Karen Kennedy McConlogue, Alan Parker, Ashit Patel, Ronnie Rowton, Adam Schwebber, John Trustman, John Wallace, Kathleen Wright, and Zhilang Zhao. I would also like to thank the folks in the SAS Institute Training group who have organized, reviewed, and sponsored our data mining classes for many years, giving me the opportunity to meet many interesting and diverse people involved with data mining.
+I also thank all those friends and family I’ve visited while writing this book and who (for the most part) allowed me the space and time to work — my mother, my father, my sister Debbie, my brother Joe, my in-laws Raimonda Scalia, Ugo Scalia, and Terry Sparacio, and my friends Jon Mosley, Paul Houli- han, Joe Hughes, and Maciej Zworski.
+Finally, acknowledgments would be incomplete without thanking my life partner, Giuseppe Scalia, who has managed to maintain our sanity for the past year while I wrote this book.
+Thank you everyone.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Introduction
+Data. Analysis. Presentation. These three key capabilities are needed for effec- tively transforming data into information. And yet, these three topics are rarely treated together. Other books focus on one or the other — on the details of relational databases, or on applying statistics to business problems, or on using Excel. This book approaches the challenges of data analysis from a more holistic perspective, and with the aim of explaining the relevant ideas both to people responsible for analyzing data and to people who want to use such information, responsibly.
+The motivation for this approach came from a colleague, Nick Drake, who is a statistician by training. Once upon a time, he was looking for a book that would explain how to use SQL for the complex queries needed for data analy- sis. There are many books on SQL, few focused on using the language for queries, and none that come strictly from a perspective of analyzing data. Sim- ilarly, there are many books on statistics, none of which address the simple fact that most of the data being used resides in relational databases. This book is intended to fill that gap.
+There are many approaches to data analysis. My earlier books, written with Michael Berry, focus on the more advanced algorithms and case studies usu- ally falling under the heading “data mining.” By contrast, this book focuses on the “how-to.” It starts by describing data stored in databases and continues through preparing and producing results. Interspersed are stories based on my experience in the field, explaining how results might be applied and why some things work and other things do not. The examples are so practical that the data used for them is available on the companion web site and at www.data-miners.com.
+xxxiii
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xxxiv Introduction
+￼￼One of the truisms about data warehouses and analysis databases in general is that they don’t actually do anything. Yes, they store data. Yes, they bring together data from different sources, cleansing and clarifying along the way. Yes, they define business dimensions, store transactions about customers, and, perhaps, summarize important data. (And, yes, all these are very important!) However, data in a database resides on so many spinning disks and in complex data structures in a computer’s memory. So much data. So little information.
+Oil deposits and diamonds hidden in rich seams beneath the surface of the earth are worth much less than gasoline at the pump or Tiffany diamond rings. Prospectors can make a quick buck on such deposits. On the other hand, the companies willing to invest the dollars to transform and process the raw mate- rials into marketable goods are the ones that uncover the long-term riches.
+This book is about the basic tools needed for exploiting data, particularly data that describes customers. There are many fancy algorithms for statistical modeling and data mining. However, “garbage-in, garbage-out.” The results of even the most sophisticated techniques are only as good as the data being used. Data is central to the task of understanding customers, understanding products, and understanding markets.
+The chapters in this book discuss different aspects of data and several dif- ferent analytic techniques. The analytic techniques range from exploratory data analysis to survival analysis, from market basket analysis to naïve Bayesian models, from simple animations to regression. Of course, the poten- tial range of possible techniques is much larger than can be presented in one book. The methods have proven useful over time and are applicable in many different areas.
+And finally, data and analysis are not enough. Data must be analyzed, and the results must be presented to the right audience. To fully exploit its value, we must transform data into stories and scenarios, charts and metrics, and insights.
+Overview of the Book and Technology
+This book focuses on three key technological areas used for transforming data into actionable information:
+■■ Relational databases store the data. The basic language for retrieving data is SQL.
+■■ Excel spreadsheets are the most popular tool for presenting data. Perhaps the most powerful feature of Excel is the charting capability, which turns columns of numbers into pictures.
+■■ Statistics is the foundation of data analysis.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Introduction xxxv
+￼￼These three technologies are presented together, because they are all inter- related. SQL answers the question “how do we pull data from a database?” Statistics answers the question “how is it relevant”? And Excel makes it pos- sible to convince other people of the veracity of what we find.
+The description of data processing is organized around the SQL language. Although there are extensions of SQL and other very powerful data manipu- lation languages, SQL is common to most databases. And, databases such as Oracle, IBM’s DB2, and Microsoft SQL Server are common in the business world, storing the vast majority of business data transactions. Other databases such as mysql are available at no cost and easily downloaded. The good news is that all relational databases support SQL as a query language. However, just as England and the United States have been described as “two countries sepa- rated by a common language,” each database supports a slightly different dialect of SQL. The Appendix contains a list of commonly used functions and how they are represented in various different dialects.
+Similarly, there are beautiful presentation tools and professional graphics packages. However, very rare and exceptional is the workplace computer that does not have Excel (or an equivalent spreadsheet).
+Statistics and data mining techniques do not always require advanced tools. Some very important techniques are readily available using the combination of SQL and Excel, including survival analysis, naïve Bayesian models, and association rules. In fact, the methods in this book are often more powerful than the methods available in many statistics and data mining tools, precisely because they are close to the data and customizable for specific applications. The explanation of the techniques covers both the basic ideas and the exten- sions that may not be available in other tools.
+The chapters describing the various techniques provide a solid introduction to modeling and data exploration, in the context of familiar tools and data. They also highlight when the more advanced tools are useful, because there is not a simpler solution using more readily available tools.
+In the interests of full disclosure, I should admit that in the early 1990s I worked on a package called Darwin at a company called Thinking Machines. In the intervening years, this package has become much more powerful and user- friendly, and has now grown into Oracle Data Mining. In addition to Oracle, SQL Server offers data mining extensions within the tool — an exciting devel- opment that brings advanced data analysis even closer to the data.
+This book does not discuss such functionality at all. The methods in the chapters have been chosen for their general applicability to data stored in relational databases. The explicit purpose is not to focus on a particular rela- tional database engine. In many ways, the methods discussed here comple- ment such extensions.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xxxvi Introduction
+￼￼How This Book Is Organized
+The twelve chapters in this book fall roughly into three parts. The first three introduce key concepts of SQL, Excel, and statistics. The six middle chapters discuss various methods of exploring data, and techniques specifically suited to SQL and Excel. The last three focus on the idea of modeling, in the sense of statistics and data mining.
+Each chapter explains some aspect of data analysis using SQL and Excel from several different perspectives, including:
+■■ Business examples for using the analysis;
+■■ Questions the analysis answers;
+■■ How the analytic techniques work;
+■■ The SQL syntax for implementing the techniques; and,
+■■ The results (as tables or charts), and how they are created in Excel.
+Examples in the chapters are generally available in Excel at www.data- miners.com.
+SQL is a concise language that is sometimes difficult to follow. Dataflows, graphical representations of data processing that explain data manipulations, are used to illustrate how the SQL works.
+Results are presented in charts and tables, sprinkled throughout the book. In addition, important features of Excel are highlighted, and interesting uses of Excel graphics are explained. Each chapter has a couple of technical asides, typically explaining some aspect of a technique or an interesting bit of history associated with the methods described in the chapter.
+Introductory Chapters
+The first chapter, “A Data Miner Looks at SQL,” introduces SQL from the per- spective of data analysis. This is the querying part of the SQL language, where data stored in databases is extracted using SQL queries.
+Ultimately, data about customers and about the business is stored in SQL databases. This chapter introduces entity-relationship diagrams to describe the structure of the data — the tables and columns and how they relate to each other. It also introduces dataflows to describe the processing of queries; dataflows provide a graphical explanation of how data is processed.
+The first chapter also describes the datasets used for examples throughout the book (and which are also available on the companion web site). This data includes tables describing retail purchases, tables describing mobile telephone customers, and reference tables that describe zip codes and the calendar.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Introduction xxxvii
+￼￼The second chapter, “What’s In a Table? Getting Started with Data Explo- ration,” introduces Excel for exploratory data analysis and presentation. Of many useful capabilities in Excel, perhaps the most useful are charts. As the ancient Chinese saying goes, “a picture paints a thousand words,” and Excel makes it possible to paint pictures using data. Such charts are not only useful aesthetically, but more practically for Word documents, PowerPoint, email, the Web, and so on.
+Charts are not a means unto themselves. This chapter starts down the road of exploratory data analysis, using charts to convey interesting summaries of data. In addition, this chapter discusses summarizing columns in a table, as well as the interesting idea of using SQL to generate SQL queries.
+Chapter 3, “How Different Is Different?”, explains some key concepts of descriptive statistics, such as averages, p-values, and the chi-square test. The purpose of this chapter is to show how to use such statistics on data residing in tables. The particular statistics and statistical tests are chosen for their prac- ticality, and the chapter focuses on applying the methods, not explaining the underlying theory. Conveniently, most of the statistical tests that we want to do are feasible in Excel and even in SQL.
+SQL Techniques
+Several techniques are suited very well for the combination of SQL and Excel. Chapter 4, “Where Is It All Happening? Location, Location, Location,” explains geography and how to incorporate geographic information into data analysis. Geography starts with locations, described by latitude and longitude. There are then various levels of geography, such as census blocks, zip code tab- ulation areas, and the more familiar counties and states, all of which have information available from the Census Bureau. This chapter also discusses various methods for comparing results at different levels of geography. And, finally, no discussion of geography would be complete without maps. Using
+Excel, it is possible to build very rudimentary maps.
+Chapter 5, “It’s a Matter of Time,” discusses another key attribute of cus-
+tomer behavior, when things occur. This chapter describes how to access fea- tures of dates and times in databases, and then how to use this information to understand customers.
+The chapter includes examples for accurately making year-over-year com- parisons, for summarizing by day of the week, for measuring durations in days, weeks, and months, and for calculating the number of active customers by day, historically. The chapter ends with a simple animation in Excel.
+Chapters 6 and 7, “How Long Will Customers Last? Survival Analysis to Understand Customers and Their Value” and “Factors Affecting Survival: The What and Why of Customer Tenure,” explain one of the most important analytic
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xxxviii Introduction
+￼￼techniques for understanding customers over time. Survival analysis has its roots in traditional statistics. However, it is very well suited to problems related to customers.
+Chapter 6 introduces the basic ideas of hazard probabilities and survival, explaining how to calculate them easily using the combination of SQL and Excel. Perhaps surprisingly, sophisticated statistical tools are not needed to get started using survival analysis. Chapter 6 then explains how important ideas in survival analysis, such as average customer lifetime, can be used in a business context. It continues by explaining how to put these pieces together into a forecast.
+Chapter 7 extends the discussion in three different areas. First, it addresses a key problem in many customer-oriented databases, called left truncation. Second, it explains a very interesting idea in survival analysis called compet- ing risks. This idea incorporates the fact that customers leave for different rea- sons. The third idea is to use survival analysis for before-and-after analysis. That is, how can we quantify what happens to customers when something happens during their lifetime — such as quantifying the effect of enrollment in a loyalty program or of a major billing fiasco.
+Chapters 8 and 9, “Customer Purchases and Other Repeated Events” and “What’s in a Shopping Cart? Market Basket Analysis and Association Rules,” explain how to understand what customers are purchasing using SQL and Excel. Chapter 8 covers everything about the purchase — when it occurs, where it occurs, how often — except for the particular items being purchased. Purchases contain a lot of information, even before we dive into the details of the items.
+Chapter 9 explains association rules, which are combinations of products purchased at the same time or in sequence. Building association rules in SQL is rather sophisticated, usually requiring intermediate tables. The methods in this chapter extend traditional association rule analysis, introducing alterna- tive measures that make them more useful, and show how to produce combi- nations of different things, such as clicks that result in a purchase (to use an example from the web).
+Chapters 8 and 9 also introduce SQL window functions (called “analytic functions” in Oracle). These are very powerful functions that should be part of the repertoire of all analysts using SQL.
+Modeling Techniques
+The last three chapters discuss statistical and data mining modeling tech- niques and methods.
+Chapter 10, “Data Mining Models in SQL,” introduces the idea of data min- ing modeling and the terminology associated with building such models. It also discusses some important types of models that are well-suited to business problems and the SQL environment. Look-alike models find things similar to a given example. Lookup models use a lookup table to find model scores.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼This chapter also discusses a more sophisticated modeling technique called naïve Bayesian models. This technique combines information along various business dimensions to estimate an unknown quantity.
+Chapter 11, “The Best Fit Line: Linear Regression Models,” covers a more traditional statistical technique, linear regression. Several variants of linear regression are introduced, including polynomial regression, weighted regres- sion, multiple regression, and exponential regression. These are explained graphically, using Excel charts, along with the R2 value that measures how well the model fits the data.
+Regression is explained using both Excel and SQL. Although Excel has several built-in functions for regression, there is an additional method using Solver, which is more powerful than the built-in functions. This chapter introduces Solver (which is free and bundled with Excel) in the context of linear regression.
+The final chapter, “Building Customer Signatures for Further Analysis,” introduces the customer signature. This is a data structure that summarizes what a customer looks like at a particular point in time. Customer signatures are very powerful for modeling.
+This chapter recognizes that although SQL and Excel are quite powerful, more sophisticated tools are sometimes necessary. The customer signature is the right way to summarize customer information, under many circumstances. And, SQL is a very powerful tool for this summarization.
+Who Should Read this Book
+This book is designed for several audiences, with varying degrees of techni- cal skills.
+On the less technical side are managers, particularly those with a quantita- tive bent who are responsible for understanding customers or a business unit. Such people are often quite proficient in Excel, but, alas, much of the data they need resides in relational databases. To help them, this book provides examples of business scenarios where analysis provides useful results. These scenarios are detailed, showing not only the business problem, but the technical approach and the results.
+Another part of the audience consists of people whose job is to understand data and customers, often having a job title including the word “analyst.” These individuals typically use Excel and other tools, sometimes having direct access to the data warehouse or to some customer-centric database. This book can help by improving SQL querying skills, showing good examples of charts, and introducing survival analysis and association rules for understanding cus- tomers and the business.
+Introduction xxxix
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼xl Introduction
+￼￼At the most technical end are statisticians, who typically use special-purpose tools such as SAS, SPSS, and S-plus. However, the data resides in databases. This book can help the very technical with their SQL skills, and also provide examples of using analysis to solve particular business problems.
+In addition, database administrators, database designers, and information architects may find this book interesting. The queries shown in the various chapters illustrate what people really want to do with the data, and should encourage database administrators and designers to create efficient databases that support these needs.
+I encourage all readers, even the technically proficient, to read (or at least skim) the first three chapters. These chapters introduce SQL, Excel, and statis- tics all from the perspective of analyzing large quantities of data. This per- spective is different from how these subjects are usually introduced. Certain ideas in these chapters, such as the example data, dataflows, SQL syntax, and good chart design, are used throughout the book.
+Tools You Will Need
+This book is designed to be stand-alone. That is, readers should be able to learn the ideas and gain understanding directly from the text.
+All the SQL in the book has been tested (in Microsoft SQL Server). The datasets and results are available on the companion web sites and at www.data-miners.com. Readers who want hands-on experience are encour- aged to download the data and run the examples in the book.
+Most examples in the book are vendor-neutral, so they should run with only minor modification on almost any fully functional relational database (I do not recommend Microsoft Access for this purpose). If you do not have a database, there are various software packages available for downloading — database vendors often have stand-alone versions of their software available at no cost. A trial version of SQL Server is available at http://www.microsoft.com/sql/ default.mspx. A trial version of Oracle 10g is available at http://www.oracle .com/technology/software/products/database/oracle10g/index.html. In addition, free database software is available, in the form of mysql and other databases.
+Some examples in the book use SQL window functions, which are currently available only in Microsoft SQL and Oracle SQL. I do hope that these func- tions — which are part of the SQL standard — are adopted by more database vendors in the future because they are tremendously useful for data analysis and data mining.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼What’s on the Web Site
+The companion web site at Wiley and at www.data-miners.com contains the datasets used in the book. These datasets contain the following information:
+■■ Reference tables. There are three reference tables, two containing census information (from the 2000 Census) and one containing calendar infor- mation about dates.
+■■ Subscribers dataset. This is data describing a subset of customers in a mobile telephone company.
+■■ Purchases dataset. This is data describing customer purchase patterns.
+This data is available for download, along with instructions for loading it into SQL Server.
+In addition, the companion web site has pages with additional information, such as spreadsheets containing the SQL queries and answers for all examples in the book and a discussion forum.
+Summary
+The idea for this book originated with a colleague’s question about a reference book for SQL for data analysis queries. However, another reference book on SQL is not needed, even one focused on the practical aspects of using the lan- guage for querying purposes.
+For analyzing data, SQL cannot be learned in a vacuum. A SQL query, no matter how deftly crafted, is usually not the entire solution to a business prob- lem. The business problem needs to be transformed into a question, which can be answered via a query. The results then need to be presented, often as tables or Excel charts.
+I would extend this further. In the real world, statistics also cannot be learned in a vacuum. Once upon a time, collecting data was a time-consuming and difficult process. Now, there are web sites devoted to storing data sets and making them available to anyone who wants them. The companion web site for this book, for example, puts dozens of megabytes of data just a few clicks away. The problem of analyzing data now extends beyond the realm of a few statistical methods to the processes for managing and extracting data as well.
+This book combines three key ideas into a single thread of solving problems. I hope this book helps readers with technical skills. Throughout my work as a data miner, I have found SQL, Excel, and statistics to be critical tools for ana- lyzing data. More important than the specific technical skills, though, I hope this book helps readers improve their technical skills and gives them ideas so they can better understand their customers and their businesses.
+Introduction xli
+￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

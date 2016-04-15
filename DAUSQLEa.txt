@@ -1,0 +1,576 @@
+APPENDIX
+Equivalent Constructs Among Databases
+Relational databases support SQL in the same way that English is the language of the Great Britain, the United States, India, and Jamaica. Although there is much in common among the databases, each dialect has its own vocabulary and accents.
+Throughout the book, the SQL examples have used Microsoft T-SQL as the dialect of choice. There are a number of things in SQL that varies from data- base to database. The purpose of the appendix is to show equivalent SQL con- structs in different databases. The five database engines are:
+■■ IBM UDB, version 7 and above;
+■■ Microsoft, version 2005;
+■■ mysql, version 5 and above;
+■■ Oracle version 9 and above; and
+■■ SAS proc sql.
+The databases from IBM, Microsoft, and Oracle are commercial products, although single-user versions can often be downloaded for no cost. mysql is a free database engine. SAS proc sql is the SQL engine within the SAS language (the most popular commercial statistical software). When using SAS, proc sql can be used in two different modes. In one, it communicates directly to a data- base, and supports the language of the database. In the other, it runs within SAS and uses SAS’s particular constructs.
+611
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼612 Appendix ■ Equivalent Constructs Among Databases
+￼￼This appendix is provided as is, without any guarantees that the software has not changed for whatever reason. The following documentation web sites are available for each of the databases:
+■■ http://download-east.oracle.com/docs/cd/B19306_01/server.102/ b14200/toc.htm
+■■ http://msdn2.microsoft.com/en-us/library/ms189826.aspx
+■■ http://publib.boulder.ibm.com/infocenter/db2luw/v9
+■■ http://dev.mysql.com/doc/refman/5.1/en/index.html
+■■ http://support.sas.com/onlinedoc/913/docMainpage.jsp
+In some cases, additional navigation is required from the first documentation page, and for some sites, registration is required. Unfortunately, the ANSI standard for SQL is only available by purchasing it from the ISO organization.
+This appendix is organized by the following topics:
+■■ String Functions;
+■■ Date/Time Functions;
+■■ Mathematical Functions; and,
+■■ Other Functions and Features.
+Within each topic, specific functions are in subsections. Within each subsec- tion, the structure for each database is shown.
+String Functions
+This section includes functions that operate on string values.
+Searching for Position of One String within Another
+What is the function that searches for one string inside another string? The arguments are:
+■■ <search string> — the string to be searched
+■■ <pattern> — the string to look for
+■■ <occurrence> — which occurrence
+■■ <offset> — where to start searching
+IBM
+  LOCATE(<pattern>, <search string>, <offset>)
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 613
+￼￼The argument <offset> is optional and defaults to 1. The function returns the position in the search string where the pattern is found and 0 if the pattern is not found.
+An alternative method:
+  POSSTR(<search string>, <pattern>)
+The function returns the position in the search string where the pattern is found and 0 if the pattern is not found.
+Microsoft
+  CHARINDEX(<pattern>, <search string>, <offset>)
+The argument <offset> is optional and defaults to 1. The function returns the position in the search string where the pattern is found and 0 if the pattern is not found.
+mysql
+  INSTR(<search string>, <pattern>)
+The function returns the position in the search string where the pattern is found and 0 if the pattern is not found.
+An alternative method:
+  LOCATE(<pattern>, <search string>, <offset>)
+The argument <offset> is optional and defaults to 1. The function returns the position in the search string where the pattern is found and 0 if the pattern is not found.
+Oracle
+  INSTR(<search string>, <pattern>, <occurrence>)
+The argument <occurrence> is optional and defaults to 1. The function returns the position in the search string where the pattern is found and 0 if the pattern is not found.
+SAS proc sql
+FIND(<search string>, <pattern >)
+The function returns the position in <search
+found, and 0 if the pattern is not found.
+string> where the pattern is
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼614 Appendix ■ Equivalent Constructs Among Databases String Concatenation
+What is the function and operator that appends strings together?
+IBM
+         CONCAT(<string 1>, <string 2>)
+Note that this function only takes two arguments, but the function can be nested. In addition, the operator “||” also concatenates strings.
+Microsoft
+         <string 1> + <string 2>
+The concatenation operator is an overloaded “+” operator. When mixing char- acter and numeric types, be sure to cast the numeric types to strings.
+mysql
+         CONCAT(<string 1>, <string 2>, . . .)
+Note: this function can take two or more arguments.
+Oracle
+         CONCAT(<string 1>, <string 2>)
+Note that this function only takes two arguments, but the function can be nested. In addition, the operator “||” also concatenates strings.
+SAS proc sql
+         CAT(<string 1>, <string 2>, . . .)
+Note: this function can take two or more arguments.
+String Length Function
+What is the function and operator that returns the length of a string?
+IBM
+         LENGTH(<string>)
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 615
+￼￼Microsoft
+  LEN(<string>)
+mysql
+  LENGTH(<string>)
+Oracle
+  LENGTH(<string>)
+SAS proc sql
+  LENGTH(<string>)
+Note that this function ignores trailing blanks.
+Substring Function
+What is the function and operator that returns a substring?
+IBM
+SUBSTRING(<string>, <offset>, <len>)
+The argument <len> is optional; when missing, the function returns the rest of
+the string. The argument <offset> must be non-negative. Microsoft
+  SUBSTRING (<string>, <offset>, <len>)
+All arguments are required and the last two must be non-negative.
+mysql
+  substring(<string>, <offset>, <len>)
+The argument <len> is optional; when missing, the function returns the rest of the string. If <offset> is negative, the function counts from the end of the string rather than the beginning.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼616 Appendix ■ Equivalent Constructs Among Databases Oracle
+         SUBSTR(<string>, <offset>, <len>)
+The argument <len> is optional; when missing, the function returns the rest of the string. If <offset> is negative, the function counts from the end of the string rather than the beginning.
+SAS proc sql
+         SUBSTRN(<string>, <offset>, <len>)
+The argument <len> is optional; when missing, the function returns the rest of the string. Note: SUBSTRN() is preferable to SUBSTR() because it does not produce errors or warnings when <offset>+<len> extends beyond the length of <string>.
+Replace One Substring with Another
+This function is the same across all databases, but differs in SAS.
+IBM
+         REPLACE(<string>, <from>, <to>)
+Microsoft
+         REPLACE(<string>, <from>, <to>)
+mysql
+         REPLACE(<string>, <from>, <to>)
+Oracle
+         REPLACE(<string>, <from>, <to>)
+SAS proc sql
+         RXCHANGE(RXPARSE(‘<from> to <to>’), 999, <string>))
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 617 Remove Leading and Trailing Blanks
+How can spaces at the beginning and end of a string be removed?
+IBM
+  LTRIM(RTRIM(<string>))
+Microsoft
+  LTRIM(RTRIM(<string>))
+mysql
+  TRIM(<string>)
+Oracle
+TRIM(<string>)
+Note: LTRIM() and RTRIM() also work.
+SAS proc sql
+  BTRIM(<string>)
+RIGHT Function
+What is the function and operator that returns a substring of length <len> from the end of a string?
+IBM
+  RIGHT(<string>, <len>)
+Microsoft
+  RIGHT(<string>, <len>)
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼618 Appendix ■ Equivalent Constructs Among Databases mysql
+         RIGHT(<string>, <len>)
+Oracle
+Function does not exist. Use:
+        SUBSTR(<string>, LENGTH(<string>) + 1 - <len>, <len>)
+SAS proc sql
+Function does not exist. Use:
+         SUBSTR(<string>, LENGTH(<string> + 1 - <len>, <len>)
+LEFT Function
+What is the function and operator that returns a substring from the beginning of a string with length <len>?
+IBM
+         LEFT(<string>, <len>)
+Microsoft
+         LEFT(<string>, <len>)
+mysql
+         LEFT(<string>, <len>)
+Oracle
+Function does not exist. Use:
+         SUBSTR(<string>, 1, <len>)
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 619
+￼￼SAS proc sql
+Function does not exist. Use:
+  SUBSTRN(<string>, 1, <len>)
+ASCII Function
+What functions returns the ASCII value of a character?
+IBM
+  ASCII(<char>)
+Microsoft
+  ASCII(<char>)
+mysql
+  ASCII(<char>)
+Oracle
+  ASCII(<char>)
+SAS proc sql
+  RANK(<char>)
+Date Time Functions
+This section has functions that deal with dates and times.
+Date Constant
+How is a constant represented in the code?
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼620 Appendix ■ Equivalent Constructs Among Databases IBM
+         DATE(‘YYYY-MM-DD’)
+Microsoft
+         CAST(‘YYYY-MM-DD’ as SMALLDATETIME)
+Microsoft also seems to recognize strings of the form “MM/DD/YYYY” and “MMMMM DD, YYYY”.
+mysql
+         CAST(‘YYYY-MM-DD’ as DATE)
+mysql also recognizes strings of the form “YYYY-MM-DD” as dates.
+Oracle
+         DATE ‘YYYY-MM-DD’
+Oracle also seems to recognize strings of the form DD-MMM-YYYY as dates in an appropriate context.
+SAS proc sql
+         ‘ddMmmyyyy’d
+Current Date and Time
+What is the current date and time?
+IBM
+CURRENT DATE
+Note: This is not a function.
+Microsoft
+GETDATE()
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 621
+￼￼mysql
+CURDATE()
+Oracle
+SYSDATE()
+SAS proc sql
+TODAY()
+Convert to YYYYMMDD String
+How can a date be converted to the format YYYYMMDD?
+IBM
+  REPLACE(LEFT(CHAR(<date>, ISO), 10), ‘-‘, ‘’)))
+Microsoft
+  CONVERT(<date>, VARCHAR, 8, 112)
+mysql
+  DATE_FORMAT(<date>, ‘%Y%m%d’)
+Oracle
+  TO_CHAR(<date>, ‘YYYYMMDD’)
+SAS proc sql
+  PUT(<date>, YYMMDD10.)
+This returns a string of the form YYYY-MM-DD. This format is usually suffi- cient, and removing the hyphens in SAS is cumbersome.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼622 Appendix ■ Equivalent Constructs Among Databases Year, Month, and Day of Month
+What functions extract the year, month, and day from a date as numbers?
+IBM
+         YEAR(date)
+         MONTH(date)
+         DAY(date)
+Microsoft
+         YEAR(date)
+         MONTH(date)
+         DAY(date)
+The following also works:
+         DATEPART(yy, <date>)
+         DATEPART(m, <date>)
+         DATEPART(d <date>)
+mysql
+         EXTRACT(YEAR FROM <date>)
+         EXTRACT(MONTH FROM <date>)
+         EXTRACT(DAY FROM <date>)
+The following also works:
+         YEAR(date)
+         MONTH(date)
+         DAY(date)
+Oracle
+         EXTRACT(YEAR FROM <date>)
+         EXTRACT(MONTH FROM <date>)
+         EXTRACT(DAY FROM <date>)
+The following also works:
+         TO_CHAR(<date>, ‘YYYY’)+0
+         TO_CHAR(<date>, ‘MM’)+0
+         TO_CHAR(<date>, ‘DD’)+0
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 623
+￼￼SAS proc sql
+  YEAR(date)
+  MONTH(date)
+  DAY(date)
+Day of Week (Integer and String)
+What functions extract the day of the week as a day number (starting with 1 for Sunday) and as a name?
+IBM
+  DAYOFWEEK(<date>)
+  DAYNAME(<date>)
+Microsoft
+  DATEPART(dw, <date>)
+  DATENAME(dw, <date>)
+mysql
+  DAYOFWEEK(<date>)
+  DAYNAME(<date>)
+Oracle
+  1 + MOD(<date> - DATE ‘1970-01-01’+4, 7)
+  TO_CHAR(<date>, ‘DY’)
+SAS proc sql
+  WEEKDAY(<date>)
+  PUT(<date>, weekdate3.)
+Adding (or Subtracting) Days from a Date
+How are a given number of days added or subtracted from a date?
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼624 Appendix ■ Equivalent Constructs Among Databases IBM
+         <date> + <days> DAYS
+Microsoft
+         DATEADD(d, <days>, <date>)
+mysql
+         ADDDATE(<date>, <days>)
+Oracle
+         <date> + <days>
+SAS proc sql
+         <date> + <days>
+Adding (or Subtracting) Months from a Date
+How are a given number of months added or subtracted from a date?
+IBM
+Not supported, use the approximation:
+         <date> + <months> * 30.4
+Microsoft
+         DATEADD(m, <months>, <date>)
+mysql
+         <date> + INTERVAL <months> MONTH
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 625
+￼￼Oracle
+  ADD_MONTHS(<date>, <months>)
+SAS proc sql
+  INTNX(‘MONTH‘, <date>, <months>)
+Difference between Two Dates in Days
+How is the difference between two dates in days calculated?
+IBM
+  DAYS(<datelater>) – DAYS(<dateearlier>)
+Microsoft
+  DATEDIFF(d, <dateearlier>, <datelater>)
+mysql
+  DATEDIFF(<datelater>, <dateearlier>)
+Oracle
+  <datelater> - <dateearlier>
+SAS proc sql
+  <datelater> - <dateearlier>
+Difference between Two Dates in Months
+How is the difference between two dates in months calculated?
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼626 Appendix ■ Equivalent Constructs Among Databases
+￼￼IBM
+Not directly supported in database, use:
+  (DAYS(<datelater>) – DAYS(<dateearlier>))/30.4
+Microsoft
+  DATEDIFF(m, <dateearlier>, <datelater>)
+mysql
+Not directly supported in database, use:
+  DATEDIFF(<datelater>, <dateearlier>)/30.4
+Oracle
+  MONTHS_BETWEEN(<datelater>, <dateearlier>)
+SAS proc sql
+  INTCK(‘MONTH‘, <dateearlier>, <datelater>)
+Note that this counts the number of month boundaries between two values, rather than the number of full months.
+Extracting Date from Date Time
+How is a date extracted from a date time value, setting the time to zero?
+IBM
+  DATE(<date>)
+Microsoft
+  DATEADD(‘1900-01-01’, DATEDIFF(dd, ‘1900-01-01’, <date>))
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 627
+￼￼mysql
+  DATE(<date>)
+Oracle
+  TRUNC(<date>)
+SAS proc sql
+  DATEPART(<date>)
+Mathematical Functions
+The functions operate on numeric values.
+Remainder/Modulo
+What function returns the remainder when one number, <num>, is divided by another, <base>?
+IBM
+  MOD(<num>, <base>)
+Microsoft
+  <num> % <base>
+mysql
+  MOD(<num>, <base>)
+  <num> MOD <base>
+  <num> % <base>
+Oracle
+  MOD(<num>, <base>)
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼628 Appendix ■ Equivalent Constructs Among Databases SAS proc sql
+         MOD(<num>, <base>)
+Power
+How do you raise one number, <base>, to another number, <exp>? IBM
+         POWER(<base>, <exp>)
+Microsoft
+         POWER(<base>, <exp>)
+mysql
+         POWER(<base>, <exp>)
+Oracle
+         POWER(<base>, <exp>)
+SAS proc SQL
+         <base>**<exp>
+Floor
+What function removes the fractional part of a number?
+IBM
+         FLOOR(<number>)
+Microsoft
+￼￼FLOOR(<number>)
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 629
+￼￼mysql
+  FLOOR(<number>)
+Oracle
+  FLOOR(<number>)
+SAS proc sql
+  FLOOR(<number>)
+“Random” Numbers
+How can we get random numbers between 0 and 1? This is useful, for instance, for returning a randomized set of rows. For random number generators that accept a seed as an argument, the sequence is always the same for a given seed.
+IBM
+RAND()
+Microsoft
+  RAND()
+  RAND(<seed>)
+mysql
+  RAND()
+  RAND(<seed>)
+Oracle
+No built-in function; use a pseudo-random number generator such as:
+(ROWNUM * prime1 + prime2 MOD prime3)/prime3 Example: (ROWNUM * 83 + 19 MOD 101)/(101.0)
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼630 Appendix ■ Equivalent Constructs Among Databases SAS proc sql
+         RAND(‘UNIFORM’)
+Note: SAS has a wide variety of random number generators that pull numbers from many different distributions.
+Left Padding an Integer with Zeros
+How can an integer value be converted to a string of a fixed length and padded with zeros on the left?
+IBM
+         RIGHT(CONCAT(REPEAT(‘0’, <len>), CAST(<num> as CHAR)), <len>)
+Microsoft
+         RIGHT(REPLICATE(‘0’, <len>) + CAST(<num> as VARCHAR), <len>)
+mysql
+         RIGHT(CONCAT(REPEAT(‘0’, <len>), CAST(<num> as CHAR)), <len>)
+Oracle
+         TO_CHAR(<num>, RPAD(‘0’, ‘0’, <len>))
+SAS proc sql
+         PUTN(<num>, Z<len>.)
+Conversion from Number to String
+How is a number converted to a string?
+IBM
+         CAST(<arg> as CHAR)
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 631
+￼￼Microsoft
+  CAST(<arg> as VARCHAR)
+mysql
+CAST(<arg> as CHAR)
+Note that VARCHAR does not work.
+Oracle
+  TO_CHAR(<arg>)
+SAS proc sql
+  PUT(<arg>, BEST.)
+The default puts the number into 12 characters. For a wider format, use BEST<width>. (such as BEST20.) for the format.
+Other Functions and Features
+These are miscellaneous functions and features that do not fall into any of the previous categories.
+Least and Greatest
+How do you get the smallest and largest values from a list?
+IBM
+  (CASE WHEN <arg1> < <arg2> THEN <arg1> ELSE <arg2> END)
+  (CASE WHEN <arg1> > <arg2> THEN <arg1> ELSE <arg2> END)
+If you have to worry about NULL values:
+  (CASE WHEN <arg2> IS NULL OR <arg1> < <arg2> THEN <arg1>
+        ELSE <arg2> END)
+  (CASE WHEN <arg2> IS NULL or <arg1> > <arg2> THEN <arg1>
+        ELSE <arg2> END)
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼632 Appendix ■ Equivalent Constructs Among Databases Microsoft
+         (CASE WHEN <arg1> < <arg2> THEN <arg1> ELSE <arg2> END)
+         (CASE WHEN <arg1> > <arg2> THEN <arg1> ELSE <arg2> END)
+If you have to worry about NULL values:
+         (CASE WHEN <arg2> IS NULL OR <arg1> < <arg2> THEN <arg1>
+               ELSE <arg2> END)
+         (CASE WHEN <arg2> IS NULL or <arg1> > <arg2> THEN <arg1>
+               ELSE <arg2> END)
+mysql
+         LEAST(<arg1>, <arg2>)
+         GREATEST(<arg1>, <arg2>)
+Oracle
+         LEAST(<arg1>, <arg2>)
+         GREATEST(<arg1>, <arg2>)
+SAS proc sql
+         (CASE WHEN <arg1> < <arg2> THEN <arg1> ELSE <arg2> END)
+         (CASE WHEN <arg1> > <arg2> THEN <arg1> ELSE <arg2> END)
+If you have to worry about NULL values:
+         (CASE WHEN <arg2> IS NULL OR <arg1> < <arg2> THEN <arg1>
+               ELSE <arg2> END)
+         (CASE WHEN <arg2> IS NULL or <arg1> > <arg2> THEN <arg1>
+               ELSE <arg2> END)
+Return Result with One Row
+How can a query return a value with only one row? This is useful for testing syntax and for incorporating subqueries for constants.
+IBM
+         SELECT <whatever>
+         FROM SYSIBM.SYSDUMMY1
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 633
+￼￼Microsoft
+  SELECT <whatever>
+mysql
+  SELECT <whatever>
+Oracle
+  SELECT <whatever>
+  FROM dual
+SAS proc sql
+Does not seem to support this; can be implemented by creating a data set with one row.
+Return a Handful of Rows
+How can a query return just a handful of rows? This is useful to see a few results without returning all of them.
+IBM
+  SELECT . . .
+  FROM . . .
+  FETCH FIRST <num> ROWS ONLY
+Microsoft
+  SELECT TOP <num> . . .
+  FROM . . .
+mysql
+  SELECT . . .
+  FROM . . .
+  LIMIT <num>
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼634 Appendix ■ Equivalent Constructs Among Databases Oracle
+         SELECT . . .
+         FROM . . .
+         WHERE ROWNUM < <num>
+SAS proc sql
+         proc sql outobs=2;
+              SELECT . . .;
+Get List of Columns in a Table
+How can a query return a list of columns in a table?
+IBM
+         SELECT colname
+         FROM syscat.columns
+         WHERE tabname = <tablename> AND
+               tabschema = <tableschema>
+Microsoft
+         SELECT column_name
+         FROM information_schema.columns
+         WHERE table_name = <tablename> AND
+               table_schema = <tableschema>
+mysql
+         SELECT column_name
+         FROM information_schema.columns
+         WHERE table_name = <tablename> AND
+               table_schema = <tableschema>
+Oracle
+         SELECT column_name
+         FROM all_tab_columns
+         WHERE table_name = <tablename> AND
+￼￼owner = <owner>
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Appendix ■ Equivalent Constructs Among Databases 635
+￼￼SAS proc sql
+  SELECT name
+  FROM dictionary.columns
+  WHERE upper(memname) = <tablename> AND
+        upper(libname) = <tableschema>
+ORDER BY in Subqueries
+IstheORDER BYclausesupportedinsubqueries? IBM
+Apparently Supported
+Microsoft
+Partially supported — supported only when TOP is used in the select.
+mysql
+Supported
+Oracle
+Not Supported
+SAS proc sql
+Not Supported
+Window Functions
+Does the database support window functions?
+IBM
+Not Supported
+Microsoft
+Supported
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼636 Appendix ■ Equivalent Constructs Among Databases mysql
+Not Supported
+Oracle
+Supported; called analytic functions.
+SAS proc sql
+Not Supported
+Average of Integers
+Is the average of a set of integers, using the AVG() function, an integer or a floating-point number?
+IBM
+Integer
+Microsoft
+Integer
+mysql
+Floating point
+Oracle
+Integer
+SAS proc sql
+Floating point
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

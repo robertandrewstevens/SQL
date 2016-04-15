@@ -1,0 +1,1235 @@
+CHAPTER
+4
+Where Is It All Happening? Location, Location, Location
+From foreign policy to politics to real estate and retailing, many would agree with Napoleon’s sentiment that “geography is destiny.” Where customers reside and the attributes of that area are among customers’ most informative characteristics: East coast, west coast, or in-between? Red state or blue state? Urban, rural, or suburban? Sun belt or snow belt? Good school district or retirement community? Geography is important.
+Incorporating this rich source of information into data analysis poses some challenges. One is geocoding, the process of identifying where addresses are physically located, based on information in databases. Loca- tion information typically includes latitude and longitude, as well as the identification of multiple geographic areas, such as zip code, county, and state. This information makes it possible to determine who are neighbors and who are not.
+Another challenge is incorporating the wealth of information about geo- graphic areas. In the United States, the Census Bureau provides demographic and economic information about various levels of geography. The Bureau divides the country into very specific geographic pieces, such as census tracts and block groups and zip code tabulation areas (ZCTAs, which are like zip codes). The Bureau then summarizes information for these areas, information such as the number of households, the median household income, and the per- cent of housing units that use solar heat. The best thing about census data is that it is free and readily accessible on the web.
+133
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼134 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼The Zipcode table contains just a small fraction of the available census variables. These are interesting by themselves. More importantly, such demographic data complements customer data. Combining the two pro- vides new insight into customers.
+This chapter introduces the information provided by geocoding and how to use this information in databases. The chapter continues by adding customer data into the mix. The examples in the chapter use the purchase dataset, because it has zip codes. Matching zip codes to census zip codes (actually zip code tabulation areas) serves as a rudimentary form of geocoding.
+No discussion of geography would be complete without including maps, which are a very powerful way of communicating information. Once upon a time (prior to Excel 2002), Excel had built-in mapping capabilities; unfortu- nately, such capabilities now require purchasing additional products. Never- theless, there are some clever things to do in Excel to visualize data, and it is even possible to connect Excel to maps on the web. This chapter starts with a discussion of geographic data and ends with an overview of the role that map- ping can play in data analysis.
+Latitude and Longitude
+Each point on the earth’s surface is described by a latitude and a longitude. Because the earth is basically a sphere and not a flat plane, latitudes and longitudes behave a bit differently from high school geometry. This section uses the Zipcode table to investigate latitudes and longitudes.
+Definition of Latitude and Longitude
+The “lines” of latitude and longitude are actually circles on the earth’s globe. All “lines” of longitude go through the north and south poles. All “lines” of latitude are circles parallel to the equator. The actual measurements are angles, measured from the center of the earth to the Greenwich meridian (for longi- tude) or to the equator (for latitude). Figure 4-1 shows examples of latitudes and longitudes.
+Although the two seem quite similar, there are some important and interest- ing differences between them. One difference is historical. Longitude (how far east and west) is difficult to measure without accurate time-keeping devices, which are a relatively modern invention.
+Latitude (how far north or south) has been understood for thousands of years and can be measured by the angle of stars in the sky or the position of the sun when it is directly overhead. By observing the position of the sun at noon on the summer solstice several thousand years ago, the ancient Greek astronomer Eratosthenes estimated the circumference of the earth. He noted three facts. At noon on the summer solstice, the sun was directly overhead in
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 135
+￼￼the town of Syene. At the same time, the sun was at an angle of 7.2 degrees from the vertical in his town of Alexandria. And, Syene was located a certain distance south of Alexandria. According to modern measurements, his estimate of the circumference was accurate within two percent—pretty remarkable accuracy for work done twenty-five centuries ago.
+Lines of longitude pass through the north and south poles.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Lines of latitude are parallel to the equator.
+Figure 4-1: Lines of latitude and longitude make it possible to locate any point on the earth’s surface.
+Unlike lines of longitude, lines of latitude do not intersect. The distance between two lines of latitude separated by one degree is always about 68.7 miles (the earth’s circumference divided by 360 degrees). The distance between two lines of longitude separated by one degree varies by latitude, being about 68.7 miles at the equator and diminishing to zero at the poles.
+Recall from high school geometry that one definition of a line is the shortest distance between two points. On a sphere, lines of longitude have this prop- erty. So for two locations, one directly north or south of the other, following the line of longitude is the shortest path between the two points.
+Lines of latitude do not have this property (so they are not strictly lines in the sense of spherical geometry). For two locations at the same latitude, such as Chicago, IL and Providence, RI or Miami, FL and Brownsville, TX, the lati- tude line connecting them is not the shortest distance. This is one reason why airplanes flying between the East Coast and West Coast often go into Canadian airspace, and why flights from the United States to Asia and Europe often go far north near the North Pole. The airplanes are following a shorter path by going farther north.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼136 Chapter 4 ■ Where Is It All Happening? Location, Location, Location Degrees, Minutes, Seconds, and All That
+Latitude and longitude are measured in degrees, usually ranging from minus 180 degrees to positive 180 degrees. For latitude, the extremes are the South and North Poles, respectively. Negative degrees are traditionally south of the equator, and positive degrees are north of the equator, probably due to the fact that people living in the northern hemisphere invented the whole system in the first place.
+Longitudes also range from minus 180 degrees to positive 180 degrees. Tradi- tionally, locations west of Greenwich, England have negative longitudes and those east of Greenwich have positive longitudes, so all of North and South America, with the exception of very small parts of far western Alaska, have neg- ative longitudes. People in Europe — which mostly has positive longitudes — invented the numbering scheme rather than people in the Americas.
+Angles are traditionally measured in degrees, minutes, and seconds. One degree consists of sixty minutes. One minute consists of sixty seconds, regard- less of whether the minute is a fraction of a degree or a fraction of an hour. This is not a coincidence. Thousands of years ago, the ancient Babylonians based their number system on multiples of sixty (which they in turn may have bor- rowed from the more ancient Sumerians), rather than the multiples of ten that we are familiar with. They divided time and angles into sixty equal parts, which is why there are sixty minutes in both one hour and one degree. Such a system is called a sexagesimal number system, a piece of trivia otherwise irrel- evant to data analysis.
+When working with degrees, both databases and Excel prefer to work with decimal degrees. How can we convert degrees/minutes/seconds to decimal degrees and vice versa? The first part of this question is easy to answer. The author was born at approximately at 25° 43’ 32” degrees north and 80° 16’ 22” degrees west. To convert this to decimal degrees, simply divide the minutes by 60 and the seconds by 3600 to arrive at 25.726° N and 80.273° W. This is easily done in either Excel or SQL.
+Although decimal degrees are quite sufficient for our purposes, it is worth considering the reverse computation. The following expressions calculate the degrees, minutes, and seconds from a decimal degree using Excel functions (assuming the decimal degrees are in cell A1):
+         <degrees> = TRUNC(A1)
+         <minutes> = MOD(TRUNC(ABS(A1)*60), 60)
+         <seconds> = MOD(TRUNC(ABS(A1)*3600), 60)
+The MOD() function returns the remainder when the second argument is divided by the first. For instance, when the second argument is two, MOD() returns zero for even numbers and one for odd numbers. The TRUNC() function removes the fractional part of a number for both positive and negative values.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 137
+￼￼Unfortunately, Excel does not have a number format that supports degrees, minutes, and seconds. However, the following expression takes degrees, min- utes, and seconds and creates an appropriate string:
+  <degrees>&CHAR(176)&“ “&<minutes>&“‘ “&<seconds>&“”“”
+The function CHAR(176) returns the degree symbol. The symbol for minutes is a single quote. The symbol for seconds is a double quote. Putting a double quotation mark in a string requires using four double quotes in a row.
+TIP AnycharactercanbeincludedinanExceltextvalue.Onewaytoadda character is with the CHAR() function. Another way is to use the Insert ➪ Symbol menu option.
+Distance between Two Locations
+Longitudes and latitudes make it possible to calculate the distance between two locations. This section introduces two methods for calculating the distance, a less accurate but easier way, and a more accurate method. The distances are then used to answer some questions about zip codes, because the latitude and longitude of the center of each zip code is available in the Zipcensus table.
+This section uses trigonometric functions, which expect their arguments to be in units called radians rather than the more familiar degrees. There is a simple conversion from degrees to radians and back again:
+  <radians> = <degrees>*PI()/180
+  <degrees> = <radians>*180/PI()
+The conversion is simple because pi radians equal exactly 180 degrees. Both SQL and Excel support the function PI(), which is used for the conversion. Excel also has the function RADIANS() that also does the conversion.
+WARNING When working with angles, be careful whether the measurements should be in degrees or radians. Usually, functions that operate on angles expect the angles in radians.
+Euclidian Method
+The Pythagorean formula calculates the length of the long side of a right triangle as the square root of the sum of the squares of the lengths of the two shorter sides. An equivalent formulation is that the distance between two points is the square root of the sum of the squares of the X-coordinate difference and the Y-coordinate difference. These are handy formulas when two points lie on a flat plane.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼138 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼The same formula could be applied directly to latitudes and longitudes, but the result does not make sense — latitudes and longitudes are measured in degrees, and distance in degrees does not make sense. The distance should be measured in miles or kilometers.
+The degrees need to be converted to miles before applying the formula. The north-south distance between two lines of latitude is simply the difference in degrees times 68.7 miles, regardless of the longitude. The east-west distance between two lines of longitude depends on the latitude; the distance is the dif- ference in degrees of longitude times 68.7 times the cosine of the bigger latitude.
+For two points on the surface of the earth, the north-south distance and east- west distance are the sides of a right triangle, as shown in Figure 4-2. Note that a right triangle on the earth’s surface does not necessarily look like one in a picture.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 4-2: The distance between two points on the earth’s surface can be approximated by converting the latitude and longitudes to miles and then using the Pythagorean Theorem.
+The geographic center of the continental United States is in the middle of Kansas and has a longitude of –98.6° and a latitude of 39.8°. By converting the differences in coordinates to miles, the following query finds the ten closest zip codes to the geographic center:
+  SELECT TOP 10 zipcode, state, population, latitude, longitude, disteuc
+  FROM (SELECT zc.*,
+               (CASE WHEN latitude > 39.8
+                     THEN SQRT(SQUARE(difflat*68.9) +
+￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 139
+￼￼￼                               SQUARE(difflong*SIN(latrad)*68.9))
+                     ELSE SQRT(SQUARE(difflat*68.9) +
+                               SQUARE(difflong*SIN(centerlatrad)*68.9))
+                END) as disteuc
+        FROM (SELECT zc.*, latitude - 39.8 as difflat,
+                     longitude - (-98.6) as difflong,
+                     latitude*PI()/180 as latrad,
+                     39.8*PI()/180 as centerlatrad
+              FROM zipcensus zc) zc) zc
+  ORDER BY disteuc
+The innermost subquery defines useful variables, such as the latitude and lon- gitude in radians (perhaps the trickiest part of the calculation). The next sub- query calculates the distance. The CASE statement chooses the larger latitude to get the smaller distance. The ten zip codes closest to the geographic center of the continental United States are in Table 4-1.
+Table 4-1: The Closest Zip Codes by Euclidean Distance to the Geometric Center of the United States
+￼￼￼￼￼￼￼￼￼￼￼ZIP CODE STATE LONGITUDE
+66952 KS -98.59 66941 KS -98.44 66967 KS -98.80 66932 KS -98.92 67638 KS -98.85 66936 KS -98.29 67474 KS -98.70 66956 KS -98.21 67628 KS -98.97 66951 KS -99.04
+Accurate Method
+EUCLIDIAN LATITUDE DISTANCE
+CIRCULAR DISTANCE
+39.84 2.5 2.5 39.83 7.2 8.5 39.79 8.6 10.4 39.76 14.5 17.3 39.64 15.4 17.0 39.91 15.4 17.8 39.58 15.8 16.1 39.79 17.3 20.8 39.65 19.4 22.2 39.79 19.4 23.2
+￼￼￼￼￼￼￼￼￼￼This formula for distance between two locations is not accurate because the calculation uses formulas from flat geometry. The distance does not take the curvature of the earth into account.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼140 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼There is a formula for the distance between two points on a sphere, based on a simple idea. Connect the two points to the center of the earth. This forms an angle. The distance is the angle measured in radians times the radius of the earth. A simple idea, but it leads to a messy formula. The following SQL query uses this formula to find the ten zip codes closest to the center of the continen- tal United States using the more accurate method:
+  SELECT TOP 10 zipcode, state, population, latitude, longitude, disteuc,
+         distcirc
+  FROM (SELECT zc.*,
+               ACOS(COS(centerlatrad)*COS(latrad)*
+                                      COS(centerlongrad - longrad) +
+                    SIN(centerlatrad)*SIN(latrad))*radius as distcirc,
+               (CASE WHEN latitude > 39.8
+                     THEN SQRT(SQUARE(difflat*68.9) +
+                               SQUARE(difflong*SIN(latrad)*68.9))
+                     ELSE SQRT(SQUARE(difflat*68.9) +
+                               SQUARE(difflong*SIN(centerlatrad)*68.9))
+                END) as disteuc
+        FROM (SELECT zc.*, latitude - 39.8 as difflat,
+                     longitude - (-98.6) as difflong,
+                     latitude*PI()/180 as latrad,
+                     39.8*PI()/180 as centerlatrad,
+                     longitude*PI()/180 as longrad,
+                     (-98.6)*PI()/180 as centerlongrad,
+                     3949.9 as radius
+              FROM zipcensus zc) zc) zc
+  ORDER BY disteuc
+This formula uses several trigonometric functions, so the innermost query converts all the latitudes and longitudes to radians. In addition, this method uses the radius of the earth, which is taken to be 3,949.9 miles.
+Table 4-1 shows the circular distance as well as the Euclidean distance. Although the results are similar, there are some discrepancies. For points due north or south of the center, such as zip codes 68970 and 67437, the two methods produce similar distances, down to a fraction of a mile. Both are measuring the distance along the shortest path between the two points.
+However, for points that lie due east or west of the center point, the two meth- ods produce different results. For zip code 66956 the Euclidean method pro- duces a distance of 17.3 miles and the circular produces a distance of 20.8 miles. Overall, the two methods are usually within about 10%–20% of each other.
+The spherical method is not perfect, because the earth is not a perfect sphere. A better approximation could take into account the bulges around the equator. Improvements might take into account altitude, because not all loca- tions are at sea level. And finally, the travel distance along roads rather than the theoretical distance between two locations may be the right distance. Such a calculation requires special-purpose tools and databases of roads and is not feasible in Excel and SQL.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 141 Finding All Zip Codes within a Given Distance
+Being able to find the distance between two locations can be useful. It makes it possible to find the nearest Wal-Mart to where a customer lives or the closest repair center to where a car broke down or the distance from home to where a customer paid for a restaurant dinner. Each of these applications assumes that the locations (customers’ and otherwise) are available as latitudes and longi- tudes, typically through the process of geocoding or through the use of global positioning systems (GPS).
+Finding the zip codes within a certain distance of a location is another appli- cation. Once upon a time, a newspaper was interested in areas where it could provide home delivery copies. One part of the newspaper delivered copies to university campuses. Another part arranged for home delivery. Some univer- sities received newspapers, even though the surrounding areas were not routable for home delivery. Why not also offer home delivery in the surround- ing area? A brilliant idea that led to the question: Which zip codes are within eight miles of a specific set of university zip codes?
+One way to answer the question is with a big map, or with a mapping web site (such as Google Maps, MapQuest, Yahoo! Maps, or Microsoft Live). This would be a manual process of looking up each zip code to find the neighbor- ing ones. Manual solutions are prone to error. Because the Census Bureau pro- vides the latitude and longitude of the center of each zip code, why not use this information instead?
+The actual solution was an Excel worksheet that used the census informa- tion to find the distance from each zip code to the chosen zip code. The spread- sheet then created a table with the zip codes within eight miles.
+Such a spreadsheet is useful for manual processing, but the processing can also be done in SQL. The following query calculates all zip codes within eight miles of Dartmouth University in Hanover, NH:
+  SELECT z.zipcode, z.state, zco.poname, distcirc, population, hh,
+         hhmedincome
+  FROM (SELECT zips.*,
+               ACOS(COS(comp.latrad)*COS(zips.latrad)*
+                                     COS(comp.longrad - zips.longrad) +
+                    SIN(comp.latrad)*SIN(zips.latrad))*radius as distcirc
+        FROM (SELECT zc.*, latitude*PI()/180 as latrad,
+                     longitude*PI()/180 as longrad, 3949.9 as radius
+              FROM zipcensus zc) zips CROSS JOIN
+             (SELECT zc.*, latitude*PI()/180 as latrad,
+                     longitude*PI()/180 as longrad
+              FROM zipcensus zc
+              WHERE zipcode IN (‘03755’)) comp) z LEFT OUTER JOIN
+        zipcounty zco
+        ON z.zipcode = zco.zipcode
+  WHERE distcirc < 8
+  ORDER BY distcirc
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼142 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼The two innermost subquerys, Zips and Comp, convert latitudes and longi- tudes to radians. These two subqueries are joined using CROSS JOIN because Comp has only one row, the zip code for Dartmouth (03755). This join provides the data for calculating the distance, and then the Zipcounty table is joined in for the post office name. More zip codes can be included by expanding the list in the Comp subquery.
+The closest zip codes are shown in Table 4-2. Some are in New Hampshire and some are in Vermont, because Hanover is near the border between these states.
+Table 4-2: Zip Codes within Eight Miles of Hanover, NH ZIP PO NAME
+HOUSEHOLDS MEDIAN
+￼￼￼￼CODE AND STATE
+DISTANCE
+POPULATION #
+INCOME
+$69,430 $66,214 $86,421 $34,444 $42,693 $42,397 $49,750 $68,250 $43,125 $47,321
+03755 Hanover, NH
+05055 Norwich, VT
+03750 Etna, NH
+05088 Wilder, VT
+03766 Lebanon, NH
+03784 West Lebanon, NH 05043 East Thetford, VT
+05074 Thetford, VT
+05001 White River Junction, VT 05075 Thetford Center, VT
+0.0 9,877 2,504 2.3 3,500 1,348 2.8 962 319 4.1 777 316 5.3 8,628 3,759 5.6 3,701 1,594 5.6 596 247 6.8 166 49 7.0 9,172 3,939 7.8 1,487 597
+￼￼￼￼￼￼￼￼￼￼It is tempting to extend the find-the-nearest-zip-code query to find the near- est zip code to every zip code in the table. As a query, this is a slight modifica- tion of the Dartmouth query (Comp would choose all zip codes). However, such a query is going to take a long time to complete. The problem is that the distance between every possible pair of all 32,038 zip codes needs to be calcu- lated — over one billion distance calculations. The distances between zip codes in Florida and zip codes in Washington (state) have to be calculated, even though no zip code in Washington is close to any zip code in Florida.
+Unfortunately, SQL does not, in general, have the ability to make these queries run faster. Using indexes does not help, because the distance calcula- tion requires two columns, both latitude and longitude. Indexes speed up access to one column at a time, not both at once. There are special-purpose
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 143
+￼￼databases that use special-purpose data structures to store geographic infor- mation and make such queries much more feasible; however, these are not part of standard SQL.
+Finding Nearest Zip Code in Excel
+This section does a very similar calculation in Excel, finding the nearest zip code to a given zip code. The Excel spreadsheet consists of the following areas:
+■■ The input area is for typing in a zip code.
+■■ The output area for the nearest zip code and distance.
+■■ The table contains all the zip codes, each with its latitude and longitude.
+The user types a zip code in the spreadsheet in the input area. The spreadsheet looks up the latitude and longitude using the VLOOKUP() function. The dis- tance from every zip code to the chosen zip code is then calculated as an addi- tional column.
+Figure 4-3 shows the functions in the worksheet. The nearest zip code is cho- sen using the MIN() function, with a small caveat. The minimum distance is clearly going to be zero, which is the distance from any given zip code to itself. The minimum uses a nested IF() to exclude the input zip code. This is an example of an array function, discussed in the aside “Array Functions in Excel.” With the minimum distance, the actual zip code is found using a com- bination of MATCH() to find the row with the zip code and then OFFSET() to return the value in the correct column.
+Figure 4-3: This Excel spreadsheet calculates the closest zip code to any other zip code. The curly braces in the formula line indicate that this particular formula is an array function.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼144 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼￼￼ARRAY FUNCTIONS IN EXCEL
+Many functions in Excel, such as SUM() and COUNT(), accept ranges of cells. This is quite useful for choosing the rows for a calculation according to some condition. Excel offers two functions that do this, SUMIF() and COUNTIF(). However, this functionality may not be enough. The conditions are limited to simple comparisons, and the functions are limited to summation and counting.
+To extend this functionality, Excel has the concept of array functions. These are functions that operate on arrays of spreadsheet values, typically columns. Array functions can be nested, so they have the full power of Excel functions. Some of them can even return values in multiple cells, although these are not discussed until Chapter 11.
+An example perhaps explains this best. The following are two ways of taking the sum of the product of the values in two columns of cells:
+   =SUMPRODUCT($A$2$A$10, $B$2$B$10)
+   {=SUM($A$2$A$10 * $B$2$B$10)}
+These two methods are equivalent. The first uses the built-in function SUMPRODUCT() that does exactly what we want. The second combines the SUM() function and the multiplication operator as an array function. It says to multiply the values in the two columns row-by-row and then to take the sum. Think of the expression as reading each row, multiplying together the corresponding values in columns A and B and saving all these products somewhere. This somewhere is then an array of values passed to SUM().
+Entering an array function takes a sleight of hand. The expression is typed
+in just like any other expression. Instead of hitting the <return> key after entering the formula, hit <control><shift><return> at the same time. Excel encloses the formula in curly braces on the formula bar to indicate that it is an array function. The curly braces are not entered as part of the function, though.
+One particularly useful application of array functions is combining them with IF(). In the text, the problem is to find the minimum distance, where the zip code is not the given zip code. The formula for this is:
+   {=MIN(IF($A$7:$A$32044<>B2, $E$7:$E$32044))}
+This says to take the minimum of the values in column E, but only where the corresponding value in column A is not equal to the value in cell B2.
+Array functions can be as complicated as other Excel functions. Although they are easy to express, a column filled with thousands of array functions can take a while to calculate.
+And they come with one small warning. The functions AND() and OR()
+do not always work as expected. Instead, just use nested IF() statements to achieve the same logic.
+￼￼￼￼www.it-ebooks.info
+￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 145 Pictures with Zip Codes
+Latitudes and longitudes are coordinates, and these can be plotted using scatter plots. Such plots are a poor-man’s geographic information system (GIS). This section introduces the idea, along with some caveats about the process.
+The Scatter Plot Map
+There are enough zip codes in the United States that just the center points form a recognizable outline of the country. Figure 4-4 shows a zip code map of the continental United States, where each zip code is represented as a small hollow circle. The reason for using a hollow circle is to see where zip codes overlap each other.
+50
+45
+40
+35
+30
+25
+20
+-125 -120 -115 -110 -105 -100 -95 -90 -85 -80 -75 -70
+Longitude
+Figure 4-4: The center of zip codes form a recognizable map of the United States.
+This map is based on the same latitude and longitude data used for the dis- tance calculations. The latitude is assigned as the Y-axis in a scatter plot and the longitude is assigned as the X-axis. To focus on the continental United States, the horizontal scale goes from –65 to –125 and the vertical scale from 20 to 50. Lines are drawn every five degrees on both scales. Although far from
+Latitude
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼146 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼perfect, the zip code centers do form a blob that is recognizable as the conti- nental United States.
+Cartographers — the people who study maps and how to convey informa- tion on them — have many standards for what makes a good map. This simple zip code scatter plot fails almost all of them. It distorts distances and areas. For instance, small land areas in the north appear bigger, and larger land areas near the equator appear smaller. It does not have boundaries or features, such as mountains, cities, and roads. And, if the dimensions of the chart are not right, the map is stretched in unusual ways.
+Nonetheless, the result is recognizable and actually useful for conveying information. It is also easy to create. Even the simple zip code map shows area where there are many zip codes (along the coasts) and where there are few (in the mountainous states of the west, in the Everglades in South Florida).
+Who Uses Solar Power for Heating?
+The census provides many attributes about people, households, families, and housing units. One of them, for instance, happens to be the source of heat. The column HHUFUELSOLAR contains the proportion of housing units using solar power in a zip code. To convert this to a count, multiply by HHUOCCUPIED, the number of occupied housing units.
+In 2000, solar power was not particularly widespread, but a simple zip code map can show where it existed. Which zip codes have any household with solar power? Figure 4-5 shows a map with this information. The faint grey areas are zip codes that do not have solar power; the larger darker triangles show zip codes that do.
+Arranging the data in the spreadsheet can make it easier to create the map. The first column is the X-value for the chart and the second two columns are the Y-values for two series in the chart. The data should be laid out as:
+■■ Longitude, which is along the X-axis;
+■■ Latitude for non-solar zip codes; and,
+■■ Latitude for solar zip codes.
+Each row has exactly one value for latitude, in one of the two columns, with the latitude only in the appropriate column. The following query returns the data in this format:
+  SELECT zipcode, longitude,
+         (CASE WHEN hhuofuelsolar = 0 THEN latitude END) as nosolarlat,
+         (CASE WHEN hhuofuelsolar > 0 THEN latitude END) as solarlat
+  FROM zipcensus
+  WHERE latitude BETWEEN 20 and 50 AND
+        longitude BETWEEN -135 AND -65
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 147 50
+45
+40
+35
+30
+25
+20
+-125 -120
+-115 -110 -105 -100 -95
+-90 -85
+-80 -75 -70
+Figure 4-5: This map shows the zip codes that have housing units with solar power, based on the 2000 Census.
+An alternative approach would be to have the query provide a “solar” indi- cator along with the longitude and latitude. The data would be put into the right format using the IF() function in Excel. Both methods work, but there is no reason to do the extra work in Excel when it can be done in SQL.
+TIP PullingthedataintherightformatusingSQLcanoftensavetimeand effort in Excel.
+The little triangles in the chart are the zip codes that have solar power. Not surprisingly, Florida and California have a high concentration of these, because these are two states that are both sunny and highly populated. The cloudy northeast has many solar zip codes, but this is probably because there are so many zip codes in such a densely populated area. Some states in the west, such as New Mexico, Arizona, and Colorado have a relatively high number of solar zip codes, but because these states are less dense, there are not as many triangles.
+A map is useful for seeing what is happening. The data itself can be verified by asking: What proportion of zip codes in each state have at least one solar powered residence? The following query answers this question, using the Census Bureau definition of a state:
+SELECT TOP 10 state,
+SUM(CASE WHEN hhuofuelsolar > 0 THEN 1.0 END)/COUNT(*) as propzips, SUM(hhuofuelsolar*hhuoccupied)/SUM(hhuoccupied) as prophhu
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼148 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼￼￼￼￼  FROM zipcensus zc
+  GROUP BY state
+  ORDER BY 3 DESC
+This query actually calculates two numbers: the proportion of zip codes with solar power and the proportion of households. For most states, there is a strong correlation between these as shown in Table 4-3. However, for some states such as Wyoming, solar power is concentrated in a few zip codes (fewer than 14%), but a relatively high proportion of housing units have it (0.10%).
+Table 4-3: The Top Ten States by Penetration of Solar Power in Housing Units
+￼￼￼￼STATE
+HI PR NM CO CA WY AZ NV MT NC
+PROPORTION ZIPS SOLAR
+87.64% 97.60% 30.35% 35.48% 37.09% 13.61% 33.70% 17.69% 10.60% 16.60%
+PROPORTION HOUSING UNITS SOLAR
+1.51% 1.31% 0.37% 0.14% 0.12% 0.10% 0.06% 0.05% 0.05% 0.04%
+￼￼￼￼￼￼￼￼￼￼Where Are the Customers?
+Questions about zip codes are not limited to the census information. The Orders table contains information about where customers place orders. The following query summarizes the number of orders in each zip code and then joins this information to the latitude and longitude in the Zipcensus table:
+SELECT zc.zipcode, longitude, latitude, numords,
+(CASE WHEN hh = 0 THEN 0.0 ELSE numords*1.0/hh END) as penetration
+  FROM zipcensus zc JOIN
+       (SELECT zipcode, COUNT(*) as numords
+FROM orders
+        GROUP BY zipcode) o
+       ON zc.zipcode = o.zipcode
+  WHERE latitude BETWEEN 20 and 50 AND
+        longitude BETWEEN -135 AND -65
+￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 149
+The results are shown in Figure 4-6 as a bubble chart. The size of the bubbles is the number of orders placed in the zip code; the X-axis is the longitude, and the Y-axis is the latitude. Like the scatter plot, this bubble chart is a rudimen- tary map; however, bubble charts have fewer formatting options available than scatter plots (for instance, the shape of the bubbles cannot be changed). The bubbles in this chart are disks, colored on the outside and transparent inside. This is important because bubbles may overlap each other.
+50
+45
+40
+35
+30
+25
+20
+-125 -120
+-115 -110
+-105 -100 -95
+-90 -85
+-80 -75 -70
+Figure 4-6: This bubble chart shows the order penetration in each zip code.
+This map has fewer zip codes than the previous ones, because only about 11,000 zip codes have orders. Many of these zip codes are in the northeast, so that region of the country is overrepresented.
+Such a map conveys interesting information about customers. By using multiple series, for instance, orders could be classified by the products they contain, or customers by the number of purchases they make.
+Census Demographics
+Solar power is interesting, but not as useful as economic information for understanding customers. This section looks at some other types of informa- tion available, and at ways of combining this information with the purchase data. Of course, the Zipcensus table contains only a subset of all the possible information available (for free) from the census web site.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼150 Chapter 4 ■ Where Is It All Happening? Location, Location, Location The Extremes: Richest and Poorest
+There are several columns in the data related to wealth, which is very valuable information for understanding customers. You may not know how wealthy your customers are, but you can know how wealthy their neighbors are.
+Median Income
+The median household income in a zip code is the income in the middle, where half the households earn more than the median and half earn less. The median income is a very useful measure for understanding whether a given area is relatively wealthy or relatively poor. Households are a reasonable unit because they tend to correspond to an economic marketing unit — groups in the population bound together economically.
+However, median household income is not the only measure available. The Census Bureau also provides the average household income, as well as dividing income into ranges (how many households earned $45,000 to $50,000 dollars, for instance). This information is provided at the household level, at the family level, and for individuals. There is even information about sources of income, separating out earned income, social security income, and government benefits. There is a wealth of variables just describing wealth, but we’ll generally stick with median household income.
+One query for finding the zip code with the highest median household income is:
+         SELECT TOP 1 zipcode, hhmedincome
+         FROM zipcensus
+         ORDER BY hhmedincome DESC
+To find the poorest, the sort order is changed to ASC rather than DESC.
+This query is simple, but it has a flaw: more than one zip code could be tied for the richest or the poorest. A better approach finds all zip codes that match the extreme values. The following query counts the number of match-
+ing zip codes:
+         SELECT hhmedincome, COUNT(*) as numzips,
+                SUM(CASE WHEN population = 0 THEN 1 ELSE 0 END) as pop0,
+                SUM(CASE WHEN hh = 0 THEN 1 ELSE 0 END) as hh0,
+                AVG(population*1.0) as avgpop, AVG(hh*1.0) as avghh
+         FROM zipcensus zc JOIN
+              (SELECT MAX(hhmedincome) as hhmax, MIN(hhmedincome) as hhmin
+               FROM zipcensus) minmax
+              ON zc.hhmedincome IN (minmax.hhmax, minmax.hhmin)
+         GROUP BY hhmedincome
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 151
+￼￼This query returns some additional information, such as the number of zip codes where the population is zero, where the number of households is zero, and the average population of the zip code.
+Table 4-4 shows that 149 zip codes have zero median income. Although some people live in these zip codes, there are no households. These zip codes probably contain institutions of some sort, where everyone is in group hous- ing, rather than private residences (for example, prisons and college dorms). Because there are no households, the household income is zero, which appears to be a placeholder for NULL.
+Table 4-4: Information About the Wealthiest and Poorest Zip Codes
+￼HOUSE- HOLD MEDIAN INCOME
+$0 $200,001
+AVERAGE AVERAGE
+￼￼NUMBER OF ZIPS
+149 10
+NO POPU- LATION
+55 0
+NO HOUSE- HOLDS
+149 0
+POPU- LATION
+710.4 1,057.9
+HOUSE- HOLDS
+0.0 339.3
+￼￼￼The ten zip codes with the maximum median income are shown in Table 4-5. These are almost all small, except for one in Illinois and one in California.
+Table 4-5: The Wealthiest Zip Codes by Household Income in the 2000 Census MEDIAN INCOME
+￼￼￼ZIP PO NAME CODE AND STATE
+12429 Esopus, NY 38157 Memphis, TN 33109 Miami Beach, FL
+60043 Kenilworth, IL 19736 Yorklyn, DE 32447 Marianna, FL 19710 Montchanin, DE
+94027 Atherton, CA 19732 Rockland, DE 28378 Rex, NC
+POPU- HOUSE- FAMI- LATION HOLDS LIES
+15 7 7
+95 5 5 339 204 118 2,550 820 732 66 22 22 236 19 7 26 16 8 6,872 2,258 1,859 46 26 19 33 16 16
+HOUSE- HOLDS
+$200,001 $200,001 $200,001 $200,001 $200,001 $200,001 $200,001 $200,001 $200,001 $200,001
+FAMILY
+$200,001 $200,001 $200,001 $200,001 $200,001
+$28,750 $200,001 $200,001 $200,001 $200,001
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼152 Chapter 4 ■ Where Is It All Happening? Location, Location, Location Proportion of Wealthy and Poor
+Median household income is interesting, but, like all medians, it provides information about only one household, the one whose income is in the middle. An alternative approach is to consider the distribution of incomes, by looking at the proportion of the very rich or very poor in the zip codes. The column FAMINC000_010 identifies for the poorest group, those whose family income is less than ten thousand dollars per year. At the other extreme are the wealth- iest whose income exceeds two hundred thousand dollars per year, counted by FAMINC200. The resulting query looks like:
+         SELECT zipcode, state, hhmedincome, fammedincome, pop, hh
+         FROM zipcensus zc CROSS JOIN
+              (SELECT MAX(faminc200) as richest, MAX(faminc000_010) as poorest
+               FROM zipcensus
+               WHERE hh >= 1000 AND state <> ‘PR’) minmax
+         WHERE (zc.faminc200 = richest OR zc.faminc000_010 = poorest) AND
+               zc.hh >= 1000
+One thing notable about this query are the parentheses in the outer WHERE clause. Without the parentheses, the clause would be evaluated as:
+         WHERE (zc.faminc200 = richest) OR (zc.faminc000_010 = poorest AND
+               zc.hh >= 1000)
+That is, the condition on the number of households would apply only to the poor- est condition and not the richest, which is not the intended behavior. Misplaced or missing parentheses can alter the meaning and performance of a query.
+TIP InWHEREclausesthatmixANDsandORs,besuretouseparenthesesto ensure that the clauses are interpreted correctly.
+The results are similar to the previous results. The poorest zip code has now switched to an inner city neighborhood of another city. At the time of the 2000 Census, 70112 was a poor district in New Orleans, but this data predates Hur- ricane Katrina, so this zip code is probably very sparsely populated now.
+Income Similarity and Dissimilarity Using Chi-Square
+The distribution of income is another level of information that goes beyond median or average income. The Census Bureau breaks income into sixteen buckets, the poorest being family income less than $10,000 and the wealthiest being family income in excess of $200,000. The proportion of families in each of these sixteen buckets is available at the zip code level, and this is a good description of the income distribution.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 153
+￼￼In which zip codes does the income distribution match the country as a whole? These zip codes are all over the entire United States. Such representa- tive areas can be useful. What works well in these areas may work well across the whole country. At the other extreme are zip codes that differ from the national distribution, the most unrepresentative areas.
+The chi-square calculation is one way to measure both these extremes. To use the chi-square, an expected value is needed, and this is the income distrib- ution at the national level. The key to calculating the national numbers is to multiply the proportions in each of the buckets by the total number of families to obtain counts of families. This total number can be aggregated across all zip codes, and then divided by the number of families to get the distribution at the national level. The following query provides an example of this calculation for zip codes having a population of more than one thousand:
+SELECT SUM(faminc000_010*fam)/SUM(fam) as faminc000_010, ...
+         SUM(faminc150_200*fam)/SUM(fam) as faminc150_175,
+         SUM(faminc200*fam)/SUM(fam) as faminc200
+  FROM zipcensus
+  WHERE pop >= 1000
+Which zip codes are most similar (or most dissimilar) can be expressed as a question: What is the likelihood that the income distribution seen in a given zip code is due to chance, relative to the national average? Or, to slightly simplify the calcu- lation: What is the chi-square value of the income distribution of the zip code com- pared to the national income distribution? The closer the chi-square value is to zero, the more representative the zip code. Higher chi-square values suggest that the observed distribution is not due to chance.
+The calculation requires a lot of arithmetic. The chi-square value for a given income column, such as FAMINC000_010, is the square of the difference between the variable and the expected value divided by the expected value. For each of the sixteen buckets, the following expression calculates its contri- bution to the total chi-square value:
+  POWER(zc.FAMINC000_010 – usa.FAMINC000_010, 2)/usa.FAMINC000_010
+The total chi-square is the sum of the chi-square values for all the bins.
+As an example, the following query finds the top ten zip codes most similar to
+the national distribution of incomes and having a population greater than 1000:
+  SELECT TOP 10 zipcode, state,
+         (SQUARE(zc.faminc000_010 - usa.faminc000_010)/usa.faminc000_010 +
+...
+SQUARE(zc.faminc150_200 - usa.faminc150_175)/usa.faminc150_175 + SQUARE(zc.faminc200 - usa.faminc200)/usa.faminc200
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼) as chisquare,
+www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼154 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼￼￼￼         pop, fammedincome
+  FROM zipcensus zc CROSS JOIN
+(SELECT SUM(faminc000_010*fam)/SUM(fam) as faminc000_010, ...
+               SUM(faminc150_200*fam)/SUM(fam) as faminc150_175,
+               SUM(faminc200*fam)/SUM(fam) as faminc200
+        FROM zipcensus
+        WHERE pop > 1000) usa
+  WHERE pop >= 1000
+  ORDER BY 3 DESC
+This uses a subquery to calculate the distribution at the national level, which is joined in using the CROSS JOIN. The actual chi-square value is calculated as a long expression in the outermost query.
+The zip codes most similar to the national income distribution are dispersed across the United States, as shown in Table 4-6.
+Table 4-6: Top Ten Zip Codes by Chi-Square Income Similarity
+INCOME POPU- FAMILY MEDIAN
+￼￼￼￼￼￼￼￼￼￼￼ZIP CODE STATE CHI-SQUARE
+87505 NM 0.007 70065 LA 0.008 95076 CA 0.009 95670 CA 0.009 55104 MN 0.010 30263 GA 0.010 93277 CA 0.010 72205 AR 0.011 97202 OR 0.011 29407 SC 0.011
+LATION INCOME
+69,700 $51,062 53,565 $52,001 81,131 $47,365 50,135 $51,105 46,169 $50,165 41,393 $50,525 44,788 $50,461 23,892 $50,432 37,407 $51,968 36,515 $47,323
+￼￼￼￼￼￼￼￼￼￼Table 4-7 shows the ten zip codes with the highest deviation from the national income distribution. Visualizing the income variables for these ten zip codes helps explain why these are different. Figure 4-7 is an example of a par- allel dimension plot, where each zip code is a line on the chart, and each point on a line is the value of one of the income variables. The thickest line is the average for the United States. The plot shows that there are five zip codes that differ from the national distribution because everyone earns the same amount of money — so 100% of families in those zip codes are in one income bucket. One of these, 75207, happens to have a family median income very close to the national average.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 155 Table 4-7: Top Ten Zip Codes by Chi-Square Income Disparity
+￼￼￼￼ZIP CODE
+53706 75207 46556 24142 97331 60043 94027 92067 07078 60022
+INCOME STATE CHI-SQUARE
+WI 21.6 TX 17.8 IN 15.9 VA 15.5 OR 15.5 IL 10.8 CA 10.6 CA 9.8 NJ 9.0 IL 8.5
+POPU- FAMILY MEDIAN LATION INCOME
+5,217 $11,250 8,121 $48,750 6,731 $26,250 2,765 $31,250 1,390 $31,250 2,550 $200,001 6,872 $200,001 7,250 $200,001
+12,888 $200,001 8,602 $200,001
+￼￼￼￼￼￼￼￼￼￼The remaining five zip codes all differ from the national average because they have a lot of wealthy people. These all have very similar distributions, with about half the households at the highest income levels.
+￼100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+97331 (OR)
+75207 (TX)
+￼￼53708 (WI)
+46
+556 (IN)
+07078
+24142
+60022
+60043
+92067
+(NJ)
+(VA)
+(IL)
+(IL)
+(CA)
+(CA)
+￼￼All USA
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼94027
+Figure 4-7: This parallel dimension plot compares the top ten zip codes least similar to the United States by income distribution.
+￼￼www.it-ebooks.info
+faminc000_010 faminc010_015 faminc015_020 faminc020_025 faminc025_030 faminc030_035 faminc035_040 faminc040_045 faminc045_050 faminc050_060 faminc060_075 faminc075_100 faminc100_125 faminc125_150 faminc150_200
+faminc200
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼156 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼The query that returns this information is a modification of the chi-square query. It replaces the CROSS JOIN with UNION ALL, does not have the chi- square calculation, and lists the zip codes explicitly:
+(SELECT CAST(zipcode as varchar), state, fammedincome, zc.faminc000_010 ...
+          zc.faminc200
+   FROM zipcensus zc
+   WHERE zipcode in (‘53706’, ‘75207’, ‘46556’, ‘24142’, ‘97331’, ‘60043’,
+                     ‘94027’, ‘92067’, ‘07078’, ‘60022’)
+  ) UNION ALL
+  (SELECT CAST(‘XXXXX’ as varchar) as zipcode, NULL as state,
+SUM(fammedincome*fam)/SUM(fam) as fammedincome, SUM(faminc000_010*fam)/SUM(fam) as faminc000_010, ...
+SUM(faminc200*fam)/SUM(fam) as faminc200
+   FROM zipcensus)
+The difference between the UNION ALL and the CROSS JOIN is that the UNION ALL adds a new row into the data with the same columns, so the result here has eleven rows, ten for the zip codes and one for the entire United States. The CROSS JOIN, by contrast, does not add new rows (assuming there is one row in the second table). Instead, it adds additional columns to the result. As a result, the overall values for the United States are added onto the row for each zip code, so the two sets of values can be compared within a single row.
+Comparison of Zip Codes with and without Orders
+The orders in the purchases database have zip codes assigned to them. Many of these zip codes have demographic data. Others have no corresponding cen- sus zip code, are mistakes, or are for non-US addresses. This section investi- gates the intersection of orders in zip codes and zip code demographic data.
+Zip Codes Not in Census File
+There are two lists of zip codes, one in the Orders table and one in the Zipcen- sus table. How many zip codes are in each table and how many are in both? This is a question about the relationship between two sets of zip codes. The right way to answer it is by comparing the zip codes in the two tables using the UNION ALL technique:
+  SELECT inorders, incensus, COUNT(*) as numzips,
+         SUM(numorders) as numorders, MIN(zipcode), MAX(zipcode)
+  FROM (SELECT zipcode, MAX(inorders) as inorders,
+               MAX(incensus) as incensus, MAX(numorders) as numorders
+        FROM ((SELECT zipcode, 1 as inorders, 0 as incensus,
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 157
+￼￼￼                      COUNT(*) as numorders
+               FROM orders o
+GROUP BY zipcode)
+UNION ALL
+(SELECT zipcode, 0 as inorders, 1 as incensus, 0 as numorders
+FROM zipcensus zc) )a
+GROUP BY zipcode )b
+  GROUP BY inorders, incensus
+The first subquery in the UNION ALL sets a flag for all zip codes in the Orders table and counts the number of orders in the zip code. The second subquery sets a flag for all zip codes in the Zipcensus table. These are aggregated by zip code to produce two flags for each zip code, one indicating whether it is in Orders and the other indicating whether it is in Zipcensus. Each zip code also has a count of the number of orders. These flags are summarized again in the outer query to obtain information about the overlap of zip codes in the two tables.
+The results in Table 4-8 show that most zip codes in Zipcensus do not have orders. On the other hand, most order zip codes are in Zipcensus. And, by far most orders are in recognized zip codes. It is quite likely that many of the unrecognized zip codes are for foreign orders.
+Table 4-8: Overlaps of Zip Codes between Census Zips and Purchase Zips
+￼￼￼￼￼￼￼￼￼￼￼IN ORDERS
+0 1 1
+IN CENSUS
+1 0 1
+COUNT
+20,501 4,042 11,537
+NUMBER ORDERS
+0 7,565 185,418
+MINIMUM ZIP
+  00601
+  00000
+  00646
+MAXIMUM ZIP
+99950 Z5B2T 99901
+￼￼￼Profiles of Zip Codes with and without Orders
+Are the zip codes with orders different from the zip codes without orders? Information such as the following can distinguish between these two groups:
+■■ Estimated number of households;
+■■ Estimated median income;
+■■ Percent of households on public assistance;
+■■ Percent of population with a college degree; and,
+■■ Percent of housing units that are owned.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼158 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼Table 4-9 shows summary statistics for the two groups. Zip codes without orders are smaller, poorer, and have more home owners. Zip codes with orders are more populous, richer, and better educated. Given that the numbers of zip codes in the two groups are so large, these differences are statistically significant.
+Table 4-9: Some Demographic Information about Zip Codes with and without Purchases HAS ORDER
+￼￼￼MEASURE
+Number of Zip Codes
+Average Number of Households Average Median Income Households on Public Assistance Population with College Degree Owner Occupied Households
+NO
+20,501 1,201.4
+$34,417 4.6%
+12.9% 74.0%
+YES
+11,537 7,121.3
+$48,238 3.4%
+27.8% 63.9%
+￼￼￼￼￼￼The following query was used to calculate the information in the table:
+SELECT (CASE WHEN o.zipcode IS NULL THEN ‘NO’ ELSE ‘YES’ END) as hasorder, COUNT(*) as cnt, AVG(hh*1.0) as avg_hh,
+AVG(hhmedincome) as avg_medincome,
+SUM(numhhpubassist) / SUM(hh) as hhpubassist,
+         SUM(numcoll) / SUM(popedu) as popcollege,
+         SUM(numhhowner) / SUM(hhuoccupied) as hhowner
+  FROM (SELECT zc.*, hhpubassist*hh as numhhpubassist,
+(popedubach + popedumast + popeduprofdoct)*popedu as numcoll, hhuowner*hhuoccupied as numhhowner
+        FROM zipcensus zc) zc LEFT OUTER JOIN
+       (SELECT DISTINCT zipcode FROM orders o) o
+       ON zc.zipcode = o.zipcode
+  GROUP BY (CASE WHEN o.zipcode IS NULL THEN ‘NO’ ELSE ‘YES’ END)
+ThisqueryusesaLEFT OUTER JOINinordertoretainalltheinformationinthe Zipcensus table. From the Orders table, only the distinct zip codes are needed; useoftheDISTINCTkeywordeliminatestheneedforanexplicitGROUP BYand ensures that no duplicate rows are inadvertently created.
+The census values are ratios. To calculate overall ratios at the group levels, it might be tempting to use something like AVG(HHPUBASSIST). However, this is not correct, because different zip codes have different sizes. The correct way is to con- vert the ratios to counts by multiplying by the appropriate factor, sum the counts, and then divide by the sum of the factor. For instance, the ratio of the households on public assistance, HHPUBASSIST, is multiplied by HH to get the number of households on public assistance. Dividing this product by SUM(HH) gets the ratio at the aggregated level.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 159
+￼￼The preceding analysis shows that zip codes that place orders are indeed more likely to be richer and larger. However, there is a subtle bias in this analy- sis. Orders are more likely to come from larger zip codes, simply because there are more people in larger zip codes who could place the order. Smaller zip codes are more likely to be rural and poor than larger ones. This is an example of a sampling bias. The zip codes vary by size, and characteristics of zip codes are sometimes related to their sizes.
+Restricting the query to largish zip codes helps eliminate this bias. For instance, any area with one thousand households has a reasonable opportu- nity to have someone who would place an order, because the national rate is about 0.23%. Table 4-10 shows the zip code characteristics with this restriction. Even among these zip codes, the same pattern holds of richer, larger, better educated areas placing orders.
+Table 4-10: Some Demographic Information about Zip Codes with and without Purchases with More Than 1000 Households
+￼HAS ORDER
+￼￼MEASURE
+Number of Zip Codes
+Average Number of Households Average Median Income Households on Public Assistance Population with College Degree Owner Occupied Households
+NO
+6,244
+3,168.7 $35,815
+4.9% 13.1% 72.5%
+YES
+9,947
+8,182.1 $48,660
+3.4% 27.8% 63.8%
+￼￼￼￼￼￼Classifying and Comparing Zip Codes
+Wealthier zip codes place orders and less wealthy zip codes do not place orders. Extending this observation a step further leads to the question: Among zip codes that place orders, do wealthier ones place more orders than less wealthy ones? This is a reasonable extrapolation, so it is worth investigating.
+One approach is to classify the zip codes by the penetration of orders within them. Penetration is the number of orders in the zip code divided by the num- ber of households. Based on the previous analysis, we would expect the aver- age median household income to increase as penetration increases. Similarly, we would expect the proportion of college educated people to increase, and the proportion of households on public assistance to decrease. These expecta- tions are all extensions of trends seen for zip codes with and without orders.
+www.it-ebooks.info
+￼160 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+First, let’s look at the median household income. Figure 4-8 shows a scatter plot of zip code penetration by household median income, along with the best fit line (these are discussed in more detail in Chapter 11) and its equation. Each point on this chart is a zip code. Although the data looks like a big blob, it does show that higher penetration zip codes tend to be on the higher income side.
+7% 6% 5% 4% 3% 2% 1% 0%
+y = 1E-07x - 0.0042 R2 = 0.2551
+$140K $160K $180K $200K
+$K $20K
+$40K $60K $80K
+$100K $120K
+Figure 4-8: This plot shows household median income and penetration by zip code, for zip codes with more than 1,000 households. This pattern is noticeable but not overwhelming.
+The horizontal scale uses a clever trick to remove the last three zeros of the median income and replace them with the letter “K.” This is accomplished using the number format “$#,K”. The best fit line shows both the equation and the R2 value, which is a measure of how good the line is (Chapter 11 discusses both the best fit line and the R2 value in more detail). The value of 0.26 indi- cates some relationship between the median income and the penetration, but the relationship is not overpowering.
+TIP Thenumberformat“$#,K”willdropthelastthreezerosfromanumber and replace them with the letter “K.”
+The query that produces the data for this chart is:
+  SELECT zc.zipcode, hhmedincome,
+         (CASE WHEN o.numorders IS NULL OR zc.hh = 0 THEN 0
+               ELSE o.numorders * 1.0/ zc.hh END) as pen
+  FROM zipcensus zc LEFT OUTER JOIN
+       (SELECT zipcode, COUNT(*) as numorders
+        FROM orders o
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 161
+￼￼￼￼￼        GROUP BY zipcode) o
+       ON zc.zipcode = o.zipcode
+  WHERE zc.hh >= 1000 AND state <> ‘PR’
+An alternative approach is to classify zip codes by penetration, and to com- pare demographic variables within these groups. Overall, there is 0.23% order penetration at the national level by households. All zip codes fall into one of five groups:
+■■ Zip codes with no orders (already seen in the previous section);
+■■ Zip codes with fewer than 1,000 households;
+■■ Zip codes with penetration less than 0.1% (low penetration);
+■■ Zip codes with penetration between 0.1% and 0.3% (medium penetra- tion); or,
+■■ Zip codes with penetration greater than 0.3% (high penetration). The following query summarizes information about these groups:
+  SELECT (CASE WHEN o.zipcode IS NULL THEN ‘ZIP MISSING’
+               WHEN zc.hh < 1000 THEN ‘ZIP SMALL’
+WHEN 1.0*o.numorders / zc.hh < 0.001 THEN ‘SMALL PENETRATION’ WHEN 1.0*o.numorders / zc.hh < 0.003 THEN ‘MED PENETRATION’ ELSE ‘HIGH PENETRATION’ END) as ziptype,
+         SUM(numorders) as numorders,
+         COUNT(*) as numzips,
+         AVG(1.0*hh) as avg_hh,
+         AVG(hhmedincome) as avg_medincome,
+         SUM(numhhpubassist) / SUM(hh) as hhpubassist,
+         SUM(numcoll) / SUM(popedu) as popcollege,
+         SUM(numhhowner) / SUM(hhuoccupied) as hhowner
+  FROM (SELECT zc.*,
+               hhpubassist*hh as numhhpubassist,
+(popedubach + popedumast + popeduprofdoct)*popedu as numcoll, hhuowner*hhuoccupied as numhhowner
+        FROM zipcensus zc) zc LEFT OUTER JOIN
+       (SELECT zipcode, COUNT(*) as numorders
+FROM orders o
+        GROUP BY zipcode) o
+       ON zc.zipcode = o.zipcode
+  GROUP BY (CASE WHEN o.zipcode IS NULL THEN ‘ZIP MISSING’
+               WHEN zc.hh < 1000 THEN ‘ZIP SMALL’
+WHEN 1.0*o.numorders / zc.hh < 0.001 THEN ‘SMALL PENETRATION’ WHEN 1.0*o.numorders / zc.hh < 0.003 THEN ‘MED PENETRATION’ ELSE ‘HIGH PENETRATION’ END)
+  ORDER BY 1 DESC
+This query is similar to the previous query with two differences. First, the inner subquery on the Orders table uses an aggregation, because now the number of
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼162 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼orders is needed as well as the presence of any order. And, the outer aggregation is a bit more complicated, defining the five groups just listed.
+The results in Table 4-11 confirm what we expected to see. As penetration increases, the zip codes become wealthier, better educated, and have fewer households on public assistance.
+Table 4-11: As Penetration Increases, Zip Codes Become Wealthier and Better Educated ZIP CODE GROUP
+￼￼￼ZIP SMALL
+ZIP MISSING
+￼MEASURE
+Number of Orders Number of Zip Codes
+Average Number of Households
+Average Median Income
+4,979 0 1,590 20,501
+484.5 1,201.4 $45,592 $34,417
+SMALL PEN
+19,462 5,765
+8,407.6 $42,388
+MIDDLE PEN
+33,117 2,326
+8,165.1 $50,720
+2.9% 33.3% 62.3%
+HIGH PEN
+127,860 1,856
+7,503.1 $65,562
+2.1% 45.7% 60.1%
+￼￼￼￼Households on
+Public Assistance 2.4%
+Population with
+College Degree 25.5%
+Owner Occupied
+Households 76.4%
+Geographic Hierarchies
+4.6% 12.9% 74.0%
+3.9% 20.5% 65.5%
+￼￼￼￼The zip code information has a natural hierarchy in it: zip codes are in coun- ties, and counties are in states, for instance. Such hierarchies are important for understanding and effectively using geographic information. This section dis- cusses information at different levels of geographic hierarchies.
+Wealthiest Zip Code in a State?
+Wealth is spread unevenly across the United States. Relative wealth is often more important than absolute wealth, although actual income levels may differ considerably. This inspires a question: What is the wealthiest zip code in each state?
+This question is about geographic hierarchies. Locations are simultaneously in multiple geographic areas, so zip codes are in counties and counties are in states. Someone residing in zip code 10011 in Manhattan is also living in New York County, and in New York City, and in New York State, and in the United States. Of course, some zip codes do straddle state and county borders, as
+www.it-ebooks.info
+￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 163
+explained in Chapter 1. However, there is a predominant state and county assigned to each zip code.
+The following query finds the wealthiest zip code in each state:
+  SELECT zc.*
+  FROM zipcensus zc JOIN
+       (SELECT state, MAX(hhmedincome) as maxincome
+        FROM zipcensus zc
+        GROUP BY state) hhmax
+       ON zc.state = hhmax.state AND
+          zc.hhmedincome = hhmax.maxincome
+It uses a subquery to calculate the zip code with the maximum income, and then joins this back to the zip code table to get information about the zip code. Figure 4-9 shows a scatter plot of zip codes that have the maximum median household income in each state. Some states, such as Florida, have more than one zip code that matches the maximum. In this case, all are shown. This chart
+includes state boundaries, which are explained later in this chapter.
+CA (94027)
+$200K
+$150K to $200K
+$100K to $150K
+$50K to $100K
+IL (60043)
+TN (38157)
+FL (32447)
+NY (12429) DE (197313602)
+NC (28378)
+FL (33109)
+Figure 4-9: The wealthiest zip codes in each state are scattered across the map. Here they are shown placed into four income buckets.
+The chart places the zip codes into four buckets based on the maximum median household income:
+■■ Greater than $200,000;
+■■ $150,000 to $200,000;
+■■ $100,000 to $150,000; and,
+■■ $50,000 to $100,000.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼164 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼The chart is created using four different series for each of these groups. The first series — the very wealthiest zip codes — are labeled with the name of the state and the zip code. Unfortunately, Excel does not make it possible to label scatter plots. Fortunately, there is a simple add-in that enables this functional- ity, as explained in the aside “Labeling Points on Scatter Plots.”
+The spreadsheet shown in Figure 4-10 pivots the data for the chart. The data starts out as a table describing zip codes with columns for zip code, state, longi- tude, latitude, and median household income. The data for the chart is in an adjacent five columns, with longitude in the first. The next four contain the lati- tude for the bucket the zip code belongs in or NA(). Column titles are con- structed from the ranges defining the buckets. The scatter plot can then be created by selecting the five columns and inserting the chart.
+Figure 4-10: This Excel spreadsheet pivots the data and assigns the names of the series for the chart in the previous figure (formulas for first bin are shown).
+The spreadsheet creates reasonable names for each of the series. The bucket is defined by two values, the minimum and maximum of the income range. The label is created using string functions in Excel:
+  =TEXT(L7, “$#,K”)&IF(L8>L7+1, “ to “&TEXT(L8, “$#,K”), “”)
+This formula uses the TEXT() function to transform a number into a string. The second argument is a number format that drops the last three digits and replaces them with a “K” (“$#,K”). The IF() takes care of the bucket that does not have an upper bound.
+The following query obtains the data for the chart:
+  SELECT zc.zipcode, zc.state, zc.longitude, zc.latitude, zc.hhmedincome
+  FROM zipcensus zc JOIN
+       (SELECT state, MAX(hhmedincome) as maxincome
+        FROM zipcensus zc
+        GROUP BY state) hhmax
+       ON zc.state = hhmax.state AND
+          zc.hhmedincome = hhmax.maxincome
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 165 This query calculates the maximum median income for zip codes in each state,
+and then joins in the zip code information by matching to the maximum value.
+￼￼￼￼LABELING POINTS ON SCATTER PLOTS
+The ability to label points in scatter plots and bubble plots (as in Figure 4-9) is very useful, but not part of Excel. Fortunately, Rob Bovey has written a small application to do this. Better yet, this application is free for download from http://www.appspro.com/Utilities/ChartLabeler.htm.
+The XY-Labeler installs new functionality in Excel by adding a new menu item called “XY Chart Labels” to the “Tools” menu, which makes it possible to:
+■ Add labels to a chart, where the labels are defined by a column in the spreadsheet;
+■ Modify existing labels; and,
+■ Add labels to individual points in any series.
+In the chart, the labels behave like labels on any other series. Just like other text, they can be formatted as desired, with fonts, colors, backgrounds, and orientations. They can be deleted by clicking them and hitting the <delete> key.
+When inserting the labels, the chart labeler asks for several items of information. First, it needs the series to label. Second, it needs the labels, which are typically in a column in the same table. And third, it needs to know where to place the labels: above, below, to the right, to the left, or on the data points.
+The labels themselves are values in a column, so they can be arbitrary text and as informative as needed. In this case, the label for each point consists of the state abbreviation with the zip code in parentheses, created using the following formula:
+   =D10&“ (“&TEXT(C10, “00000”)&“)“
+where D10 contains the state and C10 contains the zip code. The TEXT() function adds zeros to the beginning of the zip codes to ensure that zip codes starting with “0” look correct.
+￼￼Zip Code with the Most Orders in Each State
+Of course, there is no reason to limit examples to demographic features of the zip codes. The same ideas can be used to identify the zip code in each state that has the most orders and the most orders per household.
+Figure 4-11 shows a map showing the zip codes with the most orders in each state. Zip codes with the most orders are typically large, urban zip codes. If the measure were penetration, the zip codes with the most orders per household would be small zip codes that have very few households.
+www.it-ebooks.info
+￼166 Chapter 4 ■ Where Is It All Happening? Location, Location, Location 50
+35
+30
+25
+CA
+KS MO IN VADE KY WV DC
+NM OK TN NC AR
+AL GA
+AZ MSSC
+WA
+ND
+45ORMT MN
+ID ID WY WI
+SD MI MA
+UT NE IA IL OH CTRI
+NJ NY 40NVCO PA
+20
+-125 -120 -115
+-75 -70
+TX LA
+-110 -105 -100 -95 -90 -85 -80
+FL
+Figure 4-11: This map shows the zip code with the largest number of orders. The size of the circles represents the number of orders.
+The query that generates the information for this chart finds the zip code with the most orders in each state. Figure 4-12 shows a dataflow diagram that describes how the query processes the data, using the following steps:
+1. Thenumberofordersforeachzipcodeineachstateiscalculated,by counting the orders and aggregating by state and zip code.
+2. Themaximumnumberofordersisdetermined,bycalculatingthemax- imum value of number of orders in each state, from step (1).
+3. Thezipcodeassociatedwiththemaximumnumberofordersineach state is calculated by finding the zip code from (1) whose number of orders matches the maximum from (2).
+The resulting query looks like:
+  SELECT zc.zipcode, zc.state, longitude, latitude, numorders
+  FROM (SELECT zipcode, state, COUNT(*) as numorders
+FROM orders
+        GROUP BY zipcode, state) ozip JOIN
+       (SELECT state, MAX(numorders) as maxorders
+        FROM (SELECT zipcode, state, COUNT(*) as numorders
+              FROM orders
+              GROUP BY zipcode, state) o
+        GROUP BY state) ostate
+www.it-ebooks.info
+VT
+NH ME
+￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 167
+       ON ozip.state = ostate.state AND
+          ozip.numorders = ostate.maxorders JOIN
+zipcensus zc
+       ON zc.zipcode = ozip.zipcode
+  WHERE latitude BETWEEN 20 and 50 AND longitude BETWEEN -135 AND -65
+  ORDER BY 2
+This query uses multiple levels of subqueries to find the zip code with the most orders. Standard SQL does not make it easy to answer such questions. However, there are SQL extensions that facilitate these calculations. The win- dow function extensions are discussed in more detail in Chapter 8.
+READ
+orders
+READ
+orders
+READ zipcensus
+AGGREGATE group by zipcode, state
+numorders = count(*)
+ozip
+AGGREGATE group by zipcode, state
+numorders = COUNT(*)
+FILTER
+latitude BETWEEN 20 and 50 AND longitude BETWEEN -135 AND -65
+ostate
+AGGREGATE group by state
+maxorders = MAX_numorders)
+JOIN on state
+JOIN on zipcode
+SELECT SORT zipcode, state, state
+longitude, latitude, numorders
+OUTPUT
+Figure 4-12: This dataflow diagram for query finds the zip code with the most orders in each state.
+Interesting Hierarchies in Geographic Data
+Zip codes within states are only one example of geographic levels nestling inside each other. This section discusses some other geographic levels, even though most of these are not in the datasets.
+Counties
+Every state is divided into counties. Some states such as Texas have hundreds of counties (254). By contrast, Delaware and Hawaii have only three. Counties are useful precisely because every address has some county associated with it,
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼168 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼even though the location may not be in a village, town, or city. The table Zip- county maps zip codes to counties.
+Counties in different states can have the same name. Once upon a time, the author was surprised to see a map highlighting two counties in northern Min- nesota as having very large marketing potential. Between them, these counties have a population of less than fifteen thousand people, which is not very big at all. Although Lake County and Cook County are small and out of the way in Minnesota, their namesakes in Illinois are two of the most populous counties in the country.
+To prevent such confusion, the Census Bureau has a numbering system for geographic areas called FIPS (Federal Information Processing Standard). The FIPS county codes consist of five digits. The first two digits are for the state and the last three are for the counties. In general, the state number is obtained by alphabetizing the states and assigning sequential numbers, starting with 01 for Alabama. The counties in each state are similarly numbered, so Alabaster County in Alabama has the FIPS code of 01001.
+Counties are useful for other purposes as well. For instance, sales taxes are often set at the county level.
+Designated Marketing Areas (DMAs)
+Designated marketing areas are the invention of Nielsen Market Research and were originally designed as the markets for television advertising. These are groups of counties that form marketing regions, and are good approximations to metropolitan areas. There are 210 DMAs in the United States. The largest DMA by population is the one containing New York City with about 7.4 million households (in 2004) and it has twenty-nine counties spread over four states.
+A big advantage of DMAs is that they are defined as groups of counties, because all areas in the United States are in some county. Hence, every location is in some DMA. Unfortunately, the definition is privately owned, so the map- ping from county to DMA or zip code to DMA needs to be purchased for a nominal amount of money.
+Each company may have its own definition of its marketing area. Newspapers and radio stations also have designated marketing areas. This is the area where they compete for readers and advertising in the “local” market.
+Census Hierarchies
+The Census Bureau in the United States has quite a challenge. As mandated by the Constitution, the Bureau is responsible for “enumerating” the population of every state in the United States every ten years. The purpose is to determine the number of seats assigned to each state in the House of Representatives. In
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 169
+￼￼addition to counting residents, the census also estimates various demographic and economic statistics.
+The Census Bureau divides the United States into a mosaic of small geo- graphic entities, such as:
+■■ Census block;
+■■ Census block group; and,
+■■ Census tract.
+The census block is the smallest unit and typically has a population of a few dozen people in a small area (such as along one side of a street). The United States is divided into over eight million census blocks. The Bureau publishes very few statistics at the block level, because such statistics could compromise the privacy of the individuals living in such a small area.
+Block groups are collections of census blocks that typically have up to about four thousand people. Both census blocks and block groups change at the whims and needs of the Census Bureau, as populations grow and shrink, and shift.
+Census tracts are intended to be more permanent statistical subdivisions, with about two to eight thousand people each (although the largest can be much larger). Unlike zip codes, census tracts are designed to be statistically homogeneous and relevant to local governments. This is in contrast to post offices that are intended to serve diverse areas. Further information about the census divisions is available at www.census.gov.
+The low-level census hierarchies are then aggregated into a cornucopia of other groupings, such as:
+■■ Metropolitan Statistical Area (MSA);
+■■ Consolidated Metropolitan Statistical Area (CMSA); and,
+■■ New England Consolidated Metropolitan Areas (NECMAs).
+And more! The problem with these hierarchies boils down to one word, poli- tics. The funding for various federal programs is tied to populations. Perhaps for this reason, these are defined by the Office of Management and Budget (OMB) rather than the Census Bureau. For instance, in the 2000 Census, Worcester, MA was included in the Boston metropolitan statistical area. By 2003, it had been split out into its own area.
+Other Geographic Subdivisions
+There are a host of other geographic subdivisions, which might be useful for special purposes. The following discusses some of these.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼170 Chapter 4 ■ Where Is It All Happening? Location, Location, Location Zip+2 and Zip+4
+The five-digit zip code in the United States has been augmented with four additional digits, commonly known as zip+4. The first two are the carrier route code and the second two are the stop along the route. Because zip+4s change at the whim of the post office, they are not particularly useful for com- parisons over time.
+Electoral Districts
+People vote. And the wards and precincts where they vote are located in Con- gressional districts and state-wide office districts. Such information is particu- larly useful for political campaigns. However, the districts change at least every ten years, so these are not so useful for other purposes.
+School Districts
+School districts are another geographic grouping. School districts can be use- ful, because each school district has its own schedule. When do you want to send customers “back-to-school” messages? Some districts start the school year in early August. Others start a month later. Similarly, some end in early May and some continue well into June.
+Catchment Areas
+A catchment area is the area from where a retail establishment draws its cus- tomers. The definition of a catchment area can be quite complicated, taking into account store locations, road patterns, commuting distances, and com- petitors. Retailing companies often know about their catchment areas and the competition inside them.
+Calculating County Wealth
+This section looks at wealth in counties, which provides an opportunity to make comparisons across different levels of geography. The place to begin is in identifying the counties.
+Identifying Counties
+If the Orders table contained complete addresses and the addresses were geocoded, the county would be available as well as the zip code (and census tract and other information). However, the data contains zip codes, rather than geocoded addresses. The county for a zip code can be looked up using Zip- county. This is an approximate mapping, based on the zip codes existing in 1999. Even though zip codes can span both state and county borders, this table assigns one single county to each zip code.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 171
+￼￼What is the overlap between these tables? This question is quite similar to the question about the overlap between zip codes in Orders and Zipcensus. The waytodeterminetheoverlapiswiththefollowingUNION BYquery:
+  SELECT inzc, inzco, COUNT(*) as numzips, MIN(zipcode), MAX(zipcode),
+         MIN(countyname), MAX(countyname)
+  FROM (SELECT zipcode, MAX(countyname) as countyname, SUM(inzc) as inzc,
+               SUM(inzco) as inzco
+        FROM ((SELECT zipcode, ‘’ as countyname, 1 as inzc, 0 as inzco
+               FROM zipcensus)
+              UNION ALL
+              (SELECT zipcode, countyname, 0 as inzc, 1 as inzco
+               FROM zipcounty)) z
+        GROUP BY zipcode) a
+  GROUP BY  inzc, inzco
+This query is typical of queries that determine the overlap of two or more tables, with the addition of the county name as well as the zip code. The county name is for informational purposes, because discrepancies might occur at the county level.
+Table 4-12 shows that almost all zip codes in Zipcensus are also in Zip- county; the exceptions being zip codes in Puerto Rico (which, technically speaking, has “municipios” rather than “counties”). There are over ten thou- sand zip codes in Zipcounty that are not in Zipcensus, because Zipcensus con- sists of zip code tabulation areas maintained by the Census Bureau. They define zip code tabulation areas for only a subset of zip codes that would be expected to have a residential population.
+￼￼￼￼￼￼￼￼￼￼￼￼￼Table 4-12: Overlap of Zip Codes in Zipcensus and Zipcounty
+￼IN ZIP CENSUS
+1 1 0
+IN ZIP COUNTY
+0 1 1
+NUMBER OF ZIPS
+77 31,961 10,131
+MIN ZIP
+00601 00773 00785
+MAX ZIP
+00772 99950 99928
+MINIMUM COUNTY
+Abbeville Ziebach
+MAXIMUM COUNTY
+Ziebach
+￼￼￼￼Measuring Wealth
+The typical attribute for wealth is HHMEDINCOME, the median household income. Unfortunately, this is not available at the county level in the data. For- tunately, a reasonable approximation is the average of the median incomes in all zip codes in the county. The average of a median is an approximation, but
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼172 Chapter 4 ■ Where Is It All Happening? Location, Location, Location it is good enough. The following query calculates the average median house-
+hold income for each county:
+         SELECT zco.countyfips, zco.poname,
+                (CASE WHEN SUM(hh) = 0 THEN NULL
+                      ELSE SUM(hhmedincome * hh) / SUM(hh) END)
+         FROM zipcensus zc JOIN zipcounty zco ON zc.zipcode = zco.zipcode
+         GROUP BY zco.countyfips, zco.poname
+Notice that this query uses the weighted average (weighted by the number of households), rather than just the average. The alternative formulation, AVG(hhmedincome), would calculate a different value; each zip code would have the same weight regardless of its population.
+This query takes into account the fact that counties might have zero house- holds, an unusual situation. The only example in the data is Williamsburg, VA, an independent city in Virginia (meaning it is its own county). Three of its five zip codes are in neighboring counties. The only two zip codes assigned to Williamsburg are for the College of William and Mary, which has “group hous- ing” but no “households.” Such is the census data, accurate and detailed, and sometimes surprising.
+Distribution of Values of Wealth
+The distribution of median household income for both zip codes and counties is in Figure 4-13. This distribution is a histogram, with the values in thousand- dollar increments. The vertical axis shows the proportion of zip codes or coun- ties whose median household income falls into each range. Overall the distribution looks like a normal distribution, although it is skewed a bit to the left meaning that there are more very rich areas than very poor areas. One rea- son for the skew is that the median household income is never negative, so it cannot fall too low.
+The peak for both zip codes and counties is in the range of $30,000–$31,000. However, the peak for counties is higher than the peak for zip codes. And, the curve for counties is narrower, with fewer very large values or very small values. Does this tell us anything interesting about counties?
+Actually not. We can think of counties as being samples of zip codes. As explained in the previous chapter, the distribution of the average of a sample is narrower than the original data, clustering more about the overall average. Geographic hierarchies usually follow this pattern.
+The data in Figure 4-13 was calculated in SQL and Excel. The SQL query summarizes the counts by bin, which Excel then converts to ratios for the chart:
+         SELECT bin, SUM(numzips) as numzips, SUM(numcounties) as numcounties
+         FROM ((SELECT FLOOR(hhmedincome/1000)*1000 as bin, COUNT(*) as numzips,
+                       0 as numcounties
+                FROM zipcensus zc
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 173
+￼￼￼WHERE hh > 0
+         GROUP BY FLOOR(hhmedincome/1000)*1000)
+        UNION ALL
+        (SELECT FLOOR(countymedian/1000)*1000 as bin, 0 as numzips,
+                COUNT(*) as numcounties
+         FROM (SELECT countyfips,
+                      SUM(hhmedincome*hh*1.0) / SUM(hh) as countymedian
+               FROM zipcensus zc JOIN
+                    zipcounty zco
+                    ON zc.zipcode = zco.zipcode AND
+                       hh > 0
+               GROUP BY countyfips) c
+GROUP BY FLOOR(countymedian/1000)*1000) )a
+  GROUP BY bin
+  ORDER BY 1
+This query creates a bin for median income by taking only the thousands com- ponent of the number. So, an income of $31,948 is placed into the $31,000 bin. The calculation for this is simple arithmetic that uses the FLOOR() function. The query calculates this bin both at the zip code level and at the county level.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼7%
+6%
+5%
+4%
+3%
+2%
+1%
+0%
+￼￼￼COUNTY
+ZIP CODE
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$K $20K $40K
+$60K $80K
+$100K $120K
+$140K $160K
+$180K $200K
+Figure 4-13: The distribution of median household income for counties is “narrower”
+than for zip codes.
+Which Zip Code Is Wealthiest Relative to Its County?
+Local areas that are significantly different from their surrounding areas are interesting: What is the wealthiest zip code relative to its county?
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼174 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼Answering this question requires understanding what it really means. Does it mean that the difference between the median incomes is the largest possible? Does it mean that the ratio is as large as possible? Both of these are reasonable interpretations. The second leads to the idea of indexing values between dif- ferent geographic levels, which is a good idea.
+TIP Dividingthevalueofavariableinonegeographiclevelbythevalueina larger area is an example of indexing. This can find interesting patterns in the data, such as the wealthiest zip code in a county.
+The following query finds the ten zip codes with more than one thousand households whose index relative to their county is the largest in the country:
+  SELECT TOP 10 zc.zipcode, zc.state, zc.countyname, zc.hhmedincome,
+         c.countymedian, zc.hhmedincome / c.countymedian, zc.hh, c.hh
+  FROM (SELECT zc.*, countyfips, countyname
+        FROM zipcensus zc JOIN
+             zipcounty zco
+             ON zc.zipcode = zco.zipcode) zc JOIN
+       (SELECT countyfips, SUM(hh) as hh,
+               SUM(hhmedincome*hh*1.0) / SUM(hh) as countymedian
+        FROM zipcensus zc JOIN
+             zipcounty zco
+             ON zc.zipcode = zco.zipcode AND
+                hh > 0
+        GROUP BY countyfips) c
+       ON zc.countyfips = c.countyfips
+  WHERE zc.hh > 1000
+  ORDER BY zc.hhmedincome / c.countymedian DESC
+This query has two subqueries. The first appends the FIPS county code onto each row in Zipcensus. The second calculates the median household income for the county. These are joined together using the FIPS code. The ORDER BY clause then supplies the intelligence behind the query, by ordering the result by the ratio in descending order.
+These wealthy zip codes (in Table 4-13) all seem to be in counties whose income is a bit above average and whose population is quite large (they have hundreds of thousands or millions of households). These are wealthy enclaves in highly urban counties.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Table 4-13: Wealthiest Zip Codes Relative to Their Counties
+￼ZIP CODE
+92067 07078
+MEDIAN INCOME COUNTY INDEX
+HOUSEHOLDS
+￼￼￼COUNTY NAME
+San Diego, CA Essex, NJ
+ZIP
+$196,298 $185,466
+$49,499 3.97 $51,099 3.63
+ZIP
+2,543 4,279
+COUNTY
+995,487 283,825
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 175
+￼￼Table 4-13
+ZIP CODE
+60022 33158 90077 44040 19085 38139 76092 90272
+(continued)
+COUNTY NAME
+Cook, IL Miami-Dade, FL Los Angeles, CA Cuyahoga, OH Delaware, PA Shelby, TN Tarrant, TX
+Los Angeles, CA
+MEDIAN INCOME COUNTY INDEX
+HOUSEHOLDS
+￼￼￼￼ZIP
+$171,063 $118,410 $141,527 $123,980 $159,538 $116,200 $130,655 $122,877
+$47,998 3.56 $37,974 3.12 $45,737 3.09 $41,485 2.99 $55,292 2.89 $42,586 2.73 $48,381 2.70 $45,737 2.69
+ZIP
+2,955 2,094 4,165 1,071 1,902 4,656 6,280 9,272
+COUNTY
+1,965,876 777,378 3,132,861 574,086 224,026 341,743 524,833 3,132,861
+￼￼￼￼￼￼￼￼County with Highest Relative Order Penetration
+Geographic hierarchies can also be used for customer-related information. For instance: Which counties in each state have the highest order penetration relative to the state?
+Order penetration is orders per household. In addition to order penetration, the query also calculates some other statistics about the counties and states:
+■■ Estimated number of households;
+■■ Estimated median income;
+■■ Percent of households on public assistance;
+■■ Percent of population with a college degree; and,
+■■ Percent of housing units that are owned.
+These are interesting demographics. The purpose is to compare the highest penetration county to the state, to see if other factors might be correlated with high penetration.
+Table 4-14 shows the top ten counties whose order penetration is highest rel- ative to their states. For the most part, these consist of small counties with a smallish number of orders. However, the penetration by household is quite high. Interestingly, the larger counties with high relative penetration are wealthier than their states. However, some of the smaller counties are poorer. In general, these counties do seem to be better educated and have fewer people on public assistance.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼176 Chapter 4 ■ Where Is It All Happening? Location, Location, Location Table 4-14: Counties with Highest Order Penetration Relative to Their State
+￼￼￼￼￼COUNTY FIPS/ STATE
+16013
+ID
+56039
+WY
+46027
+SD
+08097
+CO
+16081
+ID
+72061
+PR
+45013
+SC
+51610
+VA
+37135
+NC
+28071
+MS
+HOUSEHOLDS
+ON PUBLIC OWNER
+% WITH PEN COLLEGE IND- DEGREE ORDER EX
+￼￼NUMBER
+7,754
+469,521
+7,523
+193,787
+4,988
+290,246
+5,788
+1,659,224
+2,065
+469,521
+34,673
+1,261,816
+45,089
+1,534,207
+5,831
+2,700,238
+46,973
+3,133,265
+13,454
+1,047,140
+MEDIAN ASSIST- INCOME ANCE
+$50,609 1.1%
+$38,416 3.4%
+$55,571 1.3%
+$38,664 2.6%
+$27,847 2.9%
+$35,783 3.0%
+$58,962 1.0%
+$48,967 2.5%
+$42,878 0.6%
+$38,416 3.4%
+$30,490 13.5%
+$15,373 20.1%
+$49,158 1.8%
+$37,808 2.5%
+$76,806 1.1%
+$49,960 2.5%
+$45,882 1.4%
+$40,355 2.8%
+$27,935 1.5%
+$31,929 3.5%
+OCCU- PIED
+68.9% 43.1%
+72.7% 21.7%
+55.8% 45.6%
+70.1% 21.9%
+54.9% 38.4%
+68.4% 21.5%
+56.6% 59.6%
+67.3% 32.7%
+74.6% 28.5%
+72.7% 21.7%
+76.7% 36.3%
+72.9% 18.3%
+74.4% 33.4%
+72.4% 20.4%
+71.6% 60.0%
+68.2% 29.5%
+56.0% 56.8%
+69.6% 22.5%
+59.2% 32.8%
+72.4% 16.9%
+0.46% 11.2
+0.04%
+0.45% 9.7
+0.05%
+0.20% 9.7
+0.02%
+1.02% 8.3
+0.12%
+0.34% 8.2
+0.04%
+0.07% 7.6
+0.01%
+0.40% 7.3
+0.05%
+1.06% 7.1
+0.15%
+0.51% 7.1
+0.07%
+0.13% 7.0
+0.02%
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼The query that finds these counties is:
+￼￼￼￼SELECT TOP 10 c.*, s.*, c.orderpen / s.orderpen
+FROM (SELECT zcounty.*, ocounty.numorders,
+￼￼       (CASE WHEN numhh > 0 THEN numorders*1.0/numhh ELSE 0
+        END) as orderpen
+FROM (SELECT zco.countyfips, zco.state,
+             MIN(countyname) as countyname, COUNT(*) as numorders
+      FROM orders o JOIN zipcounty zco ON o.zipcode = zco.zipcode
+      GROUP BY countyfips, zco.state) ocounty JOIN
+     (SELECT zco.countyfips, zco.state, SUM(hh) as numhh,
+￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 177
+￼￼￼￼￼                     SUM(hhmedincome*hh)/SUM(hh) as hhmedincome,
+                     SUM(hhpubassist*hh)/SUM(hh) as hhpubassist,
+                     (SUM((popedubach+popedumast+popeduprofdoct)*popedu)/
+                      SUM(popedu)) as popcollege,
+                     SUM(hhuowner*hhunits)/SUM(hhunits) as hhuowner
+              FROM zipcensus zc JOIN
+                   zipcounty zco
+                   ON zc.zipcode = zco.zipcode
+              WHERE hh > 0
+              GROUP BY zco.countyfips, zco.state) zcounty
+             ON ocounty.countyfips = zcounty.countyfips) c JOIN
+       (SELECT zstate.*, ostate.numorders, numorders*1.0/numhh as orderpen
+        FROM (SELECT o.state, COUNT(*) as numorders
+FROM orders o
+WHERE zipcode IN (SELECT zipcode FROM zipcensus WHERE hh > 0) GROUP BY o.state) ostate JOIN
+             (SELECT zc.state, SUM(hh) as numhh,
+                     SUM(hhmedincome*hh)/SUM(hh) as hhmedincome,
+                     SUM(hhpubassist*hh)/SUM(hh) as hhpubassist,
+                     (SUM((popedubach+popedumast+popeduprofdoct)*popedu)/
+                      SUM(popedu)) as popcollege,
+                     SUM(hhuowner*hhunits)/SUM(hhunits) as hhuowner
+              FROM zipcensus zc
+              WHERE hh > 0
+              GROUP BY zc.state) zstate
+             ON ostate.state = zstate.state) s
+        ON s.state = c.state
+  ORDER BY c.orderpen / s.orderpen DESC
+This is a complicated query built around four subqueries. The first two calcu- late the number of orders and the number of households in each county, in order to calculate the order penetration by county. The second does the same thing for states. These are then combined to calculate the order penetration index. The dataflow for this query in Figure 4-14 shows how these four sub- queries are combined together.
+The calculation of the demographic ratios at the county and state level follows the same methods seen earlier in the chapter. The percentages are multiplied by the appropriate factors to get counts (number of households, population, educated population). The counts are aggregated and then divided by the sum of the factors.
+Mapping in Excel
+Maps are very useful when working with geographic data. This section dis- cusses the issue of creating maps in Excel. The short answer is that if mapping is important, Excel is not the right tool. However, the longer answer is that there are some useful things to do before purchasing more expensive software.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼178 Chapter 4 ■ Where Is It All Happening? Location, Location, Location Why Create Maps?
+The purpose of mapping is to visualize trends and data, making it easier to understand where things are and are not happening. The zip code maps seen earlier in the chapter (for solar power or wealthy zip codes) contain tens of thousands of zip codes in a format readily understandable by most people. A map summarizes information at different levels — it is possible to see differ- ences across regions, between urban and rural areas, and for particular geo- graphic areas. And this is just from rudimentary zip code maps.
+READ zipcensus
+READ zipcounty
+READ orders
+READ zipcensus
+READ zipcensus
+JOIN on zipcode
+AGGREGATE group by countyfips, state
+numorders = COUNT(*) countyname = MIN(countyname)
+READ zipcounty
+FILTER hh > 0
+JOIN on zipcode
+READ orders
+FILTER hh > 0
+READ zipcounty
+FILTER hh > 0
+AGGREGATE group by countyfips, state
+hh = SUM(hh)
+hhmedincome = SUM(medincome*hh)/SUM(hh) hhpubassist = SUM(hhpubassis*hh)/SUM(hh)
+JOIN on zipcode
+JOIN on zipcode
+AGGREGATE group by state
+numorders = COUNT(*)
+ocounty
+JOIN
+on countyfips, state
+APPEND c.orderpen = numorders / hh
+JOIN on state
+APPEND
+ratio = c.orderpen / s.orderpen
+SORT ratio DESC
+OUTPUT
+APPEND s.orderpen = numorders / hh
+JOIN
+on countyfips, state
+zstate
+hh = SUM(hh)
+hhmedincome = SUM(medincome*hh)/SUM(hh) hhpubassist = SUM(hhpubassis*hh)/SUM(hh)
+Figure 4-14: This dataflow calculates index of order penetration in a county to its state; this is the ratio between the order penetration in the county to the order penetration in its state.
+ostate
+AGGREGATE group by countyfips, state
+www.it-ebooks.info
+zcounty C
+S
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 179
+￼￼Beyond this, there are several things that mapping software should do. Map- ping software should be able to show different levels of geography. In the United States, this means the ability to see the boundaries of states, counties, and zip codes, at a minimum. In other parts of the world, this means the ability to see different countries, regions in countries, and different linguistic areas.
+Another important capability is being able to color and highlight different geographic regions based on data, whether this is derived from business data (the number of orders) or census data (population and wealth). Fancy map- ping software allows you to include specific markers for specific types of data, to use graduated colors, and to fill regions with textures. In Excel, only the first of these is possible.
+The maps should include data available for geographic areas. This espe- cially includes census population counts, so it is possible to measure penetra- tion. Other census variables, such as wealth and education, types of home heating systems, and commuting times, are also useful. And this additional data should not be particularly expensive, because it is available for free from the census web site. It is also nice to see other features on maps, such as roads, rivers, and lakes. These make it easier to identify specific locations, and are readily available on web mapping tools.
+This list is intended to be a bare-bones discussion of what is needed for data visualization. Advanced mapping software has many other capabilities. For instance, mapping software often has the ability to integrate into GPS (global positioning services) systems to trace a route between different points, to incor- porate satellite imagery, to overlay many different features, and other advanced capabilities.
+It Can’t Be Done
+Once upon a time, Excel did include mapping capabilities similar to the chart- ing capabilities. Excel was able to create maps and color and highlight states and countries based on data attributes. This product was a trimmed-down version of a product from Mapinfo (www.mapinfo.com). However, Microsoft removed this functionality in Excel 2002, separating out the mapping tool into a separate product called MapPoint. MapPoint is one of several products on the market; others include products from Mapinfo and ESRI’s ArcView.
+Because the mapping product is separate, Excel cannot be readily used for creating and manipulating maps without purchasing additional products. This chapter has shown basic maps for data visualization, and often these are sufficient for analytic purposes, although prettier maps are often better for pre- sentations. For data visualization, the needs are often more basic than the more advanced geographic manipulations provided by special-purpose software.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼180 Chapter 4 ■ Where Is It All Happening? Location, Location, Location Mapping on the Web
+There are various map sites on the web, such as Yahoo!, Google, MapQuest, MapBlaster, and Microsoft Live. These web sites are probably familiar to most readers for finding specific addresses and directions between addresses. They also include nifty capabilities, such as satellite images and road networks and are rapidly including other features, such as local businesses on the maps.
+Perhaps less familiar is the fact that these web sites have application pro- gramming interfaces (APIs), which make it possible to use the maps for other purposes. A good example is www.wikimapia.org, which shows the ability to annotate features on maps is built using Google Maps. Wikimapia incorpo- rates Google Maps using an API, which can also be called from other web applications and from Excel.
+The upside to interfacing with online maps is the ability to create cool graphics that can even be updated in real time. The downside to using then is that they require programming, which often distracts from data analysis. These systems are designed to make maps for web sites, rather than for visu- alizing data. It is possible to use them for data visualization, but that is not what they are designed for.
+WARNING Having to use programming to visualize data (such as using an API to web mapping software) often distracts from data analysis. It is all too easy for analysis efforts to become transformed into programming projects.
+State Boundaries on Scatter Plots of Zip Codes
+Scatter plots of zip codes make functional maps, and they have the ability to annotate specific points on them. One of the features that would make them more useful is the ability to see boundaries between states. This section discusses two methods for doing this. Both methods highlight powerful features of Excel.
+Plotting State Boundaries
+The boundaries between states are defined by geographic positions — longitude and latitude. Excel scatter plots have the ability to connect the points in the scat- ter plot. For instance, Figure 4-15 shows the boundary of the state of Pennsylva- nia, where the boundary really connects a handful of points. Some parts of the boundary have very few points (because the boundary is a line). Some parts of the boundary have many points, usually because the boundary follows natural features such as rivers. The Pennsylvania border does have an unusual feature. The boundary between Pennsylvania and Delaware is actually defined as a semi- circle, the only such circular-arc state border in the country. However, in this map, the arc is approximated by line segments.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 181
+￼￼42.5 42.0 41.5 41.0 40.5 40.0 39.5
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼-81 -80
+-79 -78 -77
+-76 -75 -74
+Figure 4-15: The outline for Pennsylvania consists of a set of points connected by lines.
+The points defining the outline of the states are defined by their latitude and longitude. For instance, Colorado is a particularly simple state, because it is shaped like a rectangle. Table 4-15 shows the boundary data for Colorado; the first and last points on the boundary are the same, so there is a complete loop. To create the map of Colorado, these points are plotted as a scatter plot, with lines connecting the points, and no markers shown at each point. These options are on the “Patterns” tab of the “Format Data Series” dialog box.
+Table 4-15: Latitude and Longitude of Points Defining Colorado State Border
+￼STATE
+CO CO CO CO CO CO
+LONGITUDE LATITUDE
+-107.9 41.0 -102.0 41.0 -102.0 37.0 -109.0 37.0 -109.0 41.0 -107.9 41.0
+￼￼￼￼￼￼Adding more states requires getting the latitude and longitude, and making sure that extraneous lines do not appear. For instance, Figure 4-16 shows what happens when the outline of Wyoming is added to the Colorado outline. An extraneous line appears. Excel connects the points in the scatter plot without picking up the pen, so an extra line segment appears where Colorado ends and Wyoming begins. Fortunately, Excel makes it easy to eliminate this extraneous segment, merely by including empty cells between the two boundaries. This makes it possible to plot discrete entities on a scatter plot, without having a separate series for each one. Figure 4-9 used this technique to include state boundaries on the maps.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼182 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼46
+45
+44
+43
+42
+41
+40
+39
+38
+37
+36
+-112 -111
+-110 -109
+-108 -107
+-106 -105
+-104 -103
+-102 -101
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 4-16: The outline for Colorado and Wyoming; drawn using the scatter plot, has an extraneous line.
+TIP To make a particular line segment disappear from a scatter plot, simply insert a blank line in the data between the two points. The scatter plot skips the lines in the chart.
+The boundary data was manually modified from detailed outlines of the states. It consists of several thousand points rounded to the nearest tenth of a degree. This scale captures the zigs and zags of the state boundaries to within ten miles or so, which is quite sufficient for a map of the country. However, the boundaries are not accurate at the finest levels.
+Pictures of State Boundaries
+An alternative method of showing state boundaries is to use a real map as the background for the scatter plot. The first challenge is finding an appropriate map. Plotting latitudes and longitudes as straight lines on graph paper is not the recommended way of showing maps in the real world, because such maps distort distances and areas. Unfortunately, this is how most maps appear on the web. An exception is the national atlas at www.nationalatlas.com, which has curved lines for latitude and longitude.
+The maps on web sites cannot generally be copied as convenient image files. Instead, capture the screen image (using <print screen>), paste it into a pro- gram such as PowerPoint, and crop the image to the appropriate size. Power- Point then allows you to save just the image as a picture file (right-click the image and choose “Save as”).
+The second challenge is setting the scale for the map. This is a process of trial and error, made easier by lining up the state boundaries on both maps.
+Figure 4-17 shows an example using a map from Wikimapia that mimics the data from Figure 4-9. The map is copied into the chart by right-clicking the chart
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 4 ■ Where Is It All Happening? Location, Location, Location 183
+￼￼and choosing “Format Plot Area.” On the right side is an option for “Fill Effects,” which brings up the “Fill Effects” dialog box. Under the “Picture” tab, there is the option to select a picture, which in this case is a map copied from the web. Of course, this works for any picture, not just a map.
+The advantage of a picture is that that you can include any features available in the map. One disadvantage is that you cannot rescale the map to focus in on particular areas.
+TIP The background of a chart can be any picture that you want. Simply insert it through the “Picture” tab on the “Fill Effects” dialog box brought up through the “Format Plot Area” option.
+Figure 4-17: This example shows data points plotted on top of a map (from Wikimapia). The challenge in doing this is aligning the latitudes and longitudes so the points are properly placed.
+Lessons Learned
+This chapter discusses one of the most important characteristics of cus- tomers — where they live. Geography is a complicated topic; this chapter shows how to use geographic data in SQL and Excel.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼184 Chapter 4 ■ Where Is It All Happening? Location, Location, Location
+￼￼Using geography starts with geocoding addresses to locate them in the world. Geocoding translates points into latitudes and longitudes, and identi- fies census blocks, and tracks, and counties, and other geographic entities. Using the scatter plot mechanism in Excel, the latitudes and longitudes can even be charted, in a way that resembles a map.
+One of the advantages of using geography is that data from the Census Bureau makes it possible to know about customers’ neighborhoods. The cen- sus provides demographic and other information about regions in the country. Fortunately, one level of the census geography is called the zip code tabulation area (ZCTA) and these match most of the zip codes in databases. Information such as the population of the area, the median income, the type of heating, the level of education — and much more — is available from the Census Bureau, for free.
+Any given location is in multiple geographies. A location lies within a zip code, within a county, within a state, within the country. This is a hierarchy of locations. Comparing information at different levels of the hierarchy can be quite informative. One method is to create an index of the wealthiest zip code in each state, or the highest penetration county in each state. Such questions use geographic hierarchies.
+No discussion of geography would be complete without some discussion of mapping. Unfortunately, the simple answer is that Excel does not support maps, so use other software. For simply locating a point, there are resources on the web. For fancy maps, there are more sophisticated mapping packages.
+However, rudimentary mapping is quite useful and often sufficient for data analysis. For this purpose, Excel can be a useful visualization tool, because it can use latitude and longitude to display locations and boundaries. By using back- ground maps, it is even possible to include many other features in the maps.
+The next chapter steps away from geography and moves to the other critical component for understanding customers: time.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

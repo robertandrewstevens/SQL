@@ -1,0 +1,1204 @@
+CHAPTER
+5
+It’s a Matter of Time
+Along with geography, time is a critical dimension describing customers and business. This chapter introduces dates and times as tools for understanding customers. This is a broad topic. The next two chapters extend these ideas by introducing survival analysis, the branch of statistics also known as time-to- event analysis.
+This chapter approaches time from several different vantage points. There is the perspective of what is actually stored in the columns representing dates and times, the years, months, days, hours, and minutes themselves. There is the perspective of when things happen, along with ways to visualize changes over time and year-over-year variation. Another perspective is duration, the difference between two dates, and even how durations change over time.
+The two datasets used for examples — purchases and subscribers — have date stamps accurate to the day, rather than time stamps accurate to the minute, second, or fraction of a second. This is not an accident. Typically for business purposes, the date component is the most important part, so this chapter focuses on whole dates. The ideas can readily be extended from dates to times with hours, minutes, and seconds.
+Times and dates are complex data types, comprised of six different compo- nents and an optional seventh. Years, months, days, hours, minutes, and sec- onds are the six. In addition, time zone information may or may not be present. Fortunately, databases handle dates and times consistently, with functions extracting components and operating on them. Unfortunately, each database
+185
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼186 Chapter 5 ■ It’s a Matter of Time
+￼￼has its own set of functions and peculiarities. The analyses presented in this chapter do not rely on any one particular database’s methods for doing things; instead, the analyses offer an approach that works broadly on many systems. The syntax is the syntax for SQL Server. Appendix A provides equivalent syn- tax for other databases.
+The chapter starts with an overview of date and time data types in SQL and basic types of questions to ask about such data. It continues by looking at other columns and how their values change over time, with tips on how to do year- over-year comparisons. The difference between two dates represents duration; durations tie together events for each customer over a span of time. Analyzing data over time introduces new questions, so the chapter includes forays into questions suggested by the time-based analysis.
+The chapter finishes with two useful examples. The first is determining the number of customers active at a given point in time. The second relies on simple animations in Excel to visualize changes in durations over time. After all, animating charts incorporates the time dimension directly into the presen- tation of the results. And, such animations can be quite powerful, persuasive, and timely.
+Dates and Times in Databases
+The place to start is the timekeeping system, which measures the passage of time. For times of the day, the system is rather standardized, with twenty-four hour days divided into sixty minutes each and each minute divided into sixty seconds. The big issue is the time zone, and even that has international standards.
+For dates, the Gregorian calendar is the calendar prevalent in the modern world. February follows January, school starts in August or September, and pumpkins are ripe at the end of October (in much of the Northern Hemisphere at least). Leap years occur just about every four years by adding an extra day to the miniature winter month of February. This calendar has been somewhat standard in Europe for several centuries. But it is not the only calendar around.
+Over the course of millennia, humans have developed thousands of calen- dars based on the monthly cycles of the moon, the yearly cycles of the sun, cycles of the planet Venus (courtesy of the Mayans), logic, mere expediency, and the frequency of electrons on cesium atoms. Even in today’s rational world with instant international communications and where most people use the Gregorian calendar, there are some irregularities. Some Christian holidays float around a bit from year to year, and Orthodox Christian holidays vary from other branches of the religion. Jewish holidays jump around by several weeks from one year to the next, while Muslim holidays cycle through the sea- sons, because the Islamic year is shorter than the solar year. Chinese New Year is a month later than the Gregorian New Year.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 187
+￼￼Even rational businesses invent their own calendars. Many companies observe fiscal years that start on days other than the first of January, and some use a 5-4-4 system as their fiscal calendar. The 5-4-4 system describes the num- ber of weeks in a month, regardless of whether the days actually fall in the cal- endar month. All of these are examples of calendar systems, whose differences strive to meet different needs.
+Given the proliferation of calendars, perhaps it shouldn’t be surprising that databases handle and manage dates and times in different ways. Each data- base stores dates in its own internal format. What is the earliest date supported by the database? How much storage space does a date column require? How accurate is a time stamp? The answers are specific to the database implemen- tation. However, databases do all work within the same framework, the famil- iar Gregorian calendar, with its yearly cycle of twelve months. The next few sections discuss some of the particulars of using these data types.
+Some Fundamentals of Dates and Times in Databases
+In databases, dates and times have their own data types. The ANSI standard types are DATETIME and INTERVAL, depending on whether the value is absolute or a duration. Each of these can also have a specified precision, typically in days, seconds, or fractions of a second. The ANSI standard provides a good context for understanding the data types, but every database handles them differently. The aside “Storing Dates and Times in Databases” discusses differ- ent ways that date and time values are physically stored.
+This section discusses various aspects of dates and times that are fundamental to the data types. These include the topics of extracting components, measuring intervals, and time zones. In addition, this section introduces the Calendar table, which can be used to describe days and is included on the companion web site.
+Extracting Components of Dates and Times
+There are six important components of date and time values: year, month, day of month, hour, minute, and second. For understanding customers, year and month are typically the most important components. The month captures sea- sonality in customer behavior, and the year makes it possible to look at changes in customers over longer periods of time.
+Most databases and Excel support functions to extract components from dates, where the function name is the same as the date part: YEAR(), MONTH(), DAY(), HOUR(), MINUTE(), and SECOND(). Actually, only the first three are com- mon to all databases (Excel supports all six). These functions return numbers, rather than a special date-time value or string.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼188 Chapter 5 ■ It’s a Matter of Time
+￼￼￼￼STORING DATES AND TIMES IN DATABASES
+Date and time values are generally presented in human-readable format. For instance, some dispute whether the new millennium started on “2000-01-01” or on “2001-01-01,” but we can agree on what these dates mean. Incidentally, this format for representing dates conforms to the international standard called ISO 8601 (http://www.iso.org/iso/en/prods-services/ popstds/datesandtime.html) and is used throughout this book. Fortunately, most databases understand date constants in this format.
+Under the hood, databases store dates and times in many different ways, almost all of which look like meaningless strings of bits. One common way is to store a date as the number of days since a specific reference date, such as 1899-12-31. In this scheme, the new millennium started 36,526 days after the reference date. Or was that 36,892 days? To the human eye, both numbers are incomprehensible as dates. Excel happens to use this mechanism, and the software knows how to convert between the internal format and readable dates, especially for users familiar with setting “Number” formats on cells.
+One way to store time is as fractions of a day, so noon on the first day of the year 2000 is represented as 36,526.5. Microsoft Excel also uses this format, representing dates and times as days and fractional days since 1899-12-31.
+An alternative method for both dates and times is to store the number of seconds since the reference date. Using the same reference day as Excel, noon on the first day of 2000 would be conveniently represented by the number 3,155,889,600. Well, what’s convenient for software makes no sense to people.
+Another approach eschews the reference date, storing values as they are in the Gregorian calendar. That is, the year, month, day, and so on are stored separately, typically each as half-byte or one-byte numbers. In the business world, a date two thousand years ago is safely before the data that we work with. Even so, as more information is stored in databases, there are some uses for dates in ancient times, and some databases do support them.
+SQL Server has two data types for dates and times. The more accurate one, DATETIME, can represent dates from the year 1753 through the year 9999. The less accurate SMALLDATETIME supports dates from 1900 through 2079-06-06. In both cases, the internal format consists of two components: the date is the number of days since a reference date and the time is the number of milliseconds or minutes since midnight. Durations are stored using the same data types. Other databases store dates and times in entirely different ways.
+The variety of internal coding systems is a testament to the creativity of software designers. More important than the internal coding system is the information derived from dates and times and that information gets used. Different databases offer similar functionality with the caveat that the syntax may vary from product to product. Appendix A shows different syntax for some databases for the constructs used throughout this chapter and the book.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 189
+￼￼Converting to Standard Formats
+The ISO (International Standards Organization) standard form for dates is “YYYY-MM-DD,” where each component is prepended by zeros if necessary. So, the first day of 2000 is “2000-01-01” rather than “2000-1-1.” There are two good reasons for including the zeros. First, all dates have the same length as strings. The second reason is that the alphabetical ordering is the same as the time order- ing. Alphabetically, the string “2001-02-01” follows “2001-01-31,” just as Febru- ary 1st follows January 31st. However, alphabetically the string “2001-1-31” would be followed by “2001-10-01” rather than by “2001-2-01,” even though October does not immediately follow January.
+The simplest way to convert a value in Excel to a standard date is TEXT(NOW(), “YYYY-MM-DD”).ThefunctionNOW()returnsthecurrentdateand time on the computer, as the number of days and partial days since 1899-12-31.
+Unfortunately, the syntax for similar conversions in SQL depends on the database. One way to get around the peculiarities of each database and still get a common format is to convert the date to a number that looks like a date:
+  SELECT YEAR(orderdate)*10000+MONTH(orderdate)*100+DAY(orderdate)
+  FROM orders
+The results are numbers like 20040101, which is recognizable as a date when written without commas. In Excel, such a number can even be given the cus- tom number format of “0000-00-00” to make it look even more like a date.
+This convert-to-a-number method can be used for any combination of date parts, such as year with month, month with day, or hour with minute. For instance, the following query returns the number of orders and average order size in dollars for each calendar day of the year:
+  SELECT MONTH(orderdate)*100+DAY(orderdate) as monthday,
+         COUNT(*) as numorders, AVG(totalprice) as avgtotalprice
+  FROM orders
+  GROUP BY MONTH(orderdate)*100+DAY(orderdate)
+  ORDER BY 1
+Figure 5-1 shows the result as a line chart for each day in the year, with the number of orders on the left axis and the average dollars on the right axis. The average order size does not vary much during the year, although it appears a bit higher before August than after. On the other hand, the chart shows the expected seasonality in the number of orders, with more orders appearing in December than in any other month. The peak in early December suggests a lead time for the products and shipping, with customers ordering earlier to ensure delivery by the holiday. This curve suggests that reducing the lead times might increase impulse sales in the two or three weeks before Christmas.
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼190 Chapter 5 ■ It’s a Matter of Time
+￼￼2,000 ￼ ￼ ￼ $200 1,800 ￼ ￼ ￼ $180 1,600 ￼ ￼ ￼ $160 1,400 ￼ ￼ ￼ $140 1,200 ￼ ￼ ￼ $120 1,000 $100
+800 ￼ $80 600 $60 400 $40 200 $20
+0$0 Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+Figure 5-1: This chart uses a line chart to show the number of orders and average order size by calendar day.
+The challenge in making this chart is the scale on the horizontal axis. It is tempting to make a scatter plot, but such a chart looks quite awkward, because the “date” values are really numbers. There is a big gap between the values; 0131 and 0201. These would be 70 units apart on a scatter plot, even though the corresponding dates are one day apart.
+TIP Dates or times on the horizontal axis suggest using a line chart or column chart, rather than a scatter plot. A scatter plot treats the values as numbers, whereas the line and column charts understand date components.
+The fix is to convert the numbers back into dates in Excel, using:
+  =DATE(2000, FLOOR(<datenum>/100, 1), MOD(<datenum>, 100))
+This formula extracts the month and day portions from the number, and puts them into a date with the year 2000. The year is arbitrary, because the chart does not use it. The line chart does recognize dates on the horizontal axis, so the “Number format” can be set to “Mmm” and the axis labels placed at con- venient intervals, such as one month apart.
+The right-hand axis (secondary axis) also uses an Excel trick. Notice that the numbers line up on the decimal point, so all the “0”s are neatly stacked. This occurs because there are spaces between the “$” and the digits for numbers under $100. The format for this is “$??0”.
+Intervals (Durations)
+The difference between two dates or two times is a duration. ANSI SQL repre- sents durations using the INTERVAL data type with a specified precision up to any date or time part. Most databases, however, use the same data types for durations as for dates and times.
+￼￼￼￼￼￼www.it-ebooks.info
+Average $$/Order
+Number of Orders
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 191
+￼￼Logically, there are some differences between durations and dates. For instance, durations can be negative (four days ago rather than four days in the future). They can also take values larger than would be expected for a date or time value. A difference between two times, for instance, might be measured in hours and there might be more than twenty-four hours between them. Also, durations at the level of hours might measure differences in fractions of an hour rather than hours, minutes, and seconds.
+For the purposes of analyzing customer data, these distinctions are not important. Most analysis is at the level of dates, and durations measured in days are sufficient. Durations in a single unit, such as days, can simply be mea- sured as numbers.
+Time Zones
+Dates and times in the real world occur in a particular time zone. ANSI SQL offers full support of time zones within the date and time values themselves, so values in the same column on different rows can be in different time zones. For some types of data, this is quite useful. For instance, when java scripts return time and date information on web site visitors’ machines, the results may be in any time zone. However, in most databases, time zone information, if present at all, is stored in a separate column.
+In practice, dates and times rarely need time zone information. Most time stamp values come from operational systems, so all values are from the same time zone anyway, typically the location of the operational system or the company headquarters. It is worth remembering, though, that an online pur- chase made at midnight might really be a lunch time order from a customer in Singapore.
+Calendar Table
+The companion web site includes a table called Calendar that describes dates from Jan 1, 1950 to Dec 31, 2050. The table includes columns such as the following:
+■■ Date
+■■ Year
+■■ Month as both a string and abbreviation
+■■ Day of the week
+■■ Number of days since the beginning of the year
+■■ Holiday names for various holidays
+■■ Holiday categories for various categories
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼192 Chapter 5 ■ It’s a Matter of Time
+￼￼This table is intended to be an example of what a calendar table might contain. Throughout the chapter, various queries that use features of dates, such as day of the week or month, can be accomplished either using SQL functions or by joining to the Calendar table. The purpose of including the Calendar table is because it is useful, but not absolutely necessary, for querying purposes. How- ever, within a single business, a Calendar table can play a more important role, by maintaining important information about the business such as when the fis- cal year ends, important holidays, dates of marketing campaigns, and so on. The source of most of the holidays and categories comes from an editor called emacs, which supports a command called “list-holidays”. Emacs is distributed by the Free Software Foundation through the GNU project (http://www.gnu .org/software/emacs).
+Starting to Investigate Dates
+This section covers some basics when looking at date columns. There are sev- eral such columns in the companion datasets. The Subscription table contains the start date and stop date of subscriptions. The Orders table contains the order date, and the related Orderline table contains the billing date and ship- ping date for each line item in the order. Throughout this chapter, all these dates are used in examples. This section starts by looking at the date values themselves, and continues from there.
+Verifying that Dates Have No Times
+When the result of a query contains a date-time value, the results sometimes show only the date components, and not the time components. After all, the date part is usually more interesting; and, leaving out the time reduces the width needed for output. This means that non-zero time values are often not visible, which can be misleading. For instance, two dates might look equal, with each looking like, say, 2004-01-01. In a comparison, the two dates might not be equal because one is for noon and the other for midnight. Also, when aggregating date columns, a separate row is created for every unique time value — something that can result in unexpectedly voluminous results if every date has an associated time.
+Verifying that date columns have only dates is a good idea: Does this date col- umn have any unexpected time values? The solution is to look at the hour, minute, and second components of the date. When any of these are not zero, the date is categorized as “MIXED”; otherwise the date is “PURE”. The following
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 193 query counts the number of mixed and pure values in SHIPDATE in the
+Orderline table:
+  SELECT (CASE WHEN DATEPART(hh, shipdate) = 0 AND
+                    DATEPART(mi, shipdate) = 0 AND
+                    DATEPART(ss, shipdate) = 0
+               THEN ‘PURE’ ELSE ‘MIXED’ END) as datetype,
+         COUNT(*), MIN(orderlineid), MAX(orderlineid)
+  FROM orderline ol
+  GROUP BY (CASE WHEN DATEPART(hh, shipdate) = 0 AND
+                      DATEPART(mi, shipdate) = 0 AND
+                      DATEPART(ss, shipdate) = 0
+                 THEN ‘PURE’ ELSE ‘MIXED’ END)
+This query returns only one row, indicating that all the values in the SHIP- DATE column are pure dates. If any were mixed, the ORDERLINEIDs could be investigated further. In fact, all the date columns in the companion database tables are pure. If, instead, some dates were mixed, we would want to elimi- nate the time values before using them in queries designed for dates.
+Comparing Counts by Date
+Often, just looking at the number of things that happen on a particular date is useful. The following SQL query counts the number of order lines shipped on a given day:
+  SELECT shipdate, COUNT(*)
+  FROM orderline
+  GROUP BY shipdate
+  ORDER BY 1
+This is a basic histogram query for the shipping date, which was discussed in Chapter 2. A similar query generates the histogram for the billing date. The next sections look at counting more than one date column in a single query, and counting different things, such as customers rather than order lines.
+Orderlines Shipped and Billed
+A follow-on question is: How many orderlines shipped each day and how many billed each day? The ship date and bill date are both columns in the Orderline table. At first, this might seem to require two queries. Although a possible solution, that method is messy, because the results then have to be combined in Excel.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼194 Chapter 5 ■ It’s a Matter of Time
+A better approach is to get the results in a single query, which might suggest
+a self-join, such as:
+         SELECT shipdate, numship, numbill
+         FROM (SELECT shipdate, COUNT(*) as numship
+               FROM orderline
+               GROUP BY shipdate) s LEFT OUTER JOIN
+              (SELECT billdate, COUNT(*) as numbill
+               FROM orderline
+               GROUP BY billdate) b
+              ON s.shipdate = b.billdate
+ORDER BY 1
+This query is incorrect, though. Some dates might have bills but no shipments; if so, these dates are lost in the join operation. The opposite problem, dates withshipmentsbutnobills,ishandledbytheLEFT OUTER JOIN.Onesolution istoreplacetheLEFT OUTER JOINwithaFULL OUTER JOIN.Thiskeepsrowsin both tables; however, the FULL OUTER JOIN works only because both sub- queries are summarized by date.
+TIP LEFT and RIGHT OUTER JOIN keeps rows from one table but not both. Whenyouneedrowsfrombothtables,therightsolutionisprobablyUNION ALL orFULL OUTER JOIN.
+AnothersolutionistousetheUNION ALLoperator,whichbringstogetherall the rows from two tables:
+         SELECT thedate, SUM(isship) as numships, SUM(isbill) as numbills
+         FROM ((SELECT shipdate as thedate, 1 as isship, 0 as isbill
+                FROM orderline
+               ) UNION ALL
+               (SELECT billdate as thedate, 0 as isship, 1 as isbill
+                FROM orderline)) a
+         GROUP BY thedate
+ORDER BY 1
+The first subquery chooses the shipping date, setting the ISSHIP flag to one and the ISBILL flag to zero. The second chooses the billing date, setting the flags in the reverse way. The aggregation then counts the number of shipments and bills on each date. If nothing is shipped on a particular date and something is billed, the date appears with the value of NUMSHIPS set to zero. If nothing is shipped or billed on a particular date, that date does not appear in the output.
+To include all dates between the first and last, we would need a source of dates when nothing happens. Including the Calendar table as an additional subquery would accomplish this; the subquery would have both ISSHIP and ISBILL set to zero.
+By the way, this is the type of question where it makes a difference whether the dates have a time component. With time components, two order lines
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼1,800 1,600 1,400 1,200 1,000
+  800
+  600
+  400
+  200
+numships
+numbill
+Chapter 5 ■ It’s a Matter of Time 195
+￼￼shipped or billed on the same date, but at different times, would appear as two rows in the output rather than one.
+Figure 5-2 shows the resulting chart for just the year 2015 as a line chart (because the horizontal axis is a date). This chart is difficult to read, because the number shipped and number billed track each other so closely. In fact, there is a one-day lag between the two, which makes patterns very difficult to see.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0
+Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec Jan
+2015 2015 2015 2015 2015 2015 2015 2015 2015 2015 2015 2015 2016
+Figure 5-2: The number of items in an order and the number billed so closely track each other that the chart is difficult to read.
+One way to see how closely correlated two curves are is to use the CORREL() function in Excel to calculate the correlation coefficient, a value between minus one and one, with zero being totally uncorrelated, minus one negatively corre- lated, and one positively correlated. The correlation coefficient for the two series is 0.46, which is high, but not that high. On the other hand, the correlation coeffi- cient between NUMSHIPS lagged by one day and NUMBILLS is 0.95, which says that the value of SHIPDATE is highly correlated with BILLDATE minus one.
+Customers Shipped and Billed
+Perhaps more interesting than the number of order lines shipped each day is the question: How many customers were sent shipments and bills on each day? For this query, a customer might have an order with multiple shipping and billing dates. Such customers would be counted multiple times, once for each date.
+The approach to this query is similar to the previous query. However, the subqueries in the UNION ALL statement are aggregated prior to the UNION ALL operation, and the aggregations count the number of distinct customers:
+  SELECT thedate, SUM(numship) as numships, SUM(numbill) as numbill,
+         SUM(numcustship) as numcustship, SUM(numcustbill) as numcustbill
+(continued)
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼196 Chapter 5 ■ It’s a Matter of Time
+￼￼￼￼  FROM ((SELECT shipdate as thedate, COUNT(*) as numship, 0 as numbill,
+                COUNT(DISTINCT customerid) as numcustship,
+                0 as numcustbill
+         FROM orderline ol JOIN orders o ON ol.orderid = o.orderid
+         GROUP BY shipdate
+        ) UNION ALL
+        (SELECT billdate as thedate, 0 as numship, COUNT(*) as numbill,
+                0 as numcustship,
+                COUNT(DISTINCT customerid) as numcustbill
+         FROM orderline ol JOIN orders o ON ol.orderid = o.orderid
+         GROUP BY billdate)) a
+  GROUP BY thedate
+  ORDER BY 1
+The results for this query look essentially the same as the results for the previ- ous query, because for most customers, there is only one order with one ship date and bill date.
+Number of Different Bill and Ship Dates per Order
+That last statement is worth verifying: How many different order and ship dates are there for a given order? This question is not about time sequencing, but it is interesting nonetheless:
+SELECT numbill, numship, COUNT(*) as numorders, MIN(orderid), MAX(orderid) FROM (SELECT orderid, COUNT(DISTINCT billdate) as numbill,
+               COUNT(DISTINCT shipdate) as numship
+        FROM orderline
+        GROUP BY orderid) a
+  GROUP BY numbill, numship
+  ORDER BY 1, 2
+This query uses COUNT(DISTINCT) in the subquery to get the number of bill dates and ship dates for each order. These are then summarized for all orders. The results in Table 5-1 confirm that almost all orders have a single value for order date and a single value for ship date. This makes sense, because most orders have only one order line. The table also shows that when there are multiple dates, there are typically the same number of bill dates and ship dates. The policy on billing is that customers only get billed when the items are shipped. In other words, every date that something is shipped results in a bill. There are 61 exceptions. In actual practice, it might be worth investi- gating further to determine whether there is an occasional violation of
+this policy.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 197 Table 5-1: Number of Orders Having b Bill Dates and s Ship Dates
+￼￼￼# BILL DATES
+      1
+      1
+      2
+      2
+      2
+      3
+      3
+      3
+      4
+      4
+      5
+      5
+      6
+      6
+17
+# SHIP DATES
+      1
+      2
+      1
+      2
+      3
+      2
+      3
+      4
+      3
+      4
+      4
+      5
+      4
+      6
+17
+# ORDERS
+181,637 8 35 10,142 1 10 999 2 3 111 1 23 1 9 1
+% OF ORDERS
+94.1% 0.0% 0.0% 5.3% 0.0% 0.0% 0.5% 0.0% 0.0% 0.1% 0.0% 0.0% 0.0% 0.0% 0.0%
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Counts of Orders and Order Sizes
+Business changes over time, and understanding these changes is important for managing the business. Two typical questions are: How many customers place orders in each month? How does an average customer’s monthly order size change over time? The first question is unambiguous, and answered by the following query:
+  SELECT YEAR(orderdate) as year, MONTH(orderdate) as month,
+         COUNT(DISTINCT customerid) as numcustomers
+  FROM orders o
+  GROUP BY YEAR(orderdate), MONTH(orderdate)
+  ORDER BY 1
+The second question is ambiguous. How many “items” as measured by the number of units in each customer’s purchases? How many distinct products, as measured by distinct product IDs in each customer’s order? How has the average amount spent per customer order changed? The next three subsec- tions address each of these questions.
+￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼198 Chapter 5 ■ It’s a Matter of Time
+Items as Measured by Number of Units
+Determining the number of units is easily answered using the Orders table and is a simple modification to the customer query. The SELECT statement needs to include the following additional variables:
+         SELECT SUM(numunits) as numunits,
+                SUM(numunits) / COUNT(DISTINCT customerid) as unitspercust
+This query combines all orders from a single customer during a month, rather than looking at each order individually. So, if a customer places two orders in the same month, and each has three units, the query returns an average of six units for that customer, rather than three. The original question is unclear on how to treat customers who have multiple orders during the period.
+If instead we wanted the customer to count as having three units, the query would look like:
+         SELECT SUM(numunits) as numunits,
+                SUM(numunits) / COUNT(*) as unitspercustorder
+This takes all the units and divides them by the number of orders, rather than the number of customers. There is a subtle distinction between counting the average units per order and the average per customer. Both are equally easy to calculate, but they result in different numbers.
+Items as Measured by Distinct Products
+In Chapter 2, we saw that some orders contain the same product on multiple order lines. With this in mind, another way to approach the original question might be by calculating two values. The first is the average number of products per order in a month. The second is the average number of products per cus- tomer per month. These quantities can be calculated by first aggregating the order lines at the order level and then aggregating again by year and month:
+         SELECT YEAR(orderdate) as year, MONTH(orderdate) as month,
+                COUNT(*) as numorders, COUNT(DISTINCT customerid) as numcusts,
+                SUM(prodsperord) as sumprodsperorder,
+                SUM(prodsperord)*1.0/COUNT(*) as avgperorder,
+                SUM(prodsperord)*1.0/COUNT(DISTINCT customerid) as avgpercust
+         FROM (SELECT o.orderid, customerid, orderdate,
+                      COUNT(DISTINCT productid) as prodsperord
+               FROM orders o JOIN orderline ol ON o.orderid = ol.orderid
+               GROUP BY o.orderid, customerid, orderdate ) a
+         GROUP BY YEAR(orderdate), MONTH(orderdate)
+         ORDER BY 1, 2
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼One notable feature in this query is the multiplication by 1.0. This ensures that the division operation is done on floating-point numbers rather than integers, so three divided by two is 1.5 rather than 1.
+It turns out that the average products per order and per customer are pretty much the same on a monthly basis. Figure 5-3 shows the results of the query, with the number of customers plotted on the left axis and the average prod- ucts per order plotted on the right. This chart shows peaks in the average products in an order. Most months have a bit over one product per order, but October 2014 and May 2015 peak at twice that value.
+8,000
+7,000
+6,000 Avg Prods/Order 3.0 5,000 ￼ 2.5 4,000 ￼ ￼ 2.0
+Chapter 5 ■ It’s a Matter of Time 199
+￼￼￼Num
+Customers
+3,000 2,000 1,000
+0
+4.0 3.5
+1.5 1.0 0.5 0.0
+Figure 5-3: The size of orders as measured by average number of products per order changes from month to month.
+Such unexpected peaks suggest further analysis: Is there anything different about the products being ordered in different months? One way to answer this ques- tion is to look at information about the most popular product in each month. The new question is: What is the product group of the most popular product during each month?
+To find the most popular product, the frequencies of all products in each month are compared to the maximum frequency for that month, as shown by the dataflow diagram in Figure 5-4 and by the following query:
+  SELECT prodmon.yr, prodmon.mon, prodmon.cnt, p.productgroupname
+  FROM (SELECT YEAR(orderdate) as yr, MONTH(orderdate) as mon,
+               productid, COUNT(*) as cnt
+        FROM orders o JOIN orderline ol ON o.orderid = ol.orderid
+        GROUP BY YEAR(orderdate), MONTH(orderdate), productid
+       ) prodmon JOIN
+       (SELECT yr, mon, MAX(cnt) as maxcnt
+        FROM (SELECT YEAR(orderdate) as yr, MONTH(orderdate) as mon,
+              productid, COUNT(*) as cnt
+              FROM orders o JOIN orderline ol ON o.orderid = ol.orderid
+              GROUP BY YEAR(orderdate), MONTH(orderdate), productid) c
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+2009 Oct 2010 Jan 2010 Apr
+2010 Jul 2010 Oct 2011 Jan 2011 Apr 2011 Jul 2011 Oct 2012 Jan 2012 Apr 2012 Jul 2012 Oct 2013 Jan 2013 Apr 2013 Jul 2013 Oct 2014 Jan 2014 Apr 2014 Jul 2014 Oct 2015 Jan 2015 Apr 2015 Jul 2015 Oct 2016 Jan 2016 Apr 2016 Jul
+Number of Customers
+Avg Products Per Order
+￼200 Chapter 5 ■ It’s a Matter of Time
+        GROUP BY yr, mon
+       ) prodmax
+       ON prodmon.yr = prodmax.yr AND prodmon.mon = prodmax.mon AND
+          prodmon.cnt = prodmax.maxcnt JOIN
+       product p
+       ON prodmon.productid = p.productid
+  ORDER BY 1, 2
+The first subquery for Prodmon calculates the frequency of each product during each month. The second subquery for Prodmax calculates the maximum fre- quency in each month, where the first subquery is repeated as a sub-subquery. These are joined together to get the most frequent product id for each month. The final join to the product table looks up the name of the product group for this product.
+Figure 5-5 shows the frequency and product group of the most frequent product for each month. In October 2014 the FREEBIE product group appears for the first time, and the high peaks in November and December are for FREEBIE products. Presumably, there was a marketing offer during this time giving customers a free product in many orders. This also explains why the average order size increases by about one product during this time. It looks like a similar offer was tried again six months later, but to lesser effect.
+READ
+orders
+READ
+orderline
+READ
+orders
+READ
+orderline
+JOIN
+on orderid
+APPEND
+year = YEAR(orderdate)
+prodmon
+AGGREGATE
+group by year, month, productid
+cnt = count(*)
+AGGREGATE
+group by year, month maxcnt = max(cnt)
+AGGREGATE
+group by year, month, productid
+JOIN
+on year, month, cnt = maxcnt
+JOIN
+on productid
+SELECT
+year, month, cnt, productgroupname
+JOIN
+on orderid
+APPEND
+year = YEAR(orderdate),
+READ
+product
+SORT
+year, month
+OUTPUT
+numorders = COUNT(*)
+month = MONTH(orderdate)
+countyname = MIN(countyname)
+numorders = COUNT(*)
+month = MONTH(orderdate)
+countyname = MIN(countyname)
+cnt = count(*)
+prodmax
+Figure 5-4: This dataflow diagram shows the processing for finding the most popular product in each month and returning its product group name.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼6,000 5,000 4,000 3,000 2,000 1,000
+0
+Figure 5-5: The most popular product group varies from month to month.
+The chart in Figure 5-5 is a stacked column chart. The original data is in a tabular format, with columns for year, month, the product category, and the frequency. In Excel, an additional column is added for each product; the value in the cells is the frequency for the product group that matches the column and zero otherwise. When plotted as a stacked column chart, the groups with zero counts disappear, so only the most popular is shown. Figure 5-6 shows a screen shot of the Excel formulas that accomplish this.
+TIP Stackedcolumnchartscanbeusedtoshowonevalueforeachcategory— such as information about the most popular product for each month.
+Figure 5-6: This Excel screen shot shows the formulas used to pivot the product group data for the groups ARTWORK and APPAREL for the stacked column chart in the previous figure. Formulas for other groups are similar.
+Size as Measured by Dollars
+Back to measuring the order size. Perhaps the most natural measurement is dollars. Because the Orders table contains the TOTALPRICE column, it is easy
+Chapter 5 ■ It’s a Matter of Time 201
+￼￼￼￼FREEBIE
+CALENDAR OCCASION BOOK APPAREL ARTWORK
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+2009 Oct 2010 Jan 2010 Apr
+2010 Jul 2010 Oct 2011 Jan 2011 Apr 2011 Jul 2011 Oct 2012 Jan 2012 Apr 2012 Jul 2012 Oct 2013 Jan 2013 Apr 2013 Jul 2013 Oct 2014 Jan 2014 Apr 2014 Jul 2014 Oct 2015 Jan 2015 Apr 2015 Jul 2015 Oct 2016 Jan 2016 Apr 2016 Jul
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼202 Chapter 5 ■ It’s a Matter of Time
+to calculate the average dollars per order or the average per customer on a
+monthly basis:
+         SELECT YEAR(orderdate) as year, MONTH(orderdate) as month,
+                COUNT(*) as numorders, COUNT(DISTINCT customerid) as numcust,
+                SUM(totalprice) as totspend,
+                SUM(totalprice)*1.0/COUNT(*) as avgordersize,
+                SUM(totalprice)*1.0/COUNT(DISTINCT customerid) as avgcustorder
+         FROM orders o
+         GROUP BY YEAR(orderdate), MONTH(orderdate)
+         ORDER BY 1, 2
+Figure 5-7 shows a “cell” chart of the results. The order size tends to increase over time, although there were some months with large average order sizes early on.
+Figure 5-7: This bar chart is shown in Excel cells rather than as a chart. This is a good approach when there are too many rows to fit easily into a chart.
+The results use a clever mechanism for creating bar charts directly in spread- sheet cells, rather than in a separate chart. Such a mechanism is useful for
+￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼showing summaries next to a row of data. The idea is credited to the folks at Juice Analytics through their blog at http://www.juiceanalytics.com/ weblog/?p=236.
+The idea is quite simple. The bar chart consists of repeated strings of verti- cal bars, where the bars are formatted to be in the Ariel 8-point font (another option Webdings font at about 4-points for a solid bar). The specific formula is “=REPT(“|”, <cellvalue>)”. The function REPT() creates a string by repeat- ing a character the number of times specified in the second argument. Because only the integer portion of the count is used, fractions are not represented in the length of the bars.
+Days of the Week
+Many business events occur on weekly cycles, with different days of the week (DOWs) having different characteristics. Monday might be a busy time for starts and stops, because of pent-up demand over the weekend. Business oper- ations can determine day of week effects as well. Customers are usually iden- tified as late payers (and forced to stop, for instance) during the billing processing, which may be run on particular days of the month or on particular days of the week. This section looks at various ways of analyzing days of the week. Later in the chapter we’ll look at how to count the number of times a given day occurs between two dates.
+Billing Date by Day of the Week
+How many order lines are billed on each day of the week? This seems like an easy question, but it has a twist: there is no standard way to determine the DOW in SQL. One way around this is to do the summaries in Excel. Histograms for billing dates were calculated earlier. In Excel, the following steps summarize by day of the week:
+■■ Determine the day of the week for each date, using the TEXT() function. (TEXT(<date>, “Ddd”)returnsthethree-letterabbreviation.
+■■ Summarize the data, using SUMIF() or pivot tables.
+Table 5-2 shows that Tuesday is the most common day for billing and Mon- day the least common. Calculating these results is also possible in SQL. The simplest method is to use an extension to get the day of the week, such as this version using SQL Server syntax:
+  SELECT billdow, COUNT(*) as numbills
+  FROM (SELECT o.*, DATENAME(dw, billdate) as billdow FROM orderline o) o
+  GROUP BY billdow
+  ORDER BY (CASE WHEN billdow = ‘Monday’ THEN 1
+                 WHEN billdow = ‘Tuesday’ THEN 2
+                 WHEN billdow = ‘Wednesday’ THEN 3
+Chapter 5 ■ It’s a Matter of Time 203
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼204 Chapter 5 ■ It’s a Matter of Time
+￼￼￼￼￼￼￼￼                 WHEN billdow = ‘Thursday’ THEN 4
+                 WHEN billdow = ‘Friday’ THEN 5
+                 WHEN billdow = ‘Saturday’ THEN 6
+                 WHEN billdow = ‘Sunday’ THEN 7 END)
+The most interesting part of the SQL statement is the ORDER
+ing the days of the week alphabetically would result in: Friday, Monday, Sat- urday, Sunday, Thursday, Tuesday, Wednesday — a nonsensical ordering. SQL does not understand the natural ordering to the names. The solution is to use theCASEstatementintheORDER BYclausetoassignthedaysoftheweeknum- bers that can be sorted correctly.
+TIP UsingaCASEstatementinanORDER BYclauseallowsyoutoorder things, such as days of the week, the way you want to see them.
+Table 5-2: Number of Units Billed by Day of the Week
+￼￼￼BY clause. Order-
+￼￼DAY OF WEEK
+Monday
+Tuesday Wednesday Thursday Friday Saturday Sunday
+Changes in Day of the Week by Year
+NUMBER OF BILLS
+17,999 61,019 61,136 54,954 49,735 32,933
+8,241
+￼￼￼￼￼￼￼A natural extension is looking at changes over time: Has the proportion of bills by day of the week changed over the years? This can be answered by manipulating the day-by-day data in Excel. It is also possible to answer the question directly using SQL. The following query outputs a table with rows for years and columns for days of the week:
+SELECT YEAR(billdate) as theyear,
+AVG(CASE WHEN dow = ‘Monday’ THEN 1.0 ELSE 0 END) as Monday, ...
+AVG(CASE WHEN dow = ‘Sunday’ THEN 1.0 ELSE 0 END) as Sunday
+  FROM (SELECT ol.*, DATENAME(dw, billdate) as dow FROM orderline ol) ol
+  GROUP BY YEAR(billdate)
+  ORDER BY 1
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Comparison of Days of the Week for Two Dates
+The STARTDATE and STOPDATE columns in the Subs table contain the start and stop dates of customers of a mobile telephone company. When there are two dates that describe such customer behaviors, a natural question is: What is the relationship between the days of the week when customers start and the days of the week when customers stop? The following SQL query answers this question:
+SELECT startdow,
+AVG(CASE WHEN stopdow = ‘Monday’ THEN 1.0 ELSE 0 END) as Mon, ...
+AVG(CASE WHEN stopdow = ‘Sunday’ THEN 1.0 ELSE 0 END) as Sun
+  FROM (SELECT s.*, DATENAME(dw, start_date) as startdow,
+               DATENAME(dw, stop_date) as stopdow
+        FROM subs s) s
+  WHERE startdow IS NOT NULL AND stopdow IS NOT NULL
+  GROUP BY startdow
+  ORDER BY (CASE WHEN startdow = ‘Monday’ THEN 1
+...
+WHEN startdow = ‘Sunday’ THEN 7 END)
+Chapter 5 ■ It’s a Matter of Time 205
+￼￼Table 5-3 shows the results. Monday and Saturday stand out as having the largest variance from one year to the next. It suggests that something has changed from year to year, such as operations changing to prefer one day over another. Or, perhaps the date recorded as the billing date is changing due to systems issues, and the underlying operations remain the same. The results only show that something is changing; they do not explain why.
+Table 5-3: Proportion of Order Lines Billed on Each Day of the Week, by Year
+￼YEAR MON TUE
+2009 0.1% 21.1% 2010 1.4% 27.5% 2011 11.2% 21.9% 2012 4.8% 22.9% 2013 1.4% 20.2% 2014 1.5% 18.6% 2015 16.1% 22.8% 2016 4.7% 19.5%
+WED THU
+22.0% 15.2% 17.1% 22.0% 25.9% 18.4% 19.3% 18.5% 19.3% 16.3% 22.5% 21.0% 19.7% 19.8% 24.7% 18.4%
+FRI
+25.5% 17.5% 13.6% 17.2% 20.8% 18.5% 14.2% 19.2%
+SAT SUN
+14.1% 2.1% 13.1% 1.5% 5.0% 4.1% 14.7% 2.6% 17.3% 4.7% 15.5% 2.4% 4.0% 3.3% 13.1% 0.3%
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼206 Chapter 5 ■ It’s a Matter of Time
+￼￼The results in Table 5-4 show very little correlation between the start dates and stop dates of customers. Each row in the table is for all customers who start on a particular day of the week, broken out by the day of the week of the stops. More customers are likely to stop on a Thursday than any other day, regardless of the day they started. And fewer customers are likely to stop on a Wednes- day, regardless of the day they started.
+Table 5-4: Proportion of Stops by Day of Week Based on Day of Week of Starts
+￼START DAY OF WEEK
+Monday
+Tuesday Wednesday Thursday Friday Saturday Sunday
+STOP DAY OF WEEK
+￼￼MON TUE WED THU
+13.7% 11.0% 5.2% 22.4% 12.9% 10.7% 7.6% 22.9% 12.6% 9.9% 7.4% 23.9% 13.5% 9.5% 4.4% 21.5% 13.9% 9.6% 4.2% 21.3% 14.7% 9.8% 4.4% 21.5% 15.4% 10.3% 4.6% 21.9%
+FRI SAT
+18.7% 15.0% 18.2% 14.5% 18.6% 14.7% 20.4% 16.1% 18.6% 16.9%
+18.4% 15.2%
+18.5% 15.0%
+SUN
+13.9% 13.2% 13.0% 14.4% 15.5% 16.0% 14.3%
+￼￼￼￼￼￼￼How Long between Two Dates?
+￼The previous section looked at two dates and some relationships between them. Perhaps the most natural relationship is the duration between them. This section looks at differences between dates in different time units: days, months, years, and by the number of specific days of the week. Surprisingly, durations at each of these levels is interesting, because the different levels reveal different types of information.
+Duration in Days
+The BILLDATE and SHIPDATE columns provide a good place to start with investigating duration, particularly in conjunction with the ORDERDATE col- umn in Orders. Two natural questions are: How long after the order is placed are items shipped? How long after the order is placed are items billed?
+These questions are about durations. In most dialects of SQL, simply sub- tracting one date from the other calculates the duration between them. This
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 207 also works in Excel, but Microsoft SQL uses the DATEDIFF() function instead.
+The following answers the first question about shipping dates:
+  SELECT DATEDIFF(dd, o.orderdate, ol.shipdate) as days, COUNT(*) as numol
+  FROM orders o JOIN orderline ol ON o.orderid = ol.orderid
+  GROUP BY DATEDIFF(dd, o.orderdate, ol.shipdate)
+  ORDER BY 1
+Notice that this query is actually counting order lines, which makes sense because a single order has multiple ship dates.
+The results are shown in Figure 5-8. In a handful of cases the ship date is before the order date. Perhaps this is miraculous evidence of customer insight and service — sending customers what they want even before the orders are placed. Or, perhaps the results are preposterous, suggesting a problem in the data collection for the twenty-eight orders where this happens. At the other extreme, the delay from ordering to shipping for a handful of orders is mea- sured in hundreds of days, a very long lead time indeed.
+100,000 100%
+90,000 90% 80,000 80% 70,000 70% 60,000 60% 50,000 50% 40,000 40% 30,000 30% 20,000 20%
+10,000 10%
+0 0% 0 7 14 21 28 35 42 49
+Delay from Order to Ship (days)
+Figure 5-8: The delay from ordering to shipping is shown here, both as a histogram and a cumulative proportion.
+The cumulative proportion in the chart shows that about three quarters of order lines are fulfilled within a week. This fulfillment time is an important measure for the business. However, an order should be considered fulfilled only when the last item has been shipped, not the first. Calculating the time to fulfill the entire order requires an additional aggregation:
+SELECT DATEDIFF(dd, orderdate, fulfilldate) as days, COUNT(*) as numorders FROM (SELECT o.orderid, o.orderdate, MAX(ol.shipdate) as fulfilldate
+        FROM orders o JOIN orderline ol ON o.orderid = ol.orderid
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼73.0%
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+Cumulative Proportion
+Number of Order Lines
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼208 Chapter 5 ■ It’s a Matter of Time
+￼￼￼￼￼        GROUP BY o.orderid, o.orderdate) o
+  GROUP BY DATEDIFF(dd, orderdate, fulfilldate)
+  ORDER BY 1
+This query summarizes the orders in the subquery to get the fulfillment date. It aggregates by both ORDERID and ORDERDATE. Strictly speaking, only ORDERID is necessary because there is only one date per order. However, including ORDERDATE in the GROUP BY is simpler than including MIN(ORDERDATE) as ORDERDATE.
+Table 5-5 shows the cumulative fulfillment by days after the order for the first ten days. One column is by order (that is, when the last item is fulfilled) and the other is by item. Although 73% of items are shipped within a week, 70% of orders have all their items shipped within a week.
+Table 5-5: Days to Fulfill Entire Order
+￼￼￼DAYS
+0 1 2 3 4 5 6 7 8 9
+10
+COUNT CUMULATIVE PROPORTION
+10,326 5.4% 42,351 27.3% 22,513 39.0% 17,267 47.9% 14,081 55.2% 11,115 61.0%
+9,294 65.8% 8,085 70.0% 5,658 72.9% 4,163 75.1% 3,373 76.8%
+￼￼￼￼￼￼￼￼￼￼￼Duration in Weeks
+Duration in weeks is calculated directly from days. The number of weeks is the number of days divided by seven:
+SELECT FLOOR(DATEDIFF(dd, orderdate, fulfilldate)/7) as weeks, . . . ...
+GROUP BY FLOOR(DATEDIFF(dd, orderdate, fulfilldate)/7)
+Notice that this query uses the FLOOR() function to eliminate any fractional part. One advantage of using weeks is when data is relatively sparse, because
+￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼a week brings together more instances than a day. Another advantage is when there is a natural weekly cycle to the data. For instance, if orders were not shipped or billed on weekends, then that would introduce a weekly cycle. Summarizing by weeks removes the extraneous cycle within a week, making longer-term patterns more visible.
+Duration in Months
+Measuring the number of months between two dates is more challenging than measuring the number of day or weeks. The problem is that two dates might dif- fer by 30 days and be one month apart (say, 15 April and 15 May) or might be zero months apart (say, 1 Jan and 31 Jan). A good approximation is to divide the difference in days by 30.4, the average number of days in a month. Another approach is to do an exact calculation, based on the following rules:
+■■ The duration in months between two dates in the same month is zero. So, the duration between 2000-01-01 and 2000-01-31 is zero months.
+■■ The duration in months between a date in one month and a date in the next month depends on the day of the month. The duration is zero when the day in the second month is less than the day in the first month. So, the duration between 2000-01-01 and 2000-02-01 is one month. The duration between 2000-01-31 and 2000-02-01 is zero months.
+The following query does the duration calculation, using the start dates and stop dates in the subscription table:
+  SELECT ((YEAR(s.stop_date)*12+MONTH(s.stop_date)) -
+          (YEAR(s.start_date)*12+MONTH(s.start_date)) -
+          (CASE WHEN DAY(s.stop_date) < DAY(s.start_date)
+                THEN 1 ELSE 0 END)
+         ) as tenuremonths, s.*
+  FROM subs s
+  WHERE s.stop_date IS NOT NULL
+The calculation uses the idea of calculating the number of months since the year zero and then taking the difference. The number of months since year zero is the year times twelve plus the month number. One adjustment is needed. This adjustment takes care of the situation when the start date is later in the month than the stop date. The extra month has not gone by, so the dif- ference has over-counted by one.
+An alternative is to use built-in functions, if they are available. In Microsoft SQL, the expression DATEDIFF(m, start_date, stop_date) calculates the number of months between two dates.
+Chapter 5 ■ It’s a Matter of Time 209
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼210 Chapter 5 ■ It’s a Matter of Time How Many Mondays?
+Normally, durations are measured in units of time, such as the days, weeks, and months between two dates. Sometimes, though, understanding mile- stones between two dates, such as the number of birthdays or the number of school days, is important.
+This section goes into detail on one particular example, finding the number of times that a specific day of the week occurs between two dates. This is motivated by a specific business problem. In addition, this section illustrates taking a busi- ness problem and some observations on how to solve it, converting the observa- tions into rules, and implementing the rules in SQL to address the problem.
+A Business Problem about Days of the Week
+This example originated at a newspaper company studying its home delivery customers. The newspaper customer database typically contains the start and stop dates of each customer’s subscription, similar to the information in the Subs table. In the newspaper industry, though, not all days of the week are cre- ated equal. In particular, Sunday papers are more voluminous and more expensive, filled with more advertising, and their circulation is even counted differently by the organization that audits newspaper circulation, the aptly named Audit Bureau of Circulation.
+This newspaper was interested in knowing: How many Sunday copies did any given home delivery customer receive? This question readily extends to the num- ber of copies received on any day of the week, not just Sunday. And more gen- erally, for any two dates, the same techniques can count the number of Sundays and Mondays and Tuesdays and so on between them. This section shows how to do this calculation in SQL using the subscription data. Why SQL and not Excel? The answer is that there are many start dates, and many stop dates, and many, many combinations of the two. The data simply does not fit into a worksheet, so SQL is needed to do the heavy lifting.
+Outline of a Solution
+The approach relies on several observations. The first is that complete weeks are easy, so customers whose start and stop dates differ by a multiple of seven days have equal numbers of Sundays and Mondays and Tuesdays and so on between the dates. And, that number is the number of weeks between the dates. For any two dates, we can subtract complete weeks from the later one until there are zero to six days left over. The problem is half solved.
+When complete weeks are subtracted out, the problem reduces to the fol- lowing. Given a start date and a period of zero to six days, how often does each day of the week occur during this period? Periods longer than six days have been taken care of by subtracting out complete weeks.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 211
+￼￼Table 5-6 is a lookup table that answers this question for Wednesdays. The first row says that if the start date is Sunday, there have to be at least four days left over in order to have a Wednesday in the period. Notice that the first col- umn is all zeros, which occurs when the difference between the dates is a whole number of weeks. In this case, all the days are accounted for in the first part of the calculation.
+Table 5-6: Extra Wednesday Lookup Table, Given Start Day of Week and Days Left Over
+START DAY DAYS LEFT OVER
+OFWEEK 0123456
+￼￼￼Sunday (1) Monday (2) Tuesday (3) Wednesday (4) Thursday (5) Friday (6) Saturday (7)
+NO NO NO NO NO NO NO NO YES NO YES YES
+NO YES YES YES YES YES YES YES NO NO NO NO NO NO
+YES YES YES YES YES YES YES YES NO NO NO YES YES YES
+￼￼￼￼NO NO NO NO NO NO
+NO NO NO
+￼￼￼Unfortunately, there is a separate table for each day of the week. Can we deter- mine this information without a plethora of lookup tables? There is a way, and although it is a bit cumbersome arithmetically it provides a nice illustration of observing rules and implementing them in SQL. This method rests on two addi- tional rules, which in turn need two variables. The first is LEFTOVER, the num- ber of days left over after all the complete weeks have been counted. The second is the day of the week as a number, which for convention we are taking to start on Sunday as one through Saturday as seven (this is the default convention for the Excel function WEEKDAY()). With this information, the following rules tell us whether a Wednesday, whose number is four, is included in the leftover days:
+■■ IfthestartdayoftheweekfallsonorbeforeWednesday,thenWednes- day is included when the start day of the week number plus the left- over days is greater than five. For example, if someone starts on a Sunday (value one), then leftover days needs to be at least four.
+■■ IfthestartdayoftheweekisafterWednesday,thenWednesdayis included when the start day of the week number plus the leftover days is greater than eleven. For instance, if someone starts on a Saturday (value seven), then leftover days needs to be at least five.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼212 Chapter 5 ■ It’s a Matter of Time
+These generalize to the following rules, where DOW is the day we are look-
+ing for:
+■■ IfthestartdayoftheweekisonorbeforeDOW,thenDOWisincluded when the start day of the week number plus the leftover days is greater than the DOW number.
+■■ IfthestartdayoftheweekisafterDOW,thenDOWisincludedwhen the start day of the week number plus the leftover days is greater than seven plus the DOW number.
+The next section builds the rules in SQL.
+Solving It in SQL
+To implement this in SQL, three columns need to be defined. WEEKSBE- TWEEN is the number of complete weeks between the two dates; this is cal- culated by taking the duration in days, dividing by seven, and ignoring the remainder. LEFTOVER is the days left over after all the weeks have been counted. DOWNUM is the day of week number determined using a CASE statement on the day of week name. These columns are defined using nested subqueries:
+         SELECT s.*, (weeksbetween +
+                      (CASE WHEN (downum <= 1 AND downum + leftover > 1) OR
+                                 (downum > 1 AND downum + leftover > 7+1)
+                            THEN 1 ELSE 0 END)) as Sundays,
+                (weeksbetween +
+                 (CASE WHEN (downum <= 2 AND downum + leftover > 2) OR
+                            (downum > 2 AND downum + leftover > 7+2)
+                       THEN 1 ELSE 0 END)) as Mondays
+         FROM (SELECT daysbetween, FLOOR(daysbetween/7) as weeksbetween,
+                      daysbetween - 7*FLOOR(daysbetween/7) as leftover,
+(CASE WHEN startdow = ‘Monday’ THEN 1 ...
+                            WHEN startdow = ‘Sunday’ THEN 7 END) downum
+               FROM (SELECT s.*, DATENAME(dw, start_date) as startdow,
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼        DATEDIFF(dd, stop_date, start_date
+                ) as daysbetween
+FROM subs s
+WHERE s.stop_date IS NOT NULL )s
+￼￼￼￼￼)s
+The outermost query calculates the number of Sundays and Mondays between the start date and stop date using the two rules. Other days of the week follow the same logic as these counts.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 213
+￼￼Using a Calendar Table Instead
+An alternative method would be to use the Calendar table, if one is available. So the following query expresses what needs to be done:
+  SELECT s.customerid,
+         SUM(CASE WHEN c.dow = ‘Mon’ THEN 1 ELSE 0 END)as Monday
+  FROM subs s JOIN
+       calendar c
+       ON c.date BETWEEN s.start_date AND s.stop_date - 1
+  WHERE s.stop_date IS NOT NULL
+  GROUP BY s.customerid
+This query has many advantages in terms of readability and understandabil- ity. The only downside is performance. The join operation creates an interme- diate table with one row for every calendar date between the start date and stop date, potentially multiplying the number of rows by hundreds or thou- sands. This query has very poor performance.
+If counting weekdays is important, there is a more efficient method both in terms of representation and performance. The Calendar table has seven addi- tional columns, which count the number of each day of the week since some reference date. So, MONDAYS is the number of Mondays since the reference date. The following query uses these columns:
+  SELECT s.*, (cstop.mondays - cstart.mondays) as mondays
+  FROM subs s JOIN calendar cstart ON cstart.date = s.start_date JOIN
+       calendar cstop ON cstop.date = s.stop_date
+  WHERE s.stop_date IS NOT NULL
+This method joins the Calendar table twice to the Subs table to look up the MONDAYS value for both the start and stop dates. The number of Mondays between them is just the difference between these values.
+Year-over-Year Comparisons
+The previous year usually provides the best comparison for what is happening the following year. This section talks about such comparisons, with particular emphasis on one of the big challenges. This year’s data is usually not com- plete, so how can we make a valid comparison?
+Comparisons by Day
+The place to start is with day-by-day comparisons from one year to the next. Here is a method where much of the work is done in Excel:
+1. Querythedatabaseandaggregatebydate.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼214 Chapter 5 ■ It’s a Matter of Time
+2. LoadthedataintoExcel,withallthedatesinonecolumn.
+3. Pivotthedata,sothereare366rows(foreachdayintheyear)anda separate column for each year.
+This is actually more work than necessary. An easier way is to use the MONTH(), DAY(), and YEAR() functions in SQL to create the resulting table directly, as in the following example using starts from the subscription database:
+         SELECT MONTH(start_date) as mon, DAY(start_date) as dom,
+                SUM(CASE WHEN startyear = 2004 THEN 1 ELSE 0 END) as n2004,
+                SUM(CASE WHEN startyear = 2005 THEN 1 ELSE 0 END) as n2005,
+                SUM(CASE WHEN startyear = 2006 THEN 1 ELSE 0 END) as n2006
+         FROM (SELECT s.*, YEAR(start_date) startyear FROM subs s) s
+         WHERE startyear in (2004, 2005, 2006)
+         GROUP BY MONTH(start_date), DAY(start_date)
+         ORDER BY 1, 2
+Figure 5-9 shows the results as a line chart with three series. There is a weekly cycle of peaks and valleys for all three years. The chart illustrates that starts in 2006 are lower than in the other years during most months.
+8,000 7,000 6,000 5,000 4,000 3,000 2,000 1,000
+0
+2004 2005 2006
+Figure 5-9: This line chart shows the pattern of starts by day throughout the year for
+three years.
+The chart is a line chart so the horizontal axis can be a date. The date is cal- culated in Excel as a new column, using the DATE() function on the month and day values in each row. In the chart, the horizontal axis is this date column, whose “Number” format is set to “Mmm” to display only the month. The scale is set to show tick marks every month.
+Adding a Moving Average Trend Line
+A pattern of starts by within weeks (by weekday) can interfere with seeing larger trends. One way to fix this is by adding a trend line with a seven-day
+Starts by Day
+Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+www.it-ebooks.info
+7 per . Mov . A vg. (2006)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼moving average. Figure 5-9 also shows the trend line along with the original data. The seven-day moving average eliminates the weekly cycle.
+To add the trend line, left-click a series to select it. Then right-click and choose the “Add Trendline” option. In the dialog box, “Moving Average” is the option on the lower right, with the width of the moving average in the “Period” box. Change the default value to seven to eliminate weekly cycles, and then click “OK” to finish.
+Comparisons by Week
+An alternative way of eliminating the bumpiness is to aggregate the data at the weekly level rather than at the daily level. This is a little bit tricky, because SQL does not have a function that returns the week number of the year, so we have to calculate it by calculating the number of days since the beginning of the year and dividing by seven:
+  SELECT (CASE WHEN startyear = 2004
+               THEN FLOOR(DATEDIFF(dd, ‘2004-01-01’, start_date)/7)
+               WHEN startyear = 2005
+               THEN FLOOR(DATEDIFF(dd, ‘2005-01-01’, start_date)/7)
+               WHEN startyear = 2006
+               THEN FLOOR(DATEDIFF(dd, ‘2006-01-01’, start_date)/7)
+          END) as weekofyear,
+         SUM(CASE WHEN startyear = 2004 THEN 1 ELSE 0 END) as n2004,
+         SUM(CASE WHEN startyear = 2005 THEN 1 ELSE 0 END) as n2005,
+         SUM(CASE WHEN startyear = 2006 THEN 1 ELSE 0 END) as n2006
+  FROM (SELECT s.*, YEAR(start_date) as startyear FROM subs s) s
+  WHERE startyear in (2004, 2005, 2006)
+  GROUP BY (CASE WHEN startyear = 2004
+Chapter 5 ■ It’s a Matter of Time 215
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼     THEN FLOOR(DATEDIFF(dd, ‘2004-01-01’, start_date)/7)
+     WHEN startyear = 2005
+     THEN FLOOR(DATEDIFF(dd, ‘2005-01-01’, start_date)/7)
+     WHEN startyear = 2006
+     THEN FLOOR(DATEDIFF(dd, ‘2006-01-01’, start_date)/7)
+END)
+￼￼￼￼￼￼ORDER BY 1
+The SQL statement explicitly lists each year when calculating WEEKOFYEAR; being explicit has the advantage of being more understandable.
+An alternative method is perhaps more cryptic, but is preferable because the years do not all need to be specified:
+  FLOOR(DATEDIFF(dd, CAST(REPLACE(‘<YEAR>-01-01’, ‘<YEAR>’, startyear)
+                          as DATETIME), start_date)/7) as weekofyear
+This formulation follows the same logic as the previous one. Here, though, the first day of the year is calculated on the fly, by constructing a string form
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼216 Chapter 5 ■ It’s a Matter of Time
+￼￼of the date which is then converted to a DATETIME. In some dialects of SQL, the CAST()is unnecessary, because the SQL engine recognizes date arithmetic and does the conversion automatically.
+Creating a chart from this data follows a similar line of reasoning as for comparison by days. The idea is to add a new column with a date from some specific year. Instead of using the DATE() function, though, the date is created by adding 7*WEEKOFYEAR to a base date, such as 2000-01-01.
+Of course, Excel can also handle the transformation from daily data to weekly data, using the same method of subtracting the first day of the year, dividing by seven, and then summing the results using SUMIF().
+Comparisons by Month
+A year-over-year comparison by month can follow the same structure as the com- parison by day or week. The following SQL shows the summaries by month:
+  SELECT MONTH(start_date) as month,
+         SUM(CASE WHEN startyear = 2004 THEN 1 ELSE 0 END) as n2004,
+         SUM(CASE WHEN startyear = 2005 THEN 1 ELSE 0 END) as n2005,
+         SUM(CASE WHEN startyear = 2006 THEN 1 ELSE 0 END) as n2006
+  FROM (SELECT s.*, YEAR(start_date) as startyear FROM subs s) s
+  WHERE startyear IN (2004, 2005, 2006)
+  GROUP BY MONTH(start_date)
+  ORDER BY 1
+Monthly data is often better represented by column charts with the different years side-by-side, as shown in Figure 5-10.
+￼￼￼￼￼￼￼￼￼￼160,000 140,000 120,000 100,000
+80,000 60,000 40,000 20,000
+0
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Jan Feb Mar
+Apr May
+Jun Jul
+Aug Sep
+Oct Nov Dec
+￼2004 2005 2006
+￼Figure 5-10: Column charts are useful for showing monthly data, year over year, such as this example showing subscription starts.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 217
+￼￼The next example examines TOTALPRICE in the Orders table. This differs from the examples so far for two reasons. First, the results are not just counts but dollars. Second, the last day of data has a date of September 20th, although there is missing data after September 7th. The incomplete September data poses a challenge. The following SQL query extracts the information by month:
+  SELECT MONTH(orderdate) as month,
+         SUM(CASE WHEN ordyear = 2014 THEN totalprice END) as r2014,
+         SUM(CASE WHEN ordyear = 2015 THEN totalprice END) as r2015,
+         SUM(CASE WHEN ordyear = 2016 THEN totalprice END) as r2016
+  FROM (SELECT o.*, YEAR(orderdate) as ordyear FROM orders o) o
+  WHERE orderdate <= ‘2016-09-07’
+  GROUP BY MONTH(orderdate)
+  ORDER BY 1
+Table 5-7 shows the results, which suggest that sales have dropped precipi- tously in the month of September. This is misleading, of course, because only the first few days of September are included for the third year. There are two approaches to getting valid comparison information. The first is to look at month-to-date (MTD) comparisons for previous years. The second is to extrap- olate the values to the end of the month.
+￼￼￼￼￼￼￼￼￼￼Table 5-7: Revenue by Month for Orders MONTH 2014
+1 $198,081.37
+2 $125,088.95
+3 $171,355.72
+4 $188,072.17
+5 $239,294.02
+6 $250,800.68
+7 $206,480.10
+8 $160,693.87
+9 $234,277.87
+2015
+$201,640.63 $191,589.28 $215,484.26 $140,299.76 $188,226.96 $226,271.71 $170,183.03 $157,961.71 $139,244.44 $170,824.58 $409,834.57
+2016
+$187,814.13 $142,516.49 $251,609.27 $193,443.75 $247,425.25 $272,784.77 $250,807.38 $164,388.50
+$26,951.14
+￼￼￼￼￼￼￼￼￼￼10 $312,175.19
+11 $394,579.03
+12 $639,011.54 $466,486.34
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼218 Chapter 5 ■ It’s a Matter of Time Month-to-Date Comparison
+The month-to-date comparison is shown in the upper chart in Figure 5-11. The bars for September in 2014 and 2015 have overlapping columns, with the shorter ones in September being the month-to-date values and the taller ones being the total revenue. These month-to-date numbers are the appropriate level of comparison for September.
+￼￼$700,000 $600,000 $500,000 $400,000 $300,000 $200,000 $100,000
+$0
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Jan Feb Mar Apr
+May Jun
+Jul Aug
+Sep Oct
+2015 MTD
+Nov Dec
+2016 MTD
+￼2014 2015 2016
+2014 MTD
+￼￼￼￼￼￼$700,000 $600,000 $500,000 $400,000 $300,000 $200,000 $100,000
+$0
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Jan Feb Mar Apr
+May Jun Jul Aug
+Sep Oct
+Nov Dec
+￼2014
+2015
+2016
+￼Figure 5-11: The upper chart shows month-to-date comparisons using overlapping column charts. The lower chart shows the end-of-month estimate using Y-error bars.
+How are these overlapping columns created? Unfortunately, Excel does not have an option for column charts that are both stacked and side-by-side, but
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼we can improvise by having two sets of three series. The first three are plotted on the primary axis and contain the full month revenue numbers. The second set is plotted on the secondary axis and contains only the month-to-date rev- enue numbers for September. Both groups need to contains the same number of columns, to ensure that the column widths are the same, and the columns overlap completely. The data for this chart is calculated by adding the follow- ing three columns to the previous SQL statement:
+Chapter 5 ■ It’s a Matter of Time 219
+￼￼￼￼￼￼￼￼￼SUM(CASE
+SUM(CASE
+SUM(CASE
+WHEN ordyear = 2014 AND ordmon = 9 AND orderdate <= ‘2014-09-07’ THEN totalprice END) as rev2014mtd,
+WHEN ordyear = 2015 AND ordmon = 9 AND orderdate <= ‘2015-09-07’ THEN totalprice END) as rev2015mtd,
+WHEN ordyear = 2016 AND ordmon = 9 AND orderdate <= ‘2016-09-07’ THEN totalprice END) as rev2016mtd
+￼￼￼￼￼The subquery also needs to define ORDMON.
+These additional columns calculate the month-to-date numbers for Septem-
+ber, returning NULL for all other months. Although the last column is redun- dant (because it contains the same data as the corresponding full month column), having it simplifies the charting procedure, by providing the third series on the secondary axis.
+Creating the chart starts by pasting the results in Excel. The horizontal axis uses the month name; although we could type in the month abbreviations, an alternative method is to use dates: create a date column by copying the for- mula “DATE(2000, <monthnum>, 1)” down a column, use that column as the horizontal axis, and then format it with just the month name by setting its “Number” format to “Mmm”.
+Next, a column chart is created with the following columns:
+■■ The new date column goes on the horizontal axis.
+■■ The three full revenue columns are data columns, for the first three series on the primary axis.
+■■ The three month-to-date-revenue columns are data columns, for the second three series for the secondary axis.
+Now the chart needs to be customized. First, the three month-to-date columns need to be switched to the secondary axis. To do this, click each series, go to the “Axis” tab, and choose “Secondary axis.”
+The final step is cleaning up the secondary axis:
+■■ The month-to-date numbers need to be on the same scale as on the other axis. Click the secondary vertical axis and make the maximum value the same as the maximum value on the primary axis.
+■■ The secondary axis labels and tick marks need to be removed, by clicking them and hitting <delete>.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼220 Chapter 5 ■ It’s a Matter of Time
+Finally, the month-to-date series should be colored similarly so they can
+be seen.
+TIP IfyoumakeamistakeinExcel,justhit<control>-Ztoundoit.Youcan always experiment and try new things, and undo the ones that don’t look right.
+Extrapolation by Days in Month
+The lower chart in Figure 5-11 shows a different approach. Here, the compari- son is to the estimated value for the end of the month, rather than to the past month-to-date values. The simplest end-of-month estimate is a linear trend, calculated by multiplying the current value for the month times the number of days in the month and dividing by the number of days that have data. For instance, for the September data, multiply the $26,951.14 by 30 and divide by 7, to get $115,504.89.
+The chart shows this difference using Y-error bars. The length of the bar is the difference from the end-of-month estimate and the current value; that is $88,553.75 = $115,504.89 – $26,951.14. Starting with the column chart that has three series for each year, adding the Y-error bar has the following steps:
+1. Add a column to the table in Excel where all the cells are blank except for the one for September. This one gets the difference value.
+2. Add the error bars by double-clicking the series for 2016 to bring up the “Format Data Series” dialog box. On the “Y-Error Bars” tab, choose “Plus” (the second option) and click by “Custom,” the bottom option. Set the “+” series to refer to the difference column.
+3. Formattheerrorbarbydouble-clickingit.
+Calculating the difference column in Excel is feasible. However, doing it in SQL is instructive because it shows the power of manipulating dates in the database. Unfortunately, SQL lacks a simple way to calculate the number of days in the month. The solution starts with the following two rules:
+■■ If the month number is 12 (December), then the number of days is 31.
+■■ Otherwise, it is the difference between the first day of the current
+month and the first day of the next month.
+The dates for the first date of the current month and the first date of the next month are calculated using the CAST() and REPLACE() trick that we saw earlier.
+Combined into a query, this looks like:
+         SELECT mon,
+                SUM(CASE WHEN ordyear = 2014 THEN totalprice END) as r2014,
+                SUM(CASE WHEN ordyear = 2015 THEN totalprice END) as r2015,
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 221
+￼￼￼         SUM(CASE WHEN ordyear = 2016 THEN totalprice END) as r2016,
+         (SUM(CASE WHEN ordyear = 2016 AND mon = 9 THEN totalprice END)*
+          ((MAX(daysinmonth)*1.0/MAX(CASE WHEN ordyear= 2016 AND mon = 9
+                                          THEN DAY(orderdate) END)) - 1)
+         ) as IncrementToMonthEnd
+  FROM (SELECT o.*, DATENAME(dw, orderdate) as dow,
+              (CASE WHEN mon = 12 THEN 31
+                    ELSE DATEDIFF(dd,
+                                  CAST(REPLACE(REPLACE(‘<Y>-<M>-01’,
+                                                       ‘<Y>’, ordyear),
+                                               ‘<M>’, mon) as DATETIME),
+                                  CAST(REPLACE(REPLACE(‘<Y>-<M>-01’,
+‘<Y>’, ordyear), ‘<M>’, mon + 1) as DATETIME))
+               END) as daysinmonth
+        FROM (SELECT o.*, YEAR(orderdate) as ordyear,
+                     MONTH(orderdate) as mon
+              FROM orders o) o
+)o
+WHERE orderdate <= ‘2016-09-07’ GROUP BY mon
+ORDER BY 1
+The query is not pretty, but it does the job of calculating the linear trend to the end of the month. The subquery calculates the number of days in the month (some databases have simpler methods of doing this). The column INCRE- MENTTOMONTHEND is then calculated by taking the total for the month so far, multiplying by one less than the days in the month divided by the maxi- mum day seen in the month. The “one less” is because we want the increment over the current value, rather than the month-end estimate itself.
+Estimation Based on Day of Week
+There may be more accurate methods to estimate the end-of-month value than linear extrapolation. If there is a weekly cycle, a method that takes into account days of the week should do a better job. In the previous instance, there are seven days of data for September 2016. If weekdays have one set of start behavior and weekends another set, how could we use this information to extrapolate the $26,952.14 to the end of the September? Notice that this esti- mation is only possible after at least one weekday and at least one weekend day has passed, unless we borrow information from previous months.
+There are two parts to this calculation. The first is calculating the average weekday and the average weekend contribution for September. The second is calculating the number of weekdays and number of weekend days during the month. We’ll do the first calculation in SQL and the second calculation in
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼222 Chapter 5 ■ It’s a Matter of Time
+Excel. The following additional two columns contain the averages for week-
+days and weekends in September 2016:
+         (SUM(CASE WHEN ordyear = 2016 AND mon = 9 AND
+                        dow NOT IN (‘Saturday’, ‘Sunday’)
+                   THEN totalprice END) /
+          COUNT(DISTINCT (CASE WHEN ordyear = 2016 AND mon = 9 AND
+                                    dow NOT IN (‘Saturday’, ‘Sunday’)
+                               THEN orderdate END)) ) as weekdayavg,
+         (SUM(CASE WHEN ordyear = 2016 AND mon = 9 AND
+                        dow IN (‘Saturday’, ‘Sunday’) THEN totalprice END) /
+          COUNT(DISTINCT (CASE WHEN ordyear = 2016 AND mon = 9 AND
+                                    dow IN (‘Saturday’, ‘Sunday’)
+                               THEN orderdate END)) )  as weekendavg
+Notice that the average calculation for weekdays takes the sum of all the orders on weekdays and divides by the number of distinct days when orders were placed. This gives the average total order volume on weekdays. By contrast, the AVG() function would calculate something different, the average order size.
+Without a calendar table, it is rather complex to determine the number of weekdays and weekend days in a given month using SQL. Excel has the advantage of being able to define a lookup table, such as the one in Table 5-8. This table has the number of weekend days in a month, given the start date and number of days in the month.
+Table 5-8: Weekdays and Weekend Days by Start of Month and Length of Month
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼MONTH START DAY OF WEEK
+Monday
+Tuesday Wednesday Thursday Friday Saturday Sunday
+WEEKDAYS
+28 29 30 31
+20 21 22 23 20 21 22 23 20 21 22 23 20 21 22 22 20 21 21 21 20 20 20 21 20 20 21 22
+WEEKEND DAYS
+28 29 30 31
+￼￼￼8 8 8 8 8 8 8 8 8 8 8 9 8 9
+8 8 8 8 8 8 8 9 9 10
+10 10
+￼￼￼￼￼￼9
+9
+￼The following Excel formula calculates the number of days in a month:
+days in month = DATE(<year>, <mon>+1, 1) – DATE(<year>, <mon>, 1)
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼This works in Excel even for December because Excel interprets month 13 as January of the following year. The day of the week when the month starts is calculated using:
+  startdow = TEXT(DATE(<year>, <mon>, 1), “Dddd”)
+Using this information, the number of weekdays can be looked up in the preceding table using the following formula:
+  VLOOKUP(<startdow>, <table>, <daysinmonth>-28+2, 0)
+Figure 5-12 shows a screen shot of Excel with these formulas. Taking weekdays and weekends into account, the end-of-month estimate is $109,196.45, which is only slightly less than the $115,504.89 linear estimate.
+Figure 5-12: This screen shot of Excel shows the calculation of the number of days in the month, the number of weekdays, and the number of weekend days, which can then be used to estimate the end-of-month average taking into account the day of the week.
+Estimation Based on Previous Year
+Another way to estimate the end of the month value uses the ratio of the pre- vious year month-to-date and previous year month total. Applying this ratio to the current month gives an estimate of the end-of-month value. This calcu- lation has the advantage of taking into account holidays, because the same month period the year before probably had the same holidays. Of course, this doesn’t work well for floating holidays such as Easter and Rosh Hashanah.
+Chapter 5 ■ It’s a Matter of Time 223
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼224 Chapter 5 ■ It’s a Matter of Time
+￼￼For instance, in the previous year, the monthly total was $139,244.44. The total for the first seven days during that month was $41,886.47, which is about 30.1% of the total. The current month to date is $26,951.14. This is 30.1% of $89,594.48. The estimate for the entire month calculated using this approach is considerably smaller than using the linear trend.
+Counting Active Customers by Day
+Calculating the number of active customers as of the database cut-off date is easy, by simply counting those whose status code indicates that they are active. This section extends this simple counting mechanism to historical time periods, by progressing from counting the active customers on any given day in the past, to counting active customers on all days, and finally, to breaking customers into tenure groups and counting the sizes of those groups on any given day.
+How Many Customers on a Given Day?
+On a given day in the past, the customers who are active have two charac- teristics:
+■■ Theystartedonorbeforethegivenday. ■■ Theystoppedafterthegivenday.
+For instance, the following query answers the question: How many subscrip- tions customers were active on Valentine’s Day in 2005?
+  SELECT COUNT(*)
+  FROM subs
+  WHERE start_date <= ‘2005-02-14’ AND
+        (stop_date > ‘2005-02-14’ OR stop_date IS NULL)
+The WHERE clause implements the logic that selects the right group of customers.
+The query returns the value of 2,387,765. By adding GROUP BY clauses, this number can be broken out by features such as market, channel, rate plan, or any column that describes customers when they started.
+The data in the Subs table does not contain any accounts that stopped prior to 2004-01-01. Because these accounts are missing, it is not possible to get accu- rate counts prior to this date.
+How Many Customers Every Day?
+Calculating the number of active customers on one day only provides infor- mation about one day. A more useful question is: How many customers were
+￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼active on any given day in the past? For the subscriptions data, this question has to be tempered, because it is only possible to get an accurate count since 2004- 01-01, because of the missing stops prior to that date.
+The answer to this question relies on an observation: the number of cus- tomers who are active on a given day is the number who started on or before that day minus the customers who stopped on or before that day. The preced- ing question simplifies into two other questions: How many customers started as of a given day? How many customers stopped as of a given day?
+These questions are readily answered with the combination of SQL and Excel. The mechanism is to count the number of starts and stops on each day using SQL. Excel is then used to accumulate the numbers up to any given date, and then to subtract the cumulative number of stops from the cumulative number of starts. The following SQL finds all the starts by day, grouping all the pre-2004 starts into one bucket:
+  SELECT thedate, SUM(nstarts) as nstarts, SUM(nstops) as nstops
+  FROM ((SELECT (CASE WHEN start_date >= ‘2003-12-31’ THEN start_date
+                      ELSE ‘2003-12-31’ END) as thedate,
+                COUNT(*) as nstarts, 0 as nstops
+         FROM subs
+         WHERE start_date IS NOT NULL
+         GROUP BY (CASE WHEN start_date >= ‘2003-12-31’ THEN start_date
+                        ELSE ‘2003-12-31’ END) )
+        UNION ALL
+        (SELECT (CASE WHEN stop_date >= ‘2003-12-31’
+                      THEN stop_date ELSE ‘2003-12-31’ END) as thedate,
+                0 as nstarts, COUNT(*) as nstops
+         FROM subs
+         WHERE start_date IS NOT NULL AND stop_date IS NOT NULL
+         GROUP BY (CASE WHEN stop_date >= ‘2003-12-31’
+Chapter 5 ■ It’s a Matter of Time 225
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼THEN stop_date ELSE ‘2003-12-31’ END) )
+￼)a
+GROUP BY thedate
+ORDER BY 1
+￼￼The query works by separately counting starts and stops, combining the results using UNION ALL, and then reporting the start and stop numbers for each date. Starts and stops prior to 2004 are placed in the 2003-12-31 bucket. The query uses UNION ALL rather than a JOIN because there may be dates that have no starts and there may be dates that have no stops.
+The Subs table has 181 records where the START_DATE is set to NULL. With no start date, these rows could either be excluded (the choice here) or the start date replaced with some reasonable value (if one is known). Notice that both subqueries have the restriction on start date not being NULL, even though one subquery counts starts and the other stops. Both subqueries need to include the same group of customers. Because the second subquery counts stops, it has an additional restriction that customers have stopped.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼226 Chapter 5 ■ It’s a Matter of Time
+￼￼Excel then does the cumulative sums of the starts and stops, as shown in Figure 5-13. The difference between the cumulative starts and the cumulative stops is the number of active customers on each day since the beginning of 2004.
+Figure 5-13: This Excel screen shot shows a worksheet that calculates the number of customers on each day.
+How Many Customers of Different Types?
+The overall number of customers on any given day can be broken out by cus- tomer attributes. The following query is a modification of the previous query for the breakdown by market:
+  SELECT thedate, SUM(numstarts) as numstarts,
+         SUM(CASE WHEN market = ‘Smallville’ THEN numstarts ELSE 0
+END) as smstarts, ...
+         SUM(numstops) as numstops,
+         SUM(CASE WHEN market = ‘Smallville’ THEN numstops ELSE 0
+END) as smstops, ...
+  FROM ((SELECT (CASE WHEN start_date >= ‘2003-12-31’ THEN start_date
+                      ELSE ‘2003-12-31’ END) as thedate,
+                market, COUNT(*) as numstarts, 0 as numstops
+         FROM subs
+         WHERE start_date IS NOT NULL
+         GROUP BY (CASE WHEN start_date >= ‘2003-12-31’ THEN start_date
+                        ELSE ‘2003-12-31’ END), market )
+        UNION ALL
+        (SELECT (CASE WHEN stop_date >= ‘2003-12-31’
+                      THEN stop_date ELSE ‘2003-12-31’ END) as thedate,
+                market, 0 as numstarts, COUNT(*) as numstops
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 227
+￼￼￼FROM subs
+WHERE start_date IS NOT NULL AND stop_date IS NOT NULL
+GROUP BY (CASE WHEN stop_date >= ‘2003-12-31’
+￼￼￼￼)a
+GROUP BY thedate
+ORDER BY 1
+THEN stop_date ELSE ‘2003-12-31’ END), market )
+￼￼Each subquery aggregates by date and also market. In addition, the outer query sums the starts and stops separately for each market. The data is handled the same way in Excel, with the starts and stops being accumulated, and the differ- ence between them being the number active in each market on any given day.
+Figure 5-14 shows the results of the query. The results show that Gotham is always the largest market and Smallville the smallest. It appears, though, that Smallville is catching up to Gotham. In addition, there also seems to be an increase in all three markets at the end of 2005, and a decrease in 2006. The decrease for Gotham is larger than for the other two markets. Interestingly, there are no Smallville stops until Oct 26, 2004. Apparently, the different mar- kets have different cut-off dates.
+1,400,000 1,200,000 1,000,000
+800,000 600,000 400,000 200,000
+Gotham
+Metropolis
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Smallville
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0
+Jan Apr Jul Oct Jan Apr Jul Oct Jan Apr Jul Oct Jan
+2004 2004 2004 2004 2005 2005 2005 2005 2006 2006 2006 2006 2007
+Figure 5-14: This chart shows the number of active customers by day in each market.
+How Many Customers by Tenure Segment?
+A tenure segment specifies how long customers have been active. For instance, customers might be divided into three such segments: the first-year segment, consisting of those who have been around less than one year; the second-year segment, consisting of those who have been around between one and two years; and the long-term segment.
+This section extends the counting of active customers over time to active customers by tenure segment. Of course, the definition of the groups of inter- est can vary, because there is nothing sacrosanct about milestones at one and
+www.it-ebooks.info
+Active Customers
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼228 Chapter 5 ■ It’s a Matter of Time
+￼￼two years. The specific question is: On any given date, how many subscribers have been around for one year, for two years, and for more than two years?
+The answer to this question relies on a few observations about the relation- ship between the size of a tenure segment on the day and the size on the day before. This logic uses a mathematical technique called induction.
+The number of customers in the first-year segment on a particular date con- sists of:
+■■ All the customers in the first-year segment the day before,
+■■ Minus the first-year segment customers who graduated (by passing the
+one year milestone) on that date,
+■■ Minus the first-year segment customers who stopped on that date,
+■■ Plus new customers who started on that date.
+The number of customers in the second-year segment consists of:
+■■ All the second-year segment customers who were around the day before,
+■■ Minus the second-year segment customers who graduated (by passing the two year milestone),
+■■ Minus the second-year segment customers who stopped on that date,
+■■ Plus customers who graduated from the first-year segment on that date.
+Finally, the number of customers in the long-term segment is determined by:
+■■ All the long-term segment customers who were around the day before,
+■■ Minus the long-term segment customers who stopped,
+■■ Plus customers who graduated from the second-year segment.
+These rules suggest the information that is needed to keep track of the seg- ments on a day-by-day basis. The first is the number of customers who enter each segment on each day. For the first-year segment, this is the number of cus- tomers who start. For the second-year segment, it is the customers who pass their 365-day milestone. For the long-term customers, it is the customers who pass their 730-day milestone. Also needed is the number of customers within each segment who stop.
+Figure 5-15 shows the dataflow processing for this calculation. The first three subqueries calculate the number of customers that enter each segment at a given unit of time. The last row calculates the segment when customers stop. These are then combined using UNION ALL and then summarized for output.
+www.it-ebooks.info
+￼READ subs
+READ subs
+READ subs
+READ subs
+FILTER start_date IS NOT NULL
+FILTER start_date IS NOT NULL, tenure >= 365
+FILTER start_date IS NOT NULL tenure >= 365*2
+FILTER start_date IS NOT NULL, stop_date IS NOT NULL
+APPEND thedate = greatest(start_date, ‘2003-12-31’)
+APPEND thedate = greatest(start_date+365 ‘2003-12-31’)
+APPEND thedate = greatest(start_date+ 365*2, ‘2003-12-31)
+AGGREGATE group by thedate
+numstarts = COUNT(*)
+segment 2 enters
+AGGREGATE group by thedate
+year1 = COUNT(*)
+segment 3 enters
+AGGREGATE group by thedate
+year2 = COUNT(*)
+UNION ALL
+AGGREGATE group by thedate
+numstarts = sum(numstarts), enters1 = sum(year1), enters2 = sum(year2), stops0 = sum(year0stops), stops1 = sum(year1stops), stop2pl = sum(year2plstops)
+SORT
+year, month
+OUTPUT
+APPEND
+thedate = greatest(stop_date, ‘2003-12-31’),
+seg1stop = (tenure < 365), seg2stop = 365<=tenure<365*2 – 1) seg3stop = (tenure >= 365*2)
+all segment stops
+AGGREGATE group by thedate
+year0stops = sum(seg1stop), year1stops = sum(seg2stop), year2stops = sum(seg3stop)
+Figure 5-15: The dataflow processing shows how to calculate the number of customers that enter and leave each tenure segment.
+The following SQL corresponds to this dataflow:
+  SELECT thedate, SUM(numstarts) as numstarts, SUM(year1) as enters1,
+         SUM(year2) as enters2, SUM(year0stops) as stops0,
+         SUM(year1stops) as stops1, SUM(year2plstops) as stops2pl
+  FROM ((SELECT (CASE WHEN start_date >= ‘2003-12-31’ THEN start_date
+                      ELSE ‘2003-12-31’ END) as thedate,
+                COUNT(*) as numstarts, 0 as YEAR1, 0 as YEAR2,
+                0 as year0stops, 0 as year1stops, 0 as year2plstops
+         FROM subs
+         WHERE start_date IS NOT NULL
+         GROUP BY (CASE WHEN start_date >= ‘2003-12-31’ THEN start_date
+                        ELSE ‘2003-12-31’ END))
+        UNION ALL
+        (SELECT (CASE WHEN start_date >= ‘2002-12-31’
+                      THEN DATEADD(day, 365, start_date)
+                      ELSE ‘2003-12-31‘ END) as thedate,
+                0 as numstarts, COUNT(*) as YEAR1, 0 as YEAR2,
+                0 as year0stops, 0 as year1stops, 0 as year2plstops
+FROM subs
+WHERE start_date IS NOT NULL AND tenure >= 365
+GROUP BY (CASE WHEN start_date >= ‘2002-12-31’
+www.it-ebooks.info
+Chapter 5 ■ It’s a Matter of Time 229 segment 1 enters
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼230 Chapter 5 ■ It’s a Matter of Time
+THEN DATEADD(day, 365, start_date)
+                               ELSE ‘2003-12-31’ END))
+               UNION ALL
+               (SELECT (CASE WHEN start_date >= ‘2001-12-31’
+                             THEN DATEADD(day, 365*2, start_date)
+                             ELSE ‘2003-12-31’ END) as thedate,
+                       0 as numstarts, 0 as year1, COUNT(*) as year2,
+                       0 as year0stops, 0 as year1stops, 0 as year2plstops
+                FROM subs
+                WHERE start_date IS NOT NULL AND tenure >= 365*2
+                GROUP BY (CASE WHEN start_date >= ‘2001-12-31’
+                               THEN DATEADD(day, 365*2, start_date)
+                               ELSE ‘2003-12-31’ END))
+               UNION ALL
+               (SELECT (CASE WHEN stop_date >= ‘2003-12-31’ THEN stop_date
+                             ELSE ‘2003-12-31’ END) as thedate,
+                       0 as numstarts,  0 as YEAR0, 0 as YEAR1,
+                       SUM(CASE WHEN tenure < 365 THEN 1 ELSE 0 END
+                          ) as year0stops,
+                       SUM(CASE WHEN tenure BETWEEN 365 AND 365*2 – 1
+                                THEN 1 ELSE 0 END) as year1stops,
+                       SUM(CASE WHEN tenure >= 365*2 THEN 1 ELSE 0 END
+                          ) as year2plstops
+                FROM subs
+                WHERE start_date IS NOT NULL AND stop_date IS NOT NULL
+                GROUP BY (CASE WHEN stop_date >= ‘2003-12-31’
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼)a
+GROUP BY thedate
+ORDER BY 1
+THEN stop_date ELSE ‘2003-12-31’ END) )
+￼￼This query follows the same logic as the dataflow. The first three subqueries calculate the number of customers who enter each segment. Separate sub- queries are needed because the entry dates are different. A customer who starts on 2005-04-01 enters the first-year segment on that date. The same cus- tomer enters the second-year segment on 2006-04-01, one year later. Each of these subqueries selects the appropriate group using the WHERE clause and the TENURE column. For the first segment, there is no restriction. For the second, the tenure is at least one year. For the third, the tenure is at least two years.
+The fourth subquery handles the stops for all three segments. Because the stop date does not change, only one subquery is needed for the three calcula- tions. The Excel calculation then follows the rules described at the beginning of this section.
+Figure 5-16 shows the three segments of customers using stacked area charts. This chart makes it possible to see the total number of customers as well as the breakdown between the different tenure segments over time.
+www.it-ebooks.info
+￼3,000,000 2,500,000 2,000,000 1,500,000 1,000,000
+500,000
+0
+Jan Apr Jul Oct Jan Apr Jul Oct Jan Apr Jul Oct Jan
+2004 2004 2004 2004 2005 2005 2005 2005 2006 2006 2006 2006 2007
+Long-Term Second-Year First-Year
+Figure 5-16: This chart shows the number of active customers broken out by one-year tenure segments.
+Simple Chart Animation in Excel
+This section goes back to the purchases dataset to investigate the delay between the date when an order is placed and when the last item is shipped, the fulfillment date. Investigating the fulfillment date gets rather complicated, because other features (such as the size of the order) undoubtedly have an effect on the delay. Visualizing the results is challenging, because there are two time dimensions, the duration and order date.
+This example provides an opportunity to show rudimentary chart anima- tion in Excel, using a Visual Basic macro. This is the only place in the book that uses macros, because even without them SQL and Excel are quite powerful for data analysis and visualization. However, the macro is quite simple and easy to implement.
+Order Date to Ship Date
+What is the delay between the order date and the fulfillment date? The following SQL query answers this question, breaking out the delay by number of units in the order:
+SELECT DATEDIFF(dd, orderdate, fulfilldate) as delay, COUNT(*) as cnt, SUM(CASE WHEN numunits = 1 THEN 1 ELSE 0 END) as un1,
+...
+SUM(CASE WHEN numunits = 5 THEN 1 ELSE 0 END) as un5,
+         SUM(CASE WHEN numunits >= 6 THEN 1 ELSE 0 END) as un6pl
+  FROM orders o JOIN
+       (SELECT orderid, MAX(shipdate) as fulfilldate
+        FROM orderline
+        GROUP BY orderid) ol
+www.it-ebooks.info
+Chapter 5 ■ It’s a Matter of Time 231
+Active Customers
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼232 Chapter 5 ■ It’s a Matter of Time
+￼￼￼￼        ON o.orderid = ol.orderid
+  WHERE orderdate <= fulfilldate
+  GROUP BY DATEDIFF(dd, orderdate, fulfilldate)
+  ORDER BY 1
+This query summarizes Orderline to get the last shipment date. As a reminder, the number of units is different from the number of distinct items. If a cus- tomer orders ten copies of the same book, that is one item but ten units.
+There are a handful of anomalies in the data, such as the twenty-two orders that completely shipped before the order was placed. There is obviously some reason for this, such as a mistake in the order date. For this discussion, these few extraneous cases are not of interest, so a WHERE clause eliminates them. It should also be noted that pending orders are not in the database, which is evi- dent because all rows in Orderline have valid SHIPDATEs.
+Figure 5-17 shows the cumulative proportion of orders shipped for different numbers of units. For all groups, over half the orders have been completely fulfilled within a week. The most common orders have one unit, and over 70% of these are fulfilled within one week.
+￼￼￼100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Figure 5-17: The delay from order to fulfillment depends on order size.
+As the curves stretch out into longer and longer delays, orders with more units do take longer to fulfill. At 50 days, about 98% of the smaller orders have been fulfilled, compared to 94% of the large orders. Looking at it the other way, fewer than 2% of the smaller orders have such a long delay, whereas about 6% of the larger orders do.
+Although it is difficult to see on the chart, something interesting happens in the first few days. Of all the groups, orders with six or more units actually
+￼￼￼￼￼￼￼￼￼1 Unit
+2 Units
+￼3 Units
+￼4 Units
+￼5 Units
+6 or More
+￼￼￼￼￼￼￼￼￼0 7 14 21 28 35 42 49
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼have the largest proportion shipping on the day the order is placed. This means that the curve for the largest orders crosses all the other curves. Curves that cross like this are often interesting. Is something going on?
+TIP Curves that intersect are often a sign that something interesting is happening, suggesting ideas for further investigation.
+To investigate this, let’s ask the question: What is the relationship between the number of units in an order and the number of distinct products? The hypothesis is that larger orders are actually more likely to have only one product, so they can ship efficiently. Of course, orders with only one unit have only one prod- uct, so these don’t count for the comparison. The following SQL calculates the proportion of orders having one product among the orders with a given num- ber of units:
+  SELECT numunits, COUNT(*),
+         AVG(CASE WHEN numprods = 1 THEN 1.0 ELSE 0 END) as prop1prod
+  FROM (SELECT orderid, SUM(numunits) as numunits,
+               COUNT(DISTINCT productid) as numprods
+        FROM orderline ol
+        GROUP BY orderid) a
+  WHERE numunits > 1
+  GROUP BY numunits
+  ORDER BY 1
+The subquery counts the number of units and the number of distinct products in each order. Notice that the number of units is calculated from Orderline by sum- ming the NUMUNITS column. An alternative would be to use the NUMUNITS column in Orders, but that would require joining the tables together.
+Figure 5-18 shows a bubble plot of the results. The horizontal axis is the number of units in the order. The vertical is the proportion of the orders that consists of only one product. The size of each bubble is the log of the number of orders (calculated in Excel using the LOG() function). Larger bubbles account for even more orders than the bubbles suggest because the bubble size is based on the log.
+The first and largest bubble is missing, because all orders with only one unit have only one product. For larger orders, the proportion of one-product orders starts off fairly low. For orders with two units, it is 21.8%; for three, 13.9%. However, the proportion then starts increasing. For orders with six or more units, almost one third (32.1%) have only one product. These one-product orders are the ones that ship quickly, often on the same day they are placed. The orders with more products take longer to fulfill.
+Chapter 5 ■ It’s a Matter of Time 233
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼234 Chapter 5 ■ It’s a Matter of Time
+￼￼100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Figure 5-18: This bubble chart shows that as the number of units increases in an order, more orders have only one product.
+Order Date to Ship Date by Year
+The previous section showed the overall situation with delays in shipping orders. The question now includes changes over time: Does the delay between the order date and fulfillment date change from year to year? To calculate the delay for any given year, extend the WHERE clause in the delay query, restricting the resultstoaparticularyear;somethinglike“AND YEAR(ORDERDATE) = 2014”.
+This section proposes another solution where the data for all years is brought into Excel. Then, a subset of the data is placed into another group of cells, a “one-year” table, which in turn is used for generating a chart. This makes it possible to flip between the years, simply by changing the contents of one cell in the spreadsheet.
+Querying the Data
+The query to fetch the results simply adds YEAR(ORDERDATE) as an aggregation on the query that calculates the delays:
+SELECT YEAR(orderdate) as yr,
+DATEDIFF(dd, orderdate, fulfilldate) as delay,
+COUNT(*) as cnt,
+SUM(CASE WHEN numunits = 1 THEN 1 ELSE 0 END) as un1, ...
+SUM(CASE WHEN numunits = 5 THEN 1 ELSE 0 END) as un5, SUM(CASE WHEN numunits >= 6 THEN 1 ELSE 0 END) as un6pl
+  FROM orders o JOIN
+       (SELECT orderid, MAX(shipdate) as fulfilldate
+        FROM orderline
+        GROUP BY orderid) ol
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 5 10 15 20 25 30 35 40 45 50
+Number of Units in Order
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+Percent with One Product
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 235
+￼￼￼￼￼￼       ON o.orderid = ol.orderid AND o.orderdate <= ol. fulfilldate
+  GROUP BY  YEAR(orderdate), DATEDIFF(dd, orderdate, fulfilldate)
+  ORDER BY 1, 2
+These results pose a challenge for charting. There are almost one thousand rows. The data could be plotted on a single chart, but it is not clear how to make the chart intelligible. There are already several different curves for the number of units, leaving year and delay on the horizontal axis. A separate graph for each year, such as shown already in Figure 5-16, would be much easier to interpret.
+Creating the One-Year Excel Table
+The one-year table is a group of cells that contains the delay information for a single year. It has the same columns and rows as the original data, except for the year column because the year is in a special cell, which we’ll call the year- cell. The data in the table is keyed off of this cell, so when the value is updated, the table is updated for that year.
+One column in the one-year table is the delay. This starts at zero and is incre- mented by one until it reaches some large number (the maximum delay in the data is 625). The one-year table finds the appropriate value in the overall data using the year in the year-cell and the delay on the row. There are three steps needed to make this work.
+First, a lookup key is added to the query results to facilitate finding the appropriate row in the original data by the combination of year and delay. This additional column consists of the year and delay concatenated together to create a unique identifier:
+  <key> = <year>&“:”&<delay>
+The first value, for instance, is “2009:1” — a colon is used to separate the two values.
+The second step is to find the offset into the table by matching each row in the one-year table to this column. The Excel function MATCH()looks up the value in its first argument in a list and returns the offset where the value is found in the list. If the value is not found, it returns NA() (when the third argu- ment is FALSE):
+  <offset> = MATCH(<year cell>&“:”&<delay>, <key column>, FALSE)
+The third step is to get the right data for each cell in the one-year table by using the OFFSET() function to skip down <offset>-1 rows from the top of each col- umn. Figure 5-19 shows a screen shot of Excel with the formulas for the “1 Unit” column.
+The one-year table is now keyed off of the year-cell. Changing the value in that cell causes the table to be updated.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼236 Chapter 5 ■ It’s a Matter of Time
+￼￼￼Figure 5-19: These Excel formulas show the formulas for constructing the intermediate table for one year of data for the “1 Unit” column.
+Creating and Customizing the Chart
+Figure 5-20 shows the resulting chart for one year. Notice that this chart has a title that incorporates the year. This is accomplished by pointing the title box to a cell that has a formula for the title, using the following steps:
+1. Placethedesiredtitletextinacell,whichcanbeaformula:=”Days from Order to Fulfillment by Units for “&<year-cell>.
+2. Add an arbitrary title to the chart by right-clicking inside the chart, choosing “Chart Option,” going to the “Titles” tab, and inserting some text in the “Chart Title” box. Then exit the dialog box.
+3. Clickonceonthecharttitletoselectthetext.Thentype“=”andpoint to the cell with the title. Voila! The cell contents become the chart title.
+600
+500
+1 Unit
+Days from Order to Fulfillment by Units for 2009
+￼￼￼￼￼￼￼￼￼￼￼￼￼400 2 Units
+￼￼￼￼￼300 200 100
+3 Units
+4 Units
+5 Units
+6 or More
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0
+0 7 14 21 28 35 42 49
+Delay from Order to Fulfillment (Days)
+Figure 5-20: This chart shows the delay information for one year.
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+Number of Orders
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 5 ■ It’s a Matter of Time 237
+￼￼￼￼SIMPLE ANIMATION USING EXCEL MACROS
+Excel macros are a very powerful component of Excel. They provide the capability to customize Excel using the power of a full programming language, Visual Basic. Because the focus of this book is on analyzing data, macros are generally outside the scope. However, one is so useful, simple, and impressive that it is worth including. The one is the animation macro.
+The text describes the ability to create a chart whose contents are determined by the value in the year-cell. Animating the chart just requires automatically incrementing the year cell, starting at one value, ending at another, and waiting for a small number of seconds in between. To set this up, we’ll put the start value, the end value, and the time increment in the three cells adjacent to the year cell, so they look something like:
+YEAR START END SECONDS
+2009 2009 2016 1
+The macro automatically increments the year-cell. First, create a macro by going to the Tools ➪ Macro ➪ Macros menu. In the “Macro Name” box, type in a name, such as “animate,” and then click the “Create” menu button. This brings up the Visual Basic editor. The following macro code then creates the macro (the template that automatically appears consists of the first and last lines of this code):
+   Sub animate()
+       Dim startval As Integer, endval As Integer
+       startval = ActiveCell.Offset(0, 1).Value
+       endval = ActiveCell.Offset(0, 2).Value
+       For i = startval To endval
+           ActiveCell.Value = i
+           Application.Wait(Now() +
+               TimeValue(ActiveCell.Offset(0, 3).Text))
+Next i End Sub
+When the code appears, leave the Visual Basic editor by going to the “File” menu and choosing “Close and Return to Microsoft Excel” (or use the key <alt>Q). This adds the macro into the current Excel file. The macro gets saved with the workbook.
+To use the macro, place the cursor on the year-cell, go to the Tools ➪ Macro ➪ Macros dialog box, and choose “Run.” It is also possible to assign the macro to a keystroke through the “Options” on the dialog box.
+This example uses animation to walk through time values, which changes both the chart and the corresponding table. The more impressive demonstration is to just watch the chart. Animation can be used to walk through other values, such as products, number of units, and so on.
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼238 Chapter 5 ■ It’s a Matter of Time
+￼￼With this mechanism, the chart title and chart contents both update when the value in the year-cell changes. The aside “Simple Animation Using Excel Macros” discusses how to take this one step further with a rudimentary animation.
+Lessons Learned
+Time is important for understanding the universe and time is important for data analysis. In databases, times and dates are stored with six components: years, months, days, hours, minutes, and seconds. In addition, dates can also have a time zone attached. The structure is complicated, but within one database, times and dates tend to be from one time zone and at the same level of precision.
+As with other data types, dates and times need to be validated. The most important validations are checking the range of values and verifying that dates have no extraneous time component.
+Analyzing dates starts with the values and the counts themselves. Looking at counts and aggregations over time is valuable, whether the number of cus- tomers, or the order size, or the amount spent. Seasonal patterns appear in the data, further showing what customers are really doing. Many businesses have weekly cycles. For instance, stops may be higher on weekdays than on week- ends. Comparisons at the day level show these differences. Trend lines or weekly summaries remove them, highlighting longer-term patterns instead.
+Individual time values are interesting, more so are durations between two values. Duration can be measured in many different ways, such as days between two dates or months between two dates. One challenge is determin- ing the number of a particular day of the week, such as Mondays, between two dates. However, even this is possible with SQL and Excel.
+This chapter presents two important applications involving dates. The first is calculating the number of customers active on a particular date, which is simply the number who started as of that date minus the number who stopped before that date. This can be broken out by different groups, includ- ing tenure groups.
+The last example looks at changes over time in a duration value — the delay from when a customer places an order to when the order is fulfilled. With two time dimensions, the best way to visualize this is through a simple Excel animation, which requires just a dab of macro programming.
+The next chapter continues the exploration of time through survival analy- sis, the part of statistics that deals with time-to-event problems.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

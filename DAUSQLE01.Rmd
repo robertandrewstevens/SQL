@@ -1,0 +1,929 @@
+---
+title: "DAUSQLE01"
+author: "Robert A. Stevens"
+date: "April 14, 2016"
+output: html_document
+---
+
+*Data Analysis Using SQL and Excel* by Gordon S. Linoff
+
+# CHAPTER 1: A Data Miner Looks at SQL
+
+Everywhere data is being collected, every transaction, every web page visit, every payment — all these and much, much more are filling relational databases with raw data. Computing power and storage have been growing more cost effective over the past decades, a trend destined to continue in the future. Databases are no longer merely a platform for storing data. They are increasingly becoming powerful engines for transforming data into information, useful information about customers and products and business practices.
+
+The focus on data mining has historically been on complex algorithms developed by statisticians and machine learning specialists. Not too long ago, data mining required downloading source code from a research lab or university, compiling the code to get it to run, sometimes even debugging it. By the time the data and software were ready, the business problem had lost urgency.
+
+This book takes a different approach because it starts with the data. The billions of transactions that occur every day — credit cards swipes, web page visits, telephone calls, and so on — are now almost always stored in relational databases. This technology, which was only invented in the 1970s, is now the storehouse of the mountains of data available to businesses. Relational database engines count among the most powerful and sophisticated software products in the business world, so they are well suited for the task of extracting useful information.
+
+The focus of this book is more on data and what to do with data and less on theory and proofs. Instead of trying to squeeze every last iota of information from a small sample — the goal of much statistical analysis — the goal is to find something useful in the gigabytes and terabytes of data stored by many businesses.
+
+This book strives to assist anyone facing the problem of analyzing large databases, by describing the power of data analysis using SQL and Excel. SQL, which stands for Structured Query Language, is a language used to extract information from relational databases. Excel is a popular and useful tool for analyzing smaller amounts of data and presenting results. Its historical limit of 65,536 rows is even an advantage. If the source data fits easily in Excel, then Excel is probably powerful enough for analyzing it. Large databases start where Excel leaves off, and 65,536 rows is as good a definition of a large database as any.
+
+The various chapters of this book are intended to build skill in and enthusiasm for SQL queries and the graphical presentation of results. Throughout the book, the SQL queries are used for more and more sophisticated types of analyses, starting with basic summaries of tables, and moving to data exploration. The chapters continue with methods for understanding time-to-event problems, such as when customers stop, and market basket analysis for understanding what customers are purchasing. The chapters continue with various techniques for building models. The final chapter, which introduces customer signatures, is about putting data into the format that works best for many traditional statistical and data mining tools.
+
+This chapter introduces SQL for data analysis and data mining. Admittedly, this introduction is heavily biased, because the purpose is to explain SQL for the purpose of querying databases rather than building and managing them. SQL is presented from three different perspectives, some of which may resonate more strongly with different groups of readers. The first perspective is the structure of the data, with a particular emphasis on entity-relationship diagrams. The second is the processing of data using dataflows, which happen to be what is “under the hood” of most relational database engines. The third, and strongest thread through subsequent chapters, is the syntax of SQL itself. Although data is well described by entities and relationships, and processing by dataflows, ultimately the goal is to express the transformations in SQL and present the results through Excel.
+
+## Picturing the Structure of the Data
+
+In the beginning, there is data. Although data may seem to be without form and chaotic, there is an organization to it, an organization based on tables and columns and relationships between and among them.
+
+This section describes databases by the data they contain. It introduces entity-relationship diagrams, in the context of the datasets (and associated data models) used with this book. These datasets are not intended to represent all the myriad different ways that data might be stored in databases; instead, they are intended as practice data for the ideas in the book. They are available on the companion web site, along with all the examples in the book.
+
+### What Is a Data Model?
+
+The definition of the tables, the columns, and the relationships among them constitute the data model for the database. A well-designed database actually has two data models. The logical data model explains the database in terms that business users understand. The logical data model is very important for communicating the contents of the database because it defines many business terms and how they are stored in the database.
+
+The physical data model explains how the database is actually implemented. In many cases, the physical data model is identical to or very similar to the logical data model. That is, every entity in the logical data model corresponds to a table in the database; every attribute corresponds to a column. This is true for the datasets used in this book.
+
+On the other hand, the logical and physical data models can differ. This is particularly true for larger and more complicated databases, because certain performance issues drive physical database design. A single entity might have rows split into several tables to improve performance, enhance security, enable backup-restore functionality, or facilitate database replication. Multiple similar entities might be combined into a single table, especially when they have many attributes in common. Or, a single entity could have different columns in different tables, with the most commonly used columns in one table and less commonly used ones in another table (this is called vertical partitioning, and is one method for improving query performance). Often these differences are masked through the use of views and other database constructs.
+
+The logical model is quite important for analytic purposes, because it provides an understanding of the data from the business perspective. However, queries actually run on the database represented by the physical model, so it is convenient that the logical and physical structures are often quite similar.
+
+### What Is a Table?
+
+A table is a set of rows and columns that describe multiple instances of something — such as purchases customers have made, or visits to a web page, or zip codes with demographic details. Each row is an instance and each column contains one attribute, one item of information about the instance.
+
+Any given column contains the same genre of information for all rows. So a zip code column should not be the “sent-to” zip code in one row and the “billed-to” zip code in another. Although these are both zip codes, they represent two different uses of the zip code, so they belong in two separate columns.
+
+Some columns are permitted to take on the value NULL meaning that the value in a given row is not available or appropriate for a given instance. For instance, a row describing customers might contain a column for birthdate. This column would take on the value of NULL for all rows where the birthdate is not known.
+
+A table can have as many columns as needed to describe an instance, although for practical purposes tables with more than a few hundred columns are rare. A table can have as many rows as needed; here the numbers easily rise to the millions and even billions, because these often represent customers or customer transactions.
+
+As an example, Table 1-1 shows a few rows and columns from the Zipcensus table (which is available on the companion web site). This table shows that each zip code is in a particular state, which is the abbreviation in the STATE column. There is also a STATE2 column because some zip codes have parts in several states. For instance, 10004 is a zip code in New York City that covers Ellis Island. In 1998, the Supreme Court split jurisdiction of the island between New York and New Jersey, but the Post Office did not change the zip code. So, 10004 has a portion in New York and a smaller, unpopulated portion in New Jersey.
+
+Table 1-1: Some Rows and Columns from Zipcensus
+
+ZIPCODE STATE STATE2 POPULATION LAND AREA MILES
+------- ----- ------ ---------- ---------------
+10004   NY    NJ          1,225          0.6156 
+33156   FL    <NULL>     31,450         14.0901 
+48706   MI    <NULL>     40,647         69.7815
+55403   MN    <NULL>     14,873          1.3903 
+73501   OK    <NULL>     22,230        345.7548 
+92264   CA    <NULL>     18,869         45.9745
+
+Each zip code also has an area, which is measured in square miles and recorded in the LANDAREAMILES column. This column simply contains a number, and the database does not know what this number means. It could be area in acres, or square kilometers, or square inches, or pyongs (a Korean unit for area). What the number really means depends on information not stored in the tables. Metadata describes what the values in columns mean.
+
+Databases typically do store some information about each column. Conveniently, there is often a label or description (and it is a good idea to fill this in when creating a table). More importantly, there is the data type of the column and whether NULL values are allowed. The next two sections discuss these two topics, because they are quite important for analyzing data.
+
+#### Allowing NULL Values
+
+Nullability is whether or not a column may contain the NULL value. By default in SQL, a column in any row can contain a special value that says that the value is empty. Although this seems quite useful, NULLs have some unusual side effects. Almost every comparison and function returns NULL if any argument is NULL. So, the following simple query looks like it counts all the rows in the Zipcensus table where the STATE2 column is NULL. However, this query always returns zero:
+
+```
+SELECT COUNT(*)
+FROM zipcensus zc
+WHERE zc.state <> NULL
+```
+
+All comparisons return FALSE when either argument is NULL, so no rows are ever selected. The count is zero even though STATE has many non-NULL values. Of course, determining which rows have NULL values is quite useful, so SQL provides the special operators IS NULL and IS NOT NULL to make the comparison. These behave as expected, with the preceding query returning 32,038 instead of 0.
+
+The problem is more insidious when comparing column values, either within a single table or between tables. For instance, the column STATE contains the primary state of a zip code and STATE2 contains the second state, if any. The following query counts the number of zip codes in total and the number where these two state columns have different values:
+
+```
+SELECT COUNT(*),
+       SUM(CASE WHEN state <> state2 THEN 1 ELSE 0 END) as numsame
+FROM zipcensus zc
+```
+
+Or does it? The columns STATE and STATE2 should always have different values, so the two counts should be the same. In reality, the query returns the values 32,038 and 42. Once again, the problem is NULL values. When STATE2 is NULL, the test always fails.
+
+When a table is created, there is the option to allow NULL values on each row in the table. This is a relatively minor decision when creating the table. However, making mistakes on columns where NULL values are present is easy.
+
+WARNING Designing databases is different from analyzing the data inside them. For example, NULL columns can cause unexpected — and inaccurate — results when analyzing data and make reading queries difficult. Be very careful when using columns that allow them.
+
+#### Column Types
+
+The second important attribute of a column is its type, which tells the database exactly how to store values. A well-designed database usually has parsimonious columns, so if two characters suffice for a code, there is no reason to store eight. From the perspective of data analysis, the myriad of available column types is more detail than needed. However, there are a few important aspects of column types and the roles that columns play.
+
+Primary key columns uniquely identify each row in the table. That is, no two rows have the same value for the primary key. Databases guarantee that primary keys are unique by refusing to insert rows with duplicate primary keys. Chapter 2 shows techniques to determine whether this condition holds for any given column.
+
+Numeric values are values that support arithmetic and other mathematical operations. In SQL, these can be stored in different ways, such as floating-point numbers, integers, decimals, and long integers. The details of how these formats differ is much less important than what can be done with numeric data types.
+
+Within the category of numeric types, one big difference is between integers, which have no fractional part, and real numbers, which do. When doing arithmetic on integers, the result might be an integer or it might be a real number, depending on the database. So 5/2 might evaluate to 2 rather than 2.5, and the average of 1 and 2 might turn out to be 1 instead of 1.5. To avoid this problem, examples in this book multiply integer values by 1.0 to convert them to decimal values as necessary.
+
+Of course, just because it walks like a duck and talks like a duck does not mean that it is a duck. False numeric values are values that look like numbers, but really are not. Zip codes (in the United States) are a good example, as are primary key columns stored as numbers. What is the sum of two zip codes? What does it mean to multiply a primary key value by 2? These questions yield nonsense results (although the values can be calculated). Zip codes and primary keys just happen to look like numbers, but really are not.
+
+In the datasets used in this book, zip codes are stored as character strings, but various primary keys are numbers. Often when writing false numerics, this book left pads the numbers with 0s so they have a constant length. After all, the zip code for Harvard Square in Cambridge, MA, is 02138, not 2,138.
+
+Dates and date-times are exactly what their names imply. There are many things we want to do with them, such as determining the number of days between two dates, extracting the year and month, and comparing two times. There are functions that do all of these things. Unfortunately, most are not part of the SQL standard, so they often differ between databases. The Appendix provides a list of equivalent functions in different databases for functions used in this book, including date and time functions.
+
+Another type of data is character string data. These are commonly codes, such as the state abbreviation in the zip code table, or a description of something, such as a product name or the full state name. SQL has some very rudimentary functions for handling character strings, which in turn support rudimentary text processing. Spaces at the end of a character string are ignored, so the condition “NY” = “NY “ evaluates to TRUE. However, spaces at the beginning of a character string are counted, so “NY” = “ NY” evaluates to FALSE. When working with data in character columns, it might be worth checking out whether there are spaces at the beginning (which is an example in Chapter 2).
+
+### What Is an Entity-Relationship Diagram?
+
+The “relational” in the name “relational databases” refers to the fact that different tables relate to each other via keys, and to the fact that columns in a given row relate to the values for that column. For instance, a zip code column in any table can link (that is “relate”) to the zip code table. The key makes it possible to look up information available in the zip code table. For instance, Figure 1-1 shows the relationships between tables in the purchases dataset.
+
+Figure 1-1: This entity-relationship diagram shows the relationship among entities in the purchase dataset. Each entity corresponds to one table.
+
+These relationships have a characteristic called cardinality, which is the number of items related on each side. For instance, the relationship between Orders and Zipcensus is a zero/one-to-many relationship. This specifies that for every row in Orders there is at most one zip code. And, every zip code has zero, one, or more orders. Typically, this relationship is implemented by having a column in the first table contain the zip code, which is called a foreign key. A foreign key is just a column whose contents are the primary key of another table (ZIPCODE in Orders is a foreign key; ZIPCODE in Zipcensus is a primary key). To indicate that there is no match, the foreign key column could be nullable or contain a default missing value (such as “00000” which would indicate an invalid zip code).
+
+There are some other interesting relationships between entities. The zero/one-to-one relationship says that there is at most one match between two tables. This is often a subsetting relationship. For instance, a database might contain sessions of web visits, some of which result in a purchase. Any given session would have zero or one purchases. Any given purchase would have exactly one session.
+
+Another relationship is a many-to-many relationship. A customer might purchase many different products and any given product might be purchased by many different customers. In fact, the purchase dataset does have a many-to-many relationship between Orders and Products; this relationship is represented by the Orderline entity, which has a zero/one-to-many relationship with each of those.
+
+Another type of relationship is the one-at-a-time relationship. At any given time, a customer resides in a particular zip code. However, the customer might move over time. Or, at any given time, a customer might have a particular handset or billing plan, but these can change over time.
+
+With this brief introduction to entity-relationship diagrams, the following sections describe the datasets used in this book.
+
+### The Zip Code Tables
+
+The Zipcensus table consists of more than one hundred columns describing each zip code, or, strictly speaking, each zip code tabulation area (ZCTA) defined by the Census Bureau for the 2000 Census. This information was gathered from the census web site. Zipcensus derives information from 16 census tables, each of which has information about a particular aspect of the zip code. These 16 tables are a small subset of the hundreds of tables available from the Census Bureau.
+
+The first few columns consist of overview information about each zip code, such as the state, the second state, population, latitude, and longitude. In addition to population, there are four more counts: the number of households, the number of families, the number of housing units, and the number of occupied housing units. Each of these has information associated with them.
+
+The following information is available for the general population:
+
+- Proportion of population in various racial categories.
+
+- Proportion of population with various levels of education (among adults 25 years and older).
+
+The following information is available for households:
+
+- Proportion of population in various household configurations, such as the household size, gender of head of household, and presence of children.
+
+- Proportion of households with social security income.
+
+- Proportion of households on public assistance.
+
+- Median household income.
+
+The following information is available for families:
+
+- Proportion of families with 1999 income in various groups.
+
+The following information is available for housing units:
+
+- Proportion with complete and lacking plumbing facilities.
+
+The following information is available for occupied housing units:
+
+- Proportion that are owned and rented.
+
+- Proportion that are occupied by 1, 2, 3, 4, 5, 6, and 7 or more people.
+
+- Proportion that use various types of heating fuel.
+
+- Proportion with various combinations of unmarried couples.
+
+Information on the columns and exact definitions of terms such as ZCTA are available at www.census.gov.
+
+The second zip code table is Zipcounty, a companion table that maps zip codes to counties. It contains information such as the following:
+
+- County name;
+
+- Post office name;
+
+- Population of county;
+
+- Number of households in county; and,
+
+- County land area.
+
+This table has one row for each zip code, so it can be joined to Zipcensus and to other tables using the ZIPCODE column.
+
+### Subscription Dataset
+
+The subscription data is a simple example of an entity-relationship diagram, because it consists of only two entities, shown in Figure 1-2. This dataset paints a picture of a subscriber at a given point in time (the date when the snapshot was created).
+
+Figure 1-2: An entity-relationship diagram with only two entities describes the data in the customer snapshot dataset.
+
+The Subs table describes customers in a subscription business. It is an example of a snapshot table that shows what customers (and former customers) look like as of a particular date. The columns in this table describe customers as they start and as they stop. This particular snapshot table does not have any intermediate behavior information.
+
+The Calendar table is a general-purpose table that has information about dates, including:
+
+- Year;
+
+- Month number;
+
+- Month name;
+
+- Day of month;
+
+- Day of week;
+
+- Day of year; and,
+
+- Holiday information.
+
+This table has the date as a primary key, and covers dates from 1950 through 2050.
+
+### Purchases Dataset
+
+The purchases dataset contains entities typical of retail purchases; the entities in this dataset and their relationships are shown in Figure 1-1:
+
+- Customer;
+
+- Orders;
+
+- Orderline;
+
+- Product;
+
+- Campaign;
+
+- Zipcensus;
+
+- Zipcounty; and,
+
+- Calendar.
+
+The data in the purchases dataset captures the important entities associated with retail purchases. The most detailed information is in the Orderline table, which describes each of the items in an order. To understand the terminology, think of a receipt. Each line on the receipt represents a different item in the purchase. In addition, the line has other information such as the product number, the price, and the number of items, which are all in this table. To tie all the items in a single purchase together, each row of Orderline has an ORDERID.
+
+Each ORDERID, in turn, represents one row in the Orders table. This has information such as the date and time of the purchase, where the order was shipped to, and the type of payment. It also contains the total dollar amount of the purchase, summed up from the individual items. Because all order lines are in exactly one order and each order can have multiple order lines, there is a one-to-many relationship between these tables.
+
+By the way, it is generally good practice to name entities in the singular, so Order would be preferred to Orders. However, ORDER is a keyword in SQL, so it is simpler to use the plural in this particular case.
+
+Just as the ORDERID ties multiple order lines into an order, the CUSTOMERID assigns orders made at different points in time to the same customer. The existence of the CUSTOMERID prompts the question of how it is created. In one sense, it makes no difference how it is created; the CUSTOMERID is simply a given, defining the customer in the database. On the other hand, on occasion, it might be worth asking whether it is doing a good job — are a single customer’s purchases being tied together most of the time? The aside “The Customer ID: Identifying Customers Over Time” discusses the creation of customer IDs.
+
+```
+```
+
+**THE CUSTOMER ID: IDENTIFYING CUSTOMERS OVER TIME**
+
+The CUSTOMERID column combines transactions over time into a single grouping, the customer (or household or similar entity). How is this accomplished? It all depends on the business and the business processes. Here are some ways:
+
+- The purchases might contain name and address information. So, purchases with matching names and addresses would have the same customer ID.
+
+- The purchases might all have telephone numbers, so the telephone number could provide the customer ID.
+
+- Customers may have loyalty cards, and the loyalty number might provide the customer ID.
+
+- The purchases might be on the web, so browser cookies could identify customers over time.
+
+- The purchases might all be by credit card, so purchases with the same credit card number would have the same customer ID.
+
+- And, of course, any combination of these or other methods might be used.
+
+There are many ways to identify the same customer over time.
+
+And all of these have their challenges. What happens when a customer purchases a new computer (and the web cookie changes) or deletes her web cookies? Or when customers forget their loyalty cards (so the loyalty numbers are not attached to the purchases)? Or move? Or change phone numbers? Or change their names? Keeping track of customers over time can be challenging.
+
+```
+```
+
+The Product table provides information about products, such as the product group name and the full price. The table does not contain detailed product names. These were removed as part of the effort to anonymize the data.
+
+The data model contains the Calendar table, which provides lookup information for dates. The final two tables in Figure 1-1 are Zipcensus and Zipcounty. These are the tables that provide information about zip codes and the lookup for county names.
+
+## Picturing Data Analysis Using Dataflows
+
+Tables store data, but tables do not actually do anything. Tables are nouns; queries are verbs. This book mates SQL and Excel for data manipulation, transformation, and presentation. However, these two tools are very different from each other. The differences are exacerbated because they often support the same operations, although in very different ways. For instance, SQL uses the GROUP BY clause to summarize data in groups. An Excel user, on the other hand, might use pivot tables, use the subtotal wizard, or manually do calculations using functions such as SUMIF(); however, nothing in Excel is called “group by.”
+
+Because this book intends to combine the two technologies, it is useful to have a common way of expressing data manipulations and data transformations, a common language independent of the tools being used. Dataflows provide this common language by showing the transformation operations fitting together like an architecture blueprint for data processing, a blueprint that describes what needs to be done, without saying which tool is going to do the work. This makes dataflows a powerful mechanism for thinking about data transformations.
+
+### What Is a Dataflow?
+
+A dataflow is a graphical way of visualizing data transformations. Dataflows have two important elements. The nodes in a dataflow diagram perform transformations on data, taking zero or more inputs and producing output. The edges in a dataflow diagram are pipes connecting the nodes. Think of the data flowing through the pipes and getting banged and pushed and pulled and flattened into shape by the nodes. In the end, the data has been transformed into information.
+
+Figure 1-3 shows a simple dataflow that adds a new column, called SCF for Sectional Center Facility (something the U.S. Post Office uses to route mail). This column is the first three digits of a zip code. The output is each zip code with its SCF. The dataflow has four nodes, connected by three edges. The first, shaped like a cylinder, represents a database table or file and is the source of the data. The edge leaving this node shows some of the records being passed from it, records from the Zipcensus table.
+
+The second node appends the new column to the table, which is also visible along the edge leading out from the node. The third selects two columns for output — in this case, ZIPCODE and SCF. And the final node simply represents the output. On the dataflow diagram, imagine a magnifying glass that makes it possible to see the data moving through the flow. Seeing the data move from node to node makes it easier to understand what is happening in the flow.
+
+The actual processing could be implemented in either SQL or Excel. The SQL code corresponding to this dataflow is:
+
+SELECT zc.zipcode, SUBSSTRING(zc.zipcode, 1, 3) as scf
+FROM zipcensus zc
+
+Alternatively, if the data in Zipcensus were in an Excel worksheet with the zip codes in column A, the following formula would extract the SCF:
+
+```
+= MID(A1, 1, 3)
+```
+
+Of course, the formula would have to be copied down the column.
+
+Figure 1-3: A simple dataflow reads the ZIPCODE, calculates and appends a new field called SCF, and outputs the SCF and ZIPCODE.
+
+Excel, SQL, and dataflows are three different ways of expressing similar transformations. The advantage of dataflows is that they provide an intuitive way of expressing data manipulations, independent of the tool used for the processing. Dataflows facilitate understanding, but in the end, the work described in this book will be in SQL or Excel.
+
+TIP When column A has a column of data and we want to copy a formula down column B, the following is a handy method based on keyboard shortcuts:
+
+1. Type the formula in the first cell in column B where there is data in column A.
+
+2. Move the cursor to column A.
+
+3. Hit <control>-<down arrow> to go to the end of the data in column A.
+
+4. Hit <right arrow> to move to column B.
+
+5. Hit <control>-<shift>-<up arrow> to highlight all of column B.
+
+6. Hit <control>-D to copy the formula down the column.
+
+Voila! The formula gets copied without a lot of fiddling with the mouse and with menus.
+
+### Dataflow Nodes (Operators)
+
+Dataflows are a good way to think about the data transformations that SQL can accomplish. These, in turn, depend on a few basic types of nodes, which are explained in this section. Later in this chapter are several examples of dataflows along with the SQL used to produce them.
+
+#### READ: Reading a Database Table
+
+The READ operator reads all the columns of data from a database table or file. In SQL, this operation is implicit when tables are included in the FROM clause of a query. The READ operator does not accept any input dataflows, but has an output. Generally, if a table is needed more than once in a dataflow, there is a separate READ for each occurrence.
+
+#### OUTPUT: Outputting a Table (or Chart)
+
+The OUTPUT operator creates desired output, such as a table in a row-column format or some sort of chart based on the data. The OUTPUT operator does not have any outputs, but accepts inputs. It also accepts parameters describing the type of output.
+
+#### SELECT: Selecting Various Columns in the Table
+
+The SELECT operator chooses one or more columns from the input and passes them to the output. It might reorder columns and/or choose a subset of them. The SELECT operator has one input and one output. It accepts parameters describing the columns to keep and their order.
+
+#### FILTER: Filtering Rows Based on a Condition
+
+The FILTER operator chooses rows based on a TRUE or FALSE condition. Only rows that satisfy the condition are passed through, so it is possible that no rows ever make it through the node. The FILTER operator has one input and one output. It accepts parameters describing the condition used for filtering.
+
+#### APPEND: Appending New Calculated Columns
+
+The APPEND operator appends new columns, which are calculated from existing columns and functions. The APPEND operator has one input and one output. It accepts parameters describing the new columns.
+
+#### UNION: Combining Multiple Datasets into One
+
+The UNION operator takes two or more datasets as inputs and creates a single output that combines all rows from both of them. The input datasets need to have exactly the same columns. The UNION operator has two or more inputs and one output.
+
+#### AGGREGATE: Aggregating Values
+
+The AGGREGATE operator groups its input based on zero or more aggregate key columns. All the rows with the same key values are summarized, and the output contains the aggregate key columns and the summaries. The AGGREGATE operator takes one input and produces one output. It also takes parameters describing the aggregate keys and the summaries to produce.
+
+#### LOOKUP: Looking Up Values in One Table in Another
+
+The LOOKUP operator takes two inputs, a base table and a reference table, which have a key in common. The reference table should have at most one row for each key value. The LOOKUP operator appends one or more columns in the reference table to the base table, based on matching key values. The LOOKUP operator assumes that all keys in the base table are in the reference table. It takes two parameters. The first describes the key and the second describes which columns to append. Although this can also be accomplished with a JOIN, the LOOKUP is intended to be simpler and more readable.
+
+#### CROSSJOIN: General Join of Two Tables
+
+The CROSSJOIN operator takes two inputs and combines them in a very specific way. It produces a wider table that contains all the columns in the two inputs. Every row in the output corresponds to a pair of rows, one from each input. For instance, if the first table has four rows, A, B, C, and D, and the second has three rows, X, Y, and Z, then the output consists of all twelve combinations of these: AX, AY, AZ, BX, BY, BZ, CX, CY, CZ, DX, DY, and DZ. This is the general join operation.
+
+#### JOIN: Join Two Tables Together Using a Key Column
+
+The JOIN operator takes two inputs and a join condition, and produces an output that has all the columns in the two tables. The join condition specifies that at least one column in one table is equal to one column in the other. This common type of join, called an equijoin, is important for performance reasons when optimizing queries.
+
+With an equijoin, it is possible to “lose” rows in one or both of the inputs. This occurs when there is no matching row in the other table. Because it is sometimes desirable to ensure that all rows in one or the other table are represented in the output, there is a slight variation called an outer join. Specifically, the LEFT OUTER JOIN keeps all rows in the first input table and the RIGHT OUTER JOIN keeps all rows in the second. Although it might seem desirable, a FULL OUTER JOIN is not available in standard SQL, so is not included here as an option.
+
+#### SORT: Ordering the Results of a Dataset
+
+The SORT operator orders its input dataset based on one or more sort keys. It takes a parameter describing the sort keys and the sort order (ascending or descending).
+
+### Dataflows, SQL, and Relational Algebra
+
+Beneath the skin of many relational databases is an engine that is essentially a dataflow engine. Because dataflows focus on data and because SQL focuses on data, they are natural allies.
+
+Historically, though, SQL has a slightly different theoretical foundation based on mathematical set theory. This foundation is called relational algebra, an area in mathematics that defines operations on unordered sets of tuples. A tuple is a lot like a row, consisting of attribute-value pairs. Although there are some small theoretical differences, an attribute-value pair is essentially the same as a column in a given row with its value. Relational algebra then includes a bunch of operations on sets of tuples, operations such as union and intersection, joins and projections, which are similar to the dataflow constructs just described.
+
+The notion of using relational algebra to access data is credited to E. F. Codd who, while a researcher at IBM in 1970, wrote a paper called “A Relational Model of Data for Large Shared Data Banks.” This paper became the basis of using relational algebra for accessing data, eventually leading to the development of SQL and modern relational databases.
+
+A set of tuples is a lot like a table, but not quite. There are some theoretical differences between the two, such as the fact that a table can contain duplicate rows but a set of tuples cannot have duplicates. One difference, however, stands out: sets of tuples have no ordering, so there is no concept of the first, second, and third tuple in a set of them. To most people (or at least most people who are not immersed in set theory), tables have a natural order, defined perhaps by a primary key or perhaps by the sequence that rows were originally loaded into the table.
+
+As a legacy of the history of relational algebra, standard SQL provides no construct for extracting the first row, or the first ten rows, from a table. Because databases live in the real world, most databases provide some mechanism for this functionality, as shown in Appendix A. Relational algebra is an elegant theory that inspired the creation of modern databases; dataflows, on the other hand, are probably more intuitive to most people and come closer to explaining how databases and data processing actually work.
+
+## SQL Queries
+
+This section provides the third perspective on SQL, an introduction to the SQL querying language. In one way, this introduction is only the tip of the iceberg of the SQL language, because it focuses on one aspect: extracting information from the database using queries. The querying part of SQL is the visible portion of an iceberg whose bulky mass is hidden from view. The hidden portion is the data management side of the language — the definitions of tables and views, inserting rows, updating rows, defining triggers, stored procedures, and so on. As data miners and analysts, our goal is to exploit the visible part of the iceberg, by extracting useful information from the database.
+
+SQL queries answer specific questions. Whether the question being asked is actually the question being answered is a big issue for database users. The examples throughout this book include both the question and the SQL that answers it. Sometimes, small changes in the question or the SQL produce very different results.
+
+### What to Do, Not How to Do It
+
+An important characteristic of SQL, as a language, is its non-procedural nature. That is, SQL explains what needs to be done to data, but not how this is accomplished. This approach has several advantages. A query is isolated from the hardware and operating system where it is running. The same query should return equivalent results in two very different environments.
+
+Being non-procedural means that SQL needs to be compiled into computer code on any given computer. This provides an opportunity to optimize it to run as fast as possible for the given data on a given computer. There are generally many different algorithms lurking inside a database engine, ready to be used under just the right circumstances. The specific optimizations, though, might be quite different in different environments.
+
+Another advantage of being non-procedural is that SQL can take advantage of parallel processing. The language itself was devised in a world where computers were very expensive, had a single processor, limited memory, and one disk. The fact that SQL has adapted to modern system architectures where CPUs, memory, and disks are plentiful is a testament to the power and scalability of the ideas underlying relational database paradigm. When Codd wrote his paper suggesting relational algebra for “large data banks,” he was probably thinking of a few megabytes of data, an amount of data that now easily fits in an Excel spreadsheet and pales in comparison to the terabytes of data found in corporate repositories.
+
+### A Basic SQL Query
+
+A good place to start with SQL is with the simplest type of query, one that selects a column from a table. Consider, once again, the query that returned zip codes along with the SCF:
+
+```
+SELECT zc.zipcode, SUBSTRING(zc.zipcode, 1, 3) as scf
+FROM zipcensus zc
+```
+
+This query returns a table with two columns, one for the zip code and one for the scf. The rows might be returned in any order. In most databases, the rows are returned in the order that they are placed in the table, but you should never depend on this fact.
+
+If you want the rows in a particular order, add an explicit ORDER BY clause to the query:
+
+```
+SELECT zc.zipcode, SUBSTRING(zc.zipcode, 1, 3) as scf
+FROM zipcensus zc
+ORDER BY zc.zipcode
+```
+
+TIP If you want the result from a query to be in a particular order, add an ORDER BY clause. Without one, never assume that the result of a query will be in a particular order.
+
+Although this is a simple query, it already shows some of the structure of the SQL language. All queries begin with the SELECT clause that lists the columns being returned. The tables being acted upon come from the FROM clause, which follows the SELECT statement. And, the ORDER BY is the last clause in the query.
+
+This example uses only one table, Zipcensus. In the query, this table has a table alias, or abbreviation, called zc. Throughout the query, “zc” refers to this table. So, the first part of the SELECT statement is taking the ZIPCODE column from zc. Although table aliases are optional in SQL, as a rule this book usually uses them, because aliases clarify where columns are coming from.
+
+The second column returned by the query is calculated from the zip code itself, using the SUBSTRING() function, which in this case extracts the first three characters from the zip code. SUBSTRING() is just one of dozens of functions provided by SQL, and specific databases generally provide the ability for users to define functions. The second column has a column alias. That is, the column is named “SCF,” which is the header of the column in the output.
+
+The following query is a simple modification that returns the zip codes and SCFs only in Minnesota:
+
+```
+SELECT zc.zipcode, SUBSTRING(zc.zipcode, 1, 3) as scf
+FROM zipcensus zc
+WHERE state = ‘MN’
+ORDER BY 1
+```
+
+The query has an additional clause, the WHERE clause, which, if present, always follows the FROM clause. The WHERE clause specifies a condition; in this case, that only rows where the STATE column is equal to “MN” are included by the query. The ORDER BY clause then sorts the rows by the first column; the “1” is a reference to the first column, in this case, ZC.ZIPCODE. Alternatively, the column name could be used in the ORDER BY clause.
+
+The dataflow corresponding to this modified query is in Figure 1-4. In this dataflow, the WHERE clause has turned into a filter after the data source, and the ORDER BY clause has turned into a SORT operator just before the output. Also notice that the dataflow contains several operators, even for a simple SQL query. SQL is a parsimonious language; some complex operations can be specified quite simply.
+
+TIP When a column value is NULL, any comparison in a WHERE clause — with the important exception of “IS NULL” — always returns FALSE. So, the clause “WHERE state <> ‘MN‘” really means “WHERE state IS NOT NULL AND state <> ‘MN‘”.
+
+### A Basic Summary SQL Query
+
+A very powerful component of SQL is the ability to summarize data in a table. For instance, the following SQL counts the number of zip codes in the Zipcensus table:
+
+```
+SELECT COUNT(*) as numzip
+FROM zipcensus zc
+```
+
+This query returns the number of rows in the table, and its form is very similar to the basic select query. The function COUNT(*), not surprisingly, counts the number of rows. The “*” means that all rows are being counted. It is also possible to count a column, such as COUNT(ZIPCODE), which counts the number of rows that do not have a NULL zip code.
+
+Figure 1-4: A WHERE clause in a query adds a filter node to the dataflow.
+
+The preceding query is an aggregation query that treats the entire table as a single group. Within this group, the query counts the number of rows — which is the number of rows in the table. A very similar query returns the number of zip codes in each state:
+
+```
+SELECT state, COUNT(*) as numzip
+FROM zipcensus zc
+GROUP BY state
+ORDER BY 2 DESC
+```
+
+Conceptually, this query is quite similar to the previous one. The GROUP BY clause says to treat the table as consisting of several groups defined by the different values in the column STATE. The result is then sorted in reverse order of the count (DESC stands for “descending”), so the state with the most zip codes (Texas) is first. Figure 1-5 shows the dataflow diagram for this query.
+
+In addition to COUNT(), standard SQL offers three other useful aggregation functions. The SUM() and AVG() functions compute, respectively, the sum and average of numeric values. COUNT(DISTINCT) returns the number of distinct values. An example of using it is to answer the following question: How many SCFs are in each state?
+
+Figure 1-5: This dataflow diagram describes a basic aggregation query. 
+
+The following query answers this question:
+
+```
+SELECT zc.state, COUNT(DISTINCT SUBSTRING(zc.zipcode, 1, 3)) as numscf
+FROM zipcensus zc
+GROUP BY zc.state
+ORDER BY zc.state
+```
+
+This query also shows that functions, such as SUBSTRING(), can be nested in the aggregation functions. SQL allows arbitrarily complicated expressions. Chapter 2 has other ways to answer this question using subqueries.
+
+### What it Means to Join Tables
+
+Because they bring together information from two tables, joins are perhaps the most powerful feature of SQL. SQL is non-procedural, so the database engine can figure out the most effective way to execute the join — and there are often dozens of algorithms and variants for the database engine to choose from. A lot of programming and algorithms are hidden beneath this simple construct.
+
+As with anything powerful, joins need to be used carefully — not sparingly, but carefully. It is very easy to make mistakes using joins, especially the following two:
+
+- “Mistakenly” losing rows in the result set, and
+
+- “Mistakenly” adding unexpected additional rows.
+
+Whenever joining tables, it is worth asking whether either of these could be happening. These are subtle questions, because the answer depends on the data being processed, not by the syntax of the expression itself. There are examples of both problems throughout the book.
+
+The discussion of joins is about what joins do to data and how to use them rather than on the multitude of algorithms for implementing them (although the algorithms are quite interesting — to some people — they don’t help us understand customers and data). The most general type of join is the cross-join. The discussion then explains the more common variants: look up joins, equijoins, nonequijoins, and outer joins.
+
+TIP Whenever joining two tables, ask yourself the following two questions:
+
+1. Could one of the tables accidentally be losing rows, because there are no matches in the other table?
+
+2. Could the result set unexpectedly have duplicate rows due to multiple matches between the tables?
+
+The answers require understanding the underlying data.
+
+#### Cross-Joins: The Most General Joins
+
+The most general form of joining two tables is called the cross-join or, for the more mathematically inclined, the Cartesian product of the two tables. As discussed earlier in the section on dataflows, a cross-join on two tables results in an output consisting of all columns from both tables and every combination of rows from one table with rows from the other. The number of rows in the output grows quickly as the two tables become bigger. If the first table has four rows and two columns, and the second has three rows and two columns, then the resulting output has twelve rows and four columns. This is easy enough to visualize in Figure 1-6.
+
+Because the number of rows in the output is the number of rows in each table multiplied together, the output size grows quickly. If one table has 3,000 rows and the other 4,000 rows, the result has 12,000,000 rows — which is a bit too big to illustrate here. The number of columns is the sum of the number of columns in each input table.
+
+Tables in the business world often have thousands, or millions, or even more rows, so a cross-join quickly gets out of hand, with even the fastest computers. If this is the case, why are joins so useful, important, and practical?
+
+The reason is that the general form of the join is not the form that gets used very often, unless one of the tables is known to have only one row. By imposing some restrictions — say by imposing a relationship between columns in the two tables — the result becomes more tractable. However, even though more specialized joins are more commonly used, the cross-join is still the foundation that explains what they are doing.
+
+Figure 1-6: A cross-join on two tables, one with four rows and one with three rows, results in a new table that has twelve rows and all columns from both tables.
+
+#### Lookup: A Useful Join
+
+Zipcensus is an example of a reference table that contains data derived from the 2000 census summarized at the zip code level. Each row describes a zip code and any given zip code appears exactly once in the table. As a consequence, the zip code column is called the primary key, making it possible to look up census information at the zip code level using a zip code column in another table. Intuitively, this is one of the most natural join operations, using a foreign key in one table to look up values in a reference table.
+
+A lookup join makes the following two assumptions about the base and reference tables:
+
+- All values of the key in the base table are in the reference table (missing join keys lose rows unexpectedly).
+
+- The lookup key is the primary key in the reference table (duplicate join keys cause unexpected rows).
+
+Unfortunately, SQL does not provide direct support for lookups because there is no simple check that these two conditions are true. However, the join mechanism does make it possible to do lookups, and this works smoothly when the two preceding conditions are true.
+
+Consider the SQL query that appends the zip code population to each row of the Orders table, as an example of a lookup:
+
+```
+SELECT o.orderid, o.zipcode, zc.population
+FROM orders o JOIN
+     zipcensus zc
+     ON o.zipcode = zc.zipcode
+```
+
+This example uses the ON clause to establish the condition between the tables. There is no requirement that the condition be equality in general, but for a lookup it is.
+
+From the dataflow perspective, the lookup could be implemented with CROSSJOIN. The output from the CROSSJOIN is first filtered to the correct rows (those where the two zip codes are equal) and the desired columns (all columns from Orders plus POPULATION) are selected. Figure 1-7 shows a dataflow that appends a population column to the Orders table using this approach. Of course, using the LOOKUP operator is simpler, but it is not directly implemented in SQL.
+
+Figure 1-7: In SQL, looking up a value in one table is theoretically equivalent to creating the cross-join of the two tables and then restricting the values.
+
+Unlike the dataflow diagram, the SQL query describes that a join needs to take place, but does not explain how this is done. The cross-join is one method, although it would be quite inefficient in practice. Databases are practical, so database writers have invented many different ways to speed up this type of operation. And, there are better ways to do a lookup. The details of such performance enhancements are beyond the scope of this book, and often proprietary to each database. It is worth remembering that databases are practical, not theoretical, and the database engine is usually trying to optimize the run-time performance of queries.
+
+Although the preceding query does implement the look up, it does not guarantee the two conditions mentioned earlier. If there were multiple rows in Zipcensus for a given zip code, there would be extra rows in the output (because any matching row would appear more than once). If there were key values in Orders but not in Zipcensus, rows would unexpectedly disappear. This, in fact, is the case and the output has fewer rows than the original Orders table.
+
+Having multiple rows in Zipcensus for a given zip code is not an outlandish idea. For instance, Zipcensus could also include rows for the 1990 and 2010 censuses, which would make it possible to see changes in zip codes over time. One way to do this would be to have another column, say, CENSUSYEAR to specify the year of the census. Now the primary key would be a compound key composed of ZIPCODE and CENSUSYEAR together. A join on the table using just zip code would result in multiple columns, one for each census year.
+
+#### Equijoins
+
+An equijoin is a join that has at least one restriction between the two tables being joined, and this restriction asserts that two columns in the tables have equal values. In SQL, the restrictions are the conditions on the ON clause following the join statement. Note that these restrictions should always be connected by ANDs, not by ORs (unless you have a very good reason).
+
+Lookups are a good example of an equijoin, because the join asserts that a foreign key in one table equals a primary key in a reference table. Lookups are a special case though, where the number of rows output is exactly the number of rows in the table with the foreign key.
+
+An equijoin can return extra rows the same way that a cross-join can. If a column value in the first table is repeated three times, and the same value occurs in the second table four times, the equijoin between the two tables produces twelve rows of output for that column. In this example, the two columns are clearly not primary keys on their respective tables, because the same value appears on multiple rows. This is similar to the situation as depicted in Figure 1-6 that illustrates the cross-join. Using an equijoin, it is possible to add many rows to output that are not intended, especially when the equijoin is on non-key columns.
+
+Although joins on primary keys are more common, there are some cases where such a many-to-many equijoin is desired. The following question about the Zipcensus table does require a many-to-many equijoin to be answered in SQL: For each zip code, how many zip codes in the same state have a larger population?
+
+The following query answers this using a self-join, which simply means that two copies of the Zipcensus table are joined together. In this case, the equijoin uses the state column as a key, rather than the zip code column.
+
+```
+SELECT zc1.zipcode,
+       SUM(CASE WHEN zc1.population < zc2.population THEN 1
+                ELSE 0 END) as numzip
+FROM zipcensus zc1 JOIN zipcensus zc2
+     ON zc1.state = zc2.state
+GROUP BY zc1.zipcode
+```
+
+Notice that the Zipcensus table is mentioned twice in the FROM clause, in order to express the self-join.
+
+The dataflow for this query is shown in Figure 1-8. This dataflow reads the Zipcensus table twice, with the two going into the JOIN operator. The JOIN in the dataflow is an equijoin, because the self-join is on the STATE column. The results from the join are then aggregated. Chapter 8 introduces a special class of functions called window functions that simplify this type of query.
+
+#### Nonequijoins
+
+A nonequijoin is a join where none of the restrictions include an equality restriction between two columns. Nonequijoins are quite rare. This is fortunate because there are many fewer performance tricks available to make them run quickly. Often, a nonequijoin is actually a mistake and indicates an error.
+
+Note that when any of the restrictions are equality, the join is an equijoin. Consider the following question about the Orders table: How many orders are greater than the median rent where the customer resides?
+
+The following query answers this question:
+
+```
+SELECT zc.state, COUNT(*) as numrows
+FROM orders o JOIN
+     zipcensus zc
+     ON o.zipcode = zc.zipcode AND
+        o.totalprice > zc.hhumediancashrent
+GROUP BY zc
+```
+
+The JOIN in this query has two conditions, one specifies that the zip codes are equal and the other specifies that the total amount of the order is greater than the median rent in the zip code. This is still an example of an equijoin, because of the condition on zip code.
+
+Figure 1-8: This dataflow illustrates a self-join and an equijoin on a non-key column.
+
+#### Outer Joins
+
+The final type of join is the outer join, which guarantees that all rows from one of the tables remain in the result set, even if there are no matching rows in the other table. All the previous joins have been inner joins, meaning that only rows that match are included. For a cross-join, this does not make a difference, because there are many copies of rows from both tables in the result. However, for other types of joins, losing rows in one or the other table may not be desirable; hence the need for the outer join.
+
+Outer joins comes in two flavors: the LEFT OUTER JOIN ensures that all rows from the first table remain in the result set and the RIGHT OUTER JOIN ensures that all rows from the second table remain. The FULL OUTER JOIN ensures that all rows from both tables are kept, although this functionality is not available in all databases.
+
+What does this mean? Consider the Orders table, which has some zip codes that are not in the Zipcensus table. This could occur for several reasons. The Zipcensus table contains a snapshot of zip codes as of the year 2000, and new zip codes have appeared since then. Also, the Census Bureau is not interested in all zip codes, so they exclude some zip codes where no one lives. Or, perhaps the problem might lie in the Orders table. There could be mistakes in the ZIPCODE column. Or, as is the case, the Orders table might include orders from outside the United States.
+
+Whatever the reason, any query using the inner join eliminates all rows where the zip code in the Orders table does not appear in Zipcensus. Losing such rows could be a problem, which the outer join fixes. The only change to the query is replacing the word JOIN with the phrase LEFT OUTER JOIN:
+
+```
+SELECT zc.state, COUNT(*) as numrows
+FROM orders o LEFT OUTER JOIN
+     zipcensus zc
+     ON o.zipcode = zc.zipcode AND
+        o.totalprice > zc.hhumediancashrent
+GROUP BY zc.state
+```
+
+The results from this query are not particularly interesting. The results are the same as the previous query with one additional large group for NULL. This is because when there is no matching row in Zipcensus, ZC.ZIPCODE is NULL. On the other hand, if the SELECT and GROUP BY used O.ZIPCODE instead, the orders with non-matching zip codes would be spread through all the states.
+
+Left outer joins are very practical. They are particularly important when there is one table that contains information about customers and we want to append more and more columns to create a customer signature. Chapter 12 is about creating customer signatures and uses them extensively.
+
+### Other Important Capabilities in SQL
+
+SQL has some other features that are used throughout the book. The goal here is not to explain every nuance of the language, because reference manuals and database documentation do a good job there. The goal here is to give a feel for the important capabilities of SQL needed for data analysis.
+
+#### UNION ALL
+
+UNION ALL is a set operation that combines all rows in two tables, by just creating a new table with all the rows from each input table. There is no cross-product as there is with the join operator, so the number of columns must be the same in each of the input tables. Unlike the join operations, all input tables must have the same columns in them. In practice, this means that UNION ALL is almost always operating on subqueries, because it is unusual for two tables to have exactly the same columns.
+
+SQL has other set operations, such as UNION and INTERSECTION. The UNION operation combines the rows in two tables together, and then removes duplicates. This means that UNION is much less efficient than UNION ALL, so it is worth avoiding. INTERSECTION takes the overlap of two tables — rows that are in both. However, it is often more interesting to understand the relationship between two tables — how many items are in both and how many are in each one but not the other. Solving this problem is discussed in Chapter 2.
+
+#### CASE
+
+The CASE statement makes it possible to transform data conditionally. It has the general form:
+
+```
+CASE WHEN <condition-1> THEN <value-1> 
+     ...
+     WHEN <condition-n THEN <value-n>
+     ELSE <default-value> END
+```
+
+The <condition> clauses look like conditions in a WHERE clause; they can be arbitrarily complicated. The <value> clauses are values returned by the statement, and these should all be the same type. The <condition> clauses are evaluated in the order they are written. When no <else> condition is present, the CASE statement returns NULL when previous clauses do not match.
+
+One common use of the CASE statement is to create indicator variables. Consider the following question: How many zip codes in each state have a population of more than 10,000 and what is the total population of these? The following SQL statement is, perhaps, the most natural way of answering this question:
+
+```
+SELECT zc.state, COUNT(*) as numbigzip, SUM(population) as popbigzip
+FROM zipcensus zc
+WHERE population > 10000
+GROUP BY zc.state
+```
+
+This query uses a WHERE clause to choose the appropriate set of zip codes. 
+
+Now consider the related question: How many zip codes in each state have a population of more than 10,000, how many have a population of more than 1,000, and what is the total population of each of these sets?
+
+Unfortunately, the WHERE clause solution no longer works, because two overlapping sets of zip codes are needed. One solution would be to run two queries. This gets messy, though, especially because combining the results into a single query is easy:
+
+```
+SELECT zc.state,
+       SUM(CASE WHEN population > 10000 THEN 1 ELSE 0 END) as num_10000,
+       SUM(CASE WHEN population > 1000  THEN 1 ELSE 0 END) as num_1000,
+       SUM(CASE WHEN population > 10000 THEN population ELSE 0 END
+          ) as num_10000,
+       SUM(CASE WHEN population > 1000  THEN population ELSE 0 END
+          ) as num_1000
+FROM zipcensus zc
+GROUP BY zc.state
+```
+
+Notice that in this version, the SUM() function is being used to count the zip codes that meet the appropriate condition. COUNT() is not the right function, because it would count the number of non-NULL values.
+
+TIP When a CASE statement is nested in an aggregation function, the appropriate function is usually SUM(), sometimes AVG(), and very rarely COUNT(). Check to be sure that you are using SUM() even when “counting” things up.
+
+It is worth making a few comments about these queries. The following two statements are very close to being the same, but the second lacks the ELSE clause:
+
+```
+SUM(CASE WHEN population > 10000 THEN 1 ELSE 0 END) as num_10000,
+SUM(CASE WHEN population > 10000 THEN 1 END) as num_10000,
+```
+
+Both of these count the number of zip codes where population is greater than 10,000. The difference is what happens when there are no zip codes with such a large population. The first returns the number 0. The second returns NULL. Usually when counting things, it is preferable to have the value be a number rather than NULL, so the first form is generally preferred.
+
+The CASE statement can be much more readable than the WHERE clause because the CASE statement has the condition in the SELECT, rather than much further down in the query. On the other hand, the WHERE clause provides more opportunities for optimization, so in some cases it could run faster.
+
+#### IN
+
+The IN statement is used in a WHERE clause to choose items from a set. The following WHERE clause chooses zip codes in New England states:
+
+```
+WHERE state IN (‘VT’, ‘NH’, ‘ME’, ‘MA’, ‘CT’, ‘RI’)
+```
+
+This use is equivalent to the following:
+
+```
+WHERE (state = ‘VT‘ OR
+       state = ‘NH‘ OR
+       state = ‘ME‘ OR
+       state = ‘MA‘ OR
+       state = ‘CT‘ OR
+       state = ‘RI‘)
+```
+
+The IN statement is easier to read and easier to modify.
+
+Similarly, the following NOT IN statement would choose zip codes that are not in New England:
+
+```
+WHERE state NOT IN (‘VT‘, ‘NH‘, ‘ME‘, ‘MA‘, ‘CT‘, ‘RI‘)
+```
+
+This use of the IN statement is simply a convenient shorthand for what would otherwise be complicated WHERE clauses. The next section on subqueries explores another use of IN.
+
+## Subqueries Are Our Friend
+
+Subqueries are exactly what their name implies, queries within queries. They make it possible to do complex data manipulation within a single SQL statement, exactly the types of manipulation needed for data analysis and data mining.
+
+In one sense, subqueries are not needed. All the manipulations could be accomplished by creating intermediate tables, and combining them. The resulting SQL would be a series of CREATE TABLE statements and INSERT statements (or possibly CREATE VIEW), with simpler queries. Although such an approach is sometimes useful, especially when the intermediate tables are used multiple times, it suffers from several problems.
+
+First, instead of thinking about solving a particular problem, the analyst ends up thinking about the data processing, the naming of intermediate tables, determining the types of columns, remembering to remove tables when they are no longer needed, deciding whether to build indexes, and so on. All the additional bookkeeping activity distracts from solving business problems.
+
+Second, SQL optimizers can often find better approaches to running a complicated query than people can. So, writing multiple SQL statements impedes the optimizer from doing its job.
+
+Third, maintaining a complicated chain of queries connected by tables can be quite cumbersome. For instance, adding a new column might require adding new columns in all sorts of places.
+
+Fourth, the read-only SQL queries that predominate in this book can be run with a minimum of permissions for the user — simply the permissions to run queries. Running complicated scripts requires create and modify permissions on at least part of the database. These permissions are dangerous, because an analyst might inadvertently damage the database. Without these permissions, it is impossible to cause such damage.
+
+Subqueries can appear in many different parts of the query, in the SELECT clause, in the FROM clause, and in the WHERE clause. However, this section approaches subqueries by why we want to use them rather than where they appear syntactically.
+
+### Subqueries for Naming Variables
+
+When it comes to naming variables, SQL has a shortcoming. The following is not syntactically correct in most SQL dialects:
+
+```
+SELECT population as pop, pop + 1
+```
+
+That is, the SELECT statement names columns for the output of the query, but these column names cannot be used in the same clause. Because queries should be at least somewhat understandable to humans, as well as database engines, this is a real shortcoming. Complicated expressions should have names.
+
+Fortunately, subqueries provide a solution. The earlier query that summarized zip codes by population greater than 10,000 and greater than 1,000 could instead use a subquery that is clearer about what is happening:
+
+```
+SELECT zc.state,
+       SUM(is_pop_10000) as num_10000,
+       SUM(is_pop_1000) as num_1000,
+       SUM(is_pop_10000*population) as pop_10000,
+       SUM(is_pop_1000*population) as pop_1000
+FROM (SELECT zc.*,
+             (CASE WHEN population > 10000 THEN 1 ELSE 0 END
+             ) as is_pop_10000,
+             (CASE WHEN population > 1000 THEN 1 ELSE 0 END
+             ) as is_pop_1000
+      FROM zipcensus zc
+     ) zc
+GROUP BY zc.state
+```
+
+This version of the query uses two indicator variables, IS_POP_10000 and IS_POP_1000. These take on the value of 0 or 1, depending on whether or not the population is greater than 10,000 or 1,000. The query then sums the indicators to get the counts, and sums the product of the indicator and the population to get the population count. Figure 1-9 illustrates this process as a dataflow.
+
+TIP Subqueries with indicator variables, such as IS_POP_1000, are a powerful and flexible way to build queries.
+
+The dataflow does not include a “subquery.” SQL needs the subquery because the aggregation functions are using the indicator variables.
+
+Figure 1-9: This dataflow illustrates the process of using indicator variables to obtain information about zip codes.
+
+One advantage of using indicator variables is that they are easy to change. For instance, changing the limit of 1000 to 500 only requires changing the indicator variable, rather than making multiple changes in several places that might (or might not) be consistent.
+
+Indicator variables are only one example of using subqueries to name variables. Throughout the book, there are many other examples. The purpose is to make the queries understandable to humans, relatively easy to modify, and might, with luck, help us remember what a query written six months ago is really doing.
+
+### Subqueries for Handling Summaries
+
+By far the most typical place for a subquery is as a replacement for a table in the FROM clause. After all, the source is a table and a query returns a table, so it makes a lot of sense to combine queries in this way. From the dataflow perspective, this use of subqueries is simply to replace one of the sources with a series of dataflow nodes.
+
+Consider the question: How many zip codes in each state have a population density greater than the average zip code population density in the state? The population density is the population divided by the land area, which is in the column LANDAREAMILES.
+
+Addressing this requires thinking about the different data elements needed to answer the question. The comparison is to the average zip code population density within a state. Obtaining the average zip code population density uses a subquery, which calculates the value for all zip codes in the state. The answer combines this information with the original zip code information, as in the following query:
+
+```
+SELECT zc.state, COUNT(*) as numzips,
+       SUM(CASE WHEN zc.popdensity > zcsum.avgpopdensity
+                THEN 1 ELSE 0 END) as numdenser
+FROM (SELECT zc.*,
+             population / landareamiles as popdensity
+      FROM zipcensus zc
+     ) zc JOIN
+     (SELECT zc.state, AVG(population / landareamiles) as avgpopdensity
+      FROM zipcensus zc
+      GROUP BY zc.state) zcsum
+    ON zc.state = zcsum.state
+GROUP BY zc.state
+```
+
+The dataflow diagram for this query follows the same logic and is shown in Figure 1-10.
+
+Figure 1-10: This dataflow diagram compares the zip code population density to the average zip code population density in a state.
+
+There are a few things to note about this query. First, the population density of each state is not the same as the average of the population density within each zip code. That is, the preceding question is different from: How many zip codes in each state have a population density greater than its state’s population density? The state’s population density would be calculated in zcsum as: 
+
+```
+SUM(population) / SUM(landareamiles) as statepopdensity
+```
+
+There is a relationship between these two densities. The zip code average gives each zip code a weight of 1, no matter how big in area or population. The state average is the weighted average of the zip codes by the land area of the zip codes.
+
+The proportion of zip codes that are denser than the average zip code varies from about 4% of the zip codes in North Dakota to about 35% in Florida. Never are half the zip codes denser than the average. The density where half the zip codes are denser and half less dense is the median density rather than the average or average of averages. Averages, average of averages, and medians are all different.
+
+### Subqueries and IN
+
+The IN and NOT IN operators were introduced earlier as convenient shorthand for complicated WHERE clauses. There is another version where the “in” set is specified by a subquery, rather than by a fixed list. For example, the following query gets the list of all zip codes in states with fewer than 100 zip codes:
+
+```
+SELECT zc.*
+FROM zipcensus zc
+WHERE zc.state IN (SELECT state
+                   FROM zipcensus
+                   GROUP BY state
+                   HAVING COUNT(*) < 100)
+```
+
+The subquery creates a set of all states in the Zipcensus table where the number of zip codes in the state is less than 100 (that is, DC, DE, HI, and RI). The HAVING clause sets this limit. HAVING is very similar to WHERE, except it is used for filtering rows after aggregating, rather than before. Then, the outer SELECT chooses zip codes when the state matches one of the states in the IN set. This process actually takes place as a join operation, as shown in Figure 1-11.
+
+#### Rewriting the “IN” as a JOIN
+
+Strictly speaking, the IN operator is not necessary, because queries with INs and subqueries can be rewritten as joins. For example, the previous query could instead be written as:
+
+```
+SELECT zc.*
+FROM zipcensus zc JOIN
+     (SELECT state, COUNT(*) as numstates
+      FROM zipcensus
+      GROUP BY state
+     ) zipstates
+     ON zc.state = zipstates.state AND
+        zipstates.numstates < 100
+```
+
+Note that in the rewritten query, the Zipstates subquery has two columns instead of one. The second column contains the count of zip codes in each state, and could be added to the first SELECT clause. Using the IN statement with a subquery, it is not possible to get this information.
+
+On the other hand, the IN does have a small advantage, because it guarantees that there are no duplicate rows in the output, even when the “in” set has duplicates. To guarantee this using the JOIN, aggregate the subquery by the key used to join the tables. In this case, the subquery is doing aggregation anyway to find the states that have fewer than one hundred zip codes. This aggregation has the additional effect of guaranteeing that there are no duplicate states in the subquery.
+
+#### Correlated Subqueries
+
+A correlated subquery occurs when the subquery in the IN clause includes a reference to the outer query. An example shows this best. Consider the following question: Which zip code in each state has the maximum population and what is the population?
+
+Figure 1-11: The processing for an IN with a subquery really uses a join operation.
+
+There are two different ways to approach this problem. The first is to use a correlated subquery. The second is using a standard join, because all correlated subqueries can be rewritten as joins. The correlated subquery looks like:
+
+```
+SELECT zc.state, zc.zipcode, zc.population
+FROM zipcensus zc
+WHERE zc.population IN (SELECT MAX(zcinner.population)
+                        FROM zipcensus zcinner
+                        WHERE zcinner.state = zc.state
+                        GROUP BY zcinner.state)
+ORDER BY zc.state
+```
+
+The “correlated” part of the subquery is the WHERE clause, which specifies that the states in the inner table match the states in the outer table. Conceptually, this query reads one row from Zc (the table referenced in the outer query). Then, the subquery finds all rows in Zcinner that match this state and finds the maximum population. If the original row matches this maximum, it is selected. The outer query then moves on to the next row.
+
+Correlated subqueries are generally cumbersome to understand. To make matters perhaps more confusing, the GROUP BY statement is strictly optional. Without the GROUP BY, the aggregation functions are present with no explicit aggregation. Although complicated, correlated subqueries are not a new way of processing the data; they are just another example of joins. The following query does exactly the same thing:
+
+```
+SELECT zc.state, zc.zipcode, zc.population
+FROM zipcensus zc JOIN
+     (SELECT zc.state, MAX(population) as maxpop
+      FROM zipcensus zc
+      GROUP BY zc.state) zcsum
+     ON zc.state = zcsum.state AND
+        zc.population = zcsum.maxpop
+ORDER BY zc.state
+```
+
+This query makes it clear that there is a summary of Zipcensus by STATE and that this summary chooses the maximum population. The JOIN then finds the zip code (or possibly zip codes) that match the maximum population, returning information about them. In addition, this method makes it possible to include another piece of information, the number of zip codes where the maximum population is achieved. This is simply another variable in Zcsum, calculated using COUNT(*).
+
+The examples throughout the book do not use correlated subqueries for SELECT queries, because they are more directly represented using joins, and these joins provide more flexibility for processing and analyzing data. They are, however, occasionally necessary when updating data.
+
+#### The NOT IN Operator
+
+The NOT IN operator can also use subqueries and correlated subqueries. Consider answering the following question: What zip codes in the Orders table are not in the Zipcensus table? Once again, there are two ways to answer this question.
+
+The second method is preferable (using joins). The first uses the NOT IN operator:
+
+```
+SELECT zipcode, COUNT(*)
+FROM orders o
+WHERE zipcode NOT IN (SELECT zipcode
+                      FROM zipcensus zc)
+GROUP BY zipcode
+```
+
+This query is straightforward as written, choosing the zip codes in Orders with no matching zip code in Zipcensus, then grouping them and returning the number of purchases in each. One possible concern is performance. Many databases do a poor job of optimizing the NOT IN operator, perhaps because it is seldom used.
+
+Fortunately, there is a readily available alternative, which uses the LEFT OUTER JOIN operator. Because the LEFT OUTER JOIN keeps all zip codes in the Orders table — even those that don’t match — a filter afterwards can choose the non-matching set. This is how the following query is expressed:
+
+```
+SELECT o.zipcode, COUNT(*) as numorders
+FROM orders o LEFT OUTER JOIN
+     zipcensus zc
+     ON o.zipcode = zc.zipcode
+WHERE zc.zipcode IS NULL
+GROUP BY o.zipcode
+ORDER BY 2 DESC
+```
+
+This query joins the two tables using a LEFT OUTER JOIN and only keeps the results where there are no matching rows (because of the WHERE clause). This is equivalent to using NOT IN; however, many database engines optimize this version better than the NOT IN version.
+
+Figure 1-12 shows the dataflow associated with this query. As with the correlated subqueries,the examples in this book use the LEFT OUTER JOIN instead of the NOT IN with a subquery.
+
+### Subqueries for UNION ALL
+
+The UNION ALL operator almost demands subqueries, because it requires that the columns be the same for all tables involved in the union. As a trivial example, consider the following query that returns all the values for latitude and longitude in a single column:
+
+```
+SELECT u.longlatval
+FROM ((SELECT latitude as longlatval
+       FROM zipcensus zc
+       )
+       UNION ALL
+      (SELECT longitude as longlatval
+       FROM zipcensus zc
+      ) 
+     )u
+```
+
+This example uses subqueries to be sure that each part of the UNION ALL has the same columns.
+
+## Lessons Learned
+
+This chapter introduces SQL and relational databases from several different perspectives that are important for data mining and data analysis. The focus is exclusively on using databases to extract information from data, rather than on the mechanics of building databases, the myriad of options available in designing them, or the sophisticated algorithms implemented by database engines.
+
+One very important perspective is the data perspective — the tables themselves and the relationships between them. Entity-relationship diagrams are a good way of visualizing the structure of data in the database and the relationships among tables. Along with introducing entity-relationship diagrams, the chapter also explained the various datasets used throughout this book.
+
+Of course, tables and databases store data, but they don’t actually do anything. Queries extract information, transforming data into information. The basic processing steps are better explained using dataflow diagrams rather than complex SQL statements. These diagrams show how various operators transform data. About one dozen operators suffice for the rich set of processing available in SQL. Dataflows are not only useful for explaining how SQL processes data; database engines generally use a form of dataflows for running SQL queries.
+
+Figure 1-12: This dataflow shows the LEFT OUTER JOIN version of a query using NOT IN.
+
+In the end, though, transforming data into information requires SQL queries, whether simple or complex. The focus in this chapter, and throughout the book, is on SQL for querying.This chapter introduced the important functionality of SQL and how it is expressed, with particular emphasis on JOINs, GROUP BYs, and subqueries, because these play an important role in data analysis.
+
+The next chapter starts the path toward using SQL for data analysis by exploring data in a single table.

@@ -1,0 +1,441 @@
+Index
+AB
+accurate method of calculating distance, 139–140
+AGGREGATE operator, 16 APPEND operator, 15 array functions (Excel), 144 associations, 428
+multi-way, 451–452 one-way, 431–433
+evaluation information, 434–436
+generating, 433–434
+product groups, 436–441 sequential, 454–455 two-way
+calculating, 441–442
+chi-square and, 442–448 zero-way, 429, 430–431
+average value chart, lookup model, 485–487
+averages
+comparing numeric variables,
+301–306
+moving average, best fit line,
+525–528
+standard deviation, 100–101
+before/after comparisons, 337 best fit line, 512
+averages, 518
+direct calculation of coefficients,
+536–544 error, 517–518
+exptected value, 515–517 formula for line, 515
+goodness of fit, 532–536
+inverse model, 518–519
+LINEST( ) function, 528–532 moving average, 525–528
+OLS (ordinary least squares), 514 R2, 532–536
+residuals, 517–518 scatter plots, 521–522 tenure, 512–513 trend, 392–393
+slope, 393–395 trend curves
+exponential, 522–524 logarithmic, 522–524 polynomial, 524–525 power, 522–524
+weighted, 546–548 charts and, 548–549
+www.it-ebooks.info
+637
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼638 Index ■ B–C
+￼￼Solver and, 550–552
+SQL and, 549–550
+billing mistakes, 333
+binary classification, 480–481 bubble charts, non-numeric axes,
+421–422
+C
+Calendar table, 191–192 cardinality, 7–8
+Cartesian product of tables, 23 CASE statement, 30–31
+censor flag, 246 censoring, 251–253 census demographics
+income, similarity/dissimilarity, chi-square and, 152–156
+median income, 150–151 proportion of wealthy and
+poor, 152
+Central Limit Theorem, 100 Ceres, least squares regression
+and, 514 charts, animation
+order date to ship date, 231–234 order date to ship date by year,
+234–238 chi-square
+calculation, 124–125 confidence intervals, 123 demographics, 152–156 distribution, 125–127
+degrees of freedom, 125–127 expected values, 123–124
+deviation, 123
+SQL and, 127–128 two-way associations
+applying chi-square, 442–445 comparing rules to lift, 445–447 negative rules, 447–448
+Codd, E.F., 17
+cohort-based approach to calculating
+tenure, 338–341 column alias, 19
+column charts, 45–46 creating, 47–49 formatting
+color, 51
+fonts, 50–51
+grid lines, 51 horizontal scale, 51 legend, 50 resizing, 49–50
+inserting data, 46–47
+number of orders and revenue, 54–55 side-by-side columns, 52–54
+stacked and normalized columns, 54 stacked columns, 54
+columns. See also Excel histograms, 60–64
+for numeric values, 67–72
+of counts, 64–66 summarizing
+columns, 88–89
+one columns, 84–87 values, 59–60
+in two columns, 79–84 comparisons, numeric variables,
+averages and, 301–306 competing risks, 321–322
+examples of
+involuntary churn, 322–323 migration, 323–324 voluntary churn, 323
+hazard probability, 324–326
+survival, 326–327
+conditional formatting (Excel),
+479–480 confidence
+bounds, 304–306
+statistics and, 112–113 constant hazards, 263 correlated subqueries, 37–38 counties, highest realtive order
+penetration, 175–177 counting
+combinations, 105 confidence and, 112–113
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Index ■ C–D 639
+￼￼Null Hypothesis and, 112–113
+probability and, 114–116 counts
+comparing by date, 193–197 customers, 362–364 customers by tenure segment,
+227–231
+customers every day, 224–226 customers of different types, 226–227 customers on given day, 224
+orders and sizes
+distinct products, 198–201 dollars, 201–203
+number of units, 198
+county wealth, 170–172
+wealthiest zipcode relative to county,
+173–175 cross-joins, 23–24
+CROSSJOIN operator, 16 customer signatures, 564–565
+ad hoc analysis, 570 building
+driving table, 578–580 initial transaction, 584–586 looking up data, 580–583 pivoting, 586–594 summarizing, 594–596
+customers, 565–566 data sources, 566–570 designing
+column roles, 571–573 profiling versus prediction, 573 time frames, 573–577
+extracting features
+date time columns, 597–598 geographic location information,
+596–597
+patterns in strings, 598–600
+predictive modeling, 570
+profile modeling, 570 customers
+behaviors, summarizing, 601–609 couting, 362–364
+customer information
+addresses, 360–361 gender, 351–354
+names, 354–358, 354–360 number of, 349–350
+one-time, products, 408–410 products, best customers, 410–413 purchases
+average time between, 367–368 increasing over time, 381–395 intervals, 369–370
+span of time, 364–367
+D
+data, structure, 2–12 data exploration, 44–45 data mining, 1–2
+directed, 458
+data, 459–463
+directed models, 459 model evaluation, 465 modeling tasks, 463–465
+data models, 3
+logical data models, 3 physical data models, 3
+dataflows, 12–14 edges, 13 nodes, 13
+AGGREGATE operator, 16 APPEND operator, 15 CROSSJOIN operator, 16 FILTER operator, 15
+JOIN operator, 16 LOOKUP operator, 16 OUTPUT operator, 15 READ operator, 15 SELECT operator, 15 SORT operator, 17 UNION operator, 16
+date time functions, 619–627 dates and times, 186–187 Calendar table, 191–192
+comparing counts by date, 193–197 comparisons by week, 215–216 components, extracting, 187
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼640 Index ■ D–E
+￼￼converting to standard formats, 189–190
+counts of orders and sizes, 197–203 DAY( ) function, 187
+days of week
+billing by, 203–204
+changes in by year, 204–205 comparison for two dates, 205–206
+duration in days, 206–208 duration in months, 209 duration in weeks, 208–209 durations, 190–191 extrapolation by days in month,
+220–221
+HOUR( ) function, 187
+intervals, 190–191
+MINUTE( ) function, 187
+MONTH( ) function, 187 month-to-date comparison, 218–220 number of Mondays, 210–213 SECOND( ) function, 187
+storing, 188
+time zones, 191
+without times, 192–193
+YEAR( ) function, 187 year-over-year comparisons
+comparisons by day, 213–216
+comparisons by month, 216–224 DAY( ) function, 187
+day-by-day comparisons, 213–216 demographics
+county wealth, 170–172 distribution of values of wealth,
+172–173
+direct estimation of event effect,
+341–344
+directed data mining
+data
+model set, 459–461
+prediction model sets, 461–463 profiling model sets, 461–463 score set, 461
+directed models, 459 model evaluation, 465
+modeling tasks
+multiple categories, 465 numeric values, 465 similarity models, 463 yes-or-no models, 463–464
+distance
+accurate method of calculating,
+139–140
+Euclidian method of calculating,
+137–139
+distribution of probabilities, 429–430 distribution of values of wealth,
+172–173
+duplicate products in order,
+403–407
+E
+earliest/latest values, comparing, 381–386
+empirical hazards method, 297 entity-relationship diagrams, 2, 7–8 equijoins, 26–27
+Euclidian method of calculating
+distance, 137–139 evidence models, probability,
+495–497 likelihood, 497–498 odds, 497
+Excel
+area charts, 57
+array functions, 144
+column charts, 45–46 (See also
+columns) creating, 47–49 formatting, 49–52 inserting data, 46–47
+conditional formatting, 479–480 line charts, 56
+link charts, 106–108
+MapPoint, 179
+maps, 177
+reasons to create, 178–179
+X-Y charts (scatter plots), 57–58
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼F
+FILTER operator, 15
+first year values/last year values,
+comparing, 390–392
+first/last values, comparing, 386–390 foreign keys, 8, 24
+functions
+probability for one tenure, estimating, 314
+ratios, 307–308 interpreting, 306–307 reasons for, 308–309
+retention
+calculation, 260–262 survival comparison, 262
+survival, 253
+calculating for all tenures,
+254–256 calculating in SQL,
+256–260
+point estimate for survival, 254
+hazards, proportional hazards regression, 300
+histograms, 60–64
+for numeric values, 67–72 number of units, 407–408 of counts, 64–66
+cumulative, 66–67 homogeneity assumption, 239 HOUR( ) function, 187
+I
+IN statement, 31–32 as a join, 36–37
+INTERVAL data type, 190
+item sets, product combinations
+examples, 419
+households, 424–427 multi-way, 422–424 product groups, 420–422 two-way, 415–417, 415–418
+JOIN operator, 16 joins (tables), 22–23
+cross-joins, 23–24 equijoins, 26–27 lookups, 24–26 nonequijoins, 27–28 outer, 28–29
+date time, 619–627
+DAY( ), 187
+HOUR( ), 187 mathematical, 627–321 MINUTE( ), 187 miscellaneous, 631–636 MONTH( ), 187
+ranking functions, 372–373 SECOND( ), 187
+string, 612–619
+window functions, 385–386 YEAR( ), 187
+G
+geocoding, 133 geographic hierarchies
+census hierarchies, 168–169 counties, 167–168
+DMAs (designated marketing
+areas), 168
+zip codes, wealthiest, 162–165
+GIS (geographic information system), 145
+H
+hazard calculation
+censoring, 251–253
+constant hazards, 263
+data investigation, stop flags,
+245–249
+empirical hazards method, 297 hazard and survival example,
+262–267
+hazard probability, 249–250 probability, competing risks, 326 probability for all tenures,
+estimating, 314–316
+J
+www.it-ebooks.info
+Index ■ F–J 641
+￼￼
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼642 Index ■ L–N
+￼￼L
+labeling, points on scatter plots, 165 latitude/longitude, 134–135
+degrees, 136–137 minutes, 136–137 scatter plots, 145–146 seconds, 136–137
+left truncation
+effect of, 311–312
+fixing, 313–314 recognizing, 309–311 time windowing, 316–318
+right censoring, 318–321 life expectancy, 242–243 linear regression
+best-fit line, 512 scatter plots, 521–522
+input variables, multiple, 552–560 tenure, 512–513
+weighted, 544–552
+LINEST( ) function, 528–532 link charts (Excel), 106–108 locations, distance between
+accurate method, 139–140
+Euclidian method, 137–139 logical data models, 3 look-alike models, 466–469
+nearest neighbor model, 469–473
+z-scores, 469–473 lookup model
+evaluating, 477
+most popular product, group,
+calculating, 475–477 order size, 481–482
+average value chart, 485–487 nonstationarity, 484–485
+one dimension, adding, 482–484
+probability of response accuracy, 490–493
+dimensions, 488–489
+overall probability as a model,
+487–488
+profiling, prediction and, 478–480
+LOOKUP operator, 16
+lookups, 24–26 loyality, 333–335
+M
+many-to-many relationships, 8 MapPoint, 179
+market basket analysis
+histogram, number of units, 407–408 price, changes in, 413–415
+products
+best customers, 410–413 duplicates, 403–407 one-time customers, 408–410 scatter plots, 402–403
+mathematical functions, 627–321 maximum values, 72
+metadata, 4
+minimum values, 72
+MINUTE( ) function, 187 mode, 73
+calculating
+SQL extensions and, 74 standard SQL and, 73–74 string operations and, 75–76
+modeling
+look-alike models, 466–469
+nearest neighbor model, 473–474
+z-scores, 469–473 lookup models
+evaluating, 477
+most popular product, 475–477 MONTH( ) function, 187 month-to-date comparison, 218–220 multi-way associations, 451–452
+N
+Naive Bayesian models calculating, 498–499 generalization, 502–504 lookup models, 507–508 model of one variable, 500–502 probability, 495–497
+likelihood, 497–498
+odds, 497 scoring, 504–507
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Index ■ N–R 643
+￼￼naming, variables, subqueries, 33–34 nearest neighbor model, 473–474 non-numeric axes, charts, 421–422 nonequijoins, 27–28
+NOT IN operator, 38–39 Null Hypothesis, 93–94 counting and, 112–113
+NULL values, 5
+nullability, 5
+number of units, histogram, 407–408 numeric variables, comparing,
+averages and, 301–306
+O
+OLS (ordinary least squares), 514 Ceres and, 514
+one-at-a-time relationships, 8 one-time customers, products,
+408–410
+one-to-one relationships, 8 one-way associations, 431–433
+generating, 433–434
+evaluation information, 434–436 product groups, 436–441
+order penetration of county, highest, 175–177
+outer joins, 28–29 OUTPUT operator, 15
+P
+p-values, chi-square and, 125–127 partitioning, vertical partitioning, 3 physical data models, 3
+prediction, profiling lookup model,
+478–480
+price raises, 335, 413–415 probability, distribution of
+probabilities, 429–430 products
+attributes, rules and, 452–453 customers, best, 410–413
+duplicates, 403–407
+number of units, histogram, 407–408 scatter plots, 402–403
+profiling lookup model, prediction and, 478–480
+proportional hazards regression, 300
+purchases dataset, 11–12
+Q
+queries, 2, 18 columns, 87 SELECT clause, 19 subqueries, 32–33
+correlated, 37–38
+IN operator, 36–39
+NOT IN operator, 38–39 summaries and, 34–36 UNION ALL operator, 39–40 variable naming, 33–34
+summary query, 20–22
+R
+R2, 532–536
+raising prices, 335
+ranking functions, 372–373 ratios
+lower bounds, 122 proportions
+confidence interval, 120–121 difference of, 120–121 standard error, 118–120
+READ operator, 15 relational algebra, 17 relationships, 8
+RFM analysis
+customer migration, 378–380 dimensions, 370–371 frequency, 374
+limits, 380–381 methodology, marketing
+experiments, 377 monetary, 374–375
+recency, 371–373
+RFM cell, calculation, 375–377
+right censoring, left truncation, time windowing, 318–321
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼644 Index■S
+￼￼S
+scatter plots
+best-fit line, 521–522 latitude/longitude, 145–146 non-numeric axes, 421–422 points, labeling, 165 products, 402–403
+state boundaries, 180–182
+SECOND( ) function, 187 SELECT clause, 19
+SELECT operator, 15
+sequential associations, 454–455 SORT operator, 17
+SQL (Structured Query Language), 2
+customer survival, 256–260 ranking functions, 372–373 window functions, 385–386
+state boundaries pictures of, 182–183 scatter plots, 180–182
+statistics
+averages, 101–104
+approach, 99–100
+standard deviation, 100–101 basic concepts, 92
+confidence, 94–95
+normal distribution, 95–99 Null Hypothesis, 93–94 probability, 94–95
+counting, 104–118 ratios
+lower bounds, 122 proportions
+confidence interval, 120–121 difference of, 121–122 standard error, 118–120
+stratification, 298
+string functions, 612–619 strings, values
+case sensitivity, 76–77 characters, 77–79 histogram of length, 76 spaces, 76–77
+subqueries, 32–33
+correlated, 37–38
+IN operator, 36–39
+NOT IN operator, 38–39 summaries and, 34–36 UNION ALL operator, 39–40 variable naming, 33–34
+subscription dataset, 10 SUBSTRING( ) function, 19 summaries, subqueries and, 34–36 survival analysis, 240–242. See also
+hazard calculation
+average customer lifetime, 281–282 comparing survival over time,
+272–278
+competing risks and, 326–327 conditional survival, 272 confidence in hazards, 282–284 customer survival by year of
+start, 275
+customer value calculations
+and, 284
+estimated future revenue,
+286–288
+estimated future revenue for
+customers, 292–295 estimated revenue, 285–286 estimated revenue for customers,
+289–292
+examples of hazards, 243–245 forecasts, 335–337
+hazards, changing over time,
+273–275
+life expectancy, 242–243 markets, 267–268
+stratifying by, 268–270
+summarizing, 267–268
+median customer tenure, 279–280 medical research, 243
+past survival, 275–278
+point estimate, 278–279 stratification, 298
+survival ratio, 270–272
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼TU
+table alias, 19 tables, 3
+Calendar, 191–192 columns
+date-times, 6 dates, 6
+numeric values, 6 primary key, 6 types, 6–7
+joins, 22–23 cross-joins, 23–24 equijoins, 26–27 lookups, 24–26 nonequijoins, 27–28 outer, 28–29
+NULL values, 5
+tenure, best fit line, 512–513 time. See also dates and times time to next event
+calculation, 395–396
+next purchase date, 396–397
+time-to-event, 397–398 time-to-event, stratifying, 398–399
+time windowing, 316–318
+left truncation, right censoring,
+318–321 time zones, 191
+UNION ALL statement, 30, 39–40 UNION operator, 16
+V
+values
+earliest/latest comparison,
+calculating, 381–386 first/last, comparing, 386–390
+variables, naming, subqueries, 33–34 vertical partitioning, 3
+W
+wealth. See also income
+county, 170–172
+distribution of values, 172–173 wealthiest zipcode realtive to county,
+173–175 web, maps, 180
+window functions, 385–386
+Y
+YEAR( ) function, 187
+Z
+ZCTAs (zip code tabulation areas), 133
+zero-way associations, 429, 430–431
+zip code tables, 8–9 zip codes
+classifying, 159–162
+comparing, 159–162
+finding all within a given distance,
+141–143
+finding nearest (Excel),
+143–144
+most orders in state, 165–167 not in census file, 156–157 wealthiest relative to county,
+173–175
+with/without orders, 157–159
+Zipcode table, 134 latitude/longitude, 134–135
+trend lines, moving average, 214–215 truncation, left
+effect of, 311–312 fixing, 313–314 recognizing, 309–311
+tuples, 17
+two-way associations
+calculating, 441–442 chi-square and
+applying, 442–445
+comparing rules to lift, 445–447 negative rules, 447–448
+heterogeneous associations product mixing, 450
+state plus product, 448–450
+www.it-ebooks.info
+Index ■ T–Z 645
+￼￼

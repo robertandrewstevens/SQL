@@ -1,0 +1,905 @@
+CHAPTER
+7
+Factors Affecting Survival: The What and Why of Customer Tenure
+The previous chapter demonstrated the value of survival analysis for under- standing customers and their stop behaviors. It introduced a powerful method for calculating hazards, called the empirical hazards method, where separate haz- ard probabilities are calculated for all tenures. And, it included several examples and extensions showing how to apply survival analysis to some business prob- lems, including forecasting the number of active customers in the future.
+This chapter builds on this foundation, by introducing three extensions of basic survival analysis. These extensions solve some common problems faced when applying survival analysis in the real world. They also make it possible to understand the effects of other factors besides tenure on survival.
+The first extension focuses on the factors that are most important for deter- mining who survives and who does not. A big complication here is that the effect of these factors depends on tenure. For instance, consider the effect of market on survival. Customers in Gotham and Metropolis have about the same survival for the first year. Around the one-year anniversary, Gotham cus- tomers start leaving at a much faster rate. In other words, the effect of market on survival varies by tenure.
+The most prominent statistical technique in this area, Cox proportional haz- ards regression, assumes that such effects do not change over time. Although this method is outside the scope of this book, it does inspire us to look at the chang- ing effects of each factor at different tenures. This chapter explains several differ- ent approaches for understanding how and when such factors affect survival.
+297
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼298 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼The second extension is the calculation of hazards based on time windows. This chapter introduces time windows as a way to solve a problem that exists in many data sources, including the subscription data: starts come from a longer time period than stops — the left truncation problem. However, time windows do much more than just solve this problem. They are a powerful tool for estimating unbiased hazard probabilities based on a time window of stops, rather than on a time window of starts.
+The third extension goes in a different direction. The factors that affect sur- vival occur at the beginning of or during the customer life cycle. At the end of the life cycle, customers stop and they stop for some reason. This reason may be voluntary (the customer switches to a competitor); or the reason may be forced (the customer stops paying their bills); or the customer might migrate to a different product. Competing risks is a method for incorporat- ing these different outcomes into survival analysis.
+Competing risks is used to answer the question: “What happens next for all the customers?” That is, at a given point in the future, what proportion of cus- tomers have stopped for each of the competing risks? This question follows from the forecasting introduced in the previous chapter. Forecasts can include not only the numbers of remaining customers, but also of what happens to the stopped customers. Before diving into what happens next, let’s start at the beginning; that is, with what we know at the beginning of the customer rela- tionship and how these factors affect survival.
+What Factors Are Important and When
+Survival probabilities can be used to compare different groups of customers by calculating separate probabilities for each group. This process is called stratifi- cation, and makes it possible to see the effect of market, or rate plan, or chan- nel, or a combination of them on survival.
+This section discusses quantifying the effects for factors at different tenures. For numeric variables, the comparison uses averages of the variable at differ- ent tenures for customers who stop and do not stop. For categorical variables, the comparison uses the ratio of hazards at different tenures. The key idea is that the effect of such variables may be stronger during some parts of the cus- tomer tenure and weaker during others. Being able to see the effects at differ- ent tenures sheds light on the effect of the variables on the duration of the customer relationship.
+Explanation of the Approach
+Figure 7-1 shows a group of customers on the tenure timeline. The chart is sim- ilar to the charts in the previous chapter, which were used to illustrate the cal- culation of hazard probabilities. Here, though, we are going to look at the chart
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 299
+￼￼a bit differently. The chart shows eight customers. At tenure three, exactly one of them stops, and the rest remain active. This suggests the following question: What differentiates the customer(s) who stop and the customers who remain active?
+￼Customer 5
+Customer 4
+Customer 3
+Customer 6
+Customer 2
+Customer 1
+Customer 8
+￼￼￼￼Customer 7
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Tenure
+Figure 7-1: At any given tenure, what differentiates customers who stop and those who remain active?
+Part of the answer is obvious: what differentiates them is that one group stopped and the other did not. A better way to phrase the question is to ask what differentiates the two groups by other variables. The goal is to estimate, understand, and visualize the effect of other variables on survival at any given tenure.
+For tenures when no one stops, there is no answer because the group of stopped customers is empty. As mentioned earlier, the factors differentiating between the stopped customers and active customers are different for different tenures. For instance, during some tenure periods, initial promotions end. During others, customers are stopped because they do not pay their first bill. There is no reason to expect the groups of stopped customers at these tenures to be similar.
+The comparison between the customers who stop at a particular tenure and those who remain active was first investigated by Sir David Cox. A statement such as “Every cigarette a person smokes reduces his or her life by 11 min- utes” is an example of a result using this technique. Although it is outside the scope of this book, the aside “Proportional Hazards Regression” introduces the basic ideas.
+The next two sections show reasonable ways to make the comparison for variables in customer data. In one sense, these techniques are more powerful than proportional hazards regression, because they eliminate the assumption of proportionality. They are also better suited for understanding and visualiz- ing the effects. On the other hand, the proportional hazards regression is bet- ter for reducing the effects down to a single number, to a coefficient in the language of statistics.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼300 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼￼￼PROPORTIONAL HAZARDS REGRESSION
+In 1972, Prof. David Cox at the University of Cambridge in England published a paper with the entertaining title, “Regression Models and Life Tables (with discussion).” This paper is purportedly one of the ten most cited scientific papers, because his techniques are widely used in medical research studies. Because of his contributions to statistics, Prof. Cox was knighted and is now known as Sir David Cox.
+Why is this paper so important? Sir Cox devised a method of determining the effect of variables on survival without actually calculating the hazards. His method is quite clever and it is worthwhile understanding how it works. Although it is available in almost all statistics tools, it is not feasible to replicate the method directly in SQL and Excel. This is actually okay, because the method relies on an assumption that is generally not true in customer data. The proportionality assumption asserts that the effect of a variable is the same for all tenures. For
+the subscription data, it fails for market, channel, rate plan, and monthly fee. In general, the assumption is important for technical reasons and, unfortunately, not true for most customer data.
+Nevertheless, proportional hazards regression is important for two reasons. Even when the proportionality assumption is not true, the results are often qualitatively correct. That is, the method can tell us which variables are more important than others. Also, the method inspires us to look at the effects of factors over time, the methods discussed in the text.
+The basic idea behind Cox proportional hazards regression is quite simple. It asks the question: What is the likelihood that exactly the customers who stopped at tenure t are those customers who actually did stop? By assuming that each customer has his or her own hazard function, this likelihood can be expressed as a big equation consisting of products of expressions, such as (1–h(t)) for the customers who remain active at tenure t and h(t) for customers who stop at that tenure. So, if there are four customers and the third stopped at tenure 5, then the likelihood equation for tenure 5 looks like: (1–h1(5))*(1–h2(5))*h3(5)*(1–h4(5)). Each of the customer hazard functions is then expressed as a function of the variables describing the customers.
+Cox’s clever idea was to ask this question for all tenures, and go further: What values of the variables maximize the likelihood that exactly the set of customers who stopped are those who did stop? The assumption of proportionality makes it possible to answer this question without referring to the hazard probabilities themselves. They simply cancel out. It does, however, rely on a technique called maximum likelihood estimation (MLE), a sophisticated statistical method used to answer such questions.
+The result is a measure of the importance of each variable on survival.
+This measure is useful as an overall measure, but because the proportionality assumption is not necessarily reasonable on customer data, we need to do additional investigations anyway, investigations such as the methods discussed in the text.
+￼www.it-ebooks.info
+￼Chapter 7 ■ The What and Why of Customer Tenure 301 Using Averages to Compare Numeric Variables
+A good way to see the effects of a numeric variable on survival is to compare the average value for stopped customers and for active customers at any given tenure. A chart then shows the two averages for all tenures. Such a chart dis- plays the effect of the variable at different tenures.
+There is one numeric variable in the subscription data, MONTHLY_FEE. The question is: What is the difference in the average value of the monthly fee for cus- tomers who stop versus customers who remain active for all tenures?
+The Answer
+Figure 7-2 shows the chart for the monthly fee. This chart has two series; one shows the average monthly fee of the stopped customers, the other has the average monthly fee of active customers by tenure.
+$48
+$46
+$44
+$42
+$40
+$38
+$36
+$34
+$32
+$30
+Avg Monthly Fee for STOPS
+Avg Monthly Fee for ACTIVES
+120 180 240 300 360 420 480 540 600 660 720 780 840 900
+Tenure
+Average Monthly Fee
+0 60
+Figure 7-2: This chart compares the average monthly fees of customers who stop and who remain active at each tenure.
+During the first year, customers who stop have higher monthly fees than those who remain active. This may be due to price sensitive customers who are paying too much when they sign up. Almost all customers start on a one- or two-year contract, with a penalty for breaking the contract. The purpose of the penalty is to prevent customers from stopping during the contract period. However, customers with higher monthly fees have more to gain by stopping than those with lower monthly fees, so it is not surprising that the contract penalty has less effect on customers who have higher fees.
+Around the first year anniversary, the curves for the active and stopped cus- tomers intersect. The stopped customers initially have a higher monthly fee; after the one year mark, the order is inverted. In the second year stopped cus- tomers have a lower monthly fee. Presumably, the customers on less expensive
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼302 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼plans who do not stop during the first year do stop around the anniversary date. This washes out after a month or two, and the averages for the two groups are essentially the same for the second year. After the second year, they reverse yet again, although by the third year, the data is becoming sparser because only three years of starts are used for the analysis.
+Notice also that the average for the active customers is smooth and the average for the stopped customers jumps around. The average for the active customers is smooth because millions of customers are active for many of the tenures. In addition, the customers active for two tenures significantly overlap — because all customers active for the longer tenure are active for the shorter one. The average for the stopped customers jumps around because there are many fewer stopped customers (just a few hundred or thousand for any given tenure) and the stopped customers at two tenures do not overlap at all with each other.
+Answering the Question in SQL
+Creating such a chart requires two values for each tenure: the average value for stopped customers at each tenure, and the average value for active cus- tomers at each tenure. The first of these quantities is quite easy to calculate, because each stopped customer is included in the average only at the tenure when the customer stops. The following SQL does this calculation:
+SELECT tenure, AVG(monthly_fee) as avg_stop_monthly_fee
+FROM subs
+WHERE stop_type IS NOT NULL AND start_date >= ‘2004-01-01’ AND tenure > 0 GROUP BY tenure
+ORDER BY tenure
+The calculation for active customers is more complicated and similar to the hazard probability calculation, although it needs to carry the monthly fee information as well as the population count. The key idea is as follows. The population at risk at each tenure is calculated just as for the hazards. It is then divided into two groups, those who remain active and those who stop. The total sum of the monthly fees is calculated for each tenure using the same sum- mation method as for the population at risk. This total is divided into two groups, one for the customers who remain active and one for the customers who stop. The total monthly fees for the active and stopped customers are then divided by the total populations of the two groups, to get the average monthly fee for the active and stopped customers. This is best illustrated by walking through the calculation.
+This calculation relies on five variables for each tenure:
+■■ The tenure;
+■■ The number of customers at each tenure; www.it-ebooks.info
+￼￼￼￼￼￼￼￼
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 303
+￼￼■■ The number of customers who stop at each tenure;
+■■ The sum of the initial monthly fees of all customers at each tenure; and,
+■■ The sum of the initial monthly fees of stopped customers at each tenure.
+These values are generated in SQL by simply summing and counting various values:
+SELECT tenure, COUNT(*) as pop, SUM(isstop) as numstops, SUM(monthly_fee) as mfsumall, SUM(monthly_fee*isstop) as mfsumstop
+FROM (SELECT s.*,
+(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as isstop
+        FROM subs s) s
+  WHERE start_date >= ‘2004-01-01’ AND tenure >= 0
+  GROUP BY tenure
+  ORDER BY 1
+The population at risk for each tenure is the sum of the customers with tenures as large as or larger than each tenure. The population at risk is split into two groups, one being the customers who stop at that tenure (which is one of the five variables returned by the query) and the other being every- one else.
+Similarly, the total initial monthly fees of everyone at a given tenure is split into two groups. The first is the sum of the initial monthly fees of all customers who stop at exactly that tenure. The second is the sum of the initial monthly fees of customers who are active at that tenure. These calculated values pro- vide the information to calculate the average for each group. Figure 7-3 shows an Excel spreadsheet that does this calculation.
+Figure 7-3: This Excel spreadsheet calculates the average monthly fee for active customers and for stopped customers.
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼304 Chapter 7 ■ The What and Why of Customer Tenure Extension to Include Confidence Bounds
+This process of taking the average initial monthly fee at each tenure for stopped and active customers is an example of taking a sample average. As discussed in Chapter 3, such averages have confidence intervals based on the standard error, so a reasonable enhancement is to include the standard error or confidence bounds in the chart.
+Figure 7-4 shows the previous chart with 95% confidence bounds for the stopped customers. The confidence bounds for the active customers are so small as to be negligible, so they are not shown on the chart. Because the con- fidence bounds depend on the number of points at each point, the data is sum- marized at the weekly level rather than the daily level to narrow the confidence intervals for the stopped customers.
+￼￼￼$46
+$45
+$44
+$43
+$42
+$41
+$40
+$39
+$38
+$37
+$36
+Avg Monthly Fee for STOPS
+Avg Monthly Fee for ACTIVES
+12  16  20  24  28  32  36  40  44  48  52  56  60  64  68  72
+Tenure (weeks)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 4 8
+Figure 7-4: The comparison of averages can include error bars that show a confidence interval for either average. In this case, the 95% confidence bound is shown for the monthly fee average for stops.
+This chart clearly illustrates that during the first year, stopped customers have an average monthly fee that is significantly higher than that of active cus- tomers. After a year and a few months, the averages become quite similar.
+It is worth noting that even if the two curves had overlapping standard errors during the first year, there would probably still be a statistically signifi- cant difference between them because the trends are so apparent. Overlapping confidence intervals would normally suggest that at any given tenure, two points might be in either order due to random variation. However, a consistent trend undercuts this observation. If the difference between two groups with overlapping confidence were due to chance, there would not be long series where one is greater than the other.
+WARNING When looking at confidence bounds on series, it is important to look at trends as well as overlapping confidence intervals.
+￼www.it-ebooks.info
+Average Monthly Fee
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 305
+￼￼The confidence bound uses the statistical formula for the standard error of a sample. The bound is 1.96 times the standard error. Recall from Chapter 3 that the standard error for a sample average is the standard deviation divided by the square root of the size of the sample. The standard deviation is calculated as follows:
+■■ Takethesumofthesquaresofthemonthlyfees;
+■■ Subtract the average monthly fee squared divided by the number of
+values;
+■■ Divide the difference by one less than the number of values;
+■■ Then the square root is an estimate of the standard deviation.
+This calculation requires several aggregated values in addition to the values used for the average initial monthly fee averages. The following query does the necessary work:
+  SELECT FLOOR(tenure/7) as tenureweeks, COUNT(*) as pop,
+         SUM(isstop) as numstops, SUM(monthly_fee) as mfsumall,
+         SUM(monthly_fee*isstop) as mfsumstop,
+         SUM(monthly_fee*monthly_fee) as sum2all,
+         SUM(monthly_fee*monthly_fee*isstop) as mfsum2stop
+FROM (SELECT s.*,
+(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as isstop
+        FROM subs s) s
+  WHERE start_date >= ‘2004-01-01’ AND tenure >= 0
+  GROUP BY FLOOR(tenure/7)
+  ORDER BY 1
+This query adds several aggregations to the SELECT clause of the query used in the previous section; this version includes the sum of the squares of the monthly fee for all customers and for stopped customers. The query also uses an indicator variable, ISSTOP, for the stop calculations, rather than a CASE statement. The two methods are equivalent.
+The sum of squares values are accumulated for each tenure, and split into two groups for the actives and the stopped customers; this is the same process used for the monthly fee average calculation. The sum provides the missing information for the standard deviation calculation, which subtracts the num- ber of values times the sum of squares of the averages from this value and divides the difference by one less than the number of values. The standard error is then the standard deviation divided by the square root of the number of stops. And, the 95% confidence bound is 1.96 times the standard error.
+Showing the result as confidence bounds in the chart makes use of positive and negative Y-error bars. These are placed in the chart by selecting the series, right-clicking to bring up the “Format Data Series” dialog box, and going to the “Y Error Bars” tab. On this tab, choose the “Both” option choosing the
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼306 Chapter 7 ■ The What and Why of Customer Tenure
+“Custom” option on the bottom. Place the cell range with the confidence
+bounds in the “+” and “–” boxes. The same range is used for both.
+Hazard Ratios
+Averages work for numeric variables, but they do not work for categorical variables: The “average” value of something that takes on distinct values, such as Gotham, Smallville, and Metropolis does not make sense. Yet, there is still the question: What is the effect of a categorical variable (such as market or rate plan) on survival for different tenures? Because averages as discussed in the previous section do not work, an alternative approach is needed; this approach uses the ratio of hazard probabilities.
+Interpreting Hazard Ratios
+Figure 7-5 shows two hazard ratio charts. The top chart shows the ratio of the hazards by market, so the curves are for the Smallville to Gotham ratio and Metropolis to Gotham ratio. The Gotham to Gotham ratio is not included in the chart, because it is uniformly one.
+3.0 2.5 2.0 1.5 1.0 0.5 0.0
+3.0 2.5 2.0 1.5 1.0 0.5 0.0
+0
+30 60 90
+Smallville-Gotham
+Metropolis-Gotham
+120 150 180 210 240 270 300 330 360 390 420 450 480 510 540 570 600 630 660 690 720 750
+Hazard Ratio to Dealer
+Hazard Ratio to Gotham
+0
+30 60 90
+120 150 180 210 240 270 300 330 360 390 420 450 480 510 540 570 600 630 660 690 720 750
+Tenure (Days)
+Tenure (Days)
+Figure 7-5: The top chart shows hazard ratios for market, compared to Gotham, and the bottom shows hazard ratios for channel, compared to Dealer.
+www.it-ebooks.info
+Chain-Dealer
+Store-Dealer
+Mail-Dealer
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 307
+￼￼Smallville’s survival is better than Gotham’s, so as expected, the ratio of Smallville’s hazards to Gotham’s hazards is uniformly less than one. However, this effect is strongest during the first year, with the ratio climbing up a bit in the second year. The first year average hazard ratio is 0.44, which rises to 0.55 in the second year. Although they are much better customers, Smallville’s cus- tomers are becoming less good, relative to Gotham’s, at longer tenures.
+The situation with Metropolis is the opposite. During the first year, the haz- ard ratio is close to one, so Metropolis’s customers are almost as bad as Gotham’s in the first year. In the second year, the hazard ratio drops from 0.96 to 0.75. So, Metropolis’s customers are getting better while Smallville’s are get- ting worse. After two years, though, Smallville’s customers are still stopping at a lower rate than Metropolis’s.
+The lower chart in Figure 7-5 shows the hazard ratios by channel for Chain, Store, and Mail compared to Dealer. The hazards for the Store channel are almost uniformly lower than for Dealer, implying that survival of customers from Store is better than customers from Dealer. This makes sense, because the Store channel consists of own-branded stores, where the personnel are actually employees of the cell phone company. It is not surprising that these stores attract and retain the best customers, and in particular, better than the inde- pendently owned dealers.
+The Mail and Chain hazard ratios are interesting, because these ratios are greater than one during the first year and then lower during the second year. One possibility is that the Dealers are intentionally churning their customers in the second year. That is, the independently owned dealers switch customers who have been around a year to another carrier, because they then get an acquisition bonus from another carrier. Customers who were acquired through national chains and customers who come in by calling or through the Internet would not be subject to such a ploy.
+Calculating Hazard Ratios
+Calculating the hazard ratios is basically the same as calculating the hazard probabilities. SQL is used to start the hazard calculation, which is finished in Excel, and then the ratio is calculated in Excel. The query to calculate the haz- ards by market and channel is:
+  SELECT tenure,
+         SUM(CASE WHEN market = ‘Small’ THEN 1 ELSE 0 END) as small,
+...
+SUM(CASE WHEN channel = ‘Chain’ THEN 1 ELSE 0 END) as chain,
+...
+SUM(CASE WHEN market = ‘Smallville’ THEN isstop ELSE 0 END
+) as stopsmall, ...
+         SUM(CASE WHEN channel = ‘Chain’ THEN isstop ELSE 0 END
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼308 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼￼) as stopchain, ...
+FROM (SELECT s.*,
+(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as isstop
+        FROM subs s) s
+  WHERE start_date >= ‘2004-01-01’ AND tenure >= 0
+  GROUP BY tenure
+  ORDER BY 1
+The results are copied into Excel to calculate the hazards. For the ratios, Gotham and Dealer were chosen arbitrarily. The one with the best survival (Smallville) or worst survival (Gotham) are good choices. In other circum- stances, it might be useful to compare each group to the population as a whole. This would be particularly true if the groups were rather small, because the overall group would have non-zero hazards even when some of the other groups occasionally have zero hazards.
+One caution about the hazard ratio is that it does not work when there are no stops in the comparison group at a given tenure. However, for the compar- ison by market, the sizes of the various subgroups are large enough so this does not happen. In other cases, it might be desirable to use a larger time period, such as seven days (one week) or 30 days (approximately one month).
+TIP Whenusinghazardratios,adjustthetimeperiodusedforthetenure calculations to ensure that there are enough stops during each time period, for instance, by summarizing at the weekly level rather than the daily level.
+Why the Hazard Ratio
+A question may be occurring to some readers: Why the hazard ratio and not the survival ratio? First, it is important to note that the survival ratio can also be informative. After all, the ratio of survival provides information about how much better one group is than another. It can even be used as a rough estimate of the difference in customer half-life. That is, if one group has a survival ratio half that of another group, the customer half-life for the first group should be about twice as long as the customer half-life for the second.
+The hazard ratio has two advantages, one theoretical and one practical. The theoretical advantage is that there is a relationship between the hazard ratio and the methods used for Cox proportional hazards regression. Both techniques look at what happens at a particular tenure and determine who is stopping. This rela- tionship is theoretically appealing.
+The more practical reason is that the hazard ratio gives independent infor- mation for each tenure as opposed to survival, which accumulates information. In the charts, there was often a cutoff at one year, where the ratios flipped. This
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 309
+￼￼phenomenon would show up much more slowly in the survival ratio, because the information has to accumulate over many tenures. In fact, the hazard ratio shows that the hazard probabilities for Smallville are getting worse while the hazard probabilities for Metropolis are getting better. However, even after two years, Smallville still has better survival than Metropolis, because of what hap- pens during the first year. The survival ratio does not show this phenomenon clearly at all.
+One drawback of the hazard ratio is that there might be only a small amount of data at each tenure. This can be fixed by using longer tenure periods, such as weeks or multiples of weeks, instead of days.
+Left Truncation
+Understanding variables improves our understanding of survival and haz- ards. This section moves to another topic, which is the accurate calculation of hazard probabilities. As noted in the previous chapter, the customers in the Subs table data have an unusual property: customers who stopped before 2004-01-01 are excluded from the table. This phenomenon, where customers are excluded based on their stop date, is called left truncation. In the previous chapter, the problem of left truncation was handled by ignoring customers who started before 2004-01-01. This section presents another method, based on an idea called time windows.
+Left truncation is a problem, because hazard estimates on left truncated data are simply incorrect. The solution to left truncation uses stop time windows, a powerful enhancement to survival analysis that has other applications. Before discussing time windows in general, though, let’s look at the left truncation problem that they solve.
+Recognizing Left Truncation
+Left truncation is identified by looking at a histogram of starts and stops by date on the same chart. The chart itself is similar to other histograms, except two curves need to be shown on the same chart. One way to do this is to gen- erate the data for each histogram separately, and then combine them in Excel. However, doing the combining in SQL simplifies the Excel work. The follow- ing query returns the number of starts and stops by month:
+  SELECT YEAR(thedate) as year, MONTH(thedate) as month,
+         SUM(numstarts) as numstarts, SUM(numstops) as numstops
+FROM ((SELECT start_date as thedate, COUNT(*) as numstarts, 0 as numstops FROM subs
+         GROUP BY start_date)
+        UNION ALL
+￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼310 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼￼￼￼        (SELECT stop_date as thedate, 0 as numstarts, COUNT(*) as numstops
+         FROM subs
+         GROUP BY stop_date)) a
+  WHERE thedate IS NOT NULL
+  GROUP BY YEAR(thedate), MONTH(thedate)
+  ORDER BY 1, 2
+Figure 7-6 shows the resulting histogram. This chart suggests that starts are coming from a much longer time period than stops. One way to confirm this is to ask the question: How many years (or months or days) have both starts and stops and how many have one without the other? The following query characterizes years according to whether or not the year has any starts and whether or not the year has any stops:
+  SELECT (CASE WHEN numstarts = 0 THEN ‘NONE’ ELSE ‘SOME’ END) as starts,
+         (CASE WHEN numstops = 0 THEN ‘NONE’ ELSE ‘SOME’ END) as stops,
+         COUNT(DISTINCT theyear) as numyears,
+         MIN(theyear) as minyear, MAX(theyear) as maxyear
+  FROM (SELECT theyear, SUM(numstarts) as numstarts,
+               SUM(numstops) as numstops
+        FROM ((SELECT YEAR(start_date) as theyear, COUNT(*) as numstarts,
+               0 as numstops
+FROM subs
+               GROUP BY YEAR(start_date) )
+              UNION ALL
+              (SELECT YEAR(stop_date) as theyear, 0 as numstarts,
+                      COUNT(*) as numstops
+               FROM subs
+               GROUP BY YEAR(stop_date) )) a
+        GROUP BY theyear) b
+  GROUP BY (CASE WHEN numstarts = 0 THEN ‘NONE’ ELSE ‘SOME’ END),
+           (CASE WHEN numstops = 0 THEN ‘NONE’ ELSE ‘SOME’ END)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼ORDER BY 1, 2
+150,000 125,000 100,000
+75,000 50,000 25,000
+0
+numstarts
+numstops
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Month of Start or Stop
+Figure 7-6: This histogram of start and stop counts by month suggests that prior to 2004, starts are recorded in the database but not stops.
+www.it-ebooks.info
+1990
+1991
+1992
+1993
+1994
+1995
+1996
+1997
+1998
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+Number of Customers
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 311
+￼￼Table 7-1 has the results from this query, which confirms what we already know. Prior to 2004, starts were recorded in the database but not stops. Chap- ter 6 got around this problem by filtering the starts to include only those since 2004. The resulting hazard calculation uses customers for whom full start and stop information is available.
+Table 7-1: Number of Years, Characterized by Presence of Starts and Stops
+￼NUMBER MINIMUM
+OF YEARS YEAR YEAR
+17 1958 2003 3 2004 2006
+MAXIMUM
+￼STARTS STOPS
+SOME NONE SOME SOME
+￼￼The subscribers table has a particularly egregious form of left truncation, because all stopped customers were excluded. Often, left truncation is not quite so blatant. For instance, some stops might make it into the database, per- haps because they were pending on the cutoff date. Or, the left truncation may be within a single market or customer subgroup. Perhaps a small company was acquired, and only their active customers were included in the database. Fortunately, the techniques that deal with left truncation can be enhanced to deal a separate left truncation date for each customer.
+Effect of Left Truncation
+Left truncation, in general, biases hazard probabilities by making them smaller. This is because customers are included in the population at risk, when these customers really are not at risk. For instance, a customer that started in 2001 is included in the population at risk for tenure one. If this customer had stopped at tenure one, she would not be in the data. Her stop date, if any, must be after the left truncation date. Yet, it is easy to include her in the population at risk for tenure one.
+As a consequence, the denominator of the hazard probability ratio is too large, thereby making the hazard probability too small, which in turn makes the survival estimates too big. Figure 7-7 compares survival curves generated from all the customers and from only those who started after the left truncation date. The result from overestimating survival is that the survival values are too optimistic. Optimism is good. Ungrounded optimism bordering on fantasy might lead to incorrect decisions and assumptions. It is much preferable to cal- culate unbiased estimates.
+Although left truncated data usually underestimates hazard probabilities, the resulting hazard probabilities could actually be either larger or smaller than the unbiased estimate. Consider the hazard probability at 730 days. It can
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼312 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼be set to almost any value by making up data before the left truncation date. So, consider the customers who start on 1 Jan 2001. If all these customers stop at exactly 730 days, then they all stop before the left truncation date (1 Jan 2003 is before 1 Jan 2004), and they are not in the data. However, their stops would increase the 730-day hazard relative to the observed value. If, instead, these customers all stop at exactly 731 days of tenure, then they have survived 730 days without stopping, thereby decreasing the 730-day hazard. Because these customers are not in the data, we don’t know which, if either, of these scenar- ios occurred.
+100% 90% 80% 70% 60% 50%
+40% 30% 20% 10%
+0%
+WRONG (Left Truncated)
+CORRECT (Filtered)
+90 120 150 180 210 240 270 300 330 360 390 420 450 480 510 540 570 600 630 660 690
+Tenure (Days)
+￼￼￼￼￼￼￼￼￼￼￼￼￼0 30 60
+Figure 7-7: Calculations on left truncated data overestimate the survival. Filtering is one way to get unbiased estimates.
+However, when doing survival analysis, we assume that the hazard proba- bilities do not change radically over time. This assumption of similarity over time has a name, the homogeneity assumption. The scenarios described in the previous paragraph severely violate the homogeneity assumption. Figure 6-15 did show that the 365-day hazard probability does change over time. How- ever, the change is gradual, so this hazard does not severely violate homo- geneity. With this assumption, the hazards calculated from left truncated data underestimate the hazard and hence overestimate the survival.
+TIP The homogeneity assumption asserts that the hazard probabilities do not change radically or suddenly over time. This is usually a reasonable assumption for customer databases, although it is worth validating.
+￼www.it-ebooks.info
+Sur vival
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 313 How to Fix Left Truncation, Conceptually
+Figure 7-8 shows several customers throughout time, on the calendar time line. Two dates are highlighted; the earlier is the left truncation date and the later is the cutoff date. Only customers who are active after the left truncation date are in the database.
+Customer #5 started and stopped before the left truncation date. This cus- tomer is simply missing from the data. We do not even know to look for the customer, because the customer is not there. Customer #2 started at about the same time yet appears in the data, because this customer survived to the left truncation date. The fact that one customer is present and another absent is a property of the data, as opposed to a property of any particular record.
+￼￼￼￼￼￼er 5
+Custom
+Custom
+Customer 8
+￼￼er 6
+￼Custom
+er 7
+Customer 4
+￼￼Custom
+er 2
+Customer 3
+￼￼Customer 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼left truncation date Calendar Time cutoff date Figure 7-8: Customers who stop before the left truncation date are not included in
+the database.
+How can the hazard probabilities be calculated without the biases introduced by missing data? Answering this question requires a detailed look at the hazard calculation itself. Remember, the hazard probability at a particular tenure is the number of customers who have an observed stop at that tenure divided by the number of customers who are at risk of stopping. The population at risk is everyone who was active at that tenure who could have stopped, regardless of whether they stopped.
+Left truncation adds a twist. Consider the at-risk population for customers at tenure zero in left truncated data. If a customer started before the left trun- cation date, the customer is not in the at-risk pool for tenure zero. Customers who started before the left truncation date and would have a tenure of zero are simply not available in the data. So, the at-risk population at tenure zero con- sists only of customers who started since the left truncation date.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼314 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼Consider the at-risk population for customers at tenure one. These cus- tomers have to be at risk of stopping at tenure one and the stop needs to occur after the left truncation date. So, tenure one needs to occur on or after the left truncation date. In other words, the customer must start between one day before the left truncation date and one day before the cutoff date.
+The general rule is that a customer is in the population at risk at tenure t when that tenure occurs on or after the left truncation date and before the cutoff date. The following two rules for membership in the population at risk encapsulate this observation:
+■■ Customers start in the time period from the left truncation date minus t to the cutoff date minus t; and,
+■■ Customers are active at tenure t.
+Together, these two rules imply that the customer is active at that tenure in the
+period after the left truncation date.
+Estimating Hazard Probability for One Tenure
+The preceding rules readily translate into SQL for a given tenure For instance, the hazard probability for tenure 100 is calculated as:
+  SELECT MIN(thetenure) as thetenure, COUNT(*) as poprisk_t,
+         SUM(CASE WHEN tenure = thetenure THEN isstop ELSE 0 END
+            ) as numstops,
+         AVG(CASE WHEN tenure = thetenure THEN isstop*1.0 ELSE 0 END
+            ) as haz_t
+  FROM (SELECT s.*, 100 as thetenure,
+(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as isstop FROM subs s) s
+  WHERE tenure >= thetenure AND
+        DATEADD(dd, thetenure, start_date) BETWEEN ‘2004-01-01’ AND
+                                                   ‘2006-12-31’
+The result is 0.088%. Notice that this query sets the THETENURE variable in the subquery as a convenience for the overall calculation. Changing THETENURE results in estimates for other tenures. For instance, changing it to 1460 gives the tenure at four years (1460=365*4). That value is 0.07%.
+Wow. Calculating the hazard for such a large tenure is quite remarkable. Up to this point, hazard probabilities have been limited to tenures less than three years, because starts before 1 Jan 2004 were filtered out. However, by using a time win- dow for the stops, hazard probabilities can be calculated for any tenure.
+Estimating Hazard Probabilities for All Tenures
+The method used to estimate hazard probabilities for a single tenure does not readily scale to all tenures. Doing the calculation efficiently for all tenures
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 315
+￼￼requires a bit more cleverness based on some observations about the popula- tion at risk. These observations look at the calculation from a different per- spective, the relationship between the population at risk at one tenure and the population at risk for the previous tenure.
+The observations are:
+■■ The population at risk for a given tenure t is the population at risk for
+t–1, plus
+■■ Customers who enter the time window with tenure t (that is, those who
+have tenure t on the left truncation date), minus
+■■ Customers who leave the time window with tenure t–1 (that is, those
+who are stopped or censored at the previous tenure).
+These observations use the number of customers who enter and leave the time window defined by the left truncation date and the cutoff date. The number of customers who enter at a given tenure is easily calculated. If the customer started on or after the left truncation date, then the customer entered at tenure zero. Customers who start before the left truncation date enter the time window on their tenure as of the left truncation date. Only customers who have entered the time window are counted in the population at risk for a given tenure.
+The number of customers who leave the time window at a given tenure is even easier. This is simply the number of customers with a given tenure, regardless of whether or not they stop. Any customers who stop before the left truncation date need to be excluded from both the “enters” and “leaves” cal- culations. This condition is a bit redundant, because customers who stop before the left truncation date are not in the data at all, which is why we are going through this effort to calculate unbiased hazards.
+The following SQL calculates the columns NUMENTERS, NUMLEAVES, and NUMSTOPS for all tenures less than 1000 by placing all longer tenure cus- tomers into one group (this is just a convenience for the calculation and not necessary for handling left truncation):
+  SELECT (CASE WHEN thetenure < 1000 THEN thetenure ELSE 1000
+          END) as tenure, SUM(enters) as numenters,
+         SUM(leaves) as numleaves, SUM(isstop) as numstops
+  FROM ((SELECT (CASE WHEN start_date >= ‘2004-01-01’ THEN 0
+                      ELSE DATEDIFF(dd, start_date, ‘2004-01-01’) END
+                ) as thetenure,
+                1 as enters, 0 as leaves, 0 as isstop, s.*
+         FROM subs s) UNION ALL
+        (SELECT tenure as thetenure, 0 as enters, 1 as leaves,
+                (CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END
+                ) as isstop, s.*
+         FROM subs s) ) a
+  WHERE start_date IS NOT NULL AND tenure >= 0
+  GROUP BY (CASE WHEN thetenure < 1000 THEN thetenure ELSE 1000 END)
+  ORDER BY 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼316 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼The number of customers who enter and leave the time window are calculated in two subqueries, one for entering and one for leaving, connected with a UNION ALL. The second of these subqueries also keeps track of the customers who stop, because the tenure at the stop is the same as the tenure when the customer leaves the time window.
+These columns provide the fodder for the Excel calculation, which fol- lows the logic described in the preceding observations. Figure 7-9 shows an Excel spreadsheet that does the calculations. The population at risk for a given tenure is the previous population at risk plus the new customers that enter minus the ones that leave at the previous tenure. The hazard probabil- ities are then calculated by dividing the number of stops by the population at risk. When doing the calculation for all tenures, it is worth validating the result for one or two tenures, using the single tenure estimate in the previ- ous section.
+Figure 7-9: The Excel calculation for handling left truncation is not much more difficult than the calculation for empirical hazards.
+Notice that the number of customers who enter the time window at tenure zero is in the millions, but for the other tenures, the count is, at most, in the thousands. This is because all customers who start on or after the left truncation date enter the time window at tenure zero. So, the tenure zero number includes three years worth of starts. On the other hand, the customers who enter at larger tenures started that number of days before the left truncation date.
+Time Windowing
+Time windows are more than just the solution to left truncation. They are a powerful technique for other purposes. This section investigates time win- dows in general and some ways that they can be used.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 317 A Business Problem
+Once upon a time, a company was developing a forecasting application using survival analysis. This type of application was discussed in the previous chapter, and forecasting can be a powerful application of survival analysis. A large amount of data for tens of millions of customers was provided early in May for a proof-of-concept. The schedule called for the proof-of-concept to be reviewed in the summer, steadily improved upon, and then the final forecast- ing project would begin at the end of the year. So, using the historical data, the proof-of-concept began.
+During that May, a shrewd person in finance decided to change one of the company’s policies, just a little tweak actually. The old policy was to discon- nect a customer on the date that the customer requested the stop. The new policy was to disconnect customers at the end of their billing cycle, unless the customer very loudly objected.
+The merits of the new policy were multifold and manifest. The new policy meant that almost no monies needed to be refunded to customers, for instance, because accounts were paid up through the end of the billing period. Such refunds were generally small amounts of money, and the overhead for each refund was a significant proportion of the amount refunded. In addition, the new policy kept customers active for a longer period of time. In fact, assuming that customers call randomly during their billing periods to stop, it would add half a billing period — or two weeks — onto each customer’s tenure.
+Hmmm, would the new policy have an effect on customers’ tenures? Could it conceivably be possible that adding an extra two weeks of tenure to every customer who stops would have an effect on the proof-of-concept project? No suspense here; the answer is “yes.” The more important question is how to deal with the situation.
+Filtering customers who started after the date the new policy went into effect would not work, because the population would consist of customers having only very short tenures — about one month for the proof-of-concept and less than one year for the larger project. A better solution would be to calculate unbi- ased hazard probabilities using only stops after the new policy went into effect. In other words, forcing the left truncation date to be a recent date would only use stops that have the new policy. Voila! The hazard estimates would reflect the new policy, while still having hazard estimates for all tenures.
+Forcing left truncation solves the problem. Once this is recognized as a pos- sibility other situations are amenable to the solution. Another company changed its initial non-payment policy. Previously, customers were cancelled after 63 days, if they did not pay their initial bill. This was changed to 77 days. And, yes, this has an impact on the forecast customer numbers. Eventually, the policy was made more complicated, varying from 56 days to 84 days for dif- ferent groups of customers. By using left truncation to estimate hazards using
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼318 Chapter 7 ■ The What and Why of Customer Tenure
+stops only since the new policies went into effect, it was possible to get accu-
+rate survival estimates for a customer forecast application.
+Time Windows = Left Truncation + Right Censoring
+The examples discussed in the previous section use forced left truncation to handle a business problem. However, a more general way to think about time windows is that they calculate unbiased estimates of hazard probabilities using a time window of stops. The beginning of the time window is the left truncation date and the end of the time window is the cutoff date (technically called the right censor date for the data).
+Figure 7-10 illustrates a general time window for a small number of cus- tomers. As this example shows, a given time window is a combination of left truncation and forcing an earlier right censorship date (which we saw in the previous chapter in Figure 6-17). With these two ideas, it is possible to gener- ate unbiased hazards using almost any time window where stops occur.
+￼￼￼Customer 7
+Customer 6
+Customer 8
+￼￼￼￼Customer 5
+￼￼Customer 3
+Customer 4
+￼￼￼Customer 2
+￼Customer 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Calendar Time
+Figure 7-10: Time windows make it possible to estimate unbiased hazard probabilities for stops during a particular period of time (the shaded area).
+Calculating One Hazard Probability Using a Time Window
+Consider the following question: What are the hazard probabilities at tenure 100 based on stops in 2004, in 2005, and in 2006? This is a question about changes in
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 319 a hazard probability over time. The following SQL statement does the calcula-
+tion based on stops in 2004:
+  SELECT MAX(thetenure) as tenure, COUNT(*) as poprisk_t,
+         SUM(CASE WHEN tenure = thetenure THEN isstop ELSE 0 END
+            ) as numstops,
+         AVG(CASE WHEN tenure = thetenure THEN isstop*1.0 ELSE 0 END
+            ) as haz_t
+  FROM (SELECT s.*, 100 as thetenure,
+               (CASE WHEN stop_type IS NOT NULL AND
+                          stop_date <= ‘2004-12-31’
+                     THEN 1 ELSE 0 END) as isstop
+               FROM subs s) s
+  WHERE tenure >= thetenure  AND
+        ADDDATE(dd, thetenure, start_date, thetenure)
+            BETWEEN ‘2004-01-01’ AND ‘2004-12-31’
+This SQL statement combines left truncation and forced censoring. Left trun- cation is implemented in the WHERE clause, by restricting the customers only to those whose 100th day of tenure is during 2004. The forced censoring is as of the end of 2004, so the definition of ISSTOP is as of that date.
+The queries for 2005 and 2006 are similar. Table 7-2 shows the hazard prob- ability for tenure 100 for stops during each of the three years. The probability itself is quite low. It is interesting that the hazard is lowest during 2005, which also had the most starts.
+Table 7-2: Hazard Probability for Tenure 100 Based on Stops in 2004, 2005, and 2006
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼YEAR TENURE
+2004 100 2005 100 2006 100
+POPULATION
+AT RISK STOPS
+956,937 957 1,174,610 777 750,064 808
+HAZARD PROBABILITY
+0.10% 0.07% 0.11%
+￼￼￼All Hazard Probabilities for a Time Window
+Calculating a hazard probability for a single tenure is a good illustration of time windows. More interesting, though, is calculating hazard probabilities for all tenures. This calculation follows the same form as the left truncation calculation, where STOPS, ENTERS, and LEAVES variables are calculated for all tenures. These are then combined in Excel. The next section provides an example of this calculation.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼320 Chapter 7 ■ The What and Why of Customer Tenure Comparison of Hazards by Stops in Year
+The previous chapter showed two ways of comparing changes in survival probabilities over time. The first method was to use starts in a given year, which provides information about acquisition during the year, but not about all the customers who were active during that time. The second approach forces the right censorship date to be earlier, creating a snapshot of survival at the end of each year. Using starts, customers who start in 2006 have rela- tively lower survival than customers who start in 2004 or 2005. However, the snapshot method shows that 2006 survival looks better than survival at the end of 2004.
+This section proposes another method, based on time windows. Using time windows, hazard probabilities are estimated based on the stops during each year, rather than the starts. Time windows make it possible to calculate hazard probabilities for all tenures.
+The approach is to calculate the number of customers who enter, leave, and stop at a given tenure, taking into account the time window. The following query does the calculation for stops during 2006:
+         SELECT (CASE WHEN tenure < 1000 THEN tenure ELSE 1000 END) as tenure,
+                SUM(enters) as numenters, SUM(leaves) as numleaves,
+                SUM(isstop) as numstops
+         FROM ((SELECT (CASE WHEN start_date >= ‘2006-01-01’ THEN 0
+                             ELSE DATEDIFF(dd, start_date, ‘2006-01-01’) END
+) as tenure,
+                       1 as enters, 0 as leaves, 0 as isstop
+                FROM subs s
+                WHERE tenure >= 0 AND start_date <= ‘2006-12-31’ AND
+                      (stop_date IS NULL OR stop_date >= ‘2006-01-01’)
+               ) UNION ALL
+               (SELECT (CASE WHEN stop_date IS NULL OR stop_date >= ‘2006-12-31’
+THEN DATEDIFF(dd, start_date, ‘2006-12-31’)
+ELSE tenure END) as tenure, 0 as enters, 1 as leaves,
+                       (CASE WHEN stop_type IS NOT NULL AND
+                                  stop_date <= ‘2006-12-31’ THEN 1 ELSE 0 END
+                       ) as isstop
+                FROM subs s
+                WHERE tenure >= 0 AND start_date <= ‘2006-12-31’ AND
+                      (stop_date IS NULL OR stop_date >= ‘2006-01-01’) )
+)a
+GROUP BY (CASE WHEN tenure < 1000 THEN tenure ELSE 1000 END) ORDER BY 1
+This query calculates the variable ENTERS by determining the tenure when a customer enters the stop window — either the tenure on the left truncation date or zero for customers who start during the window. The variables LEAVES and STOPS are calculated based on the tenure on the right censorship date or the tenure when a customer stops.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼Chapter 7 ■ The What and Why of Customer Tenure 321
+Each subquery has the same WHERE clause in order to select only customers active during the time window––customers had to start before the end of the year and stop after the beginning of the year in order to be included. For good measure, each subquery also requires that TENURE be greater than zero, elim- inating the row that has a spurious negative value.
+Figure 7-11 shows the survival curves based on stops in each of the three years. These curves are comparable to Figure 6-16 and 6-18, which show the survival based on starts and the end-of-year snapshots, respectively. This chart has a more complete picture. By using time windows on stops, all three years have survival estimates for all tenures. None of the series are longer or shorter than the others.
+100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Figure 7-11: Using time windows, the stops during different years can be used to calculate hazard probabilities and survival.
+The chart shows that the anniversary churn effect is much stronger in 2005 and 2006 versus 2004. Anniversary churn is the tendency of customers to stop on the one-year anniversary of their start, typically because their contracts expire. So, although customers in 2005 and 2006 survive better in the first year (com- pared to customers in 2004), as the tenures stretch out, the difference in survival disappears. Based on the stops, 2006 seems to be the worst of all possible worlds, with the worst short-term survival (in the first 90 days) and the worst long-term survival (over 720 days), although it does a bit better in between.
+Competing Risks
+The opening lines to Leo Tolstoy’s classic novel Anna Karenina is the insightful quote: “All happy families are alike; each unhappy family is unhappy in its own way.” This book is not about literary criticism, but what Tolstoy wrote in the 19th century about families is also true of customers in the 21st century.
+Sur vival
+0 90 180 270 360 450 540 630 720 810 900 990
+Tenure (Days)
+www.it-ebooks.info
+YR2004
+YR2005
+YR2006
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼322 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼Happy customers who stay are all alike, because they remain customers. Unhappy customers stop, and they do so for a variety of reasons. Although perhaps not as compelling as the family tragedies in a Tolstoy novel, these dif- ferent reasons are of analytic interest. Competing risks is the part of survival analysis that quantifies the effects of these different reasons.
+Examples of Competing Risks
+One way to think of competing risks is to imagine a guardian angel “compet- ing” with various devils of temptation for each customer. The guardian angel encourages the customer to remain a happy, loyal, paying customer. The vari- ous devils of temptation urge the customer to defect to a competitor, or to stop paying, or quit for some other reason. This competition goes on throughout the customer lifetime, with the guardian angel usually winning . . . but even- tually a devil of temptation comes out ahead, and the customer stops.
+This image of guardian angels and devils of temptation encapsulates the central notion of competing risks: at a given tenure, a customer not only has a risk of stopping, but of stopping for one of a variety of reasons. For instance, the subscription data has three types of customer unhappiness encoded in the STOP_TYPE column. So far, we have used the stop type to identify whether or not customers have stopped, lumping together all non-NULL values as stopped customers. The next three subsections explain these stop types in more detail.
+TIP Whenworkingwithmanydifferentreasonsforcustomersleaving,itisa good idea to classify them into a handful of different categories, say between two and five. These categories depend on the business needs.
+I=Involuntary Churn
+Stop type “I” stands for “involuntary churn,” which occurs when the com- pany initiates the stop. In this dataset, involuntary churn is synonymous with customers not paying their bill. However, involuntary churn can arise in other situations. A company might close down its operations in a geographic area or sell a business unit to a competitor. These are examples of situations where customers cease being customers, but through no fault of their own.
+Involuntary churn may not really be involuntary. Customers may communi- cate their desire to leave by not paying their bills. Once upon a time, a mobile telephone company believed that it had no involuntary churn at all; that is, the company performed credit checks and believed that all customers could pay their bills. What the company did have was poor customer service—the hold times in the call center were often measured in tens of minutes. Customers
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 323
+￼￼would call customer service, perhaps with a billing or coverage question, and very likely get angry over the long wait time. Instead of canceling by calling back––and waiting again––some customers simply stopped paying their bills. The data suggested this, because many customers who stopped paying had called customer service shortly before they stopped, even though they had high credit scores that indicated their ability to pay the bill.
+V=Voluntary Churn
+Another form of churn is “V,” which stands for “voluntary churn.” This is a much more diverse array of reasons, because these are customer initiated. Cus- tomers may stop because the price is too high, or because the product does not meet expectations (such as coverage for a cell phone company), or because customer service has treated them poorly, or because they are moving, or because of a change in financial conditions, or to boycott the company’s envi- ronmental policy, or because their astrologer recommended change. There are a myriad of reasons, and it is not uncommon for there to be dozens or hun- dreds of detailed stop codes. In the Subs table, all these reasons (and more) are grouped together into one group, “V.”
+Not all voluntary churn is necessarily truly voluntary. Often, customers can- cel their accounts after late notices start appearing. They may stop voluntarily but they owe money. These customers were en route to involuntary churn, but took a detour by stopping on their own.
+These borderline cases do not affect the applicability of competing risks. Instead, they suggest that under certain circumstances, additional data might be incorporated into the stop types. For instance, there might be a dif- ference between customers who stop voluntarily with an outstanding bal- ance (larger than a certain size or so many days past due) and other customers who stop voluntarily.
+M=Migration
+The third type of churn in the subscription data is migration churn, indicated by “M.” One example of migration churn is when a company introduces a new improved product and wants to move all customers to the new product. This occurred when companies introduced digital cell phone technologies, and moved customers from analog services.
+The accounts in this dataset consist of customers on subscription accounts. These customers pay for service one month at a time as part of an ongoing service arrangement. Prepaid customers pay in advance for a block of time. The prepaid option is more appropriate for some customers, particularly those with limited financial means.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼324 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼Migration from a subscription account to a prepaid account is a down- grade, because the prepay product is not as profitable as the subscription product. In other cases, migration might be an upgrade. For instance, in a credit card database, switching to a gold, platinum, titanium, or black card might close one credit card account but open another, more valuable account. In the pharmaceutical world, a patient might go from a 10 mg dose to a 40 mg dose.
+From the holistic customer perspective, migration may not actually indicate a stop at all. After all, the customer remains a customer with the company. On the other hand, from the perspective of a particular product group, migrated customers no longer use that product. Whether or not migration indicates a stop is a business question whose answer varies depending on the particular analytic needs.
+TIP Whetherornotacustomerhasstoppedissometimesabusinessquestion. For some analyses (more product-centric), customers who migrate to another product might be considered stopped. For other more customer-centric analyses, such customers would still be active.
+Other
+Another type of churn is “expected” churn. For instance, customers may die or move outside the service area; in both cases, the cancellation is not because the customer does not want to be a customer; it is due to extraneous factors.
+It would be possible to handle competing risks for all the dozens of types of churn specified by reason codes. However, it is usually better to work with a smaller number of reasons, classifying the reasons into a handful of impor- tant stop classes.
+Competing Risk “Hazard Probability”
+The fundamental idea behind competing risks is that a customer who is still active has not succumbed to any of the risks. In the original imagery, this means that the guardian angel and the devils of temptation keep battling for the customer’s fate. While a customer is active, the angel and the devils con- tinue to compete for the customer.
+Figure 7-12 illustrates a small group of customers. In this chart, open circles indicate that the customer is still active. The dark and light shadings indicate different ways that customers might leave. It is possible to calculate the haz- ard for each of the risks, by dividing the number of stops for that risk by the population at risk. Because the angel and the devils are all competing for the same customers, the population at risk is the same for all the risks. Actually,
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 325
+￼￼the population at risk might vary slightly for different risks, but this variation is a technical detail. For intuitive purposes, it is safe to assume that the popu- lations are the same.
+￼￼￼￼Customer 5
+Customer 4
+V
+Customer 3
+Customer 7
+Customer 6
+I Customer 2
+M I
+V
+Customer 1
+Customer 8
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Tenure
+Figure 7-12: Different customers stop for different reasons, such as voluntary and involuntary churn and migration.
+The following query sets up the appropriate data in SQL:
+  SELECT tenure, COUNT(*) as pop,
+         SUM(CASE WHEN stop_type = ‘V’ THEN 1 ELSE 0 END) as voluntary,
+         SUM(CASE WHEN stop_type = ‘I’ THEN 1 ELSE 0 END) as involuntary,
+         SUM(CASE WHEN stop_type = ‘M’ THEN 1 ELSE 0 END) as migration
+  FROM subs
+  WHERE start_date IS NOT NULL AND tenure >= 0 AND
+        start_date >= ‘2004-01-01’
+  GROUP BY tenure
+ORDER BY 1
+This SQL simply divides the stops into three groups, the “V,” the “I,” and the “M” groups. Competing risk hazards are then calculated separately for each of these groups, using the same population at risk.
+There is a theoretical reason for slightly tweaking the population at risk, by making a small adjustment for the customers who stop. Even though all stopped during the same discrete time interval, we can imagine that they stopped in some order. Once a customer has stopped for any reason, that customer is no longer in the population at risk for the other risks. On average, all the customers who stopped for a particular risk stopped halfway through the time interval. These customers are not at risk for stopping again. For this reason, a reasonable adjustment on the population at risk for a particular risk is to subtract half the stops of the other types of risk.
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼326 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼This adjustment generally has a negligible impact on the resulting hazard probabilities, because the number of stops at any given time is much smaller than the population at risk. When the number of stops and the population at risk are closer together, the adjustment is more important. However, this hap- pens when the population at risk is small, so the confidence interval around the hazard probability is large. Incidentally, this same adjustment can be made for the overall hazard calculation.
+What does the competing risk hazard mean? A good intuitive answer is that the hazard is the conditional probability of succumbing to a particular risk, given that the customer has not succumbed to any risk so far. Competing risk hazard probabilities are always smaller than or equal to the overall hazard probabilities at the same tenure. In fact, if all competing risks have been taken into account, the overall hazard probability is the sum of the competing risk hazard probabilities (or at least, very close to the sum if using the adjustment).
+Is there an alternative approach? One idea might be to keep only the stops for one risk, filtering out all the others. This is a no-no. Previously, there was a warning that filtering or stratifying customers by anything that happens during or at the end of the customer relationship results in biased hazards. There is no exception for competing risks. The customers who stopped involuntarily were at risk of stopping voluntarily before their stop date. Removing them reduces the size of the population at risk, which, in turn, overestimates the hazards.
+WARNING When using survival techniques, be sure that all stops are taken into account. Use competing risks to handle different stop reasons, rather than filtering the customers by stop reason.
+Competing Risk “Survival”
+Given competing risk hazard probabilities, the next step is to calculate the competing risk survival, as shown in Figure 7-13. The survival values for one competing risk are always larger than the overall survival. For the data with large numbers of customers and relatively few stops at any given tenure, the product of all the competing risk survival values at a given tenure is a good approximation of the overall survival. This formula is not exact, but it is a good approximation.
+Competing risk survival curves do not have an easy interpretation. They are conditional on a customer not stopping for other reasons. So, the “V” curve is answering the question: What is the probability of surviving to a given tenure assuming that the customer does not stop for any reason other than “V”? This ques- tion is rather arcane; customers do stop for other reasons.
+Competing risk survival curves do not have the nice analytic properties of overall survival curves. In particular, the median value and the area under the curve do not have easily understood interpretations.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Chapter 7 ■ The What and Why of Customer Tenure 327
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼M
+I
+V
+ALL
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 30 60
+90 120 150 180 210 240 270 300 330 360 390 420 450 480
+Tenure (Days)
+Figure 7-13: Competing risk survival is always larger than overall survival.
+On the other hand, the curves are quite useful qualitatively. For instance, the chart shows that voluntary churn is the cause of anniversary churn. On the other hand, involuntary churn predominates at a few months after a customer starts, and becomes less significant after that. Migration is never a big cause of churn. This ability to see the importance of different cancellation types makes compet- ing risk survival charts useful, though more qualitatively than quantitatively.
+What Happens to Customers over Time
+Survival curves have a nice property. At any given tenure, the survival curve estimates the proportion of customers who are active; and hence the number who have stopped. Or, if the risk is something other than stopping, the curve tells us the proportion of customers who have succumbed to the risk and the proportion who have not. Competing risks extends this by refining the stopped population by risk type.
+Example
+Figure 7-14 shows a graph of the subscribers by tenure, divided into four parts. The lowest region is the customers who are active. The next is the customers who stopped voluntarily and the next region is the customers who stopped involuntarily. At the very top is a thin line for customers who have migrated, but it is invisible because there are so few. For instance, at 730 days, 42.3% are still active, 37.1% have stopped voluntarily, 20.2% have stopped involuntarily, and 0.4% have migrated. At every point, all customers are accounted for, so the sum of the three curves is always 100%.
+www.it-ebooks.info
+Competing Risk Survival
+￼328 Chapter 7 ■ The What and Why of Customer Tenure
+100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Migration
+Involuntary
+Voluntary
+Active
+0 90 180 270 360 450 540 630 720 810 900 990 1080
+Tenure (Days)
+Proportion of Population
+Figure 7-14: This chart shows what happens after subscribers start, by breaking the stops into different groups based on the stop type.
+These curves show what happens next after customers start. The only possi- bilities are remaining active, or stopping, either voluntarily, involuntarily, or by migrating. However, some customers who stop may restart and become active again. Customers who migrate away may also migrate back. These curves do not take these more complex scenarios into account, because they only show the next thing that happens.
+The boundary between the active customers and the voluntary customers is the overall survival curve. The other three regions are calculated from the haz- ards, but not in exactly the same way as the survival curves. There are two approaches for creating a “what-happens-next” chart. The first is a brute-force, cohort-based approach. The second uses survival analysis.
+A Cohort-Based Approach
+One way to create a chart of what happens next is by doing a cohort-based cal- culation. This focuses on the outcomes of a group of customers who all start around the same time. For instance, the following SQL keeps track of the cohort of customers who start on 1 January 2004:
+  SELECT tenure, COUNT(*) as pop,
+         SUM(CASE WHEN stop_type = ‘V’ THEN 1 ELSE 0 END) as voluntary,
+         SUM(CASE WHEN stop_type = ‘I’ THEN 1 ELSE 0 END) as involuntary,
+         SUM(CASE WHEN stop_type = ‘M’ THEN 1 ELSE 0 END) as migration
+  FROM subs
+  WHERE start_date = ‘2004-01-01’
+  GROUP BY tenure
+  ORDER BY 1
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 329
+￼￼This query is quite similar to the previous query. The only difference is that the query restricts the population to one day of starts. The idea is to use this data to calculate the cumulative number of starts and stops for each tenure, directly from the data.
+Calculating the cumulative numbers for all tenures relies on two rules. The number of active customers at a given tenure is the sum of all customers with longer tenures plus the number at that tenure who are active. For the other three groups, the rule is simply a cumulative sum. So, the number of voluntary stops is the sum of the number of voluntary stops for all tenures less than or equal to the given tenure.
+Excel readily supports these calculations. Figure 7-15 shows the resulting chart, with the population of each group on a separate line. This chart is not stacked, so it is not obvious that the sum at any given tenure is the same value, the 349 customers who started on 1 January 2004.
+350
+300
+250
+200
+150
+100
+50 0
+Actives
+V
+I
+M
+60 90
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 30
+120 150 180 210 240 270 300 330 360 390 420 450 480 510 540 570 600 630 660 690
+Days After Start
+Figure 7-15: This chart shows what happens to customers who started on 1 Jan 2004, by showing the size of the groups that are active, voluntary stoppers, involuntary stoppers, and migrators.
+The cohort approach is very useful for seeing what happens to a group of customers. With additional information, customers could be placed into dif- ferent groups, such as:
+■■ Active, with no overdue amount;
+■■ Active, with overdue amount;
+■■ Stoppedvoluntarily,nomoneyowed;
+■■ Stoppedvoluntarily,withanoutstandingbalance;
+■■ Stoppedinvoluntarily,outstandingbalancewrittenoff;
+■■ Stoppedinvoluntarily,eventuallypaidoutstandingbalance;
+■■ Migrated, still active on migration product;
+■■ Migrated, stopped; and
+■■ Migrated, but returned to subscription product.
+www.it-ebooks.info
+Number of Customers
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼330 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼These groups combine different types of information, such as the outstanding balance and whether a customer who migrated returned to the original product. The cohort approach does have a downside. The wider the time period when customers start, the more difficult it is to use. The problem occurs because dif- ferent groups of customers are eligible for different tenures. That is, customers who started in January 2004 can be tracked for thirty-six months. However, cus- tomers who started in January 2006 can only be tracked for twelve months;
+their data cannot be used for months thirteen through thirty-six.
+It is possible to try to keep track of how many customers are eligible for each tenure, as well as the numbers who are in the various groups. Such attempts often result in a “big triangle” in Excel, with starts from each month being tracked for the month after the customers start. So one row in Excel is devoted to customers who start in January with separate columns describing what happens to them in February and March and April and so on. The next row then has the data for February. This gets complicated, both for generating the data and for managing it in Excel. It feels as though the cohort approach is reaching its limits. Fortunately, there is an alternative, using survival analysis and competing risks.
+The Survival Analysis Approach
+This section explains how to use competing risk hazards to quantify the num- ber of customers in each group for all tenures. The place to start is with the overall survival, which splits the customer base into the customers who are active and the customers who have stopped. There are two questions. The first is: What proportion of customers stop at each tenure? The second is: Of the customers who stop at each tenure, what proportion stopped for each of the competing reasons?
+Answering the first question is easy. The proportion of customers who stop is the difference between overall survival at time t and overall survival at time t+1. The answer to the second question is almost as easy. The solution is to divide the customers who stop proportionally among the competing risks. So, assume that 10, 20, and 70 customers stop for each of three risks at a given tenure. The proportion of customers who stop at that tenure is split into three groups, one with 10% of the stops, one with 20%, and one with 70%.
+Earlier, we saw the query for calculating the competing risk hazards. Fig- ure 7-16 shows a screen shot of the Excel spreadsheet that completes the calcu- lation. This calculation determines the proportion of customers who stop at the tenure, by taking the survival at that tenure and subtracting the survival at the next tenure. The difference is then divided proportionately among the competing risks; their cumulative sum is the proportion of customers who have succumbed to a particular risk at a particular tenure.
+This method of calculation has an advantage over the cohort approach, because it readily combines data from many start dates. It can also be extended to define additional groups, by introducing more competing risks. For
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 331 instance, the risk for voluntary churn could be split into two risks, one where
+the outstanding balance is zero and the other where the customer owes money.
+Figure 7-16: In Excel, it is possible to calculate what happens next using competing risk survival.
+Competing risks makes it possible to understand what happens to cus- tomers over time. However, there is an interesting paradox involving compet- ing risk hazard probabilities and survival values, discussed in the aside “A Competing Risks Conundrum.”
+￼￼￼￼￼A COMPETING RISKS CONUNDRUM
+Competing risks survival suggests two approximations that seem intuitive (or at least very reasonable). The first is that the product of the competing risk survival values equals the overall survival. The second approximation is that the sum of the competing risk hazard probabilities at a particular tenure equals the overall hazard probability.
+Fortunately, these approximations are very good for customer data. In particular, both these statements are very close to being true when there are a large number of overall customers and few stops at each tenure. In extreme cases, though, the discrepancies are blatant and it is worth explaining this to help better understand competing risks in general.
+The first approximation about the survival runs into a problem when all customers stop. Take the case where there are three customers at risk at a given tenure and all three stop, for three different reasons. The overall hazard is 100%, and the hazard probabilities for each competing risk are 33.3%. The survival at the next time period is 0%. However, the survival for each competing risk is 66.7%, so the product is 29.6%, quite different from 0%. A bit of reflection suggests that almost no matter how we handle the competing risk hazard probabilities, they are always going to be equal and less than 100%. The product of the resulting survival is never going to be 0%.
+This problem arises because there is a singularity in the survival probabilities. The survival drops to zero when all customers stop. Fortunately, when working with large numbers of customers, this does not happen.
+www.it-ebooks.info
+Continued on next page
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼332 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼￼￼A COMPETING RISKS CONUNDRUM (CONTINUED)
+What about the sum of the competing risk hazards being the overall hazard? In this case, the explanation is a bit different. Imagine the same situation as before, with three customers each of who stops for a different reason. What is the “real” competing risk hazard when we look at this under a microscope? What would happen to the hazard probabilities if we assumed that the stops do not occur at exactly the same time, but in some sequence?
+Well, the first customer who stops, say for competing risk A, has a hazard of 1/3, about 33.3%. An instant later, when the second customer stops for competing risk B, the population at risk now has only two members, B and C (because the first customer has stopped). So, the competing risk hazard is 1/2 or 50%. And
+for the third one, the hazard comes to 1/1 or 100%. These look quite different from the hazards as calculated over the whole population.
+The problem is, we don’t know the exact order that the customers stopped in. It could be A then B then C, or B then C then A, or A then C then B, and so on. One solution is to guesstimate the average by taking the average hazard probability for the three cases. This comes to 11/18 (61.1%).
+An alternative approach is to say that for any given risk, the population at risk needs to be reduced by half the customers who stop for other reasons. That is, the customers who stop for reasons B and C cannot stop for reason A. And, on average, those customers stop for reasons B and C halfway through the time period. This yields a hazard probability of 50% for each of the risks.
+All of this discussion is academic, because the number of customers who stop is much, much smaller than the population at risk for problems involving customers. Each competing risk hazard estimate can be made a bit more accurate when reducing the population at risk by half the number of customers who stop for other risks. In practice, though, this adjustment has a very small effect on the hazards. And, this effect is much less than the effect of other biases, such as left truncation.
+￼Before and After
+The first topic in this chapter explained how to understand factors that are known about customers when they start, using stratification and hazard ratios. The previous section explained how to understand factors that occur at the end of the customer relationship, by using competing risks. The final topic in this chapter is about events that happen during customers’ life cycles, technically known as time-varying covariates. In particular, this section talks about survival measures before and after an event occurs during the customer lifetime.
+Understanding time-varying covariates starts to push the limits of what can be accomplished with SQL and Excel; statistical methods such as Cox propor- tional hazard regression continue the analysis beyond what we can accomplish. However, there are still interesting analyses that are possible.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 333
+￼￼This section discusses three techniques for understanding these types of fac- tors. The first is to compare forecasts. The second is a brute-force approach using cohorts. And the third is to directly calculate survival curves for before the event and after the event. Before explaining the techniques, the section starts with three scenarios that illustrate these types of problems.
+Three Scenarios
+This section discusses three business problems that involve time-varying events. These are only intended as examples. The scenarios are intended to show the challenges in approaching these problems.
+A Billing Mistake
+Oops! An insurance company makes a little billing boo-boo. During one bill cycle, some long-standing customers who paid their premiums are acciden- tally sent dunning notices, accusing them of not paying their bill; worse, the notices continue even after the customers complain. Of course, this might anger a few customers, and angry customers are more likely to cancel their policies. What is the cost of this mistake, in terms of lost customer revenue?
+Figure 7-17 shows this situation on both the calendar time line and the tenure time line. The “X”s indicate when the billing mistake occurred. It affects everyone at the same time on the calendar time line; however, this is at a different tenure for each customer on the tenure time line. From a business perspective, we expect the effect of such a one-time billing mistake to pass quickly. During the period when the error occurs, stops spike up and hazards go up. However, this effect should pass quickly, as the company recovers from the mistake. It is possible, of course, to test this assumption, by compar- ing hazards before and after the event using time windows to see if there are any long-term effects.
+A Loyalty Program
+Not all events are negative. Consider customers in a subscription-based busi- ness who enroll in a loyalty program. How can the company measure the effective- ness of the loyalty program in terms of increased customer tenure?
+In this case, customers enroll in the program at different points on both the calendar and tenure time lines. Of course, some enrollment tenures may be more common than others; this would be the case if customers were only eli- gible for their program after their first year, resulting in an enrollment spike at one year. Similarly, some calendar times may be more common than other times, particularly when there are marketing campaigns encouraging cus- tomers to enroll in the program. It is worth pointing out that with a loyalty program, we know everyone who is enrolled, which may not be the case for customers who stop due to a billing error.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼334 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Customer 5
+￼￼￼Customer 2
+Customer 3
+Customer 7
+Customer 6
+Customer 8
+￼￼Customer 4
+￼￼￼Customer 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Calendar Time
+￼￼￼Customer 8
+￼￼￼￼Customer 7
+￼￼￼￼Customer 6
+￼￼￼Customer 5
+Customer 4
+Customer 3
+￼￼￼Customer 2
+Customer 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Tenure Time
+Figure 7-17: These two diagrams show the effect of a billing mistake on the calendar time line and on the tenure time line.
+When customers enroll during their lifetimes is interesting. In fact, the time of enrollment is another problem amenable to survival analysis. Perhaps more interesting is translating enrollment into increased tenure, and increased tenure into dollars and cents. Measuring an increase in tenure for the cus- tomers in the loyalty program does not illustrate that the program is causing the increase. An alternative explanation is that better customers join the pro- gram in the first place. This is an example of the difference between causation and correlation. Increased tenure is a correlation, but it does not imply that the program caused the increase.
+WARNING Historical data can show correlation between different events. However, we have to reach outside mere data analysis to justify causation, either through formal testing or by suggesting how one thing causes the other.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 335
+￼￼Unlike the billing error, though, we expect the loyalty program to continue having an effect even after customers are enrolled. There is not some short period where the event (enrollment) affects customers’ survival; there is a point in each customer’s tenure where the customer changes state from unenrolled to enrolled, and we expect the enrolled customers to have better survival.
+Raising Prices
+The third scenario is a price increase on a subscription product. An increase in prices can have two effects. Existing customers might leave in response to the price increase. This would occur around the period when the increase goes into effect. The second is that new customers may leave at a faster rate. Some of the customers who stop are identified; presumably, they complained about the price increase when they stopped. However, not all such customers give price as the reason. A customer might say “customer service is awful,” when the customer really means “for the price I’m paying, customer service is awful.” There is typically only one stop reason recorded, although customers may be unhappy for more than one reason.
+Measuring the impact of the price increase requires looking at survival both when the event occurs and after the event occurs. There are several inter- esting questions:
+■■ Who likely stopped during the period of the price increase and what impact did this have? This is a question about excess stops during a particular period.
+■■ Did existing customers who survived the initial shake-out period have a degradation in survival after the price increase?
+■■ Did new customers who started after the increase have a degradation in survival?
+These questions are all related to the financial impact of the price increase on existing customers. Of course, the customers who stay are paying more money, so that often offsets the loss in customers who leave.
+The remainder of this section discusses different ways of quantifying the effects of events during customer lifetimes, starting with an approach based on forecasting.
+Using Survival Forecasts
+Forecasts, which were introduced in the previous chapter, are a powerful tool for measuring the impact of events on customers. Remember that a forecast takes a base of customers and applies a set of hazards to them, producing an estimate of the number of customers on any day in the future. Forecasts based
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼336 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼on existing customers show declines over time, because new customers are not included. By adding up the forecast values over a period of time, the forecast turns into customer-days, which in turn can be turned into a financial value, based on the monetary value that a customer contributes on each day. There are two basic approaches for using forecasts to understand the effect of an event. The two differ, depending on whether the specific customers who stop can be identified.
+Forecasting Identified Customers Who Stopped
+When the customers who stop are known, forecasting can be applied just to these customers. This is the most direct method of using survival forecasting to measure the impact of an event. The method is to apply the forecast haz- ards only to the subset of customers identified as leaving due to the event. The result of the forecast is the number of customer-days we would have expected from those customers but lost because they stopped prematurely. The difference between these expected days and the actual days observed is the lost customer-days, which can in turn be used to calculate a financial loss. For this to work, the stopped customers need to be clearly identified. Another challenge is getting the right set of hazards.
+A good set of hazards would be based on stops from some period before the event occurred, such as the month or year before the event, using a stop time window to calculate unbiased hazards. This has the advantage of a clean set of comparison data.
+Another approach for estimating the hazards is to use competing risks. Remove the customers who stopped for the particular reason, and calculate the hazards using the remaining customers and remaining stops. The previous section warned against using competing risks this way, because it underesti- mates the hazards. However, when the group of customers who leave is small relative to all stops, the error may be small enough to be ignored.
+Estimating Excess Stops
+In some cases, the customers who leave for a specific reason are not clearly identified. In the case of the loyalty program, all the customers in the program are identified, but the customers of interest are those who do not even stop. In this case, the approach is to estimate an excess (or deficiency) of stops indi- rectly rather than directly.
+The approach here is the difference between two forecasts. One is the forecast of what would have happened if the event had not occurred and the other is the forecast of what actually did happen. Because the customer base is the same — consisting of the customers who are active just when the event happens — the difference between the two forecasts is in the hazard probabilities.
+www.it-ebooks.info
+￼100% 90% 80% 70% 60% 50%
+40% 30% 20% 10%
+0%
+0 30 60 90
+120 150 180 210 240 270 300 330 360 390 420 450 480 510 540 570 600 630 660 690
+Tenure (Days)
+Chapter 7 ■ The What and Why of Customer Tenure 337
+The hazard probabilities for what actually did happen are easy to calculate using a time window of stops after the event. Similarly, the hazard probabili- ties ignoring the event can be calculated by taking a time period from before the event. The difference between the two is the lost customer-days.
+The problem is slightly more complicated when the event occurs relative to the customer lifetime, such as joining a loyalty program that takes place at a different tenure for each customer. In this case, there is no overall “before” date. Instead, customers are right censored on the date that they join the pro- gram, if ever. Prior to joining the loyalty program, customers contribute to both the population at risk and the stops. Once they join, they no longer con- tribute to either one.
+Before and After Comparison
+The before and after calculation of hazards is quite simple, using the time window technique for estimating hazards. These hazards are used to gener- ate survival curves, and the area between the survival curves quantifies the effect in customer-days.
+Because the effect starts at tenure zero, this is most readily applied to new customers. Figure 7-18 illustrates an example. Remember that the area between the curves is easy to calculate; it is simply the sum of the differences in the survival values during a particular period of time.
+Sur vival
+Figure 7-18: The area between two survival curves quantifies the difference between them in customer-days.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼338 Chapter 7 ■ The What and Why of Customer Tenure Cohort-Based Approach
+There is a cohort-based approach to calculating the remaining customer tenure after an event. It is appropriate when the event does not affect all customers at the same time, such as enrollment in a loyalty program. This approach is very computationally intensive. This section describes how to do the calculation, even though the calculation may not be feasible on even largish sets of data.
+Figure 7-19 shows the basic idea behind the approach. This chart shows a customer who has an event that occurs at some point in the customer’s life- time. Also shown are a group of other customers who are candidates for this customer’s cohort. To be in the cohort, the candidate customers must meet the following conditions:
+■■ The cohort customers start at about the same time as the customer;
+■■ The cohort customers have similar initial start characteristics to the
+customer;
+■■ The cohort customers are active at the tenure when the event occurred to the customer; and,
+■■ The cohort customers do not experience the event.
+The cohort is a comparison group that can be used to understand survival after the event. The same customer can appear in multiple cohorts, so long as the customer meets the criteria for each one.
+First, the survival for all customers who have the event is calculated after the event date. That is, the event date becomes time zero. Then, the survival of each cohort is calculated, after the event date that defines the cohort. These survivals are combined into a single survival curve, and compared to the sur- vival of customers who experience the event.
+For the customers that succumb to the event, it is easy to calculate the sur- vival after the event assuming there is a column named something like EVENT_DATE. Although such a column is not available in the subscription data, the following examples will assume that it is. The survival after the event is the survival calculation, where the start date is fast-forwarded to the event date, and the tenure is measured only after the event:
+SELECT tenure_after_event, COUNT(*) as pop, SUM(isstop) as stopped
+FROM (SELECT DATEDIFF(dd, start_date, event_date) as tenure_after_event, (CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as isstop
+FROM subs
+               WHERE event_date IS NOT NULL) s
+         GROUP BY tenure_after_event
+         ORDER BY 1
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 339
+￼￼This generates the data needed to calculate the survival after the event for the group of customers who succumb to the event. The challenge is to get the survival for a cohort of customers, similar to the original customer. For any given customer, the cohort survival could be defined by:
+  SELECT cohort.tenure – tenure_at_event,
+         COUNT(*) as pop,
+         SUM(CASE WHEN cohort.stop_type IS NOT NULL THEN 1 ELSE 0
+             END) as isstop
+  FROM (SELECT s.*,
+               DATEDIFF(dd, start_date, event_date) as tenure_at_event
+FROM subs
+        WHERE customer_id = <event cust id>) ev JOIN
+       (SELECT *
+FROM subs
+        WHERE event_date IS NULL) cohort
+       ON cohort.start_date = ev.start_date AND
+          cohort.market = ev.market AND
+          cohort.channel = ev.channel AND
+          cohort.tenure >= ev.tenure_at_event
+  GROUP BY tenure_after_event
+  ORDER BY 1
+In this case, the cohort is defined as customers who started on the same date, in the same market, and did not have the event. The actual survival values can then be calculated in Excel.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼THE
+￼￼￼￼￼COHORT 7
+￼Customer 6
+CUSTOMER
+￼Customer 5
+￼￼￼Customer 2
+Customer 3
+Customer 4
+￼COHORT 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Calendar Time
+Figure 7-19: A customer has a cohort defined by initial characteristics and when
+the event occurred. In this chart, THE CUSTOMER experiences an event at some time. Customers 1 and 7 are in the cohort, because they started at the same time and survived to the event time. The other customers fail one or both of these conditions.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼340 Chapter 7 ■ The What and Why of Customer Tenure
+The challenge is doing this for all cohorts and averaging the curves. It is
+tempting to modify the preceding query so the first subquery looks like:
+         FROM (SELECT s.*,
+                      DATEDIFF(dd, start_date, event_date) as tenure_at_event
+               FROM subs
+               WHERE event_date IS NOT NULL) s
+However, this is not correct, because it combines all members of all cohorts into one big pool of customers, and then calculates the survival of the pool. The problem is that cohorts have different sizes, and the larger cohorts would dominate this calculation. We want one customer’s cohort to have a weight of one, regardless of the size of the cohort.
+The solution is to determine the size of the cohort in order to weight every- thing appropriately. Once the weight is determined, the counts POP and ISSTOP are just multiplied by the weight. The following query includes the weight:
+         SELECT cohort.tenure – ev.tenure_at_event,
+                SUM(weight) as pop,
+                SUM(CASE WHEN cohort.stop_type IS NOT NULL THEN weight ELSE 0 END
+                    ) as isstop
+         FROM (SELECT ev.customer_id, tenure_at_event,
+                      COUNT(*) as cohort_size, 1.0/COUNT(*) as weight
+FROM (SELECT s.*,
+DATEDIFF(dd, start_date, event_date) as tenure_at_event
+FROM subs s
+                     WHERE event_date IS NOT NULL) ev JOIN
+                    (SELECT s.*
+FROM subs s
+                     WHERE event_date IS NULL) cohort
+                    ON cohort.start_date = ev.start_date AND
+                       cohort.market = ev.market AND
+                       cohort.channel = ev.channel AND
+                       cohort.tenure >= ev.tenure_at_event
+               GROUP BY ev.customer_id, ev.tenure_at_event
+              ) ev JOIN
+              (SELECT s.*
+FROM subs s
+               WHERE event_date IS NULL) cohort
+              ON cohort.start_date = ev.start_date AND
+                 cohort.market = ev.market AND
+                 cohort.channel = ev.channel AND
+                 cohort.tenure >= ev.tenure_at_event
+         GROUP BY tenure_after_event
+         ORDER BY 1
+These weighted estimates can then be brought into Excel and used the same way as unweighted counts. The only difference is that the population counts and stop counts are now decimal numbers rather than integers.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 341
+￼￼This approach is possible, but perhaps not feasible. This query can be very slow, because it is a non-equijoin on a large table. Although the join looks like an equijoin, it isn’t because the join keys are not unique in the table. There are some alternatives to making this run faster. If the size of the group that experi- ences the event is rather small, the calculation could be done in Excel. Of course, if this is true, the SQL might be slow, but it will finish. Another alter- native is to calculate the size of the cohort using SQL window functions, which are explained in Chapter 8.
+However, it is possible to estimate the effect of a time-varying covariate without resorting to cohorts or to sophisticated statistical software. The next section explains how to calculate separate survival curves for before and after the event.
+Direct Estimation of Event Effect
+This section explains stratifying survival based on whether or not a time- varying event has occurred. This method generates two separate survival curves; one for survival without the event and the other for survival with the event. These curves can be used to qualitatively describe what happens to customers before and after the event; or they can be used to quantitatively measure the difference between the two groups.
+Approach to the Calculation
+To illustrate this, let’s assume that something happens on June 1, 2005, such as a price increase. This is an arbitrary date that is being used just as an example; the technique works even when there is a different date for each customer. Customers who start before this date are in the “before” group until they reach June 1, 2005. Customers who start after this date are in the “after” group for their entire tenure. What are the survival values for the “before” and “after” groups?
+The key to answering this question is determining how to calculate unbi- ased hazards for customers in the before and after groups. The stops for each group are easy, because we know whether customers stopped before or after the event date. The challenge is calculating the population at risk, because cus- tomers switch from one group to another. Other than the details on calculating the population at risk, the survival calculation follows the same methodology as in other examples.
+Customers who start and stop before the event date are only in the “before” population at risk. Other customers who start before the event remain in the “before” population at risk until the event date. For larger tenures, they con- tribute to the “after” population at risk. And customers who start after the event date only contribute to the “after” population at risk.
+The population at risk for the “after” group has two parts. One group consists of customers who start on or after the event date. They enter the population at
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼342 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼risk from tenure zero; they leave the population at risk when they are censored or stop. The number of such customers at a given tenure is simply the popula- tion of such customers whose tenure is greater than or equal to the given tenure.
+The second group consists of the customers who start before the event date and then remain active on the event date. This group starts being at risk in the “after” group on their tenure as of the event date and they remain at risk until they stop or are censored. The size of this group is determined by the following rules:
+■■ The population at risk at tenure t is the population at risk at tenure t–1,
+■■ Plus the customers who started before the event date who passed the
+event date at tenure t,
+■■ Minus the customers who started before the event date, who passed the
+event date, and who stopped or were censored at tenure t.
+The population at risk here is calculated using a forward summation, rather
+than a backward summation.
+Time-Varying Covariate Survival Using SQL and Excel
+To answer this question in SQL requires the following variables:
+■■ BeforePopatEachTenure:Countofallcustomersbythetenureofcus- tomers who started before the event date as of the event date.
+■■ BeforeStopsatEachTenure:Countofstoppedcustomerswhostarted and stopped before the event date.
+■■ After Starts at Each Tenure: Count of all customers who start after the event date by tenure.
+■■ After Stops at Each Tenure: Count of stopped customers who start and stop after the event date by tenure.
+■■ BeforeEntersatEachTenure:Countofcustomerswhostartbeforethe event date by their tenure at the event date.
+■■ Before Leaves at Each Tenure: Count of customers who start before the event date by their tenure when they stop or are censored.
+■■ Before/After Stop at Each Tenure: Count of stopped customers who start before the event date and stop after the event date, by tenure.
+The first two of these variables are used to calculate the population at risk and stops for customers who start before the event date. The next two do the same calculation for customers who start after the event date. The final three are for the population at risk and stops for customers who experience the event date. These three groups can be treated as three different groups for comparison purposes, which is useful for questions such as: Did experiencing the billing error affect survival? Or, the last two groups can be combined into one group, for questions such as: What impact did the price increase have on survival?
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 343
+￼￼The following SQL uses two subqueries to answer these questions. The first subquery is for customers who started before the event date; it groups every- thing by the tenure as of the event date. The second subquery is for what hap- pens after the event date; it aggregates by the full tenure:
+SELECT tenure, SUM(bef) as bef, SUM(aft) as aft,
+SUM(stop_before) as stop_before, SUM(to_after) as to_after, SUM(stop_after) as stop_aft, SUM(before_stop_after) as bef_stop_aft
+  FROM ((SELECT (CASE WHEN stop_date < ‘2005-06-01’ AND
+                           stop_date IS NOT NULL THEN tenure
+                      ELSE DATEDIFF(dd, start_date, ‘2005-06-01’) END
+                ) as tenure,
+                1 as bef, 0 as aft,
+                (CASE WHEN stop_date < ‘2005-06-01’ AND
+                           stop_date IS NOT NULL THEN 1 ELSE 0 END
+                ) as stop_before,
+(CASE WHEN stop_date >= ‘2005-06-01’ OR
+stop_date IS NULL THEN 1 ELSE 0 END) as to_after,
+                0 as stop_after, 0 as before_stop_after
+         FROM subs s
+         WHERE (start_date >= ‘2004-01-01’) AND (tenure >= 0) AND
+                start_date < ‘2005-06-01’)
+        UNION ALL
+        (SELECT tenure, 0 as bef,
+                (CASE WHEN start_date >= ‘2005-06-01’ THEN 1 ELSE 0 END
+                ) as aft,
+                0 as stop_before, 0 as to_after,
+                (CASE WHEN stop_date IS NOT NULL THEN 1 ELSE 0 END
+                ) as stop_after,
+                (CASE WHEN start_date < ‘2005-06-01’ THEN 1 ELSE 0 END
+                ) as before_stop_after
+         FROM subs s
+         WHERE (start_date >= ‘2004-01-01’) AND (tenure >= 0) AND
+               (stop_date IS NULL OR stop_date >= ‘2005-06-01’) )
+)a
+GROUP BY tenure
+ORDER BY 1
+Figure 7-20 shows a screen shot of the Excel spreadsheet that implements the calculations. This figure shows the population at risk calculations for each of the three groups. Calculating the hazards is just a matter of dividing the population at risk by the appropriate stops; the survival is then calculated from the hazards.
+This approach to handling an event date combines two ideas already dis- cussed. The survival for the “before” group uses forced censoring, which was introduced in the previous chapter for historical snapshots of hazards. The censor date is the event date, and only stops before the event date are counted.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼344 Chapter 7 ■ The What and Why of Customer Tenure
+￼￼￼Figure 7-20: This spreadsheet calculates the survival curves based on whether an event occurred or did not occur during the customer lifetime.
+The “after” group (combining both the customers who start before and sur- vive to the event date and those who start after) uses time windows to define the values. In this case, the event date becomes the left truncation date for the group.
+This example uses a single calendar date as the event date. This is by no means a requirement. Instead of a constant date, the data could be defined on a customer-by-customer basis, requiring only minor modifications to the queries.
+Lessons Learned
+The previous chapter introduced survival analysis and how to calculate haz- ard probabilities and survival probabilities using SQL and Excel. This chapter extends these ideas, showing ways to calculate survival in other situations and to determine which factors influence survival.
+The chapter starts by showing how to understand the effects of initial value variables on survival. These effects might change over time, even though the variables remain constant during each customer’s lifetime. Haz- ard ratios capture the changes over time for categorical variables, by taking the ratio of the hazards for different values. For numeric variables, the right measure is the average of a numeric variable at different points in the sur- vival curve for active and stopped customers.
+One of the biggest challenges in using survival analysis is calculating unbi- ased hazard estimates. This is particularly challenging when the data is left truncated — that is, when customers who stopped before some date are not included in the database. The solution to left truncation is the use of time win- dows. However, time windows are more versatile than just the solution to left truncation. They make it possible to calculate unbiased hazard probabilities based on stops during a particular period of time.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 7 ■ The What and Why of Customer Tenure 345
+￼￼The chapter continues by looking at what happens at the end of the cus- tomer lifetime using competing risks. The survival analysis discussion assumes that all customers who leave are equal. However, the way that cus- tomers leave can also be quite important. This section calculates what happens to customers at a given point in time, by showing how many customers are still active, and how many have left due to voluntary churn, involuntary churn, and migration.
+The chapter’s final topic is estimating the hazards when an event occurs during the customer life cycle. The method for doing this combines forced right censoring (discussed in the previous chapter) with time windows.
+The next chapter moves to a related topic, the subject of recurrent events. Unlike survival analysis so far, though, recurrent events happen more than once, a twist that we haven’t yet considered.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

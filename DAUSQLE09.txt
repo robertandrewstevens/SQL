@@ -1,0 +1,1371 @@
+CHAPTER
+9
+What’s in a Shopping Cart? Market Basket Analysis and Association Rules
+The previous chapter discussed everything about customer behavior — when, where, how — with one notable exception: what customers purchase. This chapter dives into the detail, looking at the specific products being purchased, to learn both about the customers and the products they are buying. Market basket analysis is the general name for understanding product purchase pat- terns at the customer level.
+Association rules form a big part of market basket analysis. An association rule specifies that certain products are purchased with other products. Histor- ically, the classical example is beer and diapers. The story goes that these are purchased together as young families prepare for the weekend. Although this is a classic example of market basket analysis, association rules were not used to find this “unexpected” pattern, because retailers were already familiar with the purchase trends of the two products.
+Association rules can reduce millions of transactions on thousands of items into easy-to-understand rules. This chapter introduces the techniques for dis- covering association rules using SQL. The processing is rather complex, so the queries in this chapter are advanced, sometimes making use of temporary tables to hold intermediate results.
+Some data mining software includes algorithms for association rules. How- ever, such software does not provide the flexibility available when using SQL directly. This chapter also improves on the basic algorithm by showing some interesting variations on association rules, including heterogeneous associa- tions and sequential associations.
+401
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼402 Chapter 9 ■ What’s in a Shopping Cart?
+￼Market basket analysis is not only association rules. The chapter starts with exploratory analysis of purchases. Such analysis can help us understand which products are most associated with the customers who spend lots of money, which products are associated with one-time purchases, and similar questions.
+Exploratory Market Basket Analysis
+This section explores the purchases database from the perspective of under- standing the products in the orders.
+Scatter Plot of Products
+There are about four thousand products in the Product table, which are classi- fied into nine different product groups. Chapter 3 looked at product groups, and pointed out that the most popular group is BOOK.
+Two of the most interesting features of products are price and popularity. Scatter plots are a good way to visualize this information, with different groups having different shapes and colors. The following query extracts the information for the scatter plot:
+  SELECT p.productid, p.productgroupname, p.fullprice, olp.numorders
+  FROM (SELECT ol.productid, COUNT(DISTINCT orderid) as numorders
+        FROM orderline ol
+        GROUP BY ol.productid) olp JOIN
+       product p ON olp.productid = p.productid
+  ORDER BY p.productid
+The scatter plot in Figure 9-1 shows relationships among these three fea- tures. Along the bottom of the chart are the few dozen products that have a price of $0. Most of these are, appropriately, in the FREEBIE category, along with a handful in the OTHER category. Although not obvious on the scatter plot, all FREEBIE products do, indeed, have a price of zero.
+The upper left-hand portion of the chart consists almost entirely of products in the ARTWORK product group. These products are expensive and rarely pur- chased. There are a few products in the ARTWORK group that are quite popu- lar (purchased by over one thousand customers) and some that are quite inexpensive (well under one hundred dollars), but these are exceptions within the category.
+The most popular product group is BOOK, as seen by the abundance of tri- angles on the right part of the chart. Most are inexpensive, but one is among the most expensive products. This is, perhaps, an example of misclassifica- tion. The rest of the products tend to be in the middle, both in terms of pric- ing and popularity.
+￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 403
+￼￼Figure 9-1: This scatter plot shows the relationship between product groups, price, and number of purchases.
+This scatter plot is a log-log plot, meaning that both the horizontal and ver- tical axes are on a logarithmic scale where one unit on either axis increases by a factor of ten. Log scales are useful when all values are positive and there is a wide range of values.
+Log-log plots are not able to plot zero (because the logarithm of zero is undefined), and yet the chart shows the “0” value. The trick is that zero is really 0.1, which, when formatted to have no decimal places, looks like “0” instead of “0.1.” To make this work, the zeros in the data have to be replaced by the value 0.1, either using SQL:
+  (CASE WHEN <value> = 0 THEN 0.1 ELSE <value> END) as <whatever>
+Or using Excel:
+  =IF(<cellref>=0, 0.1, <cellref>)
+The number format for the chart simply shows the value with no decimal places.
+TIP Usethelogscaleonaxeswherethevalueshaveawiderangeandareall positive. The log scale does not work when values are negative or zero; however, it is possible to show zero values by changing them to a small value and then using clever formatting.
+Duplicate Products in Orders
+Sometimes, the same product occurs multiple times in the same order. This is an anomaly because such orders should be using the NUMUNITS column for multiple products rather than replicating order lines. What is happening?
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼404 Chapter 9 ■ What’s in a Shopping Cart?
+Counting is a good place to start, as with the following query:
+SELECT numinorder, COUNT(*) as cnt, COUNT(DISTINCT productid) as numprods FROM (SELECT ol.orderid, ol.productid, COUNT(*) as numinorder
+               FROM orderline ol
+               GROUP BY ol.orderid, ol.productid) olp
+         GROUP BY numinorder
+ORDER BY 1
+The query counts the number of orders that have a product on more than one order line, and the number of different products that appear on those orders.
+Table 9-1 shows that almost 98% of the time products appear on only one order line, as expected. However, there are clearly exceptions. One possible explanation is that some small group of products is to blame. Perhaps some products just have a tendency to appear on multiple order lines. The following query shows that there are, in fact, 1,343 such products:
+         SELECT COUNT(DISTINCT productid)
+         FROM (SELECT ol.orderid, ol.productid
+               FROM orderline ol
+               GROUP BY ol.orderid, ol.productid
+               HAVING COUNT(*) > 1) olp
+Table 9-1: Number of Order Lines within an Order Having the Same Product
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼LINES IN ORDER WITH PRODUCT
+1 2 3 4 5 6 7 8 9
+11 12 40
+NUMBER OF ORDERS
+272,824 5,009 686 155 51 20 1 4 1 2 1 1
+NUMBER OF
+PRODUCTS % OF ORDERS
+3,684 97.9% 1,143 1.8% 344 0.2% 101 0.1% 40 0.0% 14 0.0% 1 0.0% 3 0.0% 1 0.0% 2 0.0% 1 0.0% 1 0.0%
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 405
+￼Because about one-third of the products occur on multiple order lines within one order, the products do not seem to be the cause of order line dupli- cation. A reasonable alternative hypothesis is that the duplicates come from a particular period of time. Perhaps there was a period of time when NUMU- NITS was not used. Looking at the date of the first order containing each duplicate product sheds light on this:
+  SELECT YEAR(minshipdate) as year, COUNT(*) as cnt
+  FROM (SELECT ol.orderid, ol.productid, MIN(ol.shipdate) as minshipdate
+        FROM orderline ol
+        GROUP BY ol.orderid, ol.productid
+        HAVING COUNT(*) > 1) olp
+  GROUP BY YEAR(minshipdate)
+  ORDER BY 1
+The query uses SHIPDATE instead of ORDERDATE simply to avoid joining in the Orders table. The subquery finds orders with duplicate products by using the HAVING clause to choose only those ORDERID and PRODUCTID pairs that appear more than once.
+Although some years have much higher occurrences of products on dupli- cate order lines, the phenomenon has occurred in all years for which there is data as shown in Table 9-2. The reason is not a short-term change in policy.
+Table 9-2: Number of Orders with Duplicate Products by Year
+￼￼￼￼￼￼￼￼￼￼YEAR
+2009 2010 2011 2012 2013 2014 2015 2016
+NUMBER OF ORDERS WITH DUPLICATE PRODUCTS
+66 186 392 181 152 1,433 2,570 951
+￼￼￼￼￼￼￼￼The duplicates seem to be due neither to products nor time. Perhaps in des- peration, the next thing to consider is other data within the Orderline table. Two columns of interest are SHIPDATE and UNITPRICE. These columns sug- gest the question: How often do multiple ship dates and unit prices occur for the same product within an order?
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼406 Chapter 9 ■ What’s in a Shopping Cart?
+The idea behind answering this question is to classify each occurrence of
+multiple lines into the following categories:
+■■ “ONE” or “SOME” unit prices.
+■■ “ONE” or “SOME” shipping dates.
+Table 9-3 shows the results from such a classification. Having multiple values for SHIPDATE suggests an inventory issue. A customer orders multiple units of a particular item, but there is not enough in stock. Part of the order ships immediately, part ships at a later time.
+Table 9-3: Classification of Duplicate Order Lines by Number of Shipping Dates and Prices within Order
+￼￼SHIP PRICES DATES
+ONE ONE
+ONE SOME SOME ONE SOME SOME
+NUMBER OF PRODUCTS
+262 1,177 33 59
+NUMBER OF ORDERS
+1,649 4,173 44 65
+￼￼￼￼￼Having multiple values for UNITPRICE suggests that a customer may be getting a discount on some of the units, but the discount is not available on all of them. And, there are still over one thousand orders with duplicate products that have the same ship date and unit price on all of them. These might be errors. Or, they might be related to data that is unavailable such as orders going to multiple shipping addresses.
+The following query was used to generate the table:
+  SELECT prices, ships, COUNT(DISTINCT productid) as numprods,
+         COUNT(*) as numtimes
+  FROM (SELECT ol.orderid, ol.productid,
+               (CASE WHEN COUNT(DISTINCT unitprice) = 1 THEN ‘ONE’
+                     ELSE ‘SOME’ END) as prices,
+               (CASE WHEN COUNT(DISTINCT shipdate) = 1 THEN ‘ONE’
+                     ELSE ‘SOME’ END) as ships
+        FROM orderline ol
+        GROUP BY ol.orderid, ol.productid
+        HAVING COUNT(*) > 1) olp
+  GROUP BY prices, ships
+Figure 9-2 shows the dataflow diagram for this query. The order lines for each product are summarized, counting the number of different prices and ship dates on the lines. These are then classified as “ONE” or “SOME” and aggre- gatedagain.ThisqueryonlyusesGROUP BYtodotheprocessing;itcontainsno joins at all.
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼READ orderline
+Order Line Order Product 1 1 A
+2 1 A
+3 1 B
+4 1 B 5 2 C 6 3 D 7 3 D 8 4 E 9 4 F 10 4 G
+AGGREGATE group by orderid, productid
+nump = COUNT(DISTINCT unitprice) nums = COUNT(DISTINCT shipdate) numlines = COUNT(*)
+APPEND
+prices = (case when nump = 1 then ‘ONE’
+else ‘SOME’ end)
+ships = (case when nump = 1 then ‘ONE’
+else ‘SOME’ end)
+FILTER numlines>1
+Ship Date Price 1-Jan $20
+1-Jan $30 1-Jan $40 5-Jan $50 1-Jan $100 1-Jan $70 3-Jan $80 1-Jan $100 1-Jan $100 1-Jan $100
+Order Product Nump 1A2121A212SOMEONE 1B1221B122ONESOME 2C1112C111ONEONE 3D2223D222SOMESOME 4E1114E111ONEONE 4F1114F111ONEONE 4G1114G111ONEONE
+Chapter 9 ■ What’s in a Shopping Cart? 407
+AGGREGATE group by prices, ships
+numprds = COUNT(DISTINCT productid) numorders = COUNT(*)
+Order Product Nump Nums Numlines Prices Ships 1 A 2 1 2 SOME ONE 1 B 1 2 2 ONE SOME 3 D 2 2 2 SOMESOME
+OUTPUT
+Figure 9-2: This dataflow diagram shows the processing for calculating the number of prices and of ship dates on order lines with the same product.
+Histogram of Number of Units
+What is the average number of units for products in a given order by product group?
+It is tempting to answer this question using the following query:
+  SELECT productgroupname, AVG(numunits) as avgnumunits
+  FROM orderline ol JOIN product p ON ol.productid = p.productid
+  GROUP BY productgroupname
+However, this query misses an important point: some products are split among multiple order lines in the data. Adding up NUMUNITS for each product in each order, and then taking the average solves this.
+Both the correct average value and the incorrect value from the first query are in Table 9-4. The table shows that some products, such as ARTWORK, are less likely to have multiple units in the same order. Other products, such as those in the OCCASION product group, are more likely to be ordered in multiple quantities.
+www.it-ebooks.info
+Nums Num lines Order Product Nump
+Nums
+Numlines
+Prices Ships
+Prices Ships Numprods Numorders SOME ONE 1 1
+ONE SOME 1 1 SOME SOME 1 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼408 Chapter 9 ■ What’s in a Shopping Cart? Table 9-4: Number of Units by Order and by Order Line
+￼￼PRODUCT GROUP
+#N/A APPAREL ARTWORK BOOK CALENDAR FREEBIE GAME OCCASION OTHER
+ORDER AVERAGE
+1.00 1.42 1.26 1.59 1.67 1.53 1.49 1.82 2.44
+ORDERLINE AVERAGE
+1.00 1.39 1.20 1.56 1.64 1.51 1.46 1.79 2.30
+￼￼￼￼￼￼￼￼￼For most of the product groups, the first method undercounts the number of units in an order by about 2%; this is consistent with the fact that about 2% of products in an order are on multiple lines. However, some categories are affected more than others. The undercounting for ARTWORK is over 5%, for instance.
+The following query generated the data for the table:
+  SELECT productgroupname, AVG(ol.numunits) as orderaverage,
+         SUM(ol.numunits) / SUM(ol.numlines) as orderlineaverage
+  FROM (SELECT ol.orderid, ol.productid, SUM(numunits)*1.0 as numunits,
+               COUNT(*)*1.0 as numlines
+        FROM orderline ol
+        GROUP BY ol.orderid, ol.productid) ol JOIN
+       product p ON ol.productid = p.productid
+  GROUP BY productgroupname
+  ORDER BY productgroupname
+This query summarizes the Orderlines table, summing the NUMUNITS values for a given product in each order, and then taking the average. This is the real average of the number of products in an order. It is still possible to calculate the average number of products per order line by counting the total number of order lines for the product, and doing the division at the outer level. Both values can be calculated with a single query.
+Products Associated with One-Time Customers
+Some products may be bad in the sense that customers purchase them and never purchase anything else. This suggests the question: How many products
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 409 are purchased exactly once by a household that never purchases anything else? The
+following query returns the fact that 2,461 products have one-time purchasers:
+  SELECT COUNT(DISTINCT productid)
+  FROM (SELECT householdid, MIN(productid) as productid
+        FROM customer c JOIN orders o ON c.customerid = o.customerid JOIN
+             orderline ol ON o.orderid = ol.orderid
+        GROUP BY householdid
+        HAVING COUNT(DISTINCT ol.productid) = 1 AND
+               COUNT(DISTINCT o.orderid) = 1) h
+Much of the work in this query occurs in the HAVING clause. Of course, the Cus- tomer, Orders, and Orderline tables all need to be joined together. Then, the HAVING clause chooses only those households that have exactly one order and exactly one product. The HAVING clause counts the number of products by counting the number of distinct values of PRODUCTID and the number of orders by counting the number of distinct values of ORDERID.
+TIP When bringing together data from different tables that have a one-to- manyrelationship,suchasproducts,orders,andhouseholds,COUNT DISTINCT correctlycountsthevaluesatdifferentlevels.UseCOUNT(DISTINCT orderid) rather than COUNT(orderid) to get the number of orders.
+There are quite a few one-time products. More interesting are products that tend to be associated with one-time household purchasers: Which products have a high proportion of their purchases associated with one-order households? The answer to this question is the ratio of two numbers:
+■■ The number of households where the product is the only product the household ever buys.
+■■ The total number of households that purchase the product. Both these numbers can be summarized from the data.
+The following query performs the two calculations for each product:
+SELECT p.productid, numhouseholds, COALESCE(numuniques, 0) as numuniques, COALESCE(numuniques*1.0, 0.0) / numhouseholds as prodratio
+  FROM (SELECT productid, COUNT(*) as numhouseholds
+        FROM (SELECT c.householdid, ol.productid
+              FROM customer c JOIN
+                   orders o ON c.customerid = o.customerid JOIN
+                   orderline ol ON o.orderid = ol.orderid
+              GROUP BY c.householdid, ol.productid) hp
+        GROUP BY productid) p LEFT OUTER JOIN
+       (SELECT productid, COUNT(*) as numuniques
+        FROM (SELECT householdid, MIN(productid) as productid
+              FROM customer c JOIN
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼410 Chapter 9 ■ What’s in a Shopping Cart?
+￼￼￼                   orders o ON c.customerid = o.customerid JOIN
+                   orderline ol ON o.orderid = ol.orderid
+              GROUP BY householdid
+              HAVING COUNT(DISTINCT ol.productid) = 1 AND
+                     COUNT(DISTINCT o.orderid) = 1) h
+        GROUP BY productid) hp
+       ON hp.productid = p.productid
+  ORDER BY 4 DESC
+This query aggregates the product and household information two ways. The first subquery calculates the total number of households that purchase each product. The second subquery calculates the total number of households whose only order is a one-time purchase of the product.
+The results are somewhat expected. The products that have the highest ratios are the products that have only one order. In fact, of the 419 products where every order is the only household order, only one has more than ten purchases. The results do highlight the fact that products have different behavior with respect to bringing in one-time households. The category of the product makes a difference. Of the 419 products that bring in exclusively one-time purchasers, 416 of them are in the ARTWORK category.
+This suggests a follow-up question: For the different product groups, what is the proportion of one-time purchasing households? The following query answers this question:
+  SELECT productgroupname, COUNT(*) as numprods,
+         SUM(numhouseholds) as numhh, SUM(numuniques) as numuniques,
+         SUM(numuniques*1.0)/SUM(numhouseholds) as ratio
+  FROM  (<previous-query-without-order-by>) hp JOIN
+        product p ON hp.productid = p.productid
+  GROUP BY productgroupname
+  ORDER BY 5 DESC
+Thisqueryusesthepreviousquery(withouttheORDER BYclause)asasub- query and joins it to the Product table to get the product group:
+Figure 9-3 shows number of households that have made a purchase and the proportion that are one-time-only within each category. By this measure, the worst product group is APPAREL, where over half the purchasers are one- time only. The best is FREEBIE, with less than 1%. That is presumably because the FREEBIE products are typically included in bundles with other products.
+Products Associated with the Best Customers
+Once upon a time, in the 1990s, when bill paying services were very expensive (because banks actually had to write and send checks), Fidelity Investments con- sidered canceling its bill paying service. Then someone in its special projects group noticed that customers who used the service had the largest balances and
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 411
+￼best retention. There is a similar story about a manager wanting to remove gourmet mustard from shelves in a food market to make room for other, faster moving items. Then further analysis showed that customers who purchase gourmet mustard do so in very large purchases. Without the mustard, the store feared losing the sales of everything else in those customers’ carts.
+120,000 60%
+100,000 50% 80,000 40% 60,000 30% 40,000 20% 20,000 10%
+0 0%
+Figure 9-3: The proportion of households that purchase only one product varies considerably by product group. Some groups such as APPAREL are associated with such unique purchasers.
+Such insights (as well as most people’s personal experiences) illustrate that customers might make purchase decisions based on particular products. This leads to the question: What products have the largest remaining average value in the orders where they appear? Remaining value, also called residual value, is the value that remains in the order after said products are removed. An order containing only one product contributes no residual value for that product.
+This section discusses an approach to residual value calculations, as well as certain biases in the calculation that are difficult to remove. The following query calculates the average residual value for each product; that is, it calcu- lates the average remaining value in orders that contain the product:
+  SELECT op.productid, COUNT(*) as numorders, AVG(ototal) as avgorder,
+         AVG(prodprice) as avgprod, AVG(ototal-prodprice) as avgresidual
+  FROM (SELECT orderid, SUM(ol.totalprice) as ototal
+        FROM orderline ol
+        GROUP BY orderid
+        HAVING COUNT(DISTINCT productid) > 1) o JOIN
+       (SELECT o.orderid, ol.productid, SUM(ol.totalprice) as prodprice
+        FROM orderline ol JOIN orders o ON ol.orderid = o.orderid
+        GROUP BY o.orderid, ol.productid
+       ) op
+       ON op.orderid = o.orderid
+  GROUP BY op.productid
+  ORDER BY AVG(o.ototal - prodprice) DESC
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+Number of Households
+Ratio of One-Time Purchasers
+APPAREL OCCASION
+ARTWORK
+BOOK
+CALENDAR OTHER
+GAME FREEBIE
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼412 Chapter 9 ■ What’s in a Shopping Cart?
+￼The innermost subquery summarizes orders with more than one product by product, thereby treating multiple order lines with the same product as a single product. The residual value for each product is the order total minus the amount for each product in the order (so an order contributes to the residual values of all products in it). The average of the residual is then calculated for each product.
+Summarizing by product group uses the previous query as a subquery (withouttheORDER BYclause):
+  SELECT p.productgroupname, COUNT(*) as numproducts,
+         SUM(numorders) as numorders, AVG(avgresidual) as avgresidual
+  FROM (<previous-query-without-order-by>) o JOIN
+       product p ON p.productid = o.productid
+  GROUP BY productgroupname
+  ORDER BY 1
+This query calculates the average residual for each product and then returns the average for all products within a product group. This is different from calculating the average residual for a product group, which would require modifying the previous query to be at the product group level rather than the product level.
+Table 9-5 shows the average residual value for a market basket as well as the average price of items. Not surprisingly, the most expensive products — ARTWORK — have, by far, the highest residual value. This suggests that cus- tomers are purchasing multiple expensive items at the same time, rather than mixing and matching less expensive items with more expensive ones.
+￼￼￼￼￼￼￼Table 9-5: Average Residual Value by Product Group
+￼￼￼￼￼￼￼￼PRODUCT GROUP
+#N/A APPAREL ARTWORK BOOK CALENDAR FREEBIE GAME OCCASION OTHER
+NUMBER OF PRODUCTS
+NUMBER OF ORDERS
+AVERAGE ORDER RESIDUAL
+$868.72 $39.01 $1,032.24 $67.94 $37.01 $28.27 $133.50 $41.98 $36.49
+AVERAGE HOUSEHOLD RESIDUAL
+$658.40
+$618.88 $1,212.27 $365.06 $387.74 $1,584.93 $732.72 $719.87 $1,123.14
+￼1 9 85 4,030 2,576 21,456 236 48,852 31 3,211 25 27,708 230 12,844 71 16,757 53 3,100
+￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 413
+￼Calculating the average residual at the household level requires joining in the household ID, using the Customer and Orders tables. The household aver- age residual is larger than the residual at the order level, even though most households are one-time purchasers. The reason points to a challenge when working with market basket data.
+There happen to be a few households with very many orders. These house- holds have very large residual values for any product they purchase, and, they have purchased products from all product groups. In short, the problem is that large households dominate the residual value calculation for households. One way to remove the bias is to limit the calculations to households with only two purchases. Another way is to randomly choose one pair of products in each household, but such a technique is outside the scope of this book. The effect exists at the order level, but because there are many fewer humongous orders, the bias is smaller.
+WARNING When analyzing market basket data, the size of orders (or of households) can introduce unexpected biases in results.
+Changes in Price
+Some products have different prices within an order. More products have dif- ferent prices throughout the historical data. What is the number of different prices that products have? Actually, this question is interesting, but it is more feasible to ask a slightly simpler question: What proportion of products in each product group has more than one price? The following query answers this question:
+  SELECT productgroupname, COUNT(*) as allproducts,
+         SUM(CASE WHEN numprices > 1 THEN 1 ELSE 0 END) as morethan1price,
+         SUM(CASE WHEN numol > 1 THEN 1 ELSE 0 END) as morethan1orderline
+  FROM (SELECT ol.productid, productgroupname, COUNT(*) as numol,
+               COUNT(DISTINCT unitprice) as numprices
+        FROM orderline ol JOIN product p ON ol.productid = p.productid
+        GROUP BY ol.productid, productgroupname) a
+  GROUP BY productgroupname
+  ORDER BY 1
+Products must appear in more than one order line to have more than one price. Table 9-6 shows that 74.9% of products appearing more than once have multiple prices. In some product groups, such as APPAREL and CALEN- DARS, almost all the products have more than one price. Perhaps this is due to inventory control. Calendars, by their very nature, become outdated, so once the year covered by the calendar begins, the value decreases. APPAREL is also quite seasonal, with the same effect.
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼414 Chapter 9 ■ What’s in a Shopping Cart?
+Table 9-6: Products by Product Groups That Have More Than One Price
+￼￼PRODUCT GROUP
+#N/A APPAREL ARTWORK BOOK CALENDAR FREEBIE GAME OCCASION OTHER TOTAL
+PRODUCTS WITH 2 OR MORE ORDERS
+0 79 2,145 230 30 0 176 53 37 2,750
+PRODUCTS WITH 2 OR MORE PRICES
+1 84 2,402 236 30 23 211 70 50 3,107
+PROPORTION
+0.0% 94.0% 89.3%
+97.5% 100.0% 0.0% 83.4% 75.7% 74.0% 88.5%
+￼￼￼￼￼￼￼￼￼￼￼Figure 9-4 shows the average price by month for CALENDARs compared to BOOKs, for products costing less than $100 (expensive products appear for short periods confusing the results). For most years, the average unit price for calendars increases in the late summer, and then decreases over the next few months. By contrast, books tend to have their lowest price of the year in Janu- ary, presumably during after-holiday sales. Such charts suggest questions about price elasticity (whether changes in price for a product affects demand), which we’ll investigate in Chapter 11.
+The query used to create this is:
+  SELECT YEAR(orderdate) as yr, MONTH(orderdate) as mon,
+         AVG(CASE WHEN productgroupname = ‘CALENDAR’ AND fullprice < 100
+                  THEN unitprice END) as avgcallt100,
+         AVG(CASE WHEN productgroupname = ‘BOOK’ AND fullprice < 100
+                  THEN unitprice END) as avgbooklt100
+  FROM orders o JOIN orderline ol ON o.orderid = ol.orderid JOIN
+       product p ON ol.productid = p.productid
+  WHERE productgroupname IN (‘CALENDAR’, ‘BOOK’)
+  GROUP BY YEAR(orderdate), MONTH(orderdate)
+  ORDER BY 1, 2
+This query selects appropriate product groups and then does the conditional aggregation using a CASE statement. The CASE statement does not have an ELSE clause, intentionally. Non-matching rows get NULL values, so they do not affect the average.
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 415
+￼   $35
+   $30
+   $25
+   $20
+   $15
+   $10
+$5 $0
+Figure 9-4: The average prices of calendars and books sold change during the year by month.
+Combinations (Item Sets)
+Combinations, also called item sets, are groups of products that appear together within an order. This section looks at two-way combinations, show- ing how to use SQL to generate all such combinations. It then moves to some interesting variations, especially combinations of products at the household level rather than the order level. The next sections apply these ideas to gener- ating association rules. Because the queries are starting to get more compli- cated, it can be useful to think about query performance, as discussed in the aside “Some SQL Efficiency Tips.”
+Combinations of Two Products
+Combinations of one product are not particularly interesting, so this section starts by looking at combinations of two products. A combination is of a set of items. The combination consisting of products A and B is the same as B and A. This section counts the number of product pairs in orders and shows how to use SQL to generate them.
+Number of Two-Way Combinations
+If an order contains one product, how many two-way combinations of prod- ucts does it have? The answer is easy. There are none, because there is only one product. If there are two products, then there is one, because A and B is the same as B and A.
+And three-way combinations? The answer happens to be three, but the situa- tion is starting to get more complicated. There is, however, an easy formula. Understanding it starts with the observation that the number of pairs of products
+￼Calendar Book
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+2009 Oct 2010 Feb 2010 Jun 2010 Oct 2011 Feb 2011 Jun 2011 Oct 2012 Feb 2012 Jun 2012 Oct 2013 Feb 2013 Jun 2013 Oct 2014 Feb 2014 Jun 2014 Oct 2015 Feb 2015 Jun 2015 Oct 2016 Feb 2016 Jun
+Average Price
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼416 Chapter 9 ■ What’s in a Shopping Cart?
+￼is the number of products squared. Because pairs where the same product occurs twice are not interesting, subtract out the pairs that consist of identical products. And, because pairs are being counted twice this way (A and B as well as B and A), the difference needs to be divided in two. The number of two-way combinations in an order is half the difference between the number of products in the order and that number squared.
+￼￼SOME SQL EFFICIENCY TIPS
+Many of the queries involving item sets and association rules are complicated. The purpose of a database engine is to run queries accurately and quickly. Sometimes, we can help the engine do a better job.
+One important thing is ensuring that columns being joined together have the same types. So, the ORDERID should always be an INTEGER (or whatever) regardless of the table where it appears.
+Creating appropriate indexes is also important for enhancing performance. In a database that has lots of updating, indexes slow things down. However, in a database that is primarily query-only, indexes usually speed things up. Here are three tips for creating indexes:
+1. Create an index on the primary keys of tables that are often used for joins, such as PRODUCT.PRODUCTID. Some databases do this automatically, if the column is declared as a primary key when the table is created.
+2. Create an index on columns often used in COUNT(DISTINCT) expressions. These are often primary keys, so are covered by (1).
+3. Create more than one index on a table if appropriate. Also, create indexes with multi-part keys if appropriate.
+The normal syntax for creating an index is:
+   CREATE INDEX <name> ON <table>.<column>
+And more than one column can be added for composite index keys.
+The way the database engine runs a query is called a query plan. Sometimes,
+indexes confuse the database and there are circumstances where removing an index makes queries run faster. Alas, resolving these situations requires detailed knowledge of the particular database and particular query; when such situations arise, it is usually because the database engine needs to read all the rows in a table anyway and using the index to read all the rows slows it down.
+Another trick is using intermediate tables. These result in simpler queries, which are easier to optimize. They also provide an opportunity to add indexes that may help to improve performance. On the other hand, intermediate tables can make SQL less readable and less maintainable, so they should not be overused and when used, should be given clear, understandable names.
+One final comment is: do not to be afraid to try different things to see which combinations work best.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 417 The following query calculates the number of two-way combinations
+among all orders in Orderline:
+  SELECT SUM(numprods * (numprods - 1)/2) as numcombo2
+  FROM (SELECT orderid, COUNT(DISTINCT productid) as numprods
+        FROM orderline ol
+        GROUP BY orderid) o
+Notice that this query counts distinct products rather than order lines, so orders with the same product on multiple lines do not affect the count.
+The number of two-way combinations is 185,791. This is useful because the number of combinations pretty much determines how quickly the query gen- erating them runs. A single order with a large number of products can seri- ously degrade performance. For instance, if one order contains a thousand products, there would be about five hundred thousand two-way combinations in just that one order — versus 185,791 in all the orders data. As the number of products in the largest order increases, the number of combinations increases much faster.
+WARNING Large orders that contain many items can seriously slow down queries for combinations and association rules. A particularly dangerous situation is when there is a “default” order id, such as 0 or NULL, that corresponds to many purchases.
+Generating All Two-Way Combinations
+The approach for calculating the combinations is to do a self-join on the Order- line table, with duplicate product pairs removed. The goal is to get all pairs of products, subject to the conditions:
+■■ The two products in the pair are different.
+■■ No two combinations have the same two products.
+The first condition is easily met by filtering out any pairs where the two prod- ucts are equal. The second condition is also easily met, by requiring that the first product id be smaller than the second product id. The following query generates all the combinations in a subquery and counts the number of orders containing each one:
+  SELECT p1, p2, COUNT(*) as numorders
+  FROM (SELECT op1.orderid, op1.productid as p1, op2.productid as p2
+        FROM (SELECT DISTINCT orderid, productid FROM orderline) op1 JOIN
+             (SELECT DISTINCT orderid, productid FROM orderline) op2
+             ON op1.orderid = op2.orderid AND
+                op1.productid < op2.productid
+       ) combinations
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼GROUP BY p1, p2
+www.it-ebooks.info
+￼418 Chapter 9 ■ What’s in a Shopping Cart?
+Figure 9-5 shows the data flow for this query. The innermost subqueries, OP1 and OP2, are joined together (actually this is a self-join) to generate all pairs of products within each order. The JOIN condition restricts these pairs to those having different products, with the first smaller than the second. The outer query aggregates each pair of products, counting the number of orders along the way.
+READ orderline
+READ orderline
+op1
+AGGREGATE group by orderid, productid
+AGGREGATE group by orderid, productid
+op2
+combinations
+JOIN
+on orderid, op1.productid < op2.productid
+AGGREGATE group by op1.productid, op2.productid
+numorders = COUNT(*)
+OUTPUT
+Figure 9-5: This dataflow generates all the two-way combinations of products in the Orders table.
+Sometimes, we do not want to include all orders. The most common reason is to limit the combinations to reasonable market baskets, such as those with between two and ten products. Other reasons are to use orders from a particu- lar source, or a particular geographic region, or a particular time frame. Because the preceding query works directly on the Orderline table, it is diffi- cult to filter by conditions on the orders. The solution is to join in another sub- query that selects the desired orders:
+  SELECT p1, p2, COUNT(*) as numorders
+  FROM (SELECT op1.orderid, op1.productid as p1, op2.productid as p2
+        FROM (SELECT orderid FROM orderline GROUP BY orderid
+              HAVING COUNT(DISTINCT productid) BETWEEN 2 and 10
+             ) filter JOIN
+             (SELECT DISTINCT orderid, productid FROM orderline) op1
+             ON filter.orderid = op1.orderid JOIN
+             (SELECT DISTINCT orderid, productid FROM orderline) op2
+             ON op1.orderid = op2.orderid AND
+                op1.productid < op2.productid
+       ) combinations
+  GROUP BY p1, p2
+The additional subquery chooses orders that have between two and ten orders. Here the subquery is really just an aggregation of the Orderline table, but it could also be choosing orders based on characteristics in the Orders table, or even other tables such as Customer or Campaign.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 419
+￼Examples of Combinations
+Generating thousands of combinations is interesting. Looking at a few examples is informative. The following query fetches the top ten pairs of products in orders with two to ten products, along with the associated product groups:
+  SELECT top 10 *, p1.productgroupname, p2.productgroupname
+  FROM (<combos-subquery>) combos JOIN
+       product p1 ON combos.p1 = p1.productid JOIN
+       product p2 ON combos.p2 = p2.productid
+  ORDER BY numorders DESC
+This query uses the previous query as a subquery. Notice that SQL does not care that the alias for the Product table (P1 and P2) is the same as the name of a column in the Combos subquery. Although SQL does not care, people read- ing the query might get confused, and this is not an example of a best practice.
+The ten most common product pairs are in Table 9-7. Of the ten, seven include FREEBIE products, which are usually part of promotions associated with one particular product. Sometimes there is more than one FREEBIE included in the promotion.
+￼￼￼￼￼￼￼￼Table 9-7: Pairs of Products Appearing Together in the Most Orders
+￼￼PRODUCT 1
+12820 12819 11048 10956 12139 12820 11196 12820 12820 11053
+PRODUCT 2
+13190 12820 11196 12139 12820 12851 11197 13254 12826 11088
+NUMBER OF ORDERS
+2,580 1,839 1,822 1,481 1,239 1,084
+    667
+    592
+    589
+    584
+PRODUCT GROUP 1
+FREEBIE
+FREEBIE ARTWORK FREEBIE OCCASION FREEBIE BOOK FREEBIE FREEBIE ARTWORK
+PRODUCT GROUP 2
+FREEBIE FREEBIE BOOK OCCASION FREEBIE OCCASION BOOK OCCASION ARTWORK OCCASION
+￼￼￼￼￼￼￼￼￼￼The three
+and BOOK,
+examples of
+The product-level combinations have reconstructed the bundles. In fact, this is something that commonly happens when looking at combinations of products.
+combinations that do not have a FREEBIE in them have ARTWORK BOOK and BOOK, and ARTWORK and OCCASION. These may be product bundles, two or more products that are marketed together.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼420 Chapter 9 ■ What’s in a Shopping Cart? Variations on Combinations
+This section looks at two useful variations on the idea of combinations. The first uses the product hierarchy to look at combinations of product groups. The sec- ond looks at adding more items into the combinations, moving beyond two-way combinations.
+Combinations of Product Groups
+This example shows combinations of product groups, rather than products, to illustrate extending market basket analysis beyond products to product features. The idea is to treat each order as a collection of product groups, rather than a collection of products. An order with three books on three order lines becomes an order with one product group, BOOK. An order that has a CALENDAR and a BOOK has two product groups.
+Because there are many fewer product groups than products, there are not going to be as many combinations, just a few dozen. The following query generates the two-way product group combinations, as well as the number of orders having the combination:
+         SELECT pg1, pg2, COUNT(*) as cnt
+         FROM (SELECT op1.orderid, op1.productgroupname as pg1,
+                      op2.productgroupname as pg2
+               FROM (SELECT orderid, productgroupname FROM orderline ol JOIN
+                            product p ON ol.productid = p.productid
+                     GROUP BY orderid, productgroupname) op1 JOIN
+                    (SELECT orderid, productgroupname FROM orderline ol JOIN
+                            product p ON ol.productid = p.productid
+                     GROUP BY orderid, productgroupname) op2
+                    ON op1.orderid = op2.orderid AND
+                       op1.productgroupname < op2.productgroupname
+              ) combinations
+         GROUP BY pg1, pg2
+This query is very similar to the query for products. The difference is that the innermost subqueries look up the product group name, aggregating by that instead of the product id.
+Figure 9-6 shows a bubble chart of the results. The two most common product group pairs are FREEBIE with BOOK and FREEBIE with OCCASION. This is not surprising, because FREEBIE products are used as marketing incentives.
+The two axes in the bubble chart are the two types of product groups in an order. Creating this bubble chart is challenging, because Excel charting does not allow the axes of scatter plots and bubble charts to be names. The technical aside “Bubble Charts and Scatter Plots with Non-Numeric Axes” explains how to get around this limitation.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 421
+￼#N/A OTHER OCCASION GAME FREEBIE
+CALENDAR BOOK ARTWORK APPAREL
+Figure 9-6: This bubble chart shows the most common product pairs. One product is along each dimension, with the bubble showing the number of orders containing the product.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼BUBBLE CHARTS AND SCATTER PLOTS WITH NON-NUMERIC AXES
+Unfortunately, bubble charts and scatter plots only allow numbers for the X- and Y-coordinates. Fortunately, using the XY-labeler introduced in Chapter 4, we can make scatter plots and bubble plots with non-numeric dimensions, such
+as product group names. As a reminder, the XY chart labeler is not part of
+Excel. It uses an add-in, written by Rob Bovey, and available for download at http://www.appspro.com/Utilities/ChartLabeler.htm.
+The idea is to transform the data to make the dimensions numbers. Then, two additional series are added to the chart along each dimension. These are given labels using the XY-labeler, which are the labels on the axes.
+Assume that the data is in three columns, the first two are the X- and Y-values, the third is the bubble size, and the first two are names, rather than numbers. The example in Figure 9-6 has product group names in these columns. The bubble chart is created using the following steps:
+1. Create a lookup table for the values in each dimension to map each value to a sequence of integers, the new dimension.
+2. Look up the new dimensions for these two new columns.
+3. Insert the chart, using the new dimensions rather than the names.
+4. Insert two new series, for use as the X-labels and the Y-labels.
+5. Format the new series so they are invisible.
+6. Use the XY-labeler to label the points with strings.
+7. Format the chart as you wish.
+www.it-ebooks.info
+Continued on next page
+APPAREL
+ARTWORK
+BOOK
+CALENDAR
+FREEBIE
+GAME
+OCCASION
+OTHER
+#N/A
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼422 Chapter 9 ■ What’s in a Shopping Cart?
+￼￼￼BUBBLE CHARTS AND SCATTER PLOTS WITH NON-NUMERIC AXES
+(CONTINUED)
+This process starts by creating the lookup table. An alternative to manually typing it in is to take all the distinct values in the columns, sort them, and create the new dimension value in an adjacent column using the formula “=<prev cell>+1“.Togetthedistinctvalues,copybothcolumnsofproduct group names into one column, below the data. Filter out duplicates using the Data ➪ Filter ➪ Advanced menu option, and choose “Unique Records Only.” Highlight the values using the mouse. To select only the visible values, use the Edit➪Goto menu option, and click “Special” and then “Visible Cells Only” (toward the bottom in the left column). Now copy the values in the cells (<control>-C) and paste them into another column (<control>-V). Remember to go the Data ➪ Filter ➪ Show All menu selection to undo the filtering, so you can see all the distinct values.
+The next step is to lookup the values in the desired X- and Y-columns to get their lookup dimensions. Use VLOOKUP() to look up the appropriate values:
+   VLOOKUP(<column cell>, <lookup table>, 2, 0)
+This provides the number data accepted by the bubble chart. Labeling the axes requires more information, so add two more columns to the lookup table, the first with values set to zero and the second with values set to 1000. The first is the coordinate position of the labels; the second is the width of the bubbles.
+The axis labels are attached to two new series. Add the series by right-clicking in the chart and choosing “Source Data.” Then choose “Add” and give it the name “X-labels.” The X-values for this are the second column in the lookup table, the Y-values are the third column (which is all zeros), and the sizes are the fourth column (all 1000). Repeat for the Y-values, reversing the X- and Y-coordinates.
+To make the series invisible, left-click each one and select “None” for both the “Border” and “Area” on the “Patterns” tab.
+Now, choose the menu option Tools ➪ XY Chart Labels ➪ Add Chart Labels. The “X-labels” are the data series and the label range is the first column of the lookup table. Place the X-labels “Below” the data bubbles. Repeat for the “Y-labels,” placing them to the “Left.” The labels appear in the chart and can be formatted to any font or rotated by clicking them. It is also a good idea to adjust the scale of the axes to go from 0 to 9 in this case.
+￼￼Multi-Way Combinations
+Although two-way combinations are often sufficient, multi-way combinations are also useful. Generating larger combinations in SQL requires adding addi- tional JOINs for each item in the combination. To keep the combinations dis- tinct (that is, to avoid listing A, B, C and A, C, B as two different combinations),
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 423 an additional less than condition needs to be added for each product. The fol-
+lowing query is an example for three items:
+  SELECT p1, p2, p3, COUNT(*) as cnt
+  FROM (SELECT op1.orderid, op1.productid as p1,
+               op2.productid as p2, op3.productid as p3
+        FROM (SELECT orderid, COUNT(DISTINCT productid) as numprods
+              FROM orderline GROUP BY orderid
+              HAVING COUNT(DISTINCT productid) > 2) o JOIN
+             (SELECT DISTINCT orderid, productid FROM orderline) op1
+             ON o.orderid = op1.orderid JOIN
+             (SELECT DISTINCT orderid, productid FROM orderline) op2
+             ON op1.orderid = op2.orderid AND
+                op1.productid < op2.productid JOIN
+             (SELECT DISTINCT orderid, productid FROM orderline) op3
+             ON op2.orderid = op3.orderid AND
+                op2.productid < op3.productid
+       ) combinations
+  GROUP BY p1, p2, p3
+This query has three subqueries that provide, respectively, the first, second, and third products in the combination. These subqueries use the DISTINCT keywordinsteadofaGROUP BYtoeliminateduplicates;thetwomethodsare equivalent. Because there can be a very large number of combinations, the first subquery limits the orders to those having at least three products.
+Table 9-8 shows the top ten combinations of three products. The three-way combinations have lower counts than the two-way combinations. For instance, the top two-way combinations appeared in over two thousand orders. The top three-way combinations occur in fewer than four hundred. This is typical, because the more products in the order, the fewer the customers who have ordered all of them at once.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Table 9-8: Top Ten Combinations of Three Products
+￼PROD- UCT 1
+12506 12820 11052 12139 12820 10939 12820
+PROD- UCT 2
+12820 13144 11196 12819 12823 10940 12851
+PROD-
+UCT 3 COUNT
+12830 399
+13190 329
+11197 275
+12820 253
+12951 194
+10943 170 BOOK BOOK BOOK
+￼GROUP 1
+GROUP 2
+GROUP 3
+FREEBIE
+FREEBIE
+APPAREL
+BOOK
+FREEBIE
+FREEBIE OTHER FREEBIE
+￼FREEBIE ARTWORK OCCASION
+GAME FREEBIE BOOK FREEBIE
+￼￼￼￼￼13190 154
+FREEBIE OCCASION FREEBIE
+￼www.it-ebooks.info
+Continued on next page
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼424 Chapter 9 ■ What’s in a Shopping Cart?
+￼Table 9-8
+PROD- UCT 1
+11093 12819 12005
+(continued)
+PROD- UCT 2
+12820 12820 12820
+PROD- UCT 3
+13190 12851 13190
+COUNT GROUP 1
+142 OCCASION 137 FREEBIE 125 BOOK
+GROUP 2
+FREEBIE FREEBIE FREEBIE
+GROUP 3
+FREEBIE OCCASION FREEBIE
+￼￼￼￼￼Households Not Orders
+There is no reason to look at combinations only in orders. Another possibility is to look at products within households. One application is particularly inter- esting, looking at combinations that occur within a household but not within a particular order.
+Combinations within a Household
+The following query extends two-way combinations to products in the same household:
+  SELECT p1, p2, COUNT(*) as cnt
+  FROM (SELECT op1.householdid, op1.productid as p1, op2.productid as p2
+FROM (SELECT householdid, COUNT(DISTINCT productid) as numprods FROM orderline ol JOIN orders o ON o.orderid = ol.orderid JOIN
+                   customer c ON o.customerid = c.customerid
+              GROUP BY householdid) o JOIN
+(SELECT DISTINCT householdid, productid
+FROM orderline ol JOIN orders o ON o.orderid = ol.orderid JOIN
+                   customer c ON o.customerid = c.customerid) op1
+             ON o.householdid = op1.householdid AND
+                o.numprods BETWEEN 2 AND 10 JOIN
+             (SELECT DISTINCT householdid, productid
+FROM orderline ol JOIN orders o ON o.orderid = ol.orderid JOIN customer c ON o.customerid = c.customerid) op2
+             ON op1.householdid = op2.householdid AND
+                op1.productid < op2.productid
+       ) combinations
+  GROUP BY p1, p2
+This query looks more complicated than the earlier two-way combination query, because the two subqueries look up each order’s HOUSEHOLDID. The structure of the query remains the same, with the only difference being the innermost subqueries.
+Because few households have repeated purchases, the results within a household are quite similar to the results within orders.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 425 Investigating Products within Households but Not within Orders
+At this point, we can ask a more complicated question that illustrates the power of doing this work in SQL: What pairs of products occur frequently among household purchases but do not appear in the same purchase? Such a question can provide very valuable information on potential cross-selling opportunities, because such product pairs indicate affinities among products at different times.
+Answering this question requires some minor modifications to the house- hold query. This query had the following conditions:
+■■ The household has two to ten products.
+■■ Both products appear within the household.
+■■ The first product in the pair has a lower product id than the second product.
+One more condition is needed:
+■■ The products are in the same household but not in the same order.
+The following query adds this condition:
+  SELECT p1, p2, COUNT(*) as cnt
+  FROM (SELECT op1.householdid, op1.productid as p1, op2.productid as p2
+FROM (SELECT householdid, COUNT(DISTINCT productid) as numprods FROM orderline ol JOIN orders o ON o.orderid = ol.orderid JOIN
+                   customer c ON o.customerid = c.customerid
+              GROUP BY householdid) o JOIN
+(SELECT DISTINCT householdid, o.orderid, productid
+FROM orderline ol JOIN orders o ON o.orderid = ol.orderid JOIN
+                   customer c ON o.customerid = c.customerid) op1
+             ON o.householdid = op1.householdid AND
+                o.numprods BETWEEN 2 AND 10 JOIN
+             (SELECT DISTINCT householdid, o.orderid, productid
+FROM orderline ol JOIN orders o ON o.orderid = ol.orderid JOIN customer c ON o.customerid = c.customerid) op2
+             ON op1.householdid = op2.householdid AND
+                op1.orderid <> op2.orderid AND
+                op1.productid < op2.productid
+GROUP BY op1.householdid, op1.productid, op2.productid )o
+  GROUP BY p1, p2
+Now, the innermost queries obtain triples of order id, product id, and date. There is a slight complication. Previously, the aggregation ensured that a product only occurs once in each household. This condition is no longer true when a household purchases the same product on multiple occasions. To remove potential duplicates, there is an additional aggregation at the ORDERID, PRODUCTID1, PRODUCTID2 level.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼426 Chapter 9 ■ What’s in a Shopping Cart?
+￼Table 9-9 shows the top ten results from this query. These results differ from the products within an order because the FREEBIE product group is much less common. Some of the combinations are not particularly surprising. For instance, customers who purchase calendars one year are probably likely to purchase calendars in another year. This combination occurs three times in the top ten products.
+Table 9-9: Top Ten Pairs of Products Purchased by Households in Different Orders
+￼PRODUCT1
+PRODUCT2 COUNT
+PRODUCT
+BOOK
+BOOK OCCASION CALENDAR ARTWORK CALENDAR CALENDAR ARTWORK BOOK ARTWORK
+PRODUCT
+BOOK
+BOOK FREEBIE CALENDAR BOOK CALENDAR CALENDAR ARTWORK BOOK BOOK
+11196 11197 462 11111 11196 313 12139 12820 312 12015 12176 299 11048 11196 294 12176 13298 279 10863 12015 255 11048 11052 253 11111 11197 246 11048 11197 232
+￼￼￼￼￼￼￼￼￼￼Multiple Purchases of the Same Product
+The previous example suggests another interesting question, although one that is not directly related to product combinations: How often does a household purchase the same product in multiple orders? The following query answers this question:
+  SELECT numprodinhh, COUNT(*) as numhouseholds
+  FROM (SELECT householdid, productid,
+               COUNT(DISTINCT o.orderid) as numprodinhh
+        FROM customer c JOIN orders o ON c.customerid = o.customerid JOIN
+             orderline ol ON o.orderid = ol.orderid
+        GROUP BY householdid, productid
+)h
+GROUP BY numprodinhh ORDER BY 1
+The subquery aggregates the order lines by household id and product, using COUNT(DISTINCT) to count the number of orders containing the product within a household. The outer query then creates a histogram of the counts.
+￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 427
+￼Over eight thousand households have purchased the same product more than once. The most frequent ones purchase the same product over fifty times. These very frequent purchases are anomalous, due to businesses purchasing the same product multiple times.
+This question leads to another. What are the top products appearing in these orders? The following query answers a related question about product groups:
+  SELECT p.productgroupname, COUNT(*) as numhouseholds
+  FROM (SELECT householdid, productid,
+               COUNT(DISTINCT o.orderid) as numorders
+        FROM customer c JOIN orders o ON c.customerid = o.customerid JOIN
+             orderline ol ON o.orderid = ol.orderid
+        GROUP BY householdid, productid
+) h JOIN
+       product p ON h.productid = p.productid
+  WHERE numorders > 1
+  GROUP BY p.productgroupname
+  ORDER BY 2 DESC
+This query is quite similar to the previous query, except the product informa- tion is being joined in, and then the outer query is aggregating by PRODUCT- GROUPNAME.
+Table 9-10 shows that the top three product groups are BOOK, ARTWORK, and OCCASION. This differs from the common combinations, which always include FREEBIE products. In fact, one FREEBIE product, whose id is 12820, is the top product that appears in multiple orders within a household. Without this product, the FREEBIE category would have only 210 occurrences of the same product appearing in multiple orders, and would fall to the bottom of the table. This product, the 12820 product, is a catalog included in all ship- ments during a period of time. Customers who place multiple orders during this period of time received the catalog with each purchase.
+Table 9-10: Products that Appear in More Than One Order, by Product Group
+￼￼￼￼￼￼￼￼￼￼￼￼PRODUCT GROUP
+BOOK ARTWORK OCCASION FREEBIE GAME CALENDAR APPAREL OTHER
+NUMBER OF HOUSEHOLDS
+2,709 2,101 1,212
+           935
+           384
+           353
+           309
+           210
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼428 Chapter 9 ■ What’s in a Shopping Cart? The Simplest Association Rules
+This section starts the discussion of association rules by calculating the propor- tion of orders that have a given product. These are the simplest, most basic type of association rule, one where the “if” clause is empty and the “then” clause contains one product: given no information, what is the probability that a given product is an order? This idea of “zero-way” association rules is useful for two reasons. First, it provides a simple introduction to the ideas and terminology. Second, this overall probability is important for assessing more complex rules.
+Associations and Rules
+An association is a group of products that appear together in one or more orders. The word “association” implies that the products have a relationship with each other based on the fact that they are found together in an order. An association rule has the form:
+■■ <left-hand side> ➪ <right-hand side>
+The arrow in the rule means “implies,” so this is read as “the presence of the products on the left-hand side implies the presence of the products on the right-hand side in the same order.” Of course, a rule is not always true, so there is a probability associated with it. There can be any number of products on either side, although the right-hand side typically consists of one product. In more formal terminology, the left-and right-hand sides are item sets. The term item is a more general idea than product; and later in this chapter we’ll see the power of such generalization.
+The automatic generation of association rules demonstrates the power of using detailed data. It must be admitted that the resulting rules are not always necessarily interesting. One early example, published in the 1990s, comes from Sears after the company had invested millions of dollars in a data warehous- ing system. They learned that customers who buy large appliance warranties are very likely to buy large appliances. Maybe there is an affinity, because war- ranties are almost always added onto large appliance purchases.
+WARNING Association rules are not necessarily interesting. They are sometimes trivial, telling us something we should already know.
+Such a rule is trivial, because we should have known. Although trivial rules are not useful from a business perspective, they are resounding successes for the computer — because the pattern is undeniably in the data. An interesting use of trivial rules is to look at the exceptions, which might point to data quality or operational issues.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 429 Zero-Way Association Rules
+The zero-way association is the probability that an order contains a given product. It is the probability that the following rule is true:
+■■ <nothing> ➪ <product id>
+It is “zero” way because the left-hand side has no products. The probability, in turn, is the number of orders containing a product divided by the total num- ber of orders:
+  SELECT productid, COUNT(*)/MAX(numorders) as p
+  FROM (SELECT DISTINCT orderid, productid FROM orderline) op CROSS JOIN
+       (SELECT COUNT(*)*1.0 as numorders FROM orders o) o
+  GROUP BY productid
+  ORDER BY 2 DESC
+This query counts up the number of orders having a product and removes duplicateorderlinesusingSELECT DISTINCT(althoughthiscouldalsobe accomplished with a GROUP BY, the SELECT DISTINCT is more succinct). The number of orders with the product is then divided by the total number of orders.Asubquery,joinedinusingCROSS JOIN,calculatesthetotalnumber, which is converted to a real number by multiplying by 1.0.
+The result is each product with the proportion of orders containing the product. For instance, the most popular product is product id 12820, which is a FREEBIE product that occurs in about 9.6% of the orders.
+What Is the Distribution of Probabilities?
+There are over 4,000 products so looking at all the probabilities individually is cumbersome. What do these probabilities look like? The following query provides some information about the values:
+  SELECT COUNT(*) as numprods, MIN(p) as minp, MAX(p) as maxp,
+         AVG(p) as avgp, COUNT(DISTINCT p) as nump
+  FROM (SELECT ol.productid,
+               (COUNT(DISTINCT orderid)*1.0/
+                (SELECT COUNT(DISTINCT orderid) FROM orderline) ) as p
+        FROM orderline ol
+        GROUP BY ol.productid) op
+Notice that this query calculates the total number of orders using an in-line query,ratherthantheCROSS JOIN.Bothmethodsworkequallywell,butthe CROSS JOINmakesitpossibletoaddseveralvariablesatonceandgivethem informative names.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼430 Chapter 9 ■ What’s in a Shopping Cart?
+These probabilities have the following characteristics:
+■■ The minimum value is 0.0005%.
+■■ The maximum value is 9.6%.
+■■ The average value is 0.036%.
+■■ There are 385 different values.
+Why are there only a few hundred distinct values when there are thousands of products? The probabilities are ratios between two numbers, the number of times that a product appears, and the number of orders. For all products, the number of orders is the same, so the number of different probabilities is the number of dif- ferent frequencies of products. There is much overlap, especially because over one thousand products appear only once.
+With just a few hundred values, plotting them individually is possible as in Figure 9-7, which has both the histogram and the cumulative histogram. The histogram is on the left-hand axis. However, this histogram is visually mis- leading, because the points are not equally spaced.
+￼100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+0.0% 0.2%
+cnt
+cum
+0.4%
+0.6%
+10,000 1,000 100 10
+1 0.8% 1.0%
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 9-7: This chart shows the distribution of probabilities of an order containing a product.
+The cumulative distribution is the other curve on the chart, and it provides more information. For instance, it says that half the products have a probability of less than about 0.0015%, so many products are quite rare indeed. Only half a percent of the products (23) occur in more than one percent of the orders.
+What Do Zero-Way Associations Tell Us?
+Zero-way association rules provide basic information about products. Given no other information about purchases, such rules give the probability of a given product being in an order. For instance, the top product, with id 12820, occurs in about 9.6% of the orders. This is a FREEBIE product, which is not so interesting.
+www.it-ebooks.info
+Count (Log Scale)
+Cumulative Proportion
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 431 The second product is a book that occurs in 4.9% of orders; its product id is
+11168. An association rule predicting it has the form: ■■ <LHS> ➪ <product 11168>
+If this rule is accurate 50% of the time, then it is useful. If it is accurate 10% of the time, then it is useful. However, if it is accurate 4.8% of the time, the rule does worse than a random guess. Such a rule is not useful. The overall proba- bility is a minimum level required for a rule to be useful. This comparison is an important measure for the effectiveness of association rules.
+One-Way Association Rules
+This section moves from combinations of products to rules suggesting that the presence of one product implies the presence of another. For many purposes, finding combinations of products that occur together is quite useful. However, these are still combinations, not rules.
+This section starts with simple association rules, where both sides consist of a single product. Calculating such one-way rules is possible using a single query. However, the next section, which covers building more complex rules, needs to use intermediate tables to store information.
+Example of One-Way Association Rules
+The two most common products have product ids 12820 and 13190, suggesting the rule:
+■■ Product 12820 ➪ Product 13190
+This section looks at the traditional ways of evaluating such a rule. The place
+to begin is by gathering the following information:
+■■ The total number of orders;
+■■ The number of orders that contain the left-hand side of the rule;
+■■ The number of orders that contain the right-hand side of the rule; and,
+■■ The number of orders that contain both the left- and right-hand sides.
+The following query calculates these values:
+  SELECT COUNT(*) as numorders, SUM(lhs) as numlhs, SUM(rhs) as numrhs,
+         SUM(lhs*rhs) as numlhsrhs
+  FROM (SELECT orderid,
+               MAX(CASE WHEN productid = 12820 THEN 1 ELSE 0 END) as lhs,
+               MAX(CASE WHEN productid = 13190 THEN 1 ELSE 0 END) as rhs
+        FROM orderline ol
+        GROUP BY orderid) o
+￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼432 Chapter 9 ■ What’s in a Shopping Cart?
+￼Notice that this query calculates the presence of the left-hand-side and right- hand-sideproductsusingMAX(CASE WHEN . . .).Becausethemaximumfunc- tion is used, the calculation only counts the presence of these products, ignoring NUMUNITS as well as the number of order lines containing the products.
+Support is the first measure in Table 9-11 for evaluating the rule. This is the proportion of orders where the rule is true. In other words, support is the num- ber of orders that have both the left side and right side divided by the total number of orders. For this rule, the support is 1.3% = 2,588 / 192,983. Rules with higher support are more useful because they apply to more orders.
+Table 9-11: Measures for the Rule Product 12820 ➪ Product 13190
+￼MEASURE
+Number of Orders
+Number of Orders with Left-Hand Side Number of Orders with Right-Hand Side Number of Orders with Both Sides Support
+Confidence
+Lift
+VALUE
+192,983 18,441 3,404 2,588
+1.3% 14.0%
+8.0
+￼￼￼￼￼￼￼A second measure is confidence, which is how often the rule is true, given that the left-hand side is true. For this rule, it is the ratio of orders that have both products to those that have product 12820. The confidence is 14.0% = 2,588/18,441.
+The third important measure is lift, which tells us how much better the rule does rather than just guessing. Without the rule, 1.8% of the orders have prod- uct 13190 (this is the zero-way association rule for the product). With the rule, 14.0% have it. The rule does about eight times better than just guessing, so the rule has a high lift.
+The following query calculates these values for this rule:
+  SELECT numlhsrhs/numorders as support, numlhsrhs/numlhs as confidence,
+         (numlhsrhs/numlhs)/(numrhs/numorders) as lift
+  FROM (SELECT 1.0*COUNT(*) as numorders, 1.0*SUM(lhs) as numlhs,
+               1.0*SUM(rhs) as numrhs, 1.0*SUM(lhs*rhs) as numlhsrhs
+        FROM (SELECT orderid,
+                     MAX(CASE WHEN productid = 12820 THEN 1 END) as lhs,
+                     MAX(CASE WHEN productid = 13190 THEN 1 END) as rhs
+              FROM orderline ol
+              GROUP BY orderid) o
+￼￼￼￼￼￼￼￼￼￼￼)a
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 433
+￼This query does the calculation for only one rule. The challenge in this section is to calculate these values for all possible rules.
+Before looking at all rules, let’s look at just one other, the inverse rule: ■■ Product 13190 ➪ Product 12820
+The support for the inverse rule is exactly the same as the support for the orig- inal rule, because the two rules have the same combination of products. Per- haps more surprising, the lift for the two rules is the same as well. This is not a coincidence; it comes from the definition of lift. The formula simplifies to:
+  (numlhsrsh * numorders) / (numlhs * numrhs)
+Both the rule and its inverse have the same values of NUMLHSRHS and NUMORDERS, so the numerator is the same. The values of NUMLHS and NUMRHS are swapped, but the product remains the same. As a result the lift is the same for any rule and its inverse.
+The confidence values for a rule and its inverse are different. However, there is a simple relationship between them. The product of the confidence values is the same as the product of the support and the lift. So, given the confidence, support, and lift for one rule, it is simple to calculate the confidence for the inverse rule.
+Generating All One-Way Rules
+The query to generate one-way association rules is similar to the query to cal- culate combinations, in that both involve self-joins on Orderline. The query starts by enumerating all the possible rule combinations:
+  SELECT (CAST(lhs as VARCHAR)+’ --> ‘+ CAST(rhs as VARCHAR)) as therule,
+         lhs, rhs, COUNT(*) as numlhsrhs
+  FROM (SELECT item_lhs.orderid, item_lhs.lhs, item_rhs.rhs
+        FROM (SELECT orderid, productid as lhs FROM orderline
+              GROUP BY orderid, productid) item_lhs JOIN
+             (SELECT orderid, productid as rhs FROM orderline
+              GROUP BY orderid, productid) item_rhs
+             ON item_lhs.orderid = item_rhs.orderid AND
+￼￼￼￼￼￼￼￼￼                item_lhs.lhs <> item_rhs.rhs
+  GROUP BY lhs, rhs
+The order lines are aggregated to remove duplicates. This query carefully names the innermost subqueries, as Item_LHS and Item_RHS, with columns LHS and RHS. These names emphasize the roles of the subqueries and columns. Throughout this chapter, the association rule queries use these naming conventions.
+￼) rules
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼434 Chapter 9 ■ What’s in a Shopping Cart?
+￼Another difference from the combination query is that all pairs of products are being considered, rather than only unique pairs, because A ➪ B and B ➪ A aretwodifferentrules.Thejoinconditionusesitem_lhs.lhs <> item_rhs.rhs rather than item_lhs.lhs < item_rhs.rhs. The subquery Rules generates all candidate rules in the Orders tables
+This query returns the products in the rule as separate columns. In addition, it creates a text representation of the rule, by converting the product ids to characters and putting an arrow between the two sides.
+This form of the query does not restrict the orders, say, to orders that have between two and ten products. This condition can be added using the filter subquery used for the same purpose in the combination query.
+One-Way Rules with Evaluation Information
+The previous query generates all the possible one-way rules. This section dis- cusses methods of evaluating them, by calculating support, confidence, and lift. The idea is similar to the calculation for an individual rule, but the details are quite different.
+Figure 9-8 shows the dataflow diagram for the computation. The query starts by generating all the possible rules using the Rules subquery, which also calculates NUMLHSRHS. The challenge is to calculate NUMLHS, NUMRHS, and NUMORDERS for each rule. NUMLHS is the number of times that the left-hand side appears in an order. This is simply the number of orders con- taining the product in the left-hand side. The query that calculates this is:
+  SELECT productid, COUNT(DISTINCT orderid) as numlhs
+  FROM orderline
+  GROUP BY productid
+Similar logic works for NUMRHS and NUMLHSRHS. Combining these into a single query requires four subqueries:
+  SELECT lhsrhs.*, numorders, numlhs, numrhs,
+         numlhsrhs*1.0/numorders as support,
+         numlhsrhs*1.0/numlhs as confidence,
+         numlhsrhs * numorders * 1.0/(numlhs * numrhs) as lift
+  FROM (SELECT lhs, rhs, COUNT(*) as numlhsrhs
+        FROM (<rules>) rules GROUP BY lhs, rhs) lhsrhs JOIN
+       (SELECT productid as lhs, COUNT(DISTINCT orderid) as numlhs
+        FROM orderline GROUP BY productid) sumlhs
+       ON lhsrhs.lhs = sumlhs.lhs JOIN
+       (SELECT productid as rhs, COUNT(DISTINCT orderid) as numrhs
+        FROM orderline GROUP BY productid) sumrhs
+       ON lhsrhs.rhs = sumrhs.rhs CROSS JOIN
+       (SELECT COUNT(DISTINCT orderid) as numorders FROM orderline) a
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼item_lhs
+AGGREGATE group by orderid, productid
+READ
+orderline lhs = productid
+AGGREGATE group by orderid, productid
+Chapter 9 ■ What’s in a Shopping Cart? 435 lhsrhs
+READ
+orderline rhs = productidt
+READ orderline
+READ orderline
+item_rhs
+sumlhs
+AGGREGATE group by productid
+numlhs = COUNT(DISTINCT orderid)
+sumrhs
+AGGREGATE group by productid
+numrhs = COUNT(DISTINCT orderid)
+a
+READ numorders =
+ORDERS COUNT(DISTINCT orderid))
+OUTPUT
+AGGREGATE
+APPEND
+support = numlhsrhs / numorders confidence = numlhsrhs / numlhs
+lift = numorders*numlhsrhs / (numlhs*umrhs)
+Figure 9-8: This dataflow generates all possible one-way rules with evaluation information.
+JOIN
+on orderid, item_lhs.lhs < > item_rhs.rhs
+JOIN
+on lhs = sumlhs.lhs
+JOIN
+on rhs = sumrhs.rhs
+CROSS JOIN
+AGGREGATE group by lhs, rhs
+numlhsrhs = COUNT(*)
+There is one subquery for each item in the rules. The outer query calculates the support, confidence, and lift for each rule. The additional columns for NUMLHS, NUMRHS, and NUMORDERS are added by joining in summary queries. With these columns, the outer query calculates values for support, confidence, and lift.
+Table 9-12 shows the top few rules with the highest lift. These are interesting though useless. The highest lift rules are the ones where two products appear together and the two products never appear without the other. This tends to occur somewhat randomly for the least common products.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼436 Chapter 9 ■ What’s in a Shopping Cart?
+￼Table 9-12: Top One-Way Rules with Highest Lift
+LHS- # SUP- CONFI-
+￼￼RULE RHS LHS RHS
+10874 ➪ 10879 1 1 1 12665 ➪ 10705 1 1 1 12935 ➪ 12190 1 1 1 13224 ➪ 13859 1 1 1 13779 ➪ 13232 1 1 1 10878 ➪ 10892 1 1 1 13495 ➪ 12353 1 1 1 12717 ➪ 11786 1 1 1 13238 ➪ 13752 1 1 1 11902 ➪ 11915 1 1 1
+ORDERS PORT DENCE
+192,983 0.0% 100% 192,983 0.0% 100% 192,983 0.0% 100% 192,983 0.0% 100% 192,983 0.0% 100% 192,983 0.0% 100% 192,983 0.0% 100% 192,983 0.0% 100% 192,983 0.0% 100% 192,983 0.0% 100%
+LIFT
+192,983 192,983 192,983 192,983 192,983 192,983 192,983 192,983 192,983 192,983
+￼￼￼￼￼￼￼￼￼￼One way to fix this is by putting in a threshold value for support. For instance, to consider only rules that are valid in at least 0.1% of the orders, use a WHERE clause:
+  WHERE numlhsrhs * 1.0/numorders >= 0.001
+There are 126 rules that meet this restriction. Almost all of them have a lift greater than one, but there are a small number that have a lift less than one. There is no reason to expect generated rules with high support to have good lift as well.
+One-Way Rules on Product Groups
+As another example of one-way association rules, let’s consider rules about product groups. This requires changing the inner query used to calculate NUMLHSRHS to:
+  SELECT item_lhs.orderid, item_lhs.lhs, item_rhs.rhs
+  FROM (SELECT orderid, productgroupname as lhs
+        FROM orderline ol JOIN product p ON ol.productid = p.productid
+        GROUP BY orderid, productgroupname) item_lhs JOIN
+       (SELECT orderid, productgroupname as rhs
+        FROM orderline ol JOIN product p ON ol.productid = p.productid
+        GROUP BY orderid, productgroupname) item_rhs
+       ON item_lhs.orderid = item_rhs.orderid AND
+          item_lhs.lhs <> item_rhs.rhs
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 437 In addition, the subqueries for NUMLHS and NUMRHS need to be modified
+to extract information about product groups, rather than products:
+  SELECT lhsrhs.*, numlhs, numrhs, numorders,
+         numlhsrhs * 1.0/numorders as support,
+         numlhsrhs * 1.0/numlhs as confidence,
+         numlhsrhs * numorders * 1.0/(1.0*numlhs * numrhs) as lift
+  FROM (SELECT lhs, rhs, COUNT(*) as numlhsrhs
+        FROM (<previous-query>) rules
+        GROUP BY) lhsrhs JOIN
+       (SELECT productgroupname as lhs, COUNT(DISTINCT orderid) as numlhs
+        FROM orderline ol JOIN product p ON ol.productid = p.productid
+        GROUP BY productgroupname) sumlhs
+       ON lhsrhs.lhs = sumlhs.lhs JOIN
+       (SELECT productgroupname as rhs, COUNT(DISTINCT orderid) as numrhs
+        FROM orderline ol JOIN product p ON ol.productid = p.productid
+        GROUP BY productgroupname) sumrhs
+       ON lhsrhs.rhs = sumrhs.rhs CROSS JOIN
+       (SELECT COUNT(DISTINCT orderid) as numorders FROM orderline) a
+  ORDER BY 9 DESC
+Otherwise, this query follows the same form as the query for products. Figure 9-9 shows the results as a bubble plot. The bubble plot contains two series. One consists of pretty good rules where the lift is greater than 1. The rest are grouped into not-good rules. This bubble chart uses the same tricks for
+labeling the axes that were discussed earlier.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Lift <= 1 Lift > 1
+￼￼￼#N/A OTHER
+OCCASION GAME FREEBIE CALENDAR BOOK ARTWORK APPAREL
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 9-9: The good rules and not-so-good rules are shown in this bubble plot.
+www.it-ebooks.info
+APPAREL
+ARTWORK
+BOOK
+CALENDAR
+FREEBIE
+GAME
+OCCASION
+OTHER #N/A
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼438 Chapter 9 ■ What’s in a Shopping Cart?
+￼Not many of these rules have a good lift. One reason is that most orders have only one product and hence only one product group. These orders inflate the values of NUMLHS and NUMRHS, without contributing to the value of NUMLHSRHS.
+Naively modifying the query to use only orders that have more than one product is complicated, because all four subqueries have to be modified. Such an approach is not only complicated, but making the same change in four places makes the resulting query more prone to error. The next two sections discuss two other approaches, one that uses an intermediate table and one that uses the window functions (introduced in Chapter 8).
+Calculating Product Group Rules Using an Intermediate Table
+The product group rules are essentially finding all the LHS and RHS combina- tions, and then calculating the following values NUMLHSRHS, NUMLHS, NUMRHS, and NUMORDERS. The previous query does this calculation using four separate queries for each value. However, these could all be calculated from a single table that contains all the generated rules. The following query creates the Assoc_Rules_PG2PG table with products only from orders that have more than one product group in them:
+  SELECT item_lhs.orderid, item_lhs.lhs, item_rhs.rhs
+  INTO assoc_rules_pg2pg
+  FROM (SELECT orderid
+        FROM orderline ol JOIN product p ON ol.productid = p.productid
+        GROUP BY orderid
+        HAVING COUNT(DISTINCT productgroupname) > 1) filter JOIN
+       (SELECT orderid, productgroupname as lhs
+        FROM orderline ol JOIN product p ON ol.productid = p.productid
+        GROUP BY orderid, productgroupname) item_lhs
+       ON filter.orderid = item_lhs.orderid JOIN
+       (SELECT orderid, productgroupname as rhs
+        FROM orderline ol JOIN product p ON ol.productid = p.productid
+        GROUP BY orderid, productgroupname) item_rhs
+       ON item_lhs.orderid = item_rhs.orderid AND
+          item_lhs.lhs <> item_rhs.rhs
+(The specific syntax for creating an intermediate table differs from database to database, although CREATE TABLE AS and SELECT INTO are common methods.) This query is similar to the Rules subquery used earlier. However, it has an addi- tional join that selects the orders with more than one product group. Because all potential rules are in this table for every order where they appear, the table is rather large, having 80,148 rows. This type of query generates all the candidate rules for two-way association rules.
+The rules in the intermediate table can now be used to calculate the remain- ing variables. The key is to count distinct order ids for the different items. So,
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 439
+￼NUMORDERS is the number of distinct order ids in this table. NUMLHS is the number of distinct order ids among the left-hand products, and NUMRHS is the number of distinct orders among the right-hand products. The following query calculates these numbers along with support, confidence, and lift:
+  SELECT lhsrhs.*, numorders, numlhs, numrhs,
+         numlhsrhs*1.0/numorders as support,
+         numlhsrhs*1.0/numlhs as confidence,
+         numorders*numlhsrhs*1.0/(1.0*numlhs*numrhs) as lift
+  FROM (SELECT lhs, rhs, COUNT(*) as numlhsrhs
+        FROM assoc_rules_pg2pg GROUP BY lhs, rhs) lhsrhs JOIN
+       (SELECT lhs, COUNT(DISTINCT orderid) as numlhs
+        FROM assoc_rules_pg2pg GROUP BY lhs) sumlhs
+       ON lhsrhs.lhs = sumlhs.lhs JOIN
+       (SELECT rhs, COUNT(DISTINCT orderid) as numrhs
+        FROM assoc_rules_pg2pg GROUP BY rhs) sumrhs
+       ON lhsrhs.rhs = sumrhs.rhs CROSS JOIN
+       (SELECT COUNT(DISTINCT orderid) as numorders
+        FROM assoc_rules_pg2pg) a
+  ORDER BY lift DESC
+The advantage of this approach is that the four values are guaranteed to be based on the same set of orders; eliminating one source of error — repeated complex subqueries.
+The same basic intermediate table works in general. The idea is that the table contains all instances of rules, rather than a summary of the rules. Gen- erating association rules at the household level is a simple modification:
+  SELECT item_lhs.householdid, item_lhs.lhs, item_rhs.rhs
+  INTO assoc_rules_h_pg2pg
+  FROM (SELECT householdid
+        FROM orderline ol JOIN
+             product p ON ol.productid = p.productid JOIN
+             orders o ON ol.orderid = o.orderid JOIN
+             customer c ON o.customerid = c.customerid
+        GROUP BY householdid
+        HAVING COUNT(DISTINCT productgroupname) > 1) filter JOIN
+       (SELECT DISTINCT householdid, productgroupname as lhs
+        FROM orderline ol JOIN
+             product p ON ol.productid = p.productid JOIN
+             orders o ON ol.orderid = o.orderid JOIN
+             customer c ON o.customerid = c.customerid) item_lhs
+       ON filter.householdid = item_lhs.householdid JOIN
+       (SELECT DISTINCT householdid, productgroupname as rhs
+        FROM orderline ol JOIN
+             product p ON ol.productid = p.productid JOIN
+             orders o ON ol.orderid = o.orderid JOIN
+             customer c ON o.customerid = c.customerid) item_rhs
+       ON item_lhs.householdid = item_rhs.householdid AND
+          item_lhs.lhs <> item_rhs.rhs
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼440 Chapter 9 ■ What’s in a Shopping Cart?
+￼This query is a bit more complicated only because it needs additional joins to the Orders and Customer tables to get the HOUSEHOLDID. However, it has the same structure as the earlier one, and the query that calculates the rule measures is almost the same as shown earlier; the only difference is that COUNT(DISTINCT orderid)becomesCOUNT(DISTINCT householdid).
+Calculating Product Group Rules Using Window Functions
+A second possible approach for calculating the product group rules is to use window functions. These make it possible to do all the aggregations conve- niently in one query, without creating an intermediate table. Of course, this is only possible in databases that support this functionality.
+The window functions approach is like using an intermediate table and putting all the calculations in one query. In fact, it can be illustrated on the intermediate table. Instead of using four subqueries to calculate the four val- ues, these can all be calculated in a single query:
+  SELECT lhsrhs.*, numlhsrhs * 1.0/numorders as support,
+         numlhsrhs * 1.0/numlhs as confidence,
+         numlhsrhs * numorders * 1.0/(1.0*numlhs * numrhs) as lift
+FROM (SELECT lhs, rhs, MIN(numlhsrhs) as numlhsrhs, MIN(numlhs) as numlhs, MIN(numorders) as numorders, MIN(numrhs) as numrhs
+        FROM (SELECT orderid, lhs, rhs,
+                     COUNT(DISTINCT orderid) OVER
+                         (PARTITION BY lhs, rhs) as numlhsrhs,
+                     COUNT(DISTINCT orderid) OVER
+                         (PARTITION BY lhs) as numlhs,
+                     COUNT(DISTINCT orderid) OVER
+                         (PARTITION BY rhs) as numrhs,
+                     COUNT(DISTINCT orderid) OVER
+                         (PARTITION BY NULL) as numorders
+              FROM assoc_rules_pg2pg
+)o
+GROUP BY lhs, rhs
+       ) lhsrhs
+  ORDER BY 9 DESC
+This query follows very similar logic to the query that uses the intermediate table. The calculation of NUMLHSRHS, NUMLHS, NUMRHS, and NUMORDERS takes place in one subquery and then the aggregation on these values takes place in another, because window functions and aggrega- tions do not mix. Replacing the table Assoc_Rules_PG2PG with the query that generates the data would put the whole result in one query.
+The query has just one flaw, which is perchance fatal. SQL Server does not support COUNT(DISTINCT) as a window aggregation function. So this form of the query generates a syntax error in SQL Server, although it does work in Oracle.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 441
+￼￼WARNING SQL Server does not support COUNT(DISTINCT) as a window function. Unfortunately, if you need this functionality, you have to use an intermediate table or subquery.
+Two-Way Associations
+The calculation for two-way association rules follows the same logic as for the one-way rules. This section looks at the SQL for generating such rules, as well as some interesting extensions by widening the idea of item.
+Calculating Two-Way Associations
+The basic query for calculating two-way associations is quite similar to the query for one-way associations. The difference is that there are now two products on the left-hand side rather than one. Because the following two rules are equivalent:
+■■ AandB➪C ■■ BandA➪C
+the products on the left-hand side do not need to be repeated. This query includes the requirement that the first product id be smaller than the second on the left-hand side, as a way to eliminate duplicate equivalent rules.
+The query that generates all two-way association rules looks like:
+  SELECT item_lhs1.orderid,
+         (CAST(item_lhs1.lhs as VARCHAR)+’, ‘+
+          CAST(item_lhs2.lhs as VARCHAR)) as lhs, item_rhs.rhs
+  INTO assoc_rules_pp2p
+  FROM (SELECT orderid FROM orderline GROUP BY orderid
+        HAVING COUNT(DISTINCT productid) > 2) filter JOIN
+       (SELECT orderid, productid as lhs FROM orderline
+        GROUP BY orderid, productid) item_lhs1
+        ON filter.orderid = item_lhs1.orderid JOIN
+       (SELECT orderid, productid as lhs FROM orderline
+        GROUP BY orderid, productid) item_lhs2
+       ON item_lhs1.orderid = item_lhs2.orderid AND
+          item_lhs1.lhs < item_lhs2.lhs JOIN
+       (SELECT orderid, productid as rhs FROM orderline
+        GROUP BY orderid, productid) item_rhs
+       ON item_lhs1.orderid = item_rhs.orderid AND
+          item_rhs.rhs NOT IN (item_lhs1.lhs, item_lhs2.lhs)
+This query has an extra join to capture the additional product on the left-hand side. Because two-way association rules contain three different products (two on the left and one on the right), the query only needs to consider orders that have at least three products.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼442 Chapter 9 ■ What’s in a Shopping Cart?
+The calculation of support, confidence, and lift follows a similar pattern to
+the one-way association method. The following query does this work:
+         SELECT lhsrhs.*, numlhs, numrhs, numorders,
+                numlhsrhs * 1.0/numorders as support,
+                numlhsrhs * 1.0/numlhs as confidence,
+                numlhsrhs * numorders * 1.0/(numlhs * numrhs) as lift
+         FROM (SELECT lhs, rhs, COUNT(*) as numlhsrhs
+               FROM assoc_rules_pp2p GROUP BY lhs, rhs) lhsrhs JOIN
+              (SELECT lhs, COUNT(DISTINCT orderid) as numlhs
+               FROM assoc_rules_pp2p GROUP BY lhs) sumlhs
+              ON lhsrhs.lhs = sumlhs.lhs JOIN
+              (SELECT rhs, COUNT(DISTINCT orderid) as numrhs
+FROM assoc_rules_pp2p GROUP BY rhs) sumrhs
+ON lhsrhs.rhs = sumrhs.rhs CROSS JOIN
+(SELECT COUNT(DISTINCT orderid) as numorders FROM assoc_rules_pp2p) a
+         ORDER BY 9 DESC
+With the exception of the name of the intermediate table, this query is exactly the same as the query for one-way association rules. This is very useful. The query to evaluate different types of rules can be the same, by using well- thought-out naming conventions.
+TIP By using careful naming conventions in the intermediate table, the same query can calculate support, confidence, and lift for one-way association rules and two-way association rules.
+The results from this query are also rather similar to the results for the one- way associations. The rules with the highest lift are ones with three products that are extremely rare. By the measure of lift, the best rules seem to be those that have products that only occur together and never separately.
+Using Chi-Square to Find the Best Rules
+Lift provides one measure of “best,” but perhaps it is not the most practical because it seems to choose the least common products. The typical way to get around this is by requiring a certain level of support for the rule. However, the rules with the highest lift are often still the ones with the rarest products that meet the support criterion. This section discusses an alternative measure, the chi-square measure, because it produces a better subjective ordering of the rules.
+Applying Chi-Square to Rules
+The chi-square measure was introduced in Chapter 3 as a way of measuring whether particular splits in data across multiple dimensions are due to chance.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 443
+￼The higher the chi-square value for a particular set of splits, the less likely that observed data is happening due to chance. The measure can be used directly or it can be converted to a p-value using the chi-square distribution.
+Chi-square can also be applied to rules, and it provides a single value that determines whether or not the rule is reasonable. Lift, confidence, and support all measure how good a rule is, but they are three different measures. One warning, though. Chi-square does not work unless all cells have a minimum count; typically at least five.
+To apply chi-square to rules, start by considering a general rule: ■■ LHS➪RHS
+This rule divides all the orders into four discrete groups:
+■■ LHS is TRUE and RHS is TRUE
+■■ LHS is TRUE and RHS is FALSE
+■■ LHS is FALSE and RHS is TRUE
+■■ LHS is FALSE and RHS is FALSE
+Table 9-13 shows the counts of orders that fall into each of these groups for the rule 12820 ➪ 13190. The rows indicate whether the orders contain the left-hand side of the rule. The columns are whether they contain the right-hand side. The upper-left cell, for instance, contains all orders where the rule is true.
+Table 9-13: Counts of Orders for Chi-Square Calculation for Rule 12820 ➪ 13190
+￼LHS TRUE
+LHS FALSE
+RHS TRUE
+816 2,588
+RHS FALSE
+15,853 173,726
+￼￼￼This matrix is the chi-square matrix discussed in Chapter 3. Calculating the chi-square values is not difficult in Excel. Sum the rows and columns and then create an expected value matrix using these sums. The expected value is the product of the row sum times the column sum divided by the total num- ber of orders. The observed value minus the expected value is the variance. The chi-square value is the sum of the variances squared divided by the expected values.
+Chi-square has some nice properties compared to lift. It provides a mea- sure of how unexpected the rule is in the data, rather than the improvement from using it. In one measure, it takes into account how large the rule is as well as how good it is. The standard measures of support and lift address these issues separately.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼444 Chapter 9 ■ What’s in a Shopping Cart? Applying Chi-Square to Rules in SQL
+For one rule, the chi-square calculation is quite feasible in Excel. However, for thousands or millions of rules, Excel is not sufficiently powerful. As shown in Chapter 3, it is possible to do the chi-square calculation in SQL.
+There have been four counts used for calculating support, confidence, and lift:
+■■ NUMLHSRHS is the number of orders where the entire rule is true.
+■■ NUMLHS is the number of orders where the left-hand side is true.
+■■ NUMRHS is the number of orders where the right-hand side is true.
+■■ NUMORDERS is the total number of orders.
+The chi-square calculation, on the other hand, uses four slightly different values, based on the values in the chi-square matrix. The chi-square values are related to
+these counts:
+■■ LHS true, RHS true: NUMLHSRHS
+■■ LHS true, RHS false: NUMLHS – NUMLHSRHS
+■■ LHS false, RHS true: NUMRHS – NUMLHSRHS
+■■ LHS false, RHS false: NUMORDERS – NUMLHS – NUMRHS + NUMLHSRHS
+With these values, the chi-square calculation is just a bunch of arithmetic in a couple of nested subqueries, as shown for the two-way rules in Assoc_PP2P:
+         SELECT (SQUARE(explhsrhs - numlhsrhs)/explhsrhs +
+                 SQUARE(explhsnorhs - numlhsnorhs)/explhsnorhs +
+                 SQUARE(expnolhsrhs - numnolhsrhs)/expnolhsrhs +
+                 SQUARE(expnolhsnorhs - numnolhsnorhs)/expnolhsnorhs
+                ) as chisquare, b.*
+         FROM (SELECT lhsrhs.*, numlhs, numrhs, numorders,
+                      numlhs - numlhsrhs as numlhsnorhs,
+                      numrhs - numlhsrhs as numnolhsrhs,
+                      numorders - numlhs - numrhs + numlhsrhs as numnolhsnorhs,
+                      numlhs*numrhs*1.0/numorders as explhsrhs,
+                      numlhs*(1.*numorders-numrhs)*1.0/numorders as explhsnorhs,
+                      (1.0*numorders-numlhs)*numrhs*1.0/numorders as expnolhsrhs,
+                      ((1.0*numorders-numlhs)*(1.0*numorders-numrhs)/numorders
+                      ) as expnolhsnorhs,
+                      numlhsrhs*1.0/numorders as support,
+                      numlhsrhs*1.0/numlhs as confidence,
+                      numlhsrhs*numorders*1.0/(numlhs*numrhs) as lift
+               FROM (SELECT lhs, rhs, COUNT(DISTINCT orderid) as numlhsrhs
+                     FROM assoc_rules_pp2p GROUP BY lhs, rhs) lhsrhs JOIN
+                    (SELECT lhs, COUNT(DISTINCT orderid) as numlhs
+                     FROM assoc_rules_pp2p GROUP BY lhs) sumlhs
+                    ON lhsrhs.lhs = sumlhs.lhs JOIN
+                    (SELECT rhs, COUNT(DISTINCT orderid) as numrhs
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 445
+￼￼ FROM assoc_rules_pp2p GROUP BY rhs) sumrhs
+ON lhsrhs.rhs = sumrhs.rhs CROSS JOIN
+(SELECT COUNT(DISTINCT orderid) as numorders
+ FROM assoc_rules_pp2p) a
+￼￼￼￼)b
+The innermost subqueries calculate the counts for the various components of each rule. The next level calculates the intermediate values needed for the chi-square calculation. And the outermost query combines these values into the chi-square value.
+Comparing Chi-Square Rules to Lift
+At first glance, the rules with the highest chi-square values are the same as the rules with the highest lift. These are the rules consisting of products that appear in only one order. However, one of the conditions of the chi-square cal- culation is that every cell should have at least five orders. This condition is expressed as a WHERE condition:
+  numlhsrhs > 4 AND numlhs – numlhsrhs > 4 AND numrhs – numlhsrhs > 4
+As a performance note, adding this WHERE clause is an example where SQL Server might fail to optimize the query correctly; with the WHERE clause, the query plan might be much less efficient. To get around this, create a summary table with the results and use a query to select rules from the summary table.
+Table 9-14 shows the top ten rules with the highest chi-square values and the highest lift values. The first thing to notice is that there is no overlap between the two sets. The rules with the highest lift are quite different from the rules with the best chi-square.
+Table 9-14: Top Rules by Lift and by Chi-Square Measures
+￼BEST CHI-SQUARE
+12820 + 12830 ➪ 12506 12506 + 12820 ➪ 12830 11070 + 11072 ➪ 11074 11052 + 11197 ➪ 11196 11072 + 11074 ➪ 11070 11070 + 11074 ➪ 11072 11196 + 11197 ➪ 11052
+SUPPORT
+2.09% 2.09% 0.38% 1.44% 0.38% 0.38% 1.44%
+CHI-SQUARE LIFT
+14,044.9 35.5 12,842.8 32.5 10,812.5 148.6
+9,745.7 36.0 9,144.6 125.9 9,088.0 125.1 8,880.6 32.9
+Continued on next page
+￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼446 Chapter 9 ■ What’s in a Shopping Cart?
+￼Table 9-14 (continued) BEST CHI-SQUARE
+11157 + 11158 ➪ 11156
+11985 + 11988 ➪ 11987
+12810 + 12820 ➪ 13017 BEST LIFT
+SUPPORT CHI-SQUARE
+0.29% 8,260.1 0.52% 8,222.0 0.52% 8,146.7
+0.04% 6,476.5 0.04% 7,208.0 0.03% 4,324.3 0.03% 5,189.7 0.04% 5,977.5 0.04% 5,977.5 0.04% 5,977.5 0.03% 4,789.8 0.03% 3,963.3 0.04% 5,516.9
+LIFT
+148.2 82.8 83.0
+926.0 901.8 865.9 865.9 854.8 854.8 854.8 799.3 793.8 789.1
+￼￼￼￼13947 + 13949 ➪ 13944 + 13947 ➪ 10969 + 10971 ➪ 13945 + 13950 ➪ 13946 + 13997 ➪ 13947 + 13949 ➪ 13944 + 13947 ➪ 13948 + 13950 ➪ 10069 + 10082 ➪ 13946 + 13997 ➪
+13948 13945 11086 13948 13948 13945 13948 13945 10078 13945
+￼￼￼￼￼￼￼￼￼￼The rules with the highest lift are all similar. They all have low support and the products in the rules are quite rare. These rules do have reasonable confi- dence levels. What makes them good, though, is that the products are rare, so seeing them together in an order is very, very unlikely. Most of the top rules by lift are about ARTWORK, which has lots of expensive products with very low sales volumes.
+The rules with the highest chi-square values look much more sensible. The top rule here has a support of over 2%. The smallest of the top ten rules has a support of 0.3%, about eight times the support of any of the lift rules. The sup- port is much better, and the confidence is also much larger. Many of these rules involve FREEBIE products, which makes intuitive sense, because FREEBIE products are included in so many orders.
+TIP The chi-square measure is better than support, confidence, or lift for choosing a good set of association rules.
+The chi-square values and lift values are not totally independent. Figure 9-10 shows a bubble plot comparing decile values of chi-square with decile values of lift. The large bubbles along the axis show that there is a lot of overlap between
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 447
+￼the values; overall, they put the rules in a similar order. However, there are many examples of smaller bubbles, indicating that chi-square and lift are disagreeing on how good some rules are.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼10 9 8 7 6 5 4 3 2 1
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼1 2 3 4 5 6 7 8 9 10
+Chi-Square Decile
+Figure 9-10: This bubble plot compares the values of lift and chi-square, by decile. Calculating the deciles for the lift and chi-square uses the window functions:
+  SELECT chisquaredecile, liftdecile, COUNT(*), AVG(chisquare), AVG(lift)
+  FROM (SELECT NTILE(10) OVER (ORDER BY chisquare) as chisquaredecile,
+               NTILE(10) OVER (ORDER BY lift) as liftdecile, a.*
+        FROM (<previous-query>) a
+        WHERE numlhsrhs >= 5 and numlhsnorhs >= 5 and numnolhsrhs >= 5) a
+  GROUP BY chisquaredecile, liftdecile
+Notice that this query requires a subquery because windows functions cannot be mixed with aggregation functions. The results are plotted as a bubble chart in Excel.
+Chi-Square for Negative Rules
+The chi-square value measures how unexpected the rule is. However, a rule can be unexpected in two ways. It could be unexpected because the right- hand side occurs much more often when the left-hand side appears. Or, it could be unexpected because the right-hand side occurs much less often.
+￼￼￼￼￼￼￼￼www.it-ebooks.info
+Lift Decile
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼448 Chapter 9 ■ What’s in a Shopping Cart?
+￼In the previous example, all the rules with the highest chi-square values have a lift greater than one (as seen in Table 9.14). In this case, the lift is saying that the right hand size occurs more frequently than expected. For these rules, the chi-square value is indeed saying that the rule is a good rule.
+What happens when the lift is less than one? There are no examples in Table 9.14. However, this situation can occur. In this case, we need to consider the negative rule:
+■■ LHS ➪ NOT RHS
+The chi-square value for this rule is the same as the chi-square value for the original rule. On the other hand, the lift changes so the lift for this rule is greater than one when the lift for the original rule is less than one (and vice versa).
+The chi-square value and lift can be used together. When the chi-square is high and the lift greater than one, then the resulting rule is the positive rule. When the chi-square value is high and the lift less than one, then the resulting rule is the negative rule. Using these values together makes it possible to look for both types of rules at the same time.
+Heterogeneous Associations
+All the rules so far have either been about the products or the product groups, with the same items on both the left-hand and right-hand sides. This is tradi- tional association rule analysis. Because we are building the rules ourselves, it is possible and feasible to extend the rules to include additional types of items.
+The idea is to add other features about the order, or customer, or household as items into the rules. This section discusses two ways of doing this. The first is a “hard” approach, which generates rules where the left-hand side consists of two specific types of items in specific positions. The second is a “soft” approach, where the definition of item mixes different things together, allow- ing any item anywhere in the rule. The steps for calculating the measures, such as chi-square, are the same regardless of what is in the item sets.
+Rules of the Form “State Plus Product”
+The first approach is to form rules with two different types of items on the left- hand side, such as an attribute of the order or customer followed by a product. The right-hand side is still a product. A typical rule is:
+■■ NY + productid 11197 ➪ productid 11196
+The rules generated by this method are always of the form:
+■■ state plus product ➪ product
+These types of rules require only a slight modification to the rule genera-
+tion query. In this case, the first item is the STATE column from Orders, rather
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 449 than PRODUCTID from Orderline. The following query generates the candi-
+date rules:
+  SELECT item_lhs1.orderid,
+         (item_lhs1.lhs+’, ‘+CAST(item_lhs2.lhs as VARCHAR)) as lhs,
+         item_rhs.rhs
+  INTO assoc_rules_sp2p
+  FROM (SELECT orderid FROM orderline GROUP BY orderid
+               HAVING COUNT(DISTINCT productid) > 2) filter JOIN
+       (SELECT orderid, state as lhs FROM orders ol) item_lhs1
+       ON filter.orderid = item_lhs1.orderid JOIN
+       (SELECT DISTINCT orderid, productid as lhs
+        FROM orderline ol) item_lhs2
+       ON item_lhs1.orderid = item_lhs2.orderid JOIN
+       (SELECT DISTINCT orderid, productid as rhs
+        FROM orderline ol) item_rhs
+       ON item_lhs1.orderid = item_rhs.orderid AND
+          item_lhs2.lhs <> item_rhs.rhs
+This query has a couple tweaks. The two items on the left-hand side are never the same, because one is a state and the other a product id. There is no need to eliminate duplicates by insisting that the first be alphabetically before the sec- ond. Similarly, the right-hand side cannot be equal to the state (the first item), so that condition has been removed.
+The resulting table has the same format as the earlier rule tables, so the same chi-square query can be used for choosing rules. Table 9-15 shows the top ten rules.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Table 9-15: Top Ten Rules with State and Product on Left-Hand Side RULE COUNTS
+￼￼￼RULE
+NY + 11197 ➪ 11196 NY + 11196 ➪ 11197 NY + 11076 ➪ 11090 NY + 11051 ➪ 11050 NY + 11197 ➪ 11052 NY + 11052 ➪ 11197 NY + 10970 ➪ 11086 NY + 10968 ➪ 11086 NY + 11072 ➪ 11074 NY + 11074 ➪ 11072
+LHS RHS LHSRHS
+232 499 184 248 480 184 10 10 5 16 31 11 232 436 155 211 480 155
+CHI-SQUARE
+5,415.3 5,255.3 4,757.5 4,636.7 4,372.0 4,371.6
+LIFT
+30.3
+29.4 952.5 422.5
+29.2
+29.2 865.9 865.9 109.7 108.5
+￼￼￼￼￼￼10 11 10 11 55 120 48 139
+5 4,324.3
+5 4,324.3 38 4,130.1 38 4,087.3
+￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼450 Chapter 9 ■ What’s in a Shopping Cart? Rules Mixing Different Types of Products
+Another method for adding different types of items is to expand the notion of item. By adding the state into the products, any of the following rules are possible:
+■■ product plus product ➪ product
+■■ product plus product ➪ state
+■■ product plus state ➪ product
+■■ state plus product ➪ product
+In addition, the following rules are conceivable, but not possible, because there is only one state associated with each order:
+■■ state plus state ➪ state
+■■ state plus state ➪ product
+■■ state plus product ➪ state
+■■ product plus state ➪ state
+This method would produce rules such as these if there were more than one state.
+Creating such rules is a simple matter of modifying the item subqueries to includethestateitem,usingtheUNION ALLoperator.Theonlytrickypartis handling the data types, because PRODUCTID is an integer and the state a string, so PRODUCTID needs to be cast to a character:
+         SELECT item_lhs1.orderid, item_lhs1.lhs+’, ‘+item_lhs2.lhs as lhs, rhs
+         INTO assoc_rules_spsp2p
+         FROM (SELECT orderid FROM orderline GROUP BY orderid
+                      HAVING COUNT(DISTINCT productid) > 2) filter JOIN
+              (SELECT orderid, CAST(productid as VARCHAR) as lhs
+               FROM orderline ol GROUP BY orderid, productid UNION ALL
+               SELECT orderid, state as productid FROM orders) item_lhs1
+              ON filter.orderid = item_lhs1.orderid JOIN
+              (SELECT orderid, CAST(productid as VARCHAR) as lhs
+               FROM orderline ol GROUP BY orderid, productid UNION ALL
+               SELECT orderid, state as lhs FROM orders) item_lhs2
+              ON item_lhs1.orderid = item_lhs2.orderid AND
+                 item_lhs1.lhs < item_lhs2.lhs JOIN
+              (SELECT orderid, CAST(productid as VARCHAR) as rhs
+               FROM orderline ol GROUP BY orderid, productid UNION ALL
+               SELECT orderid, state as product FROM orders) item_rhs
+              ON item_lhs1.orderid = item_rhs.orderid AND
+                 item_rhs.rhs NOT IN (item_lhs1.lhs, item_lhs2.lhs)
+The best rules have no states, so they are the same as the ones in Table 9-14.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 451 Extending Association Rules
+The association rule methods can be extended in several different ways. The most obvious extension is adding additional items on the left-hand side. Another extension is to have entirely different sets of items on the left-hand side and the right-hand side. And, perhaps the most interesting extension is the creation of sequential association rules, which look for patterns of items purchased in a particular order.
+Multi-Way Associations
+Association rule queries handle more than two items on the left-hand side. The mechanism is to continue adding in joins for every possible item, similar to the method for going from one item on the left-hand side to two items. However, as the number of items grows, the size of the intermediate table storing the candidate rules can get unmanageably large and take a long, long time to cre- ate. The way to handle this is by adding restrictions so fewer candidate rules are considered.
+TIP As the number of items in association rules gets larger, query performance can get much and much worse. Be sure to use a filter table to limit the orders you are working on.
+One obvious restriction is to consider only orders having at least as many items as are in the rule. Several examples in this chapter have used this restric- tion. A second restriction is to require a minimum support for the rule. This is used to filter out products that have less than the minimum support. A rule having a given level of support implies that each product in the rule have at least that level of support as well.
+The third restriction is to remove the largest orders, because large orders have many products, which results in very large numbers of combinations. These orders typically add very little information, because there are few of them. However, they contribute to the vast bulk of processing time.
+The following query combines these together for three-way combinations, with a minimum support of twenty and using orders with no more than ten products:
+  SELECT item_lhs1.orderid,
+         (CAST(item_lhs1.lhs as VARCHAR)+’,’+
+          CAST(item_lhs2.lhs as VARCHAR)+’,’+
+          CAST(item_lhs3.lhs as VARCHAR)) as lhs, item_rhs.rhs
+  INTO assoc_rules_ppp2p
+  FROM (SELECT orderid FROM orderline GROUP BY orderid
+        HAVING COUNT(DISTINCT productid) BETWEEN 4 AND 10) filter JOIN
+￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼452 Chapter 9 ■ What’s in a Shopping Cart?
+￼￼￼￼       (SELECT DISTINCT orderid, productid as lhs FROM orderline ol
+        WHERE productid IN
+            (SELECT productid FROM orderline GROUP BY productid
+             HAVING COUNT(DISTINCT orderid) >= 20) ) item_lhs1
+       ON filter.orderid = item_lhs1.orderid JOIN
+       (SELECT DISTINCT orderid, productid as lhs FROM orderline ol
+        WHERE productid IN
+            (SELECT productid FROM orderline GROUP BY productid
+             HAVING COUNT(DISTINCT orderid) >= 20) ) item_lhs2
+       ON item_lhs1.orderid = item_lhs2.orderid AND
+          item_lhs1.lhs < item_lhs2.lhs JOIN
+       (SELECT DISTINCT orderid, productid as lhs FROM orderline ol
+        WHERE productid IN
+            (SELECT productid FROM orderline GROUP BY productid
+             HAVING COUNT(DISTINCT orderid) >= 20) ) item_lhs3
+       ON item_lhs1.orderid = item_lhs3.orderid AND
+          item_lhs2.lhs < item_lhs3.lhs JOIN
+       (SELECT DISTINCT orderid, productid as rhs FROM orderline ol
+        WHERE productid IN
+            (SELECT productid FROM orderline GROUP BY productid
+             HAVING COUNT(DISTINCT orderid) >= 20) ) item_rhs
+       ON item_lhs1.orderid = item_rhs.orderid AND
+item_rhs.rhs NOT IN (item_lhs1.lhs, item_lhs2.lhs, item_lhs3.lhs)
+The different restrictions appear in different places. The limit on the number of products in an order is placed in the first subquery, which chooses the orders being processed. The restriction on products is placed in each of the item sub- queries. The particular limit is using only products that appear in at least 20 orders. Multi-way associations are feasible, but it is important to pay attention to query performance.
+Rules Using Attributes of Products
+So far, all the rules have been based on products or one attribute of products, the product group. Products could have different attributes assigned to them, such as:
+■■ Whether the product is being discounted in the order;
+■■ The manufacturer of the product;
+■■ The “subject” of the product, such as whether art is photography or painting, whether books are fiction or non-fiction; and,
+■■ The target of the product (kids, adults, left-handers).
+The idea is that products could have one or more categories that can be used in rules. Adjusting the SQL to handle this is not difficult. It simply requires join- ing in the table containing the categories when generating the item sets.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 453
+￼There is another problem, though. Each product probably has the same set of categories, wherever it appears. So, categories are going to co-occur with each order, simply because they describe the same product, and occurring together may simply mean that a particular product is present. This is not what we want, because we don’t want rules on categories to tell us what we already know.
+Earlier, the section on combinations discussed a particular method for find- ing products that households purchase in different orders. The same idea can be used for categories. The approach is to find categories that are in the same order, but not in the same product, in order to find the strength of affinities among categories.
+Rules with Different Left- and Right-Hand Sides
+Another variation on association rules is to include different types of items on different sides of the rule. A small example of this was having the state included as a product on the left-hand side, but not included on the right-hand side. The implementation in SQL is a simple modification to the association rule query to generate the right item set for items on the left-hand side and the right-hand side.
+Why would this be a good idea? One application is when customers are doing a variety of different things. For instance, customers may be visiting web pages and then clicking advertisements; or they may be visiting web pages and then making a purchase, or they may be receiving multiple market- ing messages through different channels and then responding. In these cases, the left-hand side of the rule could be the advertising pages exposed, the web pages visited, or the campaigns sent out. The right-hand side could be the clicks or purchases or responses. The rules then describe what combinations of actions are associated with the desired action.
+This idea has other applications as well. When customizing banner ads or catalogs for particular types of products, the question might arise: What items have customers purchased that suggest they are interested in these products? Using association rules with purchases or visits on the left-hand side and banner clicks on the right-hand side is one possible way of approaching this question.
+Such heterogeneous rules do bring up one technical issue. The question is whether to include customers that have no events on the right-hand side. Con- sider the situation where the left-hand side has pages on a web site and the right-hand side has products purchased by customers. The purpose of the rules is to find which web pages lead to the purchase of particular products. Should the data used to generate these rules include customers who have never made a purchase?
+This is an interesting question, and there is no right answer. Using only cus- tomers who make purchases reduces the size of the data (since, presumably, many people do not make purchases). Perhaps the first step in approaching
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼454 Chapter 9 ■ What’s in a Shopping Cart?
+the problem is to ask which web pages lead to any purchase at all. The second
+step is to then find the product affinity based on the web pages.
+Before and After: Sequential Associations
+Sequential associations are quite similar to simple product associations. The difference is that the rule enforces that purchases be in a particular order. So, a typical rule is:
+■■ Product 12175 implies that Product 13297 will later be purchased
+Such sequences can prove interesting, particularly when many customers have purchase histories. However, sequential rules cannot be found within a single order, because all the products within an order are purchased at the same time. Instead, sequential rules need to consider all orders of products within a household.
+The basic structure for association rules applies to sequential rules. The dif- ference is to include the condition on time when creating the candidate rules, as in the following:
+         SELECT item_lhs.householdid, item_lhs.lhs, item_rhs.rhs
+         INTO assocs_seqrules_p2p
+         FROM (SELECT householdid
+               FROM orderline ol JOIN orders o ON ol.orderid = o.orderid JOIN
+                    customer c on c.customerid = o.customerid
+               GROUP BY householdid
+               HAVING COUNT(DISTINCT productid) > 1) filter JOIN
+              (SELECT householdid, orderdate as lhsdate, productid as lhs
+               FROM orderline ol JOIN orders o ON ol.orderid = o.orderid JOIN
+                    customer c on c.customerid = o.customerid
+               GROUP BY householdid, orderdate, productid) item_lhs
+              ON filter.householdid = item_lhs.householdid JOIN
+              (SELECT householdid, orderdate as rhsdate, productid as rhs
+               FROM orderline ol JOIN orders o ON ol.orderid = o.orderid JOIN
+                    customer c on c.customerid = o.customerid
+               GROUP BY householdid, orderdate, productid) item_rhs
+              ON item_lhs.householdid = item_rhs.householdid AND
+                 item_lhs.lhsdate < item_rhs.rhsdate AND
+                 item_rhs.rhs <> item_lhs.lhs
+This query is similar to the one that generates combinations of products within a household but not within an order. The subqueries get the household id and then aggregate by the household id, product id, and order date. The date is needed to enforce the sequencing. For customers who purchase the same product at different times, candidate rules include each purchase. If this fre- quently happens, using the minimum order date for the left-hand side and the maximum for the right-hand side also works.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 9 ■ What’s in a Shopping Cart? 455
+￼Table 9-16 shows the resulting sequential association rules. These are bliss- fully interesting, because they are intuitively obvious. Nine of the ten top rules (by the chi-square measure) are for calendars. That is, customers who purchase calendars at one point in time are likely to purchase calendars later in time, probably about a year later.
+Table 9-16: Top Ten Sequential Association Rules
+￼RULE
+12175 ➪ 13297 12176 ➪ 13298 12014 ➪ 12175 12015 ➪ 12176 10003 ➪ 12014 10863 ➪ 12015 10862 ➪ 10863 10002 ➪ 10003 12014 ➪ 13297 12488 ➪ 13628
+PRODUCT GROUPS
+CALENDAR ➪ CALENDAR CALENDAR ➪ CALENDAR CALENDAR ➪ CALENDAR CALENDAR ➪ CALENDAR CALENDAR ➪ CALENDAR CALENDAR ➪ CALENDAR CALENDAR ➪ CALENDAR CALENDAR ➪ CALENDAR CALENDAR ➪ CALENDAR BOOK ➪ BOOK
+SUPPORT LIFT
+0.54% 126.3 1.62% 41.4 0.52% 126.4 1.76% 34.8 0.36% 146.6 1.47% 34.8 1.22% 41.0 0.28% 163.0 0.45% 88.8 0.30% 127.9
+CHI-SQUARE
+12,721.7 12,391.3 12,096.9 11,262.5
+9,785.0 9,385.7 9,125.2 8,440.8 7,311.9 6,991.3
+￼￼￼￼￼￼￼￼￼￼Lessons Learned
+￼This chapter looks at what customers purchase, rather than when or how they purchase. The contents of market baskets can be very interesting, providing information about both customers and products.
+The chapter starts with exploratory analysis of products in purchases. A good way to look at products is by using scatter plots and bubble charts to visualize relationships. There is a useful Excel trick that makes it possible to see products along the X- and Y-axes for bubble charts and scatter plots.
+Investigating products includes finding the products associated with the best customers, and finding the ones associated with the worst customers (those who only make one purchase). It is also interesting to explore other facets of products, such as the number of times a product changes price, the number of units in each order, the number of times products are repeated within an order, and how often customers purchase the same product again.
+Simple association rules specify that when a customer purchases one product (the left-hand side), then the customer is likely to purchase another product (the
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼456 Chapter 9 ■ What’s in a Shopping Cart?
+￼right-hand side) in the same order. The traditional way of measuring the good- ness of these rules is with support, confidence, and lift. Support measures the proportion of orders where the rule is true. Confidence measures how confi- dent the rule is when it applies. And lift specifies how much better the rule works rather than just guessing.
+A better measure for association rules, however, is based on the chi-square value discussed in Chapter 3. This gives an indication of how likely it is that the rule is based on something significant, as opposed to random chance.
+Association rules are very powerful and extensible. Using SQL, the simple one-way associations can be extended to two-ways and beyond. Non-product items, such as the state where the customer resides and other customer attrib- utes, can be incorporated into the rules. With a relatively simple modification, the same mechanism can generate sequential rules, where products occur in a specific order.
+With association rules we have dived into the finest details of customer interactions. The next chapter moves back to the customer level, by using SQL to build basic models on customers.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

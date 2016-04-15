@@ -1,0 +1,1262 @@
+CHAPTER
+10
+Data Mining Models in SQL
+Data mining is the process of finding meaningful patterns in large quantities of data. Traditionally, the subject is introduced through statistics and statistical modeling. This chapter takes an alternative approach that introduces data mining concepts using databases. This perspective presents the important con- cepts, sidestepping the rigor of theoretical statistics to focus instead on the most important practical aspect: data.
+The next two chapters extend the discussion begun in this chapter. Chapter 11 explains linear regression, a more traditional starting point for modeling, from the perspective of data mining. The final chapter focuses on data preparation. Whether the modeling techniques are within a database or in another tool, data preparation is often the most challenging part of a data mining endeavor.
+Although earlier chapters have already shown the powerful techniques that are possible using SQL, snobs may feel that data mining is more advanced than mere querying of databases. Such a sentiment downplays the importance of data manipulation, which lies at the heart of even the most advanced tech- niques. Some powerful techniques adapt well to databases, and learning how they work — both in terms of their application to business problems and their implementation on real data — provides a good foundation for understanding modeling. Some techniques do not adapt as well to databases, so they require more specialized software. However, the fundamental ideas on using models and evaluating the results remain the same regardless of the sophistication of the modeling technique.
+457
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼458 Chapter 10 ■ Data Mining Models in SQL
+￼￼Earlier chapters contain examples of models, without describing them as such. The RFM methodology introduced in Chapter 8 assigns an RFM bin to each customer; the estimated response rate of the RFM bin is a model score that estimates response. The expected remaining lifetime from a survival model is a model score. Even the expected value from the chi-square test is an example of a model score, produced by a basic statistics formula. What these have in common is that they all find patterns in data that can be applied back to the original data or to new data, producing a meaningful result.
+The first type of model in this chapter is the look-alike model, which takes an example — typically of something particularly good or bad — and finds other rows that are similar to the example. Look-alike models use a definition of sim- ilarity. Nearest neighbor techniques are an extension of look-alike models that estimate a value by combining information from neighbors where the value is already known.
+The next type of model in the chapter is the lookup model, which summa- rizes data along various dimensions to create a lookup table. These models are quite powerful and fit naturally in any discussion of data mining and data- bases. However, they are limited to at most a few dimensions. Lookup models lead to naïve Bayesian models, a powerful technique that combines informa- tion along any number of dimensions, using some interesting ideas from the area of probability.
+Before talking about these techniques, the chapter introduces important data mining concepts and the processes of building and using models. There is an interesting analogy between these processes and SQL. Building models is analogous to aggregation, because both are about bringing data together to identify patterns. Scoring models is like joining tables — applying the patterns to new rows of data.
+Introduction to Directed Data Mining
+Directed data mining is the most common type of data mining. “Directed” means that target values are known in the historical data, so the data mining techniques have examples to learn from. Directed data mining makes the assumption that the patterns in historical data are applicable in the future.
+Another type of data mining is undirected data mining, which uses sophis- ticated techniques to find groups in the data seemingly unrelated to each other. Undirected data mining does not have a target, so the groups may or may not be meaningful. Association rules are one example of undirected data mining. Other undirected techniques are typically more specialized, so this chapter and the next two focus on directed techniques.
+TIP Thepurposeofadirectedmodelmaybetoapplymodelscorestonewdata or to gain better understanding of customers and what’s happening in the data.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 459
+￼￼Directed Models
+A directed model finds patterns in historical data using examples where the answer is known. The process of finding the patterns is called training or build- ing the model. The most common way to use the model is by scoring data to append a model score.
+Sometimes, understanding gleaned from a model is more important than the model scores. The models discussed in this book lend themselves to under- standing, so they can contribute to exploratory data analysis as well as directed modeling. Other types of models, such as neural networks, are so complicated that they cannot explain how they arrive at their results. Such “black-box” models might do a good job of estimating values, but people cannot peek in and understand how they work or use them to learn about the data.
+TIP If it is important to know how a model is working (which variables it is choosing, which variables are more important, and so on), then use a technique that produces understandable models. The techniques discussed in this book fall in this category.
+The models themselves take the form of formulas and auxiliary tables that can be used to generate scores. The process of training the model generates the information needed for scoring. This section explains important facets of mod- eling, in the areas of data and evaluation.
+As a note, the word “model” has another sense in databases. As discussed in Chapter 1, a data model describes the contents of a database, the way that the data is structured. A data mining model, on the other hand, is a process that analyzes data and produces useful information about the business. Both types of model are about patterns, one about the structure of the database and the other about patterns in the content of the data.
+The Data in Modeling
+Data is central to the data mining process. Data is used to build models. Data is used to assess models, and data is used for scoring models. This section dis- cusses the different uses of data in modeling.
+Model Set
+The model set, which is sometimes also called the training set, consists of histor- ical data with known outcomes. It has the form of a table, with rows for each example. Typically, each row is the granularity of what is being modeled, such as a customer.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼460 Chapter 10 ■ Data Mining Models in SQL
+￼￼The target is what we are looking for; this is typically a value in a column. The target is known for all the rows in the model set. Most of the remaining columns consist of input columns. Figure 10-1 illustrates data in a possible model set.
+This column is an id field that identifies the rows.
+These columns are input columns.
+This column is the target, what we want to predict.
+These rows have invalid customer ids, so they are ignored.
+￼￼￼￼￼2610000101
+010377
+14
+A
+19.1
+4 Spring . ..
+TRUE
+2610000102
+103188
+7
+A
+19.1
+NULL
+TRUE
+2610000105
+041598
+1
+B
+21.2
+71 W. 19 St.
+FALSE
+2610000171
+040296
+1
+S
+38.3
+3562 Oak. . .
+FALSE
+2610000182
+051990
+22
+C
+56.1
+9672 W. 142
+FALSE
+2610000183
+111191
+45
+C
+56.1
+NULL
+TRUE
+2620000107
+080891
+6
+A
+19.1
+P.O. Box 11
+FALSE
+2620000108
+120398
+3
+D
+10.0
+560 Robson
+TRUE
+2620000220
+022797
+2
+S
+38.3
+222 E. 11th
+FALSE
+2620000221
+021797
+3
+A
+19.1
+10122 SW 9
+FALSE
+2620000230
+060899
+1
+S
+38.3
+NULL
+TRUE
+2620000231
+062099
+10
+S
+38.3
+RR 1729
+TRUE
+2620000300
+032894
+7
+B
+21.2
+1920 S. 14th
+FALSE
+￼The data types in some columns are
+not suitable for the modeling techniques discussed in this chapter.
+Figure 10-1: A model set consists of records with data where the outcome is already known. The process of training a model assigns a score or educated guess, estimating the target.
+The goal of modeling is to intelligently and automatically “guess” the values in the target column using the values in the input columns. The specific tech- niques used for this depend on the nature of the data in the input and target columns, and the data mining algorithm. From the perspective of modeling, each column contains values that are one of a handful of types.
+Binary columns (also called flags) contain one of two values. These typically describe specific aspects about a customer or a product. For instance, the sub- scription data consists of customers who are active (on the cutoff date) or stopped. This would lend itself naturally to a binary column.
+Category columns contain one of multiple, known values. The subscrip- tion data, for instance, has several examples, including market, channel, and rate plan.
+Numeric columns contain numbers, such as dollar amounts or tenures. Tra- ditional statistical techniques work best on such columns.
+Date-time columns contain dates and times stamps. These are often the most challenging type of data to work with. They are often converted to tenures and durations for data mining purposes.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 461
+￼￼Text columns (and other complex data types) contain important informa- tion. However, these are not used directly in the process of modeling. Instead, features of one of the other types are extracted, such as extracting the zip code from an address column.
+Most of the techniques discussed in this chapter can handle missing values (represented as NULL). However, not all statistical and data mining techniques are able to handle missing values.
+Score Set
+After a model is built, it can be applied to a score set, which has the same input columns as the model set, but does not necessarily have the target column. When the model is applied to the score set, the model processes the inputs to calculate the value of the target column, using formulas and auxiliary tables.
+If the score set also has a target column, it is possible to determine how well the model is performing. So, the model set itself can be used as a score set. However, models almost always perform better on the data used to build them than on unseen data.
+WARNING A model almost always works best on the model set. Do not expect the performance on this data to match performance on other data.
+Prediction Model Sets versus Profiling Model Sets
+One very important distinction in data mining is the difference between pro- filing and prediction. This is a subtle concept, because the process of building models is the same for the two. The difference is in the data.
+Each column describing a customer has a time frame associated with it, which is the “as-of” date when the data becomes known. For some columns, such as market and channel in the subscription data, the “as-of” date is when the customer starts. For other columns, such as the stop date and stop type columns, the “as-of” date is when the customer stops. For other data, such as the total amount spent, the “as-of” date may be some cutoff date. Unfortu- nately, the “as-of” date is not stored in the database, although it can usually be imputed from knowledge about how data is loaded into the database.
+In a profiling model set, the input and target columns come from the same time period. That is, the target has an as-of date similar to some of the inputs. For a prediction model set, the input columns have an as-of date earlier than the target. The input columns are a “before” view of the customer and the tar- get is the “after” view.
+The upper part of Figure 10-2 shows a model set for prediction, because the inputs come from an earlier time period than the target. The target might con- sist of customers who stopped during July or who purchased a particular
+￼www.it-ebooks.info
+￼462 Chapter 10 ■ Data Mining Models in SQL
+product in July. The lower part of the chart shows a model set for profiling, because the inputs and target all come from the same time period. The cus- tomers stopped during the same time period that the data comes from.
+jan feb mar apr may jun july aug
+TAR GET
+Model Set for Profiling: Target comes from same time frame as input columns
+Figure 10-2: In a model set used for prediction, the target column represents data from a time frame strictly after the input columns. For a model set used for profiling, the target comes from the same time frame.
+Building a model set for profiling, rather than for prediction, is usually eas- ier because profiling does not care about the as-of date. However, because of the “before” and “after” structure of the data, models built on prediction model sets do a better job of finding patterns related to actual causes rather than spurious correlations. One easy way to make prediction models is to limit the input columns to what is known when customers start, although such inputs are not as descriptive as customer behavior variables that use informa- tion after customers start.
+To illustrate the distinction between profiling and prediction, consider the case of a bank that was building a model to estimate the probability of cus- tomers responding to an offer to open an investment account. The bank sum- marized customers in a table with various input columns describing the banking relationship — the balances in accounts of different types, dates when the accounts were opened, and so on. The bank also had a target column spec- ifying which customers had an investment account.
+The data contains at least one very strong pattern regarding investment accounts. Customers with investment accounts almost always have low sav- ings account balances. On reflection, this is not so surprising. Such customers usually prefer to put their money in the higher yielding accounts. However, the reverse is not true. Targeting customers with low savings account balances to open investment accounts is a bad idea. Most such customers have few financial resources.
+INPUT COLUMNS
+Model Set for Prediction: Target comes from after the input columns
+INPUT COLUMNS and TARGET
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 463
+￼￼The problem is that the values in the input columns came from the same period of time as the target, so the model was a profiling model. It would have been better to take a snapshot of the customers before they opened an invest- ment account, and to use this snapshot for the input columns. The target would then be customers who opened an investment account after the cutoff date. The better approach uses a prediction model set, rather than a profiling model set.
+Examples of Modeling Tasks
+This section discusses several types of tasks that models might be used for.
+Similarity Models
+Sometimes, the problem is to find more instances similar to a given target instance. In this case, an entire row is the target, and the score represents the similarity between any given row and the target instance.
+The target may be a made up ideal, or it might be an actual example. For instance, the highest penetration zip code for the purchase data is 10007, a wealthy zip code in Manhattan. A similarity model might use census demo- graphics to find similar zip codes from the perspective of the census data. The assumption is that what works in one wealthy zip code might work well in another, so marketing efforts can be focused on similar areas.
+Yes-or-No Models (Binary Response Classification)
+Perhaps the most common type of modeling situation is assigning a “yes” or “no.” The historical data contains both “yes” and “no” examples. This might be used to determine:
+■■ Who is likely to respond to a particular marketing promotion;
+■■ Who is likely to leave in the next three months;
+■■ Who is likely to purchase a particular product;
+■■ Whoislikelytogobankruptinthenextyear;or,
+■■ Which transactions are likely to be fraud.
+Each of these scenarios involves placing customers into one of two categories.
+Such a model can be used for:
+■■ Saving money by contacting customers likely to respond to an offer;
+■■ Saving customers by offering an incentive to those likely to stop;
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼464 Chapter 10 ■ Data Mining Models in SQL
+■■ Optimizing campaigns by sending marketing messages to those likely
+to purchase a particular product;
+■■ Reducing risk by lowering the credit limit for those likely to go bank- rupt; or,
+■■ Reducing loses by investigating transactions likely to be fraud.
+Yes-or-no models are also called binary response models, because they are often used for determining the customers who are more likely to respond to a par- ticular campaign.
+Yes-or-No Models with Propensity Scores
+A very useful variation on yes-or-no models assigns a propensity to each cus- tomer, rather than a specific classification. Everyone gets a “yes” score that varies, say, from zero (definitely “no”) to one (definitely “yes”). One reason why a propensity score is more useful is that any particular number of cus- tomers can be chosen for a campaign, by adjusting the threshold value. Values on one side of the threshold are “no” and values on the other side are “yes.” The model can choose the top one percent, or the top forty percent, by choos- ing an appropriate threshold.
+Often, the propensity score is actually a probability estimate. This is even more useful, because the probability can be combined with financial informa- tion to calculate an expected dollar amount. With such information, a cam- paign can be optimized to achieve particular financial and business results.
+Consider a company that is sending customers an offer in the mail for a new product. From previous experience, the company knows that the product should generate an additional $200 in revenue during the first year. Each item of direct mail costs $1 to print, mail out, and process. How can the company use modeling to optimize its business?
+Let’s assume that the company wants to invest in expanding its customer relationships, but not lose money during the first year. The campaign then needs to meet the following conditions:
+■■ Every customer contacted costs $1.
+■■ Everycustomerwhorespondsisworth$200duringthefirstyear.
+■■ Thecompanywantstobreakevenduringthefirstyear.
+One responsive customer generates an excess of $199 in the first year, which is enough money to contact an additional 199 customers. So, if one out of two hundred customers (0.5%) respond, the campaign breaks even. To do this, the company looks at previous, similar campaigns and builds a model estimating
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 465 the probability of response. The goal is to contact the customers whose
+expected response exceeds the break-even point of 0.5%.
+Multiple Categories
+Sometimes, two categories (“yes” and “no”) are not enough. For instance, con- sider the next offer to make to each customer. Should this offer be in books or apparel or calendars or something else?
+When there are a handful of categories, building a separate propensity model for each category is a good way to handle this. For each customer, the product with the highest propensity among the models can then be assigned as the one with the highest affinity. Another approach is to multiply the propensity probabilities by the value of the product, and choose the product that has the highest expected value.
+When there are many values in the category, association rules are probably a better place to start. Some of the most interesting information may be the products that are purchased together.
+Estimating Numeric Values
+The final category is the traditional statistical problem of estimating numeric values. This might be a number at an aggregated level, such as the penetration within a particular area. Another example is the expected value of a customer over the next year. And yet another is tenure related, such as the number of days we expect a customer to be active over the next year.
+There are many different methods to estimate real values, including regres- sion and survival analysis.
+Model Evaluation
+Model evaluation is the process of measuring how well a model works. The best way to do this is to compare the results of the model to actual results. How this comparison is made depends on the type of model. Later in this chapter, we will see three different methods, one for models that predict categories, one for models that estimate numbers, and one for yes-or-no models.
+When evaluating models, the choice of data used for the evaluation is very important. Models almost always perform better on the model set, the data used to build the model in the first place. So, it is misleading to assume that per- formance on the model set generalizes to other data. It is better to use a hold- out sample, called a test set, for model evaluation. For models built on prediction model sets, the best test set is an out-of-time sample; that is, data that is a bit more recent than the model set. However, such an out-of-time sample is often not available.
+￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼466 Chapter 10 ■ Data Mining Models in SQL
+TIP Evaluatingmodelsonthedatausedtobuildthemodelischeating.Usea
+hold-out sample for evaluation purposes.
+Look-Alike Models
+The first modeling technique is look-alike models, which are used to measure similarity to known good or bad instances.
+What Is the Model?
+The look-alike model produces a similarity score. The model itself is a formula that describes the similarity, and this formula can be applied to new data. Typ- ically, the purpose of a look-alike model is to choose some groups of customers or zip codes for further analysis or for a marketing effort.
+The similarity measure cannot really be validated quantitatively. However, we can qualitatively evaluate the model by seeing if the rankings look reasonable.
+What Is the Best Zip Code?
+This example starts with the question: Which zip codes have the highest penetra- tion of orders and what are some of their demographic characteristics? For practical purposes, the zip codes are limited to those with one thousand or more house- holds. The following query answers this question:
+         SELECT TOP 10 o.zipcode, zco.state, zco.poname,
+                COUNT(DISTINCT householdid) / MAX(zc.hh*1.0) as penetration,
+                MAX(zc.hh) as hh, MAX(hhmedincome) as hhmedincome,
+                MAX(popedubach + popedumast + popeduprofdoct) as collegep
+         FROM orders o JOIN customer c ON o.customerid = c.customerid JOIN
+              zipcensus zc ON o.zipcode = zc.zipcode JOIN
+              zipcounty zco ON zc.zipcode = zco.zipcode
+         WHERE zc.hh >= 1000
+         GROUP BY o.zipcode, zco.state, zco.poname
+         ORDER BY 4 DESC
+Penetration is defined at the household level, by counting distinct values of HOUSEHOLDID within a zip code. The proportion of college graduates is the sum of three of the education variables.
+The top ten zip codes by penetration are all well-educated and wealthy (see Table 10-1). Which zip codes are similar to the zip code with the highest penetration? This question suggests a look-alike model.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 467 Table 10-1: Ten Zip Codes with Highest Penetration
+￼￼￼￼￼￼￼ZIP PO NAME CODE AND STATE
+10007 New York, NY 10504 Armonk, NY
+10514 Chappaqua, NY 07078 Short Hills, NJ 10576 Pound Ridge, NY 10018 New York, NY 10510 Briarcliff Manor, NY 07043 Montclair, NJ 10538 Larchmont, NY 90067 Los Angeles, CA
+PENE- HOUSE- TRATION HOLDS
+5.9% 1,283 5.2% 2,315 5.1% 3,820 5.0% 4,279 4.9% 1,648 4.9% 2,205 4.9% 3,227 4.8% 4,255 4.7% 6,375 4.7% 1,553
+HOUSEHOLD MEDIAN INCOME
+$112,947 $130,789 $173,368 $185,466 $152,863
+$48,705 $131,402 $115,498 $111,492
+$74,830
+COLLEGE %
+56.9% 60.7% 79.4% 79.2% 70.5% 51.3% 70.8% 73.6% 71.0% 46.4%
+￼￼￼￼￼￼￼￼￼￼￼The first decision with a look-alike model is to decide on the dimensions used for the comparison. For the statistically inclined, one interesting method might be to use something called principal components. However, using the raw data has an advantage, because the distance can be understood by humans.
+Instead, the approach described in this section uses only two attributes of the zip codes, the median household income and the proportion of the popu- lation with a college education. The limit to two is for didactic reasons. Two dimensions can be plotted on a scatter plot. In practice, using more attributes is a good idea.
+Figure 10-3 shows a scatter plot of the almost ten thousand largish zip codes that have orders. There are three symbols on the scatter plot. The diamonds are the zip codes with the highest number of orders, the squares are in the middle, and the triangles have the fewest orders. This scatter plot confirms that the highest penetration zip codes also have high median household incomes and are well educated.
+Alas, this scatter plot is potentially misleading, because the three groups seem to differ in size. Many of the zip codes are in the big blob on the lower left-hand side of the chart — median income between $20,000 and $70,000 and college proportion between 20% and 50%. The three groups overlap signifi- cantly in this region. Because Excel draws one series at a time, a later series may hide the points on an earlier series, even when the symbols are hollow. The order of the series can affect the look of the chart. To change the order, select any of the series, right-click, and bring up the “Format Data Series” dia- log box. The order can be changed under the “Series Order Tab.”
+www.it-ebooks.info
+￼468 Chapter 10 ■ Data Mining Models in SQL
+100% 90% 80% 70% 60% 50% 40%
+HIGH PENETRATION
+College Percent
+30% MEDIUM PENETRATION
+20% 10% 0%
+LOW PENETRATION
+$0K $20K $40K $60K $80K $100K $120K $140K $160K $180K $200K Median Household Income
+Figure 10-3: This scatter plot shows that the zip codes with the highest penetration do seem to have a higher median household income and higher education levels.
+WARNING When plotting multiple series on a scatter plot, one series may overlap another, hiding some or many points. Use the “Series Order” option to rearrange the series and see the hidden points. Of course, changing the order may cause other points to be hidden.
+A Basic Look-Alike Model
+Zip code 10007 has the highest penetration and the following characteristics:
+■■ Median household income is $112,947; and,
+■■ College rate is 56.7%.
+The first attempt at a look-alike model simply calculates the distance from
+each zip code to these values using the Euclidean distance formula:
+  SQRT(SQUARE(hhmedincome – 112947)+SQUARE(collegep - 0.567))
+This formula is the model. And, this model can be used to assign a similarity measure to all zip codes, as in the following query:
+  SELECT TOP 10 oz.*,
+         SQRT(SQUARE(hhmedincome - 112947.)+
+              SQUARE(collegep - 0.5689)) as dist
+  FROM (SELECT o.zipcode, MAX(hhmedincome) as hhmedincome,
+               MAX(popedubach + popedumast + popeduprofdoct) as collegep
+        FROM orders o JOIN customer c ON o.customerid = c.customerid JOIN
+             zipcensus zc ON o.zipcode = zc.zipcode
+        WHERE zc.hh >= 1000
+        GROUP BY o.zipcode) oz
+  ORDER BY 1 ASC
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 469
+￼￼This query hardwires the values for zip code 10007 directly into the SELECT statement.
+Table 10-2 shows the ten closest zip codes by this measure. The median income for all these is right on the money, being very close to the value for 10007. On the other hand, the education levels vary rather widely. This is because the median income is measured in units of dollars with values going into the hundreds of thousands. The proportion college educated is always less than one. The median household income dominates the calculation.
+Table 10-2: Ten Zip Codes Most Similar to 10007 (First Similarity Measure)
+￼￼￼￼￼DISTANCE
+ZIP PENE- HOUSE- CODE TRATION HOLDS
+HOUSEHOLD MEDIAN INCOME
+$112,947 $112,976 $112,998 $112,809 $113,212 $112,572 $113,526 $112,300 $113,639 $113,788
+COLLEGE %
+56.9% 61.7% 52.5% 59.0% 62.8% 55.5% 64.2% 56.5% 55.6% 77.4%
+0.0 10007 5.9% 1,283 29.0 06490 2.1% 1,597 51.0 92679 0.1% 9,966
+138.0 48374 0.1% 3,576 265.0 01921 0.2% 2,560 375.0 90210 1.8% 8,690 579.0 21029 0.2% 2,323 647.0 46814 0.2% 2,512 692.0 08836 1.0% 1,348 841.0 20817 1.3% 13,252
+￼￼￼￼￼￼￼￼￼￼There are several ways to fix this. One way is to normalize values by sub- tracting the minimum from each value and dividing by the range (the differ- ence between the maximum and the minimum). A better approach borrows an idea from Chapter 3.
+Look-Alike Using Z-Scores
+Z-scores replace numeric values that have wildly different ranges with values on the same scale. The z-score is the number of standard deviations that a value differs from the average value.
+The following query calculates the standard deviation and average value for the household median income and the proportion of college graduates:
+SELECT AVG(hhmedincome) as avghhmedinc, STDEV(hhmedincome) as stdhhmedinc, AVG(collegep) as avgcollegep, STDEV(collegep) as stdcollegep
+￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼470 Chapter 10 ■ Data Mining Models in SQL
+￼￼￼￼￼  FROM (SELECT o.zipcode, MAX(hhmedincome) as hhmedincome,
+               MAX(popedubach + popedumast + popeduprofdoct) as collegep
+        FROM orders o JOIN customer c ON o.customerid = c.customerid JOIN
+             zipcensus zc ON o.zipcode = zc.zipcode
+        WHERE zc.hh >= 1000
+        GROUP BY o.zipcode) oz
+Because the model is restricted to zip codes that have at least one thousand households, the z-scores are restricted to this group of zip codes, resulting in the following values:
+■■ HH median income: average is $48,672; standard deviation is $19,273.
+■■ Proportion College Grads: average is 27.8%; standard deviation is 15.6%.
+A scatter plot using the z-scores instead of the original values would look almost exactly the same as the scatter plot already seen in Figure 10-3; the only difference is that the X- and Y-axes would have different scales on them. Instead of going from $0 to $200,000, the range for median household income would go from about –3 to +8. For the proportion of college graduates, the z-scores would go from about –1.8 to 4.7, rather than from 0% to 100%.
+In order to apply the z-score to a look-alike model, the comparison values need to be transformed into z-score values as well as the values in the score set. Figure 10-4 shows the dataflow diagram for this processing. The following query uses this same logic to calculate the similarity score:
+SELECT SQRT(POWER((hhmedincome-hhmedincome10007)/stdhhmedincome, 2) + POWER((collegep-collegep10007)/stdcollegep, 2)) as dist, oz.*
+  FROM (SELECT o.zipcode, MAX(hhmedincome) as hhmedincome,
+               MAX(popedubach + popedumast + popeduprofdoct) as collegep
+        FROM orders o JOIN customer c ON o.customerid = c.customerid JOIN
+             zipcensus zc ON o.zipcode = zc.zipcode
+        WHERE zc.hh >= 1000
+        GROUP BY o.zipcode) oz CROSS JOIN
+       (SELECT AVG(hhmedincome) as avghhmedincome,
+STDEV(hhmedincome) as stdhhmedincome,
+AVG(popedubach + popedumast + popeduprofdoct) as avgcollegep,
+               STDEV(popedubach + popedumast + popeduprofdoct
+                    ) as stdcollegep,
+               MAX(CASE WHEN o.zipcode = ‘10007’ THEN hhmedincome END
+                  ) as hhmedincome10007,
+               MAX(CASE WHEN o.zipcode = ‘10007’
+                        THEN popedubach + popedumast + popeduprofdoct
+                   END) as collegep10007
+        FROM (SELECT DISTINCT zipcode
+              FROM orders o JOIN customer c
+              ON o.customerid = c.customerid) o JOIN
+             zipcensus zc ON o.zipcode = zc.zipcode
+        WHERE zc.hh >= 1000) vals
+  ORDER BY 1 ASC
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼READ zipcensus
+READ
+orders
+READ
+customer
+FILTER
+hh >= 1000
+JOIN on zipcode
+AGGREGATE group by zipcode
+penetration = COUNT(DISTINCT householdid) / MAX(zc.hh*1.0) hh = MAX(zc.hh as hh
+hhmedincome = MAX(hhmedincome)
+collegep = MAX(popedubach + popedumast + popeduprofdoct)
+AGGREGATE
+READ zipcensus
+READ
+orders
+READ
+customer
+FILTER
+hh >= 1000
+JOIN
+on customerid
+END) as collegep10007
+JOIN on zipcode
+AGGREGATE group by zipcode
+minorderidd = MIN(orderid)
+JOIN
+on customerid
+Chapter 10 ■ Data Mining Models in SQL 471 oz
+avghhmedincome = AVG(hhmedincome),
+stdhhmedincome = STDEV(hhmedincome)
+avgcollegep = AVG(popedubach+popedumast+popeduprofdoct),
+stdcollegep = STDEV(popedubach+popedumast+popeduprofdoct) hhmedincome10007 = MAX(CASE WHEN o.zipcode = ‘10007’ THEN hhmedincome
+END) as hhmedincome10007,
+collegep10007 = MAX(CASE WHEN o.zipcode = ‘10007’
+THEN popedubach+popedumast+popeduprofdoct
+CROSSJOIN
+APPEND
+dist = SQRT(((hhmedincome – hhmedincome10007)/ stdhhmedincome)^2)+
+((collegep – collegep10007)/stdcollegep)^2))
+OUTPUT
+Figure 10-4: This dataflow calculation scores a look-alike model using z-scores rather than the original values.
+There are several things to point out about this query. First, the subqueries, Oz and Vals, use a very similar set of joins to ensure that the z-score calculation uses the same set of rows for both the target instance and the score set. The dif- ference between the two queries arises because zip codes can have multiple orders, so the join between Orders and Zipcensus results in duplicate zip codes. These duplicates do not affect Oz, because duplicates do not affect the value of the MAX() function.
+On the other hand, Vals uses AVG() and STDEV(), which duplicates do affect. Vals only needs the zip codes that have orders. For this purpose, it uses the DISTINCT keyword in the innermost subquery to remove duplicate zip codes.
+www.it-ebooks.info
+vals
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼472 Chapter 10 ■ Data Mining Models in SQL
+TIP When calculating summary statistics on tables connected by complex sets
+of joins, be sure that none of the joins inadvertently change the number of rows.
+The second subquery calculates the statistics for all zip codes. It also calculates the values for 10007, using a trick: the CASE statement converts all the values in non-10007 zip codes values to NULL, so the maximum returns the value for 10007.
+The outermost SELECT calculates the difference of two z-scores, using the fact that the following two operations are equivalent:
+■■ Takingthedifferenceoftwoz-scores.
+■■ Takingthedifferenceoftwovaluesandconvertingthedifferencetoaz-
+score, using the average and standard deviation of the original values.
+The query uses the second approach, because it results in a simpler expression. By the way, window functions can be used instead of analytic functions, as
+in the following version:
+         SELECT TOP 10
+                SQRT(SQUARE((hhmedincome-hhmedincome10007)/stdhhmedinc) +
+                     SQUARE((collegep-collegep10007)/stdcollegep)) as dist, oz.*
+         FROM (SELECT oz.*,
+                      STDEV(hhmedincome) OVER () as stdhhmedinc,
+                      STDEV(collegep) OVER () as stdcollegep,
+                      MAX(CASE WHEN zipcode = ‘10007’ THEN hhmedincome END) OVER
+                         () as hhmedincome10007,
+                      MAX(CASE WHEN zipcode = ‘10007’ THEN collegep END) OVER
+                         () as collegep10007
+               FROM (SELECT o.zipcode,
+COUNT(DISTINCT householdid)/MAX(zc.hh*1.0) as penetrat, MAX(zc.hh) as hh,
+MAX(hhmedincome) as hhmedincome, MAX(popedubach+popedumast+popeduprofdoct) as collegep
+                     FROM orders o JOIN customer c
+                          ON o.customerid = c.customerid JOIN
+                          zipcensus zc ON o.zipcode = zc.zipcode
+                     WHERE zc.hh >= 1000
+                     GROUP BY o.zipcode) oz
+              ) oz
+         ORDER BY 1 ASC
+This version of the query is simpler is several respects. First, COLLEGEP is cal- culated only once, eliminating problems caused by code duplication. Second, the average and standard deviations needed for the z-scores are calculated after the aggregation by zip code, so there are no duplicates. Using the win- dow functions also ensures that the same rows are used for all calculations. Notice that the window functions have an empty OVER clause, which means to do the calculation over all rows. An equivalent formulation would be OVER (PARTITION BY NULL).
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 473
+￼￼￼TIP Whencalculatingstatisticsonasetofrows(suchastheaverageand standard deviation for calculating z-scores), the window functions have an advantage because they reduce the amount of duplicated code in the query.
+Table 10-3 shows the ten closest zip codes. All the zip codes in this table have similar median incomes and proportions of college graduates. The college pro- portion now varies from 55.5% to 59.1%, rather than from 52.5% to 77.4%. The household median incomes still cluster around the value for 10007.
+Table 10-3: Ten Zip Codes Most Similar to 10007 (Z-Score Measure)
+￼￼￼￼￼￼DISTANCE
+PENE- HOUSE- ZIP TRATION HOLDS
+HOUSEHOLD MEDIAN INCOME
+$112,947 $112,300 $113,639 $112,572 $114,985 $112,809 $109,771 $110,470 $116,658 $109,542
+COLLEGE %
+56.9% 56.5% 55.6% 55.5% 55.7% 59.0% 58.1% 59.1% 57.7% 58.5%
+0.000 10007 5.9% 1,283 0.042 46814 0.2% 2,512 0.089 08836 1.0% 1,348 0.094 90210 1.8% 8,690 0.131 07733 1.7% 4,832 0.133 48374 0.1% 3,576 0.181 94526 0.3% 12,116 0.191 60010 0.4% 14,102 0.199 92861 0.1% 1,925 0.204 10536 2.8% 3,441
+￼￼￼￼￼￼￼￼￼￼The look-alike model now finds the zip codes that look like 10007 along both these dimensions, so the results are much more reasonable. However, the pen- etrations for similar zip codes vary from 0.1% to 2.8%. All these values are on the high side for household penetration. However, the wide range suggests that look-alike zip codes may not be similar in terms of penetration. On the other hand, perhaps the look-alike zip codes should be similar, and these other zip codes represent lost opportunity.
+Example of Nearest Neighbor Model
+Nearest neighbor models are a variation on look-alike models. They use the measure of similarity to define a neighborhood of similar cases, and then sum- marize the cases to assign an estimated value.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼474 Chapter 10 ■ Data Mining Models in SQL
+As an example, the following query estimates the penetration for zip code
+10007, using the similarity measure by median income and college proportion:
+         SELECT AVG(pen) as estpenetration
+         FROM (SELECT TOP 5
+                      SQRT(SQUARE((collegep - collegep10007)/stdcollp) +
+                           SQUARE((hhmi - hhmi10007)/stdhhmi)) as dist, oz.*
+               FROM (SELECT oz.*, AVG(hhmi) OVER () as avghhmi,
+                            STDEV(hhmi) OVER () as stdhhmi,
+                            AVG(collegep) OVER () as avgcollegep,
+                            STDEV(collegep) OVER () as stdcollp,
+                            MAX(CASE WHEN zipcode = ‘10007’ THEN hhmi END
+                               ) OVER () as hhmi10007,
+                            MAX(CASE WHEN zipcode = ‘10007’ THEN collegep END
+                               ) OVER () as collegep10007
+                     FROM (SELECT o.zipcode, MAX(hhmedincome) as hhmi,
+                                  MAX(popedubach + popedumast + popeduprofdoct
+                                     ) as collegep,
+                                  COUNT(DISTINCT householdid)/MAX(hh*1.0) as pen
+                           FROM orders o JOIN customer c
+                                ON o.customerid = c.customerid JOIN
+                                zipcensus zc ON o.zipcode = zc.zipcode
+                           WHERE zc.hh >= 1000
+                           GROUP BY o.zipcode) oz
+                    ) oz
+               WHERE zipcode <> ‘10007’
+               ORDER BY 1) score
+This query uses a scoring subquery that is quite similar to the one used for the look-alike model. There are a handful of differences:
+■■ The subquery excludes zip code 10007, because it is being scored.
+■■ The subquery chooses the top five neighbors.
+■■ The subquery defines the penetration variable, PEN.
+The outermost query simply takes the average of PEN from the five most similar zip codes and uses this as the estimate for penetration in 10007.
+This is only an example of using the nearest neighbor technique. In this case, the actual penetration in zip code 10007 is already known. However, the technique itself can be used in other situations for scoring new, unknown examples.
+The model itself is the table of known instances along with the formula for calculating distance. It is reasonably efficient for scoring one row at a time. However, for scoring large numbers of rows, every row in the score set has to be compared to every row in the training set, which can result in long- running queries.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 475 Lookup Model for Most Popular Product
+A lookup model partitions the data into non-overlapping groups, and then assigns a constant value within each group. Lookup models do not look like fancy statistical models, because they pre-calculate all the possible scores, rather than estimating coefficients for a complicated equation. Nevertheless, the language of statistics has a name for them, contingency tables.
+The first example of a lookup model finds the most popular product group in a zip code using the purchases data. This model provides a good example of profiling.
+Most Popular Product
+The most popular product group in a zip code is easy to calculate and to use. The model itself is a lookup table with two columns: a zip code and a product group. Using the model simply requires looking up the appropriate value in the table, using the customer’s zip code.
+Once upon a time, a company was customizing its email offers. One of the things known about prospects was their zip codes. The marketing idea was to customize each email by including information about products that would be of interest. Lacking other information, the geographic information proved use- ful. Prospects were indeed more interested in the most popular product in their neighborhood (as defined by zip code) than in random products.
+Calculating Most Popular Product Group
+An earlier chapter noted that BOOKS is the most popular product group. The following query is one way to determine this information:
+  SELECT productgroupname
+  FROM (SELECT productgroupname, cnt, MAX(cnt) OVER () as maxcnt
+FROM (SELECT productgroupname, COUNT(*) as cnt
+FROM orders o JOIN orderline ol ON o.orderid = ol.orderid JOIN
+                   product p
+                   ON ol.productid = p.productid and
+                      p.productgroupname <> ‘FREEBIE’
+              GROUP BY productgroupname
+) pg )a
+  WHERE cnt = maxcnt
+This query has two levels of subqueries. The innermost calculates the order fre- quency for product groups. This subquery does not include FREEBIE products, because they are not interesting for cross-selling purposes. The next level then calculates the maximum of the frequency (the second subquery is needed
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼476 Chapter 10 ■ Data Mining Models in SQL
+￼￼becausewindowfunctionscannotbeusedwithGROUP BY).Theoutermostthen chooses the product group whose count is the maximum. Instead of window functions, the query could also use another subquery to calculate the maximum.
+The most popular product is, in itself, a very simple model. However, we want to refine the model by zip code, resulting in the rather similar query:
+  SELECT zipcode, productgroupname
+  FROM (SELECT zipcode, productgroupname, cnt,
+                MAX(cnt) OVER (PARTITION BY zipcode) as maxcnt
+        FROM (SELECT zipcode, productgroupname, COUNT(*) as cnt
+FROM orders o JOIN orderline ol ON o.orderid = ol.orderid JOIN product p
+                   ON ol.productid = p.productid and
+                      p.productgroupname <> ‘FREEBIE’
+              GROUP BY zipcode, productgroupname
+             ) pg
+)a
+WHERE cnt = maxcnt
+Notice that the only thing that changes between the two queries is the PARTITION BY clause. In this version, it partitions by the zip code, to return the maximum count within the zip code. The query then returns the product groups whose counts match the maximum.
+TIP When finding rows containing the minimum and maximum values in a table, always consider that there might be more than one matching row.
+There is a slight problem with this approach. Some zip codes might have multiple product groups all having the maximum frequency. Where there are ties, the query needs to choose one product group (any will do), or else the results will have duplicate zip codes. One way to choose is by calculating the minimum product group name that has a given count in each zip code, as in the following variation:
+  SELECT zipcode, productgroupname
+  FROM (SELECT zipcode, productgroupname, cnt,
+               MAX(cnt) OVER (PARTITION BY zipcode) as maxcnt,
+               MIN(productgroupname) OVER (PARTITION BY zipcode, cnt
+                  ) as minpg
+        FROM (SELECT zipcode, productgroupname, COUNT(*) as cnt
+FROM orders o JOIN orderline ol ON o.orderid = ol.orderid JOIN product p
+                   ON ol.productid = p.productid and
+                      p.productgroupname <> ‘FREEBIE’
+              GROUP BY zipcode, productgroupname
+             ) pg
+)a
+WHERE cnt = maxcnt AND
+        productgroupname = minpg
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 477
+￼￼This query uses the window functions to break ties by choosing the first prod- uct group name alphabetically.
+The result contains two columns: the zip code and the most popular product group. This is the lookup model by zip code for the most popular product group. This model is a profiling model because the zip code and product group come from the same time frame. There is no “before” and “after.” Here the most popu- lar product group has been defined as the one with the most orders. Other defin- itions are possible, such as the one with the most households purchasing it or the largest dollar amount per household.
+Table 10-4 shows each product group and the number of zip codes where that group is the most popular. Not surprisingly, BOOKS win in over half the zip codes, as shown by the following query:
+  SELECT productgroupname, COUNT(*) as numzips
+  FROM (<zipcode-productgroupname-subquery>) subquery
+  GROUP BY productgroupname
+  ORDER BY 2 DESC
+This query uses the previous query as a subquery. It then aggregates by prod- uct group name and counts the number of zip codes where that product group is the most popular.
+Table 10-4: Number of Zip Codes Where Product Groups Are Most Popular
+￼￼￼￼￼￼￼￼PRODUCT GROUP
+BOOK ARTWORK OCCASION GAME APPAREL CALENDAR OTHER
+NUMBER OF ZIPS
+8,402 2,917 2,064
+899 771 403 123
+% OF ALL ZIPS
+53.9% 18.7% 13.2%
+5.8% 4.9% 2.6% 0.8%
+￼￼￼￼￼￼￼Evaluating the Lookup Model
+This model uses all the zip codes for determining the most popular product. There is no data left over to quantify how good it is.
+One idea for testing it would be to partition the data into two parts, one for determining the most popular product and the other for testing it. This strategy of testing a model on a separate set of data is a good idea and important to data mining. However, the next section describes an alternative approach that is often more useful.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼478 Chapter 10 ■ Data Mining Models in SQL
+Using a Profiling Lookup Model for Prediction
+This model is a profiling model because the target (the most popular product group) comes from the same time frame as the input (the zip code). This is the nature of the model and the model set used to create it. However, it is possible to use a profiling model for prediction by making a small assumption.
+The assumption is that the most popular product group prior to 2016 is the most popular after 2016. This assumption also requires building the model — still a profile model because of the dataset — using data prior to 2016. The only modification to the query is to add the following WHERE clause to the innermost subquery:
+         WHERE order_date < ‘2016-01-01’
+The model now finds the most popular product group prior to the cutoff date. A classification matrix is used to evaluate a model that classifies customers. It is simply a table where the modeled values are on the rows and the correct values are across the columns (or vice versa). Each cell in the table consists of the count (or proportion) of rows in the score set that have that particular combination of
+model prediction and actual result.
+Table 10-5 shows a classification matrix, where the rows contain the pre-
+dicted product group (the most popular group prior to 2016) and the columns contain the actual product group (the most popular after 2016). Each cell contains the number of zip codes with that particular combination of predicted and actual product groups. All the zip codes in the table have orders in the model set (prior to 2016) and the score set (after 2016). There are 1,406 zip codes where BOOK is predicted to be the most popular product and it is actually BOOK. However, there are an additional 1,941 zip codes (483+938+303+149+30+38) where BOOK is predicted to be the most popular and it is not.
+Figure 10-5: This classification matrix shows the number of zip codes by the predicted and actual most popular product group in 2016. The highlighted cells are where the prediction is correct.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 479
+￼￼The cells in the table where the row and the column have the same value are shaded using Excel’s conditional formatting capability. This is explained in the aside “Conditional Formatting in Excel.”
+Although BOOK is still the most popular product group in 2016, its popu- larity is waning. If we totaled the values across the rows, BOOK consists of about 70% of the predicted values. However, if we total the rows across the columns, BOOK accounts for only about 40% of the actual values.
+How well is the model doing? In this case, not so well. The model does well when its prediction agrees with what actually happens. So, there are 1,406 + 89 + 227 + 25 + 16 + 4 + 1 = 1,768 zip codes where the prediction matches what actually happened. This comes to 37.4% of the zip codes. This is much better than randomly guessing one out of seven categories. However, it is doing worse than just guessing that BOOK is going to be the most popular.
+￼￼CONDITIONAL FORMATTING IN EXCEL
+Excel has the ability to format cells individually based on the values in the cells. That is, the border, color, and font in the cell can be controlled by the contents of the cell or even by a formula that refers to other cells. This conditional formatting can be used to highlight cells as shown in Table 10-5.
+Conditional formatting comes in two flavors, formatting by the value in the cell or by a formula. For both flavors, the “Conditional Formatting” dialog box is accessed using the Format ➪ Conditional Formatting menu option (or using the key sequence <alt>-O<alt>-D).
+Use formatting by a value to highlight cells with particular values. For instance, in a table showing chi-square values, the cells with a chi-square value exceeding a threshold can be given a different color. To do this, bring up the “Conditional Formatting” dialog box, choose the “Cell Value Is” option, and set the condition. Click the “Format” button to define the desired format.
+Using a formula provides even more power. A formula can describe whether the formatting gets applied, which occurs when the formula evaluates to TRUE. For instance, the shaded format in Table 10-5 is when the name of the row and the name of the header have the same value. The formula for this is:
+   =($I42=J$41)
+Where row 41 has the column names and column “I” has the row names. The formula uses “$” to ensure that the formula is correct when copied. When copied, cell references in a conditional formatting formula change the same way that cell references for a regular formula do.
+Conditional formatting can be used for many things. For instance, to color every other row, use:
+   =MOD(ROW(), 2) = 0
+www.it-ebooks.info
+Continued on next page
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼480 Chapter 10 ■ Data Mining Models in SQL
+￼￼￼￼CONDITIONAL FORMATTING IN EXCEL (CONTINUED) To color every other column, use:
+   =MOD(COLUMN(), 2) = 0
+To create a checkerboard pattern, use:
+   =MOD(ROW()+COLUMN(), 2) = 0
+These formulas use the ROW() and COLUMN() functions, which return the current row and current column of the cell.
+Conditional formatting can also be used to put borders around regions in a table. Say column C has a key in a table that takes on repeated values and then changes. To put a line between blocks of similar values, use the following condition in the cells on row 10:
+   =($C10<>$C11)
+This says to apply the formatting when cell C11 has a different value from C10. Make the formatting the bottom border. When this formatting is copied to the rest of the table, horizontal lines appear between the different groups.
+Using the paintbrush copies the conditional formatting as well as the overall formatting, so it is easy to copy formats from one cell to a group of cells.
+￼Using Binary Classification Instead
+BOOK is so popular that we might tweak the model a bit, to look just for BOOK or NOT-BOOK as the most popular category, grouping all the non-book products together into a single group. To do this in SQL, replace the innermost references to product group with the following CASE statement:
+  (CASE WHEN productgroupname = ‘BOOK’ THEN ‘BOOK’
+        ELSE ‘NOT-BOOK’ END) as productgroupname
+This model performs better than the categorical model, as shown in the clas- sification matrix in Table 10-5. Now, there are 805+1,812 zip codes where the model is correct (55.4% versus 37.4%). In particular, the model is working bet- ter on predicting NOT-BOOK, where it is correct 63.4% of the time versus only 43.1% when it predicts BOOK.
+Table 10-5: Classification Matrix for BOOK or NOT-BOOK
+BOOK NOT-BOOK
+BOOK 805 1,048 NOT-BOOK 1,062 1,812
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 481
+￼￼Notice that the number of zip codes where BOOK is the most popular before and after has dropped from 1,406 to 805. These 805 zip codes are where the majority of orders are in BOOK. The rest are where BOOK has the most orders, but not over 50%.
+This example shows a modeling challenge. When working with two cate- gories of about the same size, binary models do a good job of distinguishing between them. When working with multiple categories, a single model often works less well.
+Another challenge in building a model is the fact that BOOK is becoming less popular as a category over time, relative to the other categories. There is a big word to describe this situation, nonstationarity, which means that patterns in the data change over time. Nonstationarity is the bane of modeling, but is, alas, quite common in the real world.
+TIP Whenbuildingmodels,weareassumingthatthedatausedtobuildthe model is representative of the data used when scoring the model. This is not always the case, due to changes in the market, in the customer base, in the economy, and so on.
+Lookup Model for Order Size
+The previous model was a lookup model for classification, both for multiple classification and binary classification. The lookup itself was along a single dimension. This section uses lookup models for estimating a real number. It starts with the very simplest case, no dimensions, and builds the model up from there.
+Most Basic Example: No Dimensions
+Another basic example of a lookup model is assigning an overall average value. For instance, we might ask the question: Based on purchases in 2015, what do we expect the average order size to be in 2016? The following query answers this question, by using the average of all purchases in 2015:
+  SELECT YEAR(o.orderdate) as year, AVG(totalprice) as avgsize
+  FROM orders o
+  WHERE YEAR(o.orderdate) in (2015, 2016)
+  GROUP BY YEAR(o.orderdate)
+ORDER BY 1
+￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼482 Chapter 10 ■ Data Mining Models in SQL
+￼￼This query gives the estimate of $85.51. This is a reasonable estimate, but it is a bit off the mark, because the actual average in 2016 is $112.64.
+This example is a predictive model. The average from 2015 is being used to estimate the value in 2016. This is a big assumption, but not unreasonable.
+Adding One Dimension
+The next step is to add a dimension, as in the following query that calculates the average by state:
+SELECT state,
+AVG(CASE WHEN YEAR(orderdate)=2015 THEN totalprice END) as avg2015, AVG(CASE WHEN YEAR(orderdate)=2016 THEN totalprice END) as avg2016
+  FROM orders o
+  WHERE YEAR(o.orderdate) in (2015, 2016)
+  GROUP BY state
+This query calculates the average order sizes in 2015 and 2016 using the AVG() function with a CASE statement that quite intentionally does not have an ELSE clause. Rows that do not match the year are given a NULL value rather than the TOTALPRICE. The NULL values are ignored when SQL takes the average. Of course,wecouldgetthesameeffectbyincludingELSE NULLinthestatement. The results from this query are a lookup table.
+Evaluating the results requires applying the model to data that was not used to create it. A good score set is orders in 2016. Applying the model means joining the score set to the lookup table by state. One caveat is that some customers may be in states that did not place orders in 2015. These cus- tomers need a default value, and a suitable value is the overall average order size in 2015.
+The following query attaches the estimated order size for 2016 onto each row in the score set:
+SELECT o.*, COALESCE(statelu.avgamount, defaultlu.avgamount) as predamount FROM (SELECT o.*
+FROM orders o
+        WHERE YEAR(o.orderdate) = 2016) o LEFT OUTER JOIN
+       (SELECT state, AVG(totalprice) as avgamount
+FROM orders o
+        GROUP BY state) statelu
+       ON o.state = statelu.state CROSS JOIN
+       (SELECT AVG(totalprice) as avgamount
+        FROM orders o
+        WHERE YEAR(o.orderdate) = 2015) defaultlu
+Figure 10-6 shows the dataflow diagram for this query. There are three subqueries. The first is for the score set that chooses orders from 2016. The second two are the lookup tables, one for state and one for the default value
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼Chapter 10 ■ Data Mining Models in SQL 483 (when no state matches). These lookup tables use the orders from 2015 to cal-
+culate values.
+READ orders
+READ orders
+JOIN on zipcode
+CROSSJOIN
+READ orders
+FILTER
+YEAR(orderdate) = 2015
+FILTER
+YEAR(orderdate) = 2015
+FILTER
+score
+YEAR(orderdate) = 2016
+statelu
+AGGREGATE group by state
+avgtotalprice = AVG(totalprice)
+defaultlu
+AGGREGATE avgtotalprice = AVG(totalprice)
+Figure 10-6: This dataflow diagram shows the processing needed for scoring a lookup model with one dimension.
+Comparing the average predicted amount to the average actual amount is an overall measure of how good the model is doing:
+  SELECT AVG(predamount) as avgpred, AVG(totalprice) as avgactual
+  FROM (<lookup-score-subquery>) subquery
+This query uses the previous lookup score query as a subquery.
+This model actually produces basically the same overall results as before. However, this structure makes it easy to evaluate different dimensions by replacing state with another column name. Table 10-6 shows the average amounts for various different dimensions, including channel, zip code, pay-
+ment type, and month of order.
+www.it-ebooks.info
+APPEND
+predamount = COALESCE(statelu.avgamount, defaultlu.avgamount)
+OUTPUT
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼484 Chapter 10 ■ Data Mining Models in SQL
+Table 10-6: Performance of Various One-Dimensional Lookup Models
+￼￼￼DIMENSION
+State
+Zip Code Channel Month Payment Type
+PREDICTED 2016
+$85.33 $87.65 $85.92 $87.50 $85.42
+ACTUAL 2016
+$112.64 $112.64 $112.64 $112.64 $112.64
+￼￼￼￼￼Adding More Dimensions
+Adding more dimensions is a simple modification to the basic query. The fol- lowing query uses month and zip code as the dimensions:
+  SELECT AVG(predamount) as avgpred, AVG(totalprice) as avgactual
+  FROM (SELECT o.*,
+COALESCE(dim1lu.avgamount, defaultlu.avgamount) as predamount FROM (SELECT o.*, c.channel, MONTH(orderdate) as mon
+              FROM orders o JOIN campaign c on o.campaignid = c.campaignid
+              WHERE YEAR(o.orderdate) = 2016) o LEFT OUTER JOIN
+             (SELECT MONTH(orderdate) as mon, zipcode,
+                     AVG(totalprice) as avgamount
+              FROM orders o JOIN campaign c on o.campaignid = c.campaignid
+              WHERE YEAR(o.orderdate) = 2015
+              GROUP BY MONTH(orderdate), zipcode) dim1lu
+             ON o.mon = dim1lu.mon AND
+                o.zipcode = dim1lu.zipcode CROSS JOIN
+             (SELECT AVG(totalprice) as avgamount
+              FROM orders o
+              WHERE YEAR(o.orderdate) = 2015) defaultlu) a
+The structure of the query is the same as the query for one dimension. The only difference is the additional column in the Dim1lu subquery and the join.
+With the lookup table, the average rises to a bit over $90. The two-dimensional lookup table is doing a better job, but the average is still off from the actual value.
+Examining Nonstationarity
+As shown in Table 10-7, the average order size is increasing from year to year. Without taking into account this yearly increase, estimates based on the past are not going to work so well. This is another example of nonstationarity.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Table 10-7: Average Order Size Varies Over Time YEAR AVERAGE ORDER SIZE
+2009 $33.63
+2010 $51.90
+2011 $50.98
+2012 $67.94
+2013 $74.50
+2014 $70.08
+2015 $85.51
+2016 $112.64
+CHANGE YEAR OVER YEAR
+54.3% -1.8% 33.3% 9.7% -5.9% 22.0% 31.7%
+Chapter 10 ■ Data Mining Models in SQL 485
+￼￼￼￼￼￼￼￼￼￼￼What is causing this change is perhaps a mystery. Perhaps prices increase from year to year. Perhaps the product mix changes from year to year. Perhaps customers’ initial orders are smaller than repeat orders, and the number of repeat orders (as a proportion of the total) increases from year to year. There are many possible reasons for orders increasing in size.
+We could make an adjustment. For instance, note that the average purchase size increased by 22% from 2014 to 2015. If we increased the 2015 estimate by the same amount, the result would be much closer to the actual value.
+Of course, to choose the appropriate increase it helps to understand what is happening. This requires additional understanding of the data and of the business.
+Evaluating the Model Using an Average Value Chart
+An average value chart is used to visualize model performance for a model with a numeric target. The average value chart breaks customers into equal sized groups, by ordering them by the customers’ predicted values. For instance, it might break the customers into ten equal sized groups called deciles, with the first decile consisting of customers with the highest predicted order amounts, and the next highest in the second decile, and so on. The chart then shows the average of the predicted value and the average of the actual value for each decile.
+Figure 10-7 shows an example for the lookup model using month and zip code as dimensions. The dotted line is the predicted average amount in each decile. It starts high and then decreases, although the values for deciles two through seven are flat.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼486 Chapter 10 ■ Data Mining Models in SQL
+￼￼The actual values look quite different. They are basically a horizontal line, meaning that there is no relationship between the predicted amount and the actual amount. The model is doing a poor job.
+   $350
+   $300
+   $250
+   $200
+   $150
+   $100
+$50
+$0
+1 2 3 4 5 6 7 8 9 10
+Predicted Score Decile
+Figure 10-7: This average value chart is for a model that does not work for predicting the size of 2016 orders. This is apparent because the actual values are a horizontal line.
+The goal in the average value chart is for the actual values to correspond to the predicted values. Figure 10-8 shows a better model, which uses channel, payment type, and customer gender. In this case, the actual values are higher when the predicted values are higher and lower when the predicted values are lower. There are some anomalies, such as the third decile doing better than the second, but overall, this model is doing a better job than the previous one.
+One observation about both models is that the actual values are almost always higher than the predicted values. This is a result of the fact that order sizes in 2016 are larger than in 2015.
+   $160
+   $140
+   $120
+   $100
+    $80
+    $60
+    $40
+    $20
+$0
+1 2 3 4 5 6 7 8 9 10
+Predicted Score Percentile
+Figure 10-8: This average value chart uses channel, payment type, and customer gender. Here the model is working better, because the actual values are decreasing as the predicted values decrease.
+￼Avg Predicted
+Avg Actual
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Avg Predicted
+Avg Actual
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+Average Value Average Value
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 487
+￼￼Creating an average value chart starts by assigning a decile to customers in the score set, based on the predicted amount. For each decile, the averages of the predicted value and of the actual value are calculated, as in the following query:
+  SELECT decile, AVG(predamount) as avgpred, AVG(totalprice) as avgactual
+  FROM (SELECT lss.*, NTILE(10) OVER (ORDER BY predamount DESC) as decile
+FROM (<lookup-score-subquery>) lss )b
+  GROUP BY decile
+  ORDER BY 1
+This query uses the scoring subquery to get the predicted amount. The middle level uses the NTILE() window function to divide the scores into ten equal sized groups. The outermost level calculates the average for the predicted amount and average amount for each of the groups.
+Lookup Model for Probability of Response
+This section looks at a different sort of problem, related to the subscription data. What is the probability that a customer who starts in 2005 is going to last for one year? This question uses the subscription data to address the question, build- ing a model using the 2004 starts and testing it using the 2005 starts.
+The Overall Probability as a Model
+The way to start thinking about this problem is to consider all customers who start in 2004 and ask how many of them survive for exactly one year. Using one year of starts dampens seasonal effects occurring within a year. Also, the sub- scription table has no stops prior to 2004, limiting how far back in time we can go.
+Chapter 8 addressed several different methods for looking at survival and retention. This section looks only at the point estimate after one year, as calcu- lated by the following query:
+  SELECT AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                  THEN 1.0 ELSE 0 END) as stoprate
+  FROM subs
+  WHERE YEAR(start_date) = 2004
+Customers who stop within one year have tenures less than one year and a non-NULL stop type. Strictly speaking, the test for stop type is unnecessary, because all customers who start in 2004 and have tenures less than 365 are stopped.
+This query uses AVG() to calculate the proportion of customers who stop. The argument to the average is 1.0, rather than 1, because some databases
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼488 Chapter 10 ■ Data Mining Models in SQL
+￼￼return the average of an integer as an integer rather than as a real number. In such databases, the integer average would always be zero except when all cus- tomers stop within their first year.
+Of the customers who start in 2004, 28.0% stop during the first year after they start. Given a new customer who starts in 2005, the best guess for that cus- tomer’s stop rate during the first year is 28.0%. Of course, this assumes that the conditions affecting stops remain the same from one year to the next.
+The actual stop rate for 2005 starts is 27.2%, which is quite similar to the rate in 2004. This supports using the 2004 data to develop a model for 2005.
+Exploring Different Dimensions
+There are five dimensions in the subscription data that are known when cus- tomers start:
+■■ Channel;
+■■ Market;
+■■ RatePlan;
+■■ Initial Monthly Fee; and,
+■■ Date of Start.
+These are good candidates for modeling dimensions. Although the monthly fee is numeric, it only takes on a handful of values.
+The following query calculates the stop rate by channel:
+  SELECT channel,
+         AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                  THEN 1.0 ELSE 0 END) as stoprate
+  FROM subs
+  WHERE YEAR(start_date) = 2004
+  GROUP BY channel
+The result is a lookup table that has the expected stop rate for different channels.
+Applying this lookup table as a model requires joining it back to a score set. The following query calculates the probability that a customer who starts in 2005 is going to leave, using the channel for the lookup:
+  SELECT score.*, COALESCE(lookup.stoprate, def.stoprate) as predrate
+  FROM (SELECT s.*,
+               (CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                     THEN 1 ELSE 0 END) as is1yrstop
+FROM subs s
+        WHERE YEAR(start_date) = 2005) score LEFT OUTER JOIN
+       (SELECT channel,
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 489 AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                 THEN 1.0 ELSE 0 END) as stoprate
+ FROM subs
+ WHERE YEAR(start_date) = 2004
+ GROUP BY channel) lookup
+ON score.channel = lookup.channel CROSS JOIN
+(SELECT AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+￼￼￼￼￼￼￼￼￼￼                        THEN 1.0 ELSE 0 END) as stoprate
+        WHERE YEAR(start_date) = 2004) def
+This query takes into account the fact that there might be no matching channel. The query has three subqueries. The Def subquery calculates the default value for the one-year stop rate. The Lookup subquery calculates the one-year stop rate by channel. And the Score subquery finds the set of customers who started in 2005. The logic for scoring is to take the stop rate from Lookup, if available, and otherwise take the stop rate from Def using the COALESCE() function. In this particular case, the Def subquery is superfluous, because all channels are represented in both years.
+The following query calculates the overall stop rate and the predicted stop rate, using the previous query as a subquery:
+  SELECT AVG(predrate) as predrate, AVG(1.0*is1yrstop) as actrate
+  FROM (<scoring-subquery>) subquery
+This query compares the average of the predicted rate, over all the rows, to the actual stop rate.
+The model works very well overall. In fact, the query predicts an overall stop rate of 27.2%, which is exactly what is observed. However, Table 10-8 shows that the model does not work so well within each channel.
+WARNING Just because a model works well overall does not mean that the model works well on all subgroups of customers.
+Table 10-8: Actual and Predicted Stop Rates by Channel for 2005 Starts, Based on 2004 Starts
+￼FROM subs
+￼￼￼￼￼CHANNEL
+Chain Dealer Mail Store
+PREDICTED
+41.0% 25.0% 36.8% 16.3%
+ACTUAL
+24.7% 27.6% 35.2% 18.1%
+DIFFERENCE
+16.4% -2.6% 1.5% -1.8%
+￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼490 Chapter 10 ■ Data Mining Models in SQL How Accurate Are the Models?
+Table 10-9 compares the overall predicted stop rates and actual stop rates of one-dimensional lookup models, using each of five different dimensions. All the models do a reasonable job of estimating the overall stop rate. Notice that the accuracy of the models does not improve as the number of values in the dimension increases.
+For all the models, the overall predicted stop rate is close to the actual stop rate. However, the business goal could be to identify a group of customers that has a much greater chance of stopping than other customers, probably to offer them an incentive to remain. Such incentives cost money, suggesting the ques- tion: How many customers who actually stop are captured by the model in the top ten percent of model scores?
+The answer to this question is a cumulative gains chart, which is used to visu- alize model performance for models with binary targets. The horizontal axis is a percentage of customers chosen based on the model score, ranging from 0% to 100%, with the highest scoring customers chosen first. The vertical axis mea- sures the proportion of the desired target found in that group of customers, ranging from 0% — none of the desired target — to 100% — all of the desired target. The curves start at the lower left at 0% on both axes and rise to the upper right to 100% on both axes. If customers are chosen randomly, the cumulative gains chart is a line.
+Figure 10-9 shows a cumulative gains chart for the channel lookup model for stops. The horizontal axis is the percentage of customers with the highest scores. So, 10% means the top decile of all customers. The vertical axis is the percentage of stoppers captured by that segment of customers.
+Table 10-9: Actual and Predicted Stop Rates by Modeling Dimension for 2005 Starts, Based on 2004 Starts
+￼￼￼￼DIMENSION
+Channel Market Rate Plan Monthly Fee Month
+NUMBER
+OF VALUES PREDICTED
+4 27.2% 3 27.1% 3 27.8%
+24 23.1% 12 29.0%
+ACTUAL
+27.2% 27.2% 27.2% 27.2% 27.2%
+DIFFERENCE
+0.00% -0.04% 0.69% -4.04% 1.82%
+￼￼￼￼￼There are three curves on the chart. The highest one is the best one, and this is the performance of the model on the model set used to build it. Models gen- erally perform best on the data used to create them. The middle curve is for the
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+2004 Starts
+2005 Starts
+No Model
+Chapter 10 ■ Data Mining Models in SQL 491
+￼￼test set using 2005 starts, and the straight line is a reference assuming no model. For instance, the point at the 25% mark on the 2005 curve says that the top 25% of customers with the highest model score captures 28.6% of the cus- tomers who stop. Lift is one way to measure how well the model is working. At the 25% mark the lift is 28.6%/25%= 14.4%. Note that lift always declines to one as the percentage moves toward 100%.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼28.6%
+Improvement is the difference between the curves
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 10 20 30 40 50 60 70 80 90 100 Model Depth (Percentile)
+Figure 10-9: This cumulative gains chart shows the performance of the channel model on both the model set (2004 starts) and on the score set (2005 starts).
+The cumulative gains chart is a good way to compare models. Figure 10-10 shows the chart for several lookup models on the test set of 2005 starts. The cumulative gains chart can also be used to select how many customers are needed to get a certain number of customers expected to have the target value.
+100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Rate Plan
+Market
+Channel
+Month
+0 10 20 30 40 50 60 70 80 90 100
+Model Depth (Percentile)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 10-10: Cumulative gains charts for five models using 2005 charts are a good way to compare the performance of different models.
+www.it-ebooks.info
+Cum Proportion of Stops Cum Proportion of Stops
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼492 Chapter 10 ■ Data Mining Models in SQL
+The cumulative gains charts are based on a summary of the data, shown in
+Table 10-10, having the following information:
+■■ The decile, which divides the customers into ten equal sized groups (the charts in the text divide the customers into percentiles);
+■■ The predicted stop rate for the decile (the average model score);
+■■ The predicted number of stops (the average model score times the num-
+ber of customers);
+■■ The predicted and actual stop rate for the decile;
+■■ The cumulative number of actual stops up to and including the decile and the cumulative stop rate; and
+■■ The lift of actual stops compared to no model.
+Only the first and last of these are used for the cumulative gains chart. How- ever, the other information is quite informative for understanding model per- formances and to create other informative charts.
+￼￼Table 10-10: Summary Information for Cumulative Gains Chart
+￼￼NUMBER
+OF STOPS STOP RATE
+CUMULATIVE STOPS # RATE PROP
+41,294 31.9% 11.8%
+83,834 32.4% 23.9% 123,179 31.8% 35.1% 159,128 30.8% 45.3% 196,092 30.3% 55.9% 233,624 30.1% 66.5%
+268,809 29.7% 76.6% 305,538 29.5% 87.0% 327,677 28.2% 93.3% 351,095 27.2% 100.0%
+￼￼￼DECILE
+1 2 3 4 5 6 7 8 9
+10
+PRED- ACT- PRED- ICTED UAL ICTED
+ACT- UAL
+31.9% 32.9% 30.4% 27.8% 28.6% 29.0% 27.2% 28.4% 17.1% 18.1%
+LIFT
+1.18 1.19 1.17 1.13 1.12 1.11 1.09 1.09 1.04 1.00
+42,670 41,294 42,670 42,540 42,667 39,345 42,667 35,949 42,667 36,964 37,938 37,532 37,430 35,185 35,839 36,729 12,997 22,139 12,997 23,418
+33.0% 33.0% 33.0% 33.0% 33.0% 29.3% 29.0% 27.7% 10.1% 10.1%
+￼￼￼￼￼￼￼￼￼￼The following steps are used to calculate the information in the table:
+1. Apply the model to the score set to obtain the predicted stop rate.
+2. Dividethescoredcustomersintoten(orwhatever)equalsizedgroups. 3. Calculatethesummaryinformationforeachgroup.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 493 The following query follows these steps:
+SELECT decile, COUNT(*) as numcustomers, SUM(is1yrstop) as numactualstops, SUM(predstoprate) as predactualstops,
+AVG(is1yrstop*1.0) as actualstop, AVG(predstoprate) as predstoprate
+  FROM (SELECT customer_id, predrate, is1yrstop,
+               NTILE(10) OVER (PARTITION BY NULL ORDER BY predrate DESC
+                              ) as decile
+        FROM (<scoring-subquery>) score
+  GROUP BY decile
+  ORDER BY 1
+This query uses the score query as a subquery. Calculating the percentile uses the window ranking function NTILE() to divide the customers into equal sized buckets based on their predicted stop rates. Within each bucket, the query counts the number of customers who do actually stop and estimates the num- ber of predicted stops by taking the average predicted stop rate and multi- plying it by the number of customers in the decile. The cumulative number of stops is calculated in Excel.
+Adding More Dimensions
+Using more than one dimension for the lookup model is feasible. Up to a point, increasing the number of dimensions can improve the model. Figure 10-11 shows the cumulative gains chart for the model using three dimensions. This model does better than the model with one dimension.
+￼￼￼￼￼￼￼￼￼￼￼100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Market Channel-Rate Plan
+Market
+No Model
+0 10 20 30 40 50 60 70 80 90 100
+Model Depth (Percentile)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 10-11: The lookup model with three dimensions does better than the best model with one dimension.
+Generating such a model is simply a matter of replacing the Lookup sub- query with a more refined lookup table, resulting in a scoring query such as:
+  SELECT score.*, COALESCE(lookup.stoprate, def.stoprate) as predstoprate
+  FROM (SELECT subs.*,
+￼￼www.it-ebooks.info
+(continued)
+Cum Proportion of Stops
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼494 Chapter 10 ■ Data Mining Models in SQL
+(CASE WHEN tenure < 365 AND stop_type IS NOT NULL THEN 1
+                            ELSE 0 END) as is1yrstop
+FROM subs
+              WHERE YEAR(start_date) = 2005) score LEFT OUTER JOIN
+             (SELECT market, channel, rate_plan,
+AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL THEN 1.0 ELSE 0 END) as stoprate
+              FROM subs
+              WHERE YEAR(start_date) = 2004
+              GROUP BY market, channel, rate_plan ) lookup
+            ON score.market = lookup.market AND
+               score.channel = lookup.channel AND
+               score.rate_plan = lookup.rate_plan CROSS JOIN
+            (SELECT AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL THEN 1.0
+                             ELSE 0 END) as stoprate
+             FROM subs
+             WHERE YEAR(start_date) = 2004) def
+This creates the lookup table using three dimensions rather than one.
+Adding more dimensions is beneficial, because the lookup model captures more features of the customers, and more interactions among those features. However, as the number of dimensions increases, each cell in the lookup table has fewer and fewer customers. In fact, using MONTHLY_FEE instead of RATE_PLAN for the third dimension, some of the combinations have no cus- tomers at all and more than one in six cells have fewer than ten customers, as shown in the histogram of cell sizes in Figure 10-12. The largest cell (for the market Gotham, the channel Dealer, and a monthly fee of $40) accounts for
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼15% of all customers.
+100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼1 10
+100 1,000
+10,000 100,000
+1,000,000
+Size of Cell (log scale)
+Figure 10-12: This histogram chart shows the cumulative number of cells that have up to each number of customers for the market, dealer, monthly fee lookup model. Note that the horizontal axis uses a log scale, because the range of cell sizes is very large.
+www.it-ebooks.info
+Cum Proportion of Cells
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 495
+￼￼Having large numbers of cells has another effect as well. The resulting esti- mate for the stop rate has a confidence interval, as discussed in Chapter 3. The fewer customers contributing to the proportion, the wider the confi- dence interval.
+For this reason, cells in the lookup table should have some minimum size, such as having at least 500 customers. This is accomplished by including a HAVING clause in the Lookup subquery:
+  HAVING COUNT(*) >= 500
+Combinations of market, channel, and monthly fee that are not in the lookup table but are in the score set are then given the default value.
+The next section presents another method for bringing together data from many dimensions, a method that borrows ideas from probability.
+Naïve Bayesian Models (Evidence Models)
+Naïve Bayesian models extend the idea of lookup models for probabilities to the extreme. It is possible to have any number of dimensions and still use the information along each dimension to get sensible results, even when the cor- responding lookup model would have an empty cell for that combination of values. Instead of creating ever smaller cells, naïve Bayesian models combine the information from each dimension.
+The “naïve” part of the name is the assumption that the dimensions are independent of each other. This makes it possible to combine information along the dimensions into a single score. The Bayesian part of the name refers to a simple idea from probability. Understanding this idea is a good way to get started.
+Some Ideas in Probability
+One way of looking at the chi-square value is as a model score for estimating counts that combines information along various dimensions. In practice, this is taken one step further by measuring how different the expected value is from the actual value. However, the expected value is itself an estimate of the actual value.
+In a similar way, a naïve Bayesian model produces an expected value for a probability based on summaries of the probabilities along the dimensions. The model itself is just some complicated arithmetic. However, to get a feel for what it is doing requires some language from probability.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼496 Chapter 10 ■ Data Mining Models in SQL Probabilities
+Figure 10-13 shows four distinct groups of customers. The light gray shaded ones are customers who stop in the first year. The striped customers are from a particular market. Everyone is in exactly one of the groups:
+■■ 38customersstoppedandarenotinthemarket(gray,unstripedarea);
+■■ 2 customers stopped and are in the market (gray striped area);
+■■ 8customersareinthemarketandnotstopped(notgray,striped);and,
+■■ 52customersarenotinthemarketandnotstopped(notgray,notstriped).
+The purpose of the chart is to illustrate some ideas and vocabulary about proba- bility. The chart itself is a Venn diagram, showing overlapping sets in the data.
+￼￼￼￼STOPS (40)
+NOT STOPS (60)
+￼MARKET
+40% have stopped
+60% have not stopped
+10% are in the market
+2% are in the market and stopped
+￼￼￼MARKET STOP (2)
+MARKET NOT STOP (8)
+Figure 10-13: Four groups of customers here are represented as a Venn diagram, showing the overlaps between the customers in one market and the stopped and not stopped customers.
+What is the probability that someone stops? (Strictly speaking, the question should be “if we choose one of these customers at random, what is the probability of choosing a customer who stops?”) This is the number of customers who stop divided by the total number of customers. There are forty customers who stop (38+2) out of one hundred customers (38+2+8+52), so the probability is 40%. Sim- ilarly, the probability of someone being in the market shown in the chart is 10%.
+It is worth pondering how informative this situation is. If told that there are one hundred customers, and 40% stop and 10% are in a given market, what does this tell us about the relationship between stops and the market? The answer is: very little. All the customers in the market could be stopped. All the customers in the market could be not stopped. Or, anything in between.
+However, once the probability of stops within the market is known, then the various counts are all determined. This probability of stopping within the mar- ket is an example of a conditional probability. It is the number of customers in
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 497
+￼￼the market who stop divided by the number of customers in the market, or 20% (2/10).
+When the conditional probability is the same as the overall probability, the two phenomena are said to be independent. Being independent simply means that knowing the market provides no additional information about stopping and vice versa. In this case, the probability of stopping is 40% and the probability of stop- ping for customers in the market is 20%, so the two are not independent.
+Odds
+Another important concept from probability is odds. These are familiar to any- one who has ever used the expression “50-50” to mean an equal chance. The odds for something are the number of times something happens for every time it does not happen.
+Overall, 40% of customers stop and 60% do not, so the odds are forty-to- sixty. This is often simplified, so two-to-three and 0.667 (the “to one” being implicit) are equivalent ways of saying the same thing. When the probability is 50%, the odds are one.
+There is a simple relationship between odds and probabilities and back again:
+  odds = probability / (1 – probability) =  –1 + 1/(1 – probability)
+  probability = 1 – (1/(1 + odds))
+Odds and probability are two ways of describing the same thing. Given the probability it is easy to calculate the odds, and vice versa.
+Likelihood
+Likelihood has a specific meaning in probability theory. The likelihood of some- one in a market stopping is the ratio between two conditional probabilities: the probability of someone being in the market given that they stopped and the prob- ability of someone being in the market given that they did not stop.
+Figure 10-14 illustrates what this means as a picture. The probability of someone being in the market given they stopped is two divided by forty. The probability of someone being in the market given they did not stop is eight divided by sixty. The ratio is 3/8. This means that someone in the market has a 3/8 chance of stopping compared to not stopping.
+An alternative way of expressing the likelihood is as the ratio of two odds. The first is the odds of stopping in the market and the second is the overall odds of stopping. The odds of stopping in the market are 2/8; the overall odds are 4/6. The ratio produces the same value: (2/8)/(4/6)=(2*6)/(4*8)=3/8.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼498 Chapter 10 ■ Data Mining Models in SQL
+￼￼￼￼38
+￼￼2
+8
+52
+Figure 10-14: A likelihood is the ratio of two conditional probabilities.
+Calculating the Naïve Bayesian Model
+This section moves from the simple ideas in probability to an intriguing obser- vation by Thomas Bayes and then naïve Bayesian models. Although Bayes himself probably did not realize it, the observation also has philosophical implications, and is the foundation of a branch of statistics called Bayesian sta- tistics (which has little relationship to naïve Bayesian modeling). The aside “Bayes and Bayesian Statistics” discusses the man and the statistics.
+Likelihood is ratio of 8/(8+52) and 2/(2+38)
+￼￼BAYES AND BAYESIAN STATISTICS
+Rev. Thomas Bayes was born at the beginning of the 18th century to a family of Nonconformists. According to English law at the time, members of non-Anglican churches were officially classified as “nonconformist”; eventually, he took a ministering position in a Presbyterian church.
+Bayes was quite interested in mathematics, yet he lived up to his religious affiliation in one striking way. His ideas in probability theory were published in 1763, three years after his death — distinctly nonconformist.
+The paper, An Essay Towards Solving a Problem in the Doctrine of Chances, appeared in the Philosophical Transactions of the Royal Society of London (the paper is available at http://www.stat.ucla.edu/history/essay.pdf). For several decades the paper languished, until found and expounded upon by a French mathematician Pierre-Simon Laplace.
+By the mid-20th century, statistics had two competing perspectives,
+the Frequentists and the Bayesians. To outsiders (and many insiders), this competition often looks like a religious debate, so it is perhaps fitting that Bayes himself was a religiously ordained Nonconformist.
+The primary difference between the two groups is how to deal with subjective information in probability theory. Both Bayesians and Frequentists would agree that the probability of a coin about to be flipped landing heads side up is 50% (because this is not a trick question).
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 499
+￼￼￼￼BAYES AND BAYESIAN STATISTICS (CONTINUED)
+Consider a slightly different scenario, though. Someone has flipped the coin, hidden it from view, and looked at whether the coin is heads or tails. Now, is the probability still 50% even though you cannot see the coin? Frequentists would say that probability does not apply, because the event has occurred. The coin either is or is not heads, so the “probability” is either 0% or 100%. Bayesians are more comfortable saying that the probability is 50%. Which is true? There is no right answer. This is a question as much about philosophy as about probability.
+Chapter 3 introduced the concept of the confidence interval and the p-value as a confidence. These are Frequentist notions. The Bayesian perspective has similar ideas, called “credible intervals” and Bayesians often treat p-values
+as actual probabilities. Thankfully, the mathematics is the same for basic statistical measures.
+The Bayesian perspective makes it possible to incorporate prior beliefs when analyzing data. This can be quite powerful and can make it possible to solve some very difficult problems, often using lots of computer power. Frequentists counter that any given outcome can be generated, just by choosing the appropriate prior beliefs.
+Of course, there is an old saying that “statistics don’t lie but statisticians do.” Even without resorting to complex mathematical modeling, it is possible to mislead with statistics. Responsible analysts and statisticians — whether Bayesian or Frequentist — are not trying to mislead. They are trying to analyze data to increase understanding and provide useful results.
+There is a lesson to be learned from this history. When analyzing data, the only responsible thing to do is to be explicit about assumptions being made. This is particularly important when working with databases, where business processes can result in unusual behavior. Be explicit about assumptions, so the results rest on a solid and credible foundation.
+￼An Intriguing Observation
+Thomas Bayes made a key observation in the realm of statistics. It connects the following two probabilities:
+■■ What is the probability of stopping for a customer in the partic- ular market?
+■■ What is the probability of being in the market for a customer who stops?
+These are two ways of understanding the relationship between markets and stops, one focusing on what happens in the market and the other focusing on the customers who stop. It turns out that these probabilities are related to each other by a simple formula.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼500 Chapter 10 ■ Data Mining Models in SQL
+￼￼The two probabilities themselves are conditional probabilities. The first is the probability of stopping, given that a customer is in a market. The second is the probability of being in a market, given that a customer stops. In the example data, the first is 20% because two out of ten customers in the market stop. The sec- ond is 5%, because two out of forty stopped customers are in the market.
+Simple enough. The ratio between these numbers is four (20%/5% = 4). Remarkably, this is also the ratio between the overall stop rate (40%) and the overall proportion of customers in the given market (10%).
+This observation is true in general. The ratio between two conditional prob- abilities that are the inverses of each other is the ratio between the two proba- bilities with no conditions. In a sense, the conditional parts of the probabilities cancel out. This is Bayes’ formula.
+Bayesian Model of One Variable
+The Bayesian model of one variable applies the formula in the following way: the odds of stopping given that a customer is in the market are the product of two numbers. The first is the overall odds of stopping; the second is the likeli- hood of the customer in the market stopping.
+Let’s work this out for the example. The probability of stopping given that a customer is in the market is 20%. Hence, the odds of a customer stopping are 20%/(1–20%) = 1/4. Is this the same as the product of the overall odds and the likelihood?
+As observed earlier, the overall odds of stopping are 2/3. The likelihood of the customer stopping was also calculated as 3/8. Well, in this case, the result holds: 1/4 = (2/3)*(3/8).
+The case with one dimension is trivially correct. Recall the alternative way of expressing the likelihood is the ratio of the odds of a customer stopping divided by the overall odds. The Bayesian model becomes the product of the overall odds times this ratio, and the overall odds cancel out. The result is just the odds of the customer stopping given the market — which is what we were looking for to begin with.
+Bayesian Model of One Variable in SQL
+The goal of the Bayesian model is to calculate the conditional probability of a customer stopping. For the simple example in one dimension, the formula is not necessary. The following query calculates the odds by market:
+  SELECT market,
+         AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                  THEN 1.0 ELSE 0 END) as stoprate,
+         (-1+1/(1-AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                           THEN 1.0 ELSE 0 END))) as stopodds,
+￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 501
+￼￼￼￼         SUM(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                  THEN 1 ELSE 0 END) as numstops,
+         SUM(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                  THEN 0 ELSE 1 END) as numnotstops
+  FROM subs
+  WHERE YEAR(start_date) = 2004
+  GROUP BY market
+The results are shown in Table 10-11. Although the direct calculation is easy, it is instructive to show the alternative approach using the odds times likeli- hood approach. For this alternative approach, the following is needed:
+■■ The overall odds; and,
+■■ The likelihood of a customer stopping given that the customer is in the
+market.
+The odds given the market are then the overall odds times the likelihood of stopping in the market. These odds can easily be converted to a probability.
+￼￼￼￼￼￼Table 10-11: Results by Market for Bayesian Model of One Variable NUMBER
+NUMBER OF NOT STOPS
+357,411 288,809 155,362
+￼￼MARKET
+Gotham Metropolis Smallville
+STOP RATE
+33.0% 29.0% 10.1%
+STOP ODDS
+0.49 0.41 0.11
+OF STOPS
+176,065 117,695 17,365
+￼￼￼Both of these values can readily be calculated in SQL, because they are both based on counting and dividing:
+  SELECT market, (1-(1/(1+overall_odds*likelihood))) as p,
+         overall_odds*likelihood as odds, overall_odds, likelihood,
+         numstop, numnotstop, overall_numstop, overall_numnotstop
+  FROM (SELECT dim1.market,
+               overall.numstop / overall.numnotstop as overall_odds,
+               ((dim1.numstop / overall.numstop)/
+                (dim1.numnotstop / overall.numnotstop)) as likelihood,
+               dim1.numstop, dim1.numnotstop,
+               overall.numstop as overall_numstop,
+               overall.numnotstop as overall_numnotstop
+        FROM (SELECT market,
+                     SUM(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                              THEN 1.0 ELSE 0 END) as numstop,
+                     SUM(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                              THEN 0.0 ELSE 1 END) as numnotstop
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼FROM subs
+www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼502 Chapter 10 ■ Data Mining Models in SQL
+￼￼￼  WHERE YEAR(start_date) = 2004
+  GROUP BY market) dim1 CROSS JOIN
+(SELECT SUM(CASE WHEN tenure < 365 THEN 1.0 ELSE 0
+            END) as numstop,
+        SUM(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                 THEN 0.0 ELSE 1 END) as numnotstop
+FROM subs
+  WHERE YEAR(start_date) = 2004
+) overall
+￼￼￼￼￼￼￼￼￼)a
+The first subquery, Dim1, calculates the number of customers who do and do not stop in each market. The second, Overall, calculates the same values over- all. The middle query then calculates the likelihood and overall odds, which are brought together in the outermost query.
+Using the alternative formulation for odds just changes the definition of likelihood to the arithmetically equivalent:
+  (dim1.numstop/dim1.numnotstop)/(overall.numstop/overall.numnotstop)
+This formulation is easier to calculate in SQL.
+These results in Table 10-12 are exactly the same as the results calculated
+directly. This is not a coincidence. With one variable, the Bayesian model is exact.
+Table 10-12: Results for the Naïve Bayesian Approach, with Intermediate Results
+￼MARKET P
+Gotham 33.0% Metropolis 29.0% Smallville 10.1%
+ODDS
+0.493 0.408 0.112
+OVERALL ODDS
+0.388 0.388 0.388
+LIKELIHOOD
+1.269 1.050 0.288
+￼￼￼The “Naïve” Generalization
+The “naïve” part of naïve Bayesian means “independent,” in the sense of prob- ability. This implies that each variable can be treated separately in the model. With this assumption, the formula for one dimension generalizes to any num- ber of dimensions: the odds of stopping given several attributes in several dimensions are the overall odds of stopping times the product of the likeli- hoods for each attribute. What makes this powerful is the ease of calculating the overall odds and the individual likelihoods.
+TIP Naïve Bayesian models can be applied to any number of inputs (dimensions). There are examples with hundreds of input dimensions.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 503
+￼￼Table 10-13 shows the actual probability and the estimated probability by channel and market for stopping in the first year. The estimates from the model are pretty close to the actual values. In particular, the ordering is quite similar. Unlike the one-attribute case, the estimate for two attributes is an approximation, because the attributes are not strictly independent. This is okay; we should not expect modeled values to exactly match actual values.
+Table 10-13: Results from Naïve Bayesian Model, Using Channel and Market for First Year Stops
+￼￼￼￼MARKET
+Gotham Gotham Gotham Gotham Metropolis Metropolis Metropolis Metropolis Smallville Smallville Smallville Smallville
+CHANNEL
+Chain Dealer Mail Store Chain Dealer Mail Store Chain Dealer Mail Store
+PRED- ICTED
+46.9% 29.7% 42.5% 19.8% 42.2% 25.9% 37.9% 17.0% 16.7%
+8.7% 14.4% 5.3%
+ACT- UAL
+58.7% 28.9% 41.9% 21.3% 38.2% 23.1% 41.1% 17.9%
+9.1%
+9.7% 13.9% 8.5%
+DIFFER- PRED- ACT- ENCE ICTED UAL
+-11.8% 1 1 0.8% 5 5 0.6% 2 2
+-1.5% 7 7 4.1% 3 4 2.7% 6 6
+-3.2% 4 3 -0.9% 8 8 7.6% 9 11 -1.0% 11 10 0.4% 10 9 -3.2% 12 12
+PROBABILITY RANK
+￼￼￼￼￼￼￼￼￼￼￼￼The following query calculates the values in this table:
+SELECT market, channel,
+       1-1/(1+pred_odds) as predp, 1-1/(1+actual_odds) as actp,
+       1-1/(1+market_odds) as marketp, 1-1/(1+channel_odds) as channelp,
+       pred_odds, actual_odds, market_odds, channel_odds
+FROM (SELECT dim1.market, dim2.channel, actual.odds as actual_odds,
+             (overall.odds*(dim1.odds/overall.odds)*
+              (dim2.odds/overall.odds)) as pred_odds,
+             dim1.odds as market_odds, dim2.odds as channel_odds
+      FROM (SELECT market,
+                   -1+1/(1-(AVG(CASE WHEN tenure < 365 AND
+                                          stop_type IS NOT NULL
+                                     THEN 1.0 ELSE 0 END))) as odds
+￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+(continued)
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼504 Chapter 10 ■ Data Mining Models in SQL
+￼￼￼              FROM subs
+              WHERE YEAR(start_date) = 2004
+              GROUP BY market) dim1 CROSS JOIN
+             (SELECT channel,
+                     -1+1/(1-(AVG(CASE WHEN tenure < 365 AND
+                                            stop_type IS NOT NULL
+                                       THEN 1.0 ELSE 0 END))) as odds
+              FROM subs
+              WHERE YEAR(start_date) = 2004
+              GROUP BY channel) dim2 CROSS JOIN
+            (SELECT -1+1/(1-(AVG(CASE WHEN tenure < 365 AND
+                                           stop_type IS NOT NULL
+                                      THEN 1.0 ELSE 0 END))) as odds
+FROM subs
+              WHERE YEAR(start_date) = 2004
+            ) overall JOIN
+            (SELECT market, channel,
+                    -1+1/(1-(AVG(CASE WHEN tenure < 365 AND
+                                           stop_type IS NOT NULL
+                                      THEN 1.0 ELSE 0 END))) as odds
+             FROM subs
+             WHERE YEAR(start_date) = 2004
+             GROUP BY market, channel) actual
+            ON dim1.market = actual.market AND
+               dim2.channel = actual.channel
+)a ORDER BY 1, 2
+This query has four subqueries. The first two calculate the odds for the market and channel separately. The third calculates the odds for the overall data. And the fourth calculates the actual odds, which are used only for comparison pur- poses. The middle subquery combines these into predicted odds, and the out- ermost query brings together the data needed for the table.
+The expression to estimate the odds multiplies the overall odds by several odds ratios. This can be simplified by combining the overall odds into one expression:
+  POWER(overall.odds, -1)*dim1.odds*dim2.odds as pred_odds
+The simpler expression is helpful as the model incorporates more attributes.
+Naïve Bayesian Model: Scoring and Lift
+This section generates scores for the naïve Bayesian model, using the estimates from 2004 to apply to 2005.
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 505 Scoring with More Attributes
+Adding more dimensions to the naïve Bayesian model is relatively simple. For the most part, it is just a matter of adding in more dimensions in the inner query and updating the expression for predicted odds:
+  POWER(overall.odds, 1-<N>)*dim1.odds* . . . *dimN.odds as pred_odds
+That is, the overall odds are raised to the power of one minus the number of dimensions and these are then multiplied by the odds along each dimension.
+The one complication occurs when the score set has values that have no cor- responding odds. This can occur for two reasons. One is that new values appear, from one year to the next. The second is restricting the model to a minimum number of instances for calculating the odds, so some values are missing from the dimensional tables. The naïve Bayesian approach handles missing values in the dimension quite well, theoretically. If a value is not available along a dimen- sion, the likelihood value for the dimension is simply not used. However, as with many things, the practice is a bit more detailed than the theory.
+The missing dimension shows up in two places:
+■■ The likelihood value will be NULL.
+■■ The exponent used for the POWER() function needs to be decreased by one for each missing dimension.
+Neither of these are insurmountable; they just require arithmetic and cleverly setting up the subqueries.
+ThefirstthingistouseLEFT OUTER JOINratherthanJOINforcombiningthe dimensions tables with the score set. The second is to default the missing odds to one (rather than NULL or zero), so they do not affect the multiplication. The third is to count the number of dimensions that match.
+The first is trivial. The second uses the COALESCE() function. The third could use a gargantuan, ugly nested CASE statement. But there is an alternative. Within each dimension subquery, a variable called N is given the value 1. The following expression calculates the number of matching dimensions:
+  COALESCE(dim1.n, 0) + COALESCE(dim2.n, 0) + . . . + COALESCE(dimn.n, 0)
+Missing values are replaced by zeros, so the sum is the number of matching dimensions.
+TIP Inaquerythathasseveralouterjoins,itispossibletocountthenumber that succeed by adding a dummy variable in each subquery (let’s call it N) and giving it a value of 1. Then, the expression COALESCE(q1.N, 0) + . . . + COALESCE(qn.N, 0)countsthenumberofsuccessfuljoins.
+￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼506 Chapter 10 ■ Data Mining Models in SQL
+The following query calculates the naïve Bayesian predicted score for two
+dimensions, channel and market:
+         SELECT customer_id, score.channel, score.market, is1yrstop,
+                (POWER(overall.odds,
+                       1-(COALESCE(market.n, 0) + COALESCE(channel.n,0))) *
+                 COALESCE(channel.odds,0)*COALESCE(market.odds, 0)) as predodds
+         FROM (SELECT s.*,
+                      (CASE WHEN tenure < 365 AND stop_type IS NOT NULL THEN 1.0
+                            ELSE 0 END) as is1yrstop, MONTH(start_date) as mon
+FROM subs s
+WHERE YEAR(start_date) = 2005) score CROSS JOIN
+(SELECT -1+1/(1-(AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL
+                                        THEN 1.0 ELSE 0 END))) as odds
+FROM subs
+               WHERE YEAR(start_date) = 2004) overall LEFT OUTER JOIN
+              (SELECT channel, 1 as n,
+-1+1/(1-(AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL THEN 1.0 ELSE 0 END))) as odds
+               FROM subs
+               WHERE YEAR(start_date) = 2004
+               GROUP BY channel) channel
+             ON score.channel = channel.channel LEFT OUTER JOIN
+              (SELECT market, 1 as n,
+-1+1/(1-(AVG(CASE WHEN tenure < 365 AND stop_type IS NOT NULL THEN 1.0 ELSE 0 END))) as odds
+               FROM subs
+               WHERE YEAR(start_date) = 2004
+               GROUP BY market) market
+             ON score.market = market.market
+This query has a separate subquery for each dimension, using the ideas just described. In addition, the odds for each dimension are then combined using COALESCE(), so the query can handle values that don’t match the dimension tables.
+Creating a Cumulative Gains Chart
+Creating a cumulative gains chart uses the preceding query as a subquery, cal- culating the percentile based on the predicted odds. For this purpose, the pre- dicted odds and predicted probability are interchangeable, because they have the same ordering. The resulting query is basically the same query used earlier for creating these charts:
+         SELECT percentile, COUNT(*) as numcustomers,
+                SUM(is1yrstop) as numactualstops,
+                AVG(is1yrstop*1.0) as actualstop,
+                AVG(1-(1/(1+predodds))) as avgpredp
+         FROM (SELECT score_subquery.*,
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 507
+￼￼￼               1-(1/(1+predodds)) as predp,
+NTILE(100) OVER (ORDER BY 1-(1/(1+predodds))) as percentile FROM (<score-subquery>) score_subquery
+)a
+  GROUP BY percentile
+  ORDER BY 1
+This query calculates the percentile based on the predicted score and counts the number of actual stops in each percentile.
+The cumulative gains chart in Figure 10-15 shows the cumulative propor- tion of stops for two score sets. As expected, the better one is for the scores on the model set. The data from 2005 is a more reasonable score set. It demon- strates that the model does still work on data a year later, although it is not quite as powerful.
+￼￼￼￼￼100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+Figure 10-15: This chart shows cumulative gains charts for the naïve Bayesian model on the training set (2004 starts) and on the score set (2005 starts).
+Comparison of Naïve Bayesian and Lookup Models
+Both naïve Bayesian models and lookup models estimate probabilities based on values along dimensions. The two modeling techniques produce exactly the same results when there is only one dimension; the results differ when there are more dimensions.
+It is worthwhile to think about the two different approaches. The lookup approach is a brute force approach that breaks the data into smaller and smaller cells. As there become more cells — either because there are more dimensions or because each dimension has more possible values — the cells become smaller and smaller. The data is literally divided among the cells. This means that the number of cells needs to be limited in some way, probably by using few dimensions that take on few values (as in the subscription data).
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Score 2004
+Score 2005
+No Model
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 10 20 30 40 50 60 70 80 90 100
+Model Depth (Percentile)
+www.it-ebooks.info
+Cum Proportion of Stops
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼508 Chapter 10 ■ Data Mining Models in SQL
+￼￼By contrast, naïve Bayesian models use all the data to estimate values for each dimension. The data is not divided and subdivided over and over. Instead, the approach uses probability theory and a reasonable assumption to combine the values along the dimensions into an estimated prediction. The assumption works well in practice, despite the fact that dimensions are almost never independent.
+Of course, both approaches are making another, unstated assumption. The models use data from 2004. The assumption is that the past tells us about the future. As we saw in the cumulative gains charts that compare the two values, the models do work, but they do not work as well on the data being scored as they do on the data used to build the model.
+Lessons Learned
+A data mining model takes inputs and produces an output, which is typically a prediction or estimation of some value. There are two major processes involved with models. The first is training or building the model. The second is applying the model to new data.
+SQL provides a good basis for learning the basics about data mining. Although this may seem surprising, some powerful techniques are really more aboutmanipulatingdatathanaboutfancystatisticaltechniques.TheGROUP BY operation in SQL is analogous to creating a model (both summarize data). The JOIN operation is analogous to scoring a model.
+This chapter discusses several different types of models. The first is a look- alike model, where the model score indicates how close one example is to another. For instance, the model score might indicate how similar zip codes are to the zip code that has highest market penetration.
+Lookup models are another type. These create a lookup table, so the process of scoring the model is the process of looking up values. The values might be the most popular product, or the probability of someone stopping, or some- thing else. Although any number of dimensions could be used to create the lookup table, the data gets partitioned into smaller and smaller pieces, mean- ing that the values in the table become more uncertain or even empty when there are more dimensions.
+Naïve Bayesian models address this shortcoming. They use some basic probability theory along with Bayes’ formula, an important formula in proba- bility proven almost three hundred years ago. This approach to modeling makes it possible to calculate lookup tables along each dimension separately, and then to combine the values together. The big advantage to the naïve Bayesian approach is the ability to handle many, many dimensions.
+￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 10 ■ Data Mining Models in SQL 509
+￼￼The naïve Bayesian models also make an assumption about the data. This assumption is that the different dimensions are independent (in the proba- bilistic sense). Although this assumption is not true when working with busi- ness data, the results from the model are often still useful. In a sense, naïve Bayesian models produce an expected value for a probability, similar to the way that the chi-square approach calculates an expected value.
+Evaluating models is as important as creating them. A cumulative gains chart shows how well a binary response model is performing. An average value chart shows the performance of a model estimating a number. And a classification chart shows the performance of classification models.
+This chapter has introduced modeling in the context of SQL and working with large databases. The traditional way of introducing modeling is through linear regression, which is discussed in the next chapter.
+www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼

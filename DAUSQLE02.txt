@@ -1,0 +1,1424 @@
+CHAPTER 2: What’s In a Table? Getting Started with Data Exploration
+
+The previous chapter introduced the SQL language from the perspective of data analysis. This chapter demonstrates the use of SQL for exploring data, the first step in any analysis project. The emphasis shifts from databases in general to data; understanding data — and the underlying customers — is a theme common to this chapter and the rest of the book.
+
+The most common data analysis tool, by far, is the spreadsheet, particularly Microsoft Excel. Spreadsheets show users data in a tabular format. More importantly, spreadsheets give users power over their data, with the ability to add columns and rows, to apply functions, create charts, make pivot tables, and color and highlight and change fonts to get just the right look. This functionality and the what-you-see-is-what-you-get interface make spreadsheets a natural choice for analysis and presentation. Spreadsheets, however, are inherently less powerful than databases because they run on a single user’s machine. Even without the historical limits in Excel on the number of rows (a maximum of 65,535 rows) and the number of columns (a maximum of 255 columns), the power of users’ local machines limits the performance of spreadsheet applications.
+
+This book assumes a basic understanding of Excel, particularly familiarity with the row-column-worksheet format used for laying out data. There are many examples of using Excel for basic calculations and charting. Because charts are so important for communicating results, the chapter starts by explaining some of the charting tools in Excel, providing tips for creating good charts.
+
+The chapter continues with exploring data in a single table, column by column. Such exploration depends on the types of data in the column, so there are separate sections for numeric columns and categorical columns. Although dates and times are touched upon here, they are so important that Chapter 4 is devoted to them. The chapter ends with a method for automating some descriptive statistics for columns in general. Throughout the chapter, most of the examples use the purchases dataset, which describes retail purchases.
+
+What Is Data Exploration?
+
+Data is stored in databases as bits and bytes, spread through tables and columns. The data lands there through various business processes. Operational databases capture the data as it is collected from customers — as they make airplane reservations, or complete telephone calls, or click on the web, or as their bills are generated. The databases used for data analysis are usually decision support databases and data warehouses where the data has been restructured and cleansed to conform to some view of the business.
+
+Data exploration is the process of characterizing the data that is actually present in a database and understanding the relationships between various columns and entities. Data exploration is a hands-on effort. Often, data is described through the use of metadata or by documentation that explains what should be there. Data exploration is about understanding what is actually there, and, if possible, understanding how and why it got there. Data exploration is about answering questions about the data, such as:
+
+- What are the values in each column?
+
+- What unexpected values are in each column?
+
+- Are there any data format irregularities, such as time stamps missing hours and minutes or names being both upper- and lowercase?
+
+- What relationships are there between columns?
+
+- What are frequencies of values in columns and do these frequencies make sense?
+
+TIP Documentation tells us what should be in the data; data exploration finds what is actually there.
+
+Almost anyone who has worked with data has stories about data quality or about discovering something very unexpected inside a database. At one telecommunications company, the billing system maintained customers’ telephone numbers as an important field inside the data. Not only was this column stored as character strings rather than numbers, but several thousand telephone numbers actually contained letters intermixed with numbers. Clearly, the column called telephone number was not always a telephone number. And, in fact, after much investigation, it turned out that under some circumstances involving calls billed to third parties, the column could contain values other than telephone numbers.
+
+Even when you are familiar with the data, it is still worthwhile to look at the data to see what is inside it. There are many different approaches for this. The simplest is to just look at rows and sample values in tables. This chapter talks about other methods as well. Seeing values is an important part of the endeavor. Much of this is possible by looking at summary tables. However, using charts is also important, because a good chart can convey much more information than a table of numbers. Before continuing with data exploration, the next section focuses on some important facets of charting in Excel.
+
+Excel for Charting
+
+Excel’s charting capability gives users much control over the visual presentation of data. A good presentation of results, however, is more than just clicking an icon and inserting a chart. Charts need to be accurate and informative, as well as visually elegant and convincing. Edward Tufte’s books, starting with The Visual Display of Quantitative Information, are classics in how to display and convey information.
+
+This section discusses charting in Excel, including various common chart types and good practices when using them. The discussion is necessarily specific, so some parts explain explicitly, click-by-click, what to do. The section starts with a basic example and then progresses to recommended formatting options. The intention is to motivate good practices by explaining the reasons, not to be a comprehensive resource explaining, click-by-click, what to do in Excel.
+
+A Basic Chart: Column Charts
+
+The first example, in Figure 2-1, uses a simple aggregation query, the number of orders for each payment type. The chart format used is a column chart, which shows a value for each column. In common language, these are also called bar charts, but in Excel, bar charts have horizontal bars whereas column charts have vertical columns.
+
+The query that pulls the data is:
+
+  SELECT paymenttype, COUNT(*) as cnt
+  FROM orders o
+  GROUP BY paymenttype
+  ORDER BY 1
+
+Orders by Payment Type — Column Chart
+80,000 70,000 60,000 50,000 40,000 30,000 20,000 10,000
+0
+?? AE DB MC OC VI
+
+Figure 2-1: A basic column chart shows the number of orders for each payment type code. This chart shows some good practices:
+
+- The chart has a title;
+
+- Appropriate axes have labels (none is needed for the horizontal axis because its meaning is clear from the title);
+
+- Numbers larger than one thousand have commas, because people are going to read the values;
+
+- Gridlines are very light so they do not overpower the data; and,
+
+- Extraneous elements are kept to a minimum. For instance, there is no need for a legend (because there is only one series) and no need for vertical grid lines (because the columns serve the same purpose).
+
+For the most part, charts throughout the book adhere to these conventions, with the exception of the title. Figures in a book have captions making titles unnecessary. This rest of this section explains how to create the chart with these elements.
+
+Inserting the Data
+
+Creating the chart starts with running the query and copying the data into an Excel spreadsheet. The data is assumed to be generated by a database access tool, which can export data into Excel such as by using cut-and-paste (<control>-C and <control>-V, if the tool conforms to Windows standards). The basic query produces two columns of data, in the spreadsheet. It is also possible to run SQL directly from Excel; this requires setting various configuration options that are outside the scope of this book.
+
+Number of Orders
+
+A good practice is to include the query in the spreadsheet along with the data itself. This makes it possible to remember exactly which query produced the results, something that becomes particularly important as analysis queries become more complex. Including the query ensures that you know what data is actually in the spreadsheet, even when you return to it hours, days, or months after running the query.
+
+TIP Keeping the query with the results is always a good idea.So, copy the query into the Excel spreadsheets along with the data.
+
+The technical aside “Common Issues When Copying Data into Excel” discusses some issues that occur when copying data. In the end, the spreadsheet looks something like Figure 2-2. Notice that this data includes the query used to generate the data.
+
+Figure 2-2: This spreadsheet contains the column data for payment types and orders.
+
+Creating the Column Chart
+
+Creating a column chart — or any other type of chart — has just two steps. The first is inserting the chart; the second is customizing it to be clean and informative.
+
+COMMON ISSUES WHEN COPYING DATA INTO EXCEL
+
+Each database access tool may have its own peculiarities when copying data into Excel. One method is to export the data as a file and import the file into Excel. When copying the data directly through the clipboard, there are some common issues. The first is the data landing in a single column. The second is a lack of headers in the data. A third issue is the formatting of the columns themselves.
+
+Under some circumstances, Excel places copied data in a single column rather than in multiple columns. This problem, which occurs because Excel recognizes the values as text rather than as columns, is easily solved by converting the text to columns using the following steps:
+
+1. Highlight the inserted data that you want converted to columns. Use either the mouse or keystrokes. For keystrokes, go to the first cell and type <shift><control><down arrow>.
+
+2. Bring up the “Text to Columns” wizard. Using the mouse, choose the menu item Data ➪ Text to Columns. The keystrokes <alt>-D <alt>-E do the same thing.
+
+3. Choose the appropriate options. The data may be delimited by tabs or commas, or the data may be fixed format. Buttons at the top of the wizard let you choose the appropriate format.
+
+4. Finish the wizard. Usually the remaining choices are not important.
+
+5. When finished, the data is transformed into columns, filling the columns to the right of the original data.
+
+The second problem is a lack of headers. This occurs, for instance, when using SQL Server and copying the data from the grid. To get the column headers in SQL Server, output the data as text rather than in a grid. The alternative is to manually type in the names of the columns in the spreadsheet.
+
+The third issue is the formatting of columns. Column formats are important; people read cell contents and formats help us understand the values.
+
+By default, large numbers do not have commas. One way to insert commas is to highlight the column and change the format by using the format wizard launched from Format ➪ Cells. Go to the “Number” tab, choose “Number,” set “0” decimal places, and click the “Use 1000 Separator” box. Date fields usually need to have their format changed. For them, go to the “Custom” option and type in the string “yyyy-mm-dd”. This sets the date format to a standard format. To set dollar amounts, choose the “Currency” option, with “2” as the decimal places and “$” as the symbol.
+
+The simplest way to create the chart is with the following steps:
+
+1. Highlight the data that goes into the chart. In this case, the query results have two columns and both columns, the payment type code and the count (along with their headers), go into the chart. If there is a non-data line between the header and the data, delete it (or copy the headers into the cells just above the data). To use keystrokes instead of the mouse to highlight the data, go to the first cell and type <shift><control><down arrow>.
+
+2. Bring up the Chart wizard.Using the mouse, choose the menu item Insert ➪ Chart. The keystrokes <alt>-I <alt>-H do the same thing.
+
+3. The default option for the sub-type of column chart is the one we want — the first sub-type under the column chart.
+
+4. Click “Next” and be sure that the “Columns” button is checked rather than rows.
+
+5. Click “Next” and add a title and axis labels.For this example, the title is “Number of Orders by Payment Type,” and the Y-axis is “Num Orders.”
+
+6. Click “Finish.” Further formatting can be done after the chart has been inserted.
+
+7. Resize the chart to an appropriate size, if you like.
+
+A chart, formatted with the default options, now appears in the spreadsheet. This chart can be copied and pasted into other applications, such as PowerPoint, Word, and email applications. When pasting the chart into other applications, it can be convenient to paste the chart as a picture rather than as a live Excel chart. To do this, use the File ➪ Paste Special (<alt>-E <alt>-S) menu option and choose the picture option.
+
+Formatting the Column Chart
+
+The following are the formatting conventions to apply to the column chart:
+
+- Resize the chart in the chart window;
+
+- Format the legend;
+
+- Change the fonts;
+
+- Change chart colors; and,
+
+- Adjust the horizontal scale.
+
+For reference, Figure 2-3 shows the names of various components of a chart, such as the chart area, plot area, horizontal gridlines, chart title, X-axis label, Y-axis label, X-axis title, and Y-axis title.
+
+Resize the Chart in the Chart Window
+
+By default, the chart does not take up quite all the space in the chart window. Why waste space? Click the gray area to select the plot area. Then make it bigger, keeping in mind that you usually don’t want to cover the chart title and axis labels.
+
+Y-axis labels
+Horizontal gridlines
+Chart Title
+Plot Area
+Chart Area
+Payment Type for All Orders
+80,000 70,000 60,000 50,000 40,000 30,000 20,000 10,000
+0
+?? AE DB MC OC VI
+Y-axis Y-axis title
+There is no X-axis title in this chart
+X-axis labels
+X-axis
+
+Figure 2-3: An Excel chart consists of many different parts.
+
+Format the Legend
+
+By default, Excel adds a legend, containing the name of each series in the chart. Having a legend is a good thing. By default, though, the legend is placed next to the chart, taking up a lot of real estate and shrinking the plot area. In most cases, it is better to have the legend overlap the plot area. To do this, click the plot area (the actual graphic in the chart window) and expand to fill the chart area. Then, click the legend and move it to the appropriate place, somewhere where it does not cover data values.
+
+When there is only one series, a legend is unnecessary. To remove it, just click the legend box and hit the <delete> key.
+
+Change the Fonts
+
+The default fonts in the chart are variable sized. So, if the chart is made smaller, the fonts become almost invisible. If the chart is enlarged, the text dominates it. To change all the fonts in the chart at once, double-click the white area to select options for the entire chart window. On the “Font” tab, deselect “Auto scale” on the lower left. Sizes and choices of fonts are definitely a matter of preference, but 8-point Arial is a reasonable choice.
+
+Number of Orders
+
+This change affects all fonts in the window. The chart title should be larger and darker (such as Arial 12-point Bold), and the axis titles a bit larger and darker (such as Arial 10-point Bold). The “Format Chart Title” dialog box makes it possible to change the font. Access the dialog box by double-clicking the text boxes themselves or right-clicking and choosing the format option.
+
+Change Chart Colors
+
+The default chart colors include a gray background. A white background is often preferable, because it highlights the colors and is more similar to the printed graphic. To change the background color, double-click the gray. In the “Format Plot Area” dialog box, click the little white square on the lower right to set the color. At the same time, eliminate the border on the chart area by changing the border from “Custom” to “None” on the right of the dialog box. To remove the outer border on the entire plot area, double-click the white space around the outside of the chart area and change the border option to “None.”
+
+Adjust the Grid Lines
+
+Grid lines should be visible to make chart values more readable. However, the grid lines are merely sideshows on the chart; they should be faint, so they do not interfere with or dominate the data points. On column charts, only horizontal grid lines are needed; these make it possible to easily match the vertical scale to the data points. On other charts, both horizontal and vertical grid lines are recommended.
+
+By default, Excel includes the horizontal grid lines but not the vertical ones. To choose zero, one, or both sets of grid lines, right-click in the chart area, choose “Chart Options,” and go to the “Gridlines” tab. Click the “Major Gridlines” boxes for both the X and Y axes, and then click “OK”. The “Minor Gridlines” are rarely needed.
+
+To adjust the color of the grids, double-click the grid lines themselves. The horizontal grid lines are present but not visible when they are the same shade as the background. If this is the case, double-click where they should be to bring up the “Format Gridlines” dialog box. A good choice of colors is the lightest shade of gray, just above the white.
+
+Adjust the Horizontal Scale
+
+For a column chart, every category should be visible. By default, Excel might only show some of the category names. To change this, double-click the horizontal axis to bring up the “Format Axis” dialog box, and go to the “Scale” tab. Set the second and third numbers, “Number of Categories between tick-mark labels” and “Number of categories between tick-marks” both to 1. This controls the spacing of the marks on the axis and of the labels.
+
+TIP To include text in a chart that is connected to a cell (and whose value changes when the cell value changes), click the whole chart and type “=” and click the cell. A text box appears with the text; this can be formatted and moved however you choose. The same technique works for other text boxes, such as titles; click the title box, type “=”, and click the cell.
+
+Useful Variations on the Column Chart
+
+This simple column chart illustrates many of the basic principles of using charts in Excel. There are some useful variations on the column chart. To illustrate them, a somewhat richer set of data is needed, which is provided by a new query.
+
+A New Query
+
+A richer set of data provides more information about the payment types, information such as:
+
+- Number of orders with each code;
+
+- Number of orders whose price is in the range $0–$10, $10–$100, $100–$1,000, and over $1,000; and, 
+
+- Total revenue for each code.
+
+The following query produces this data:
+
+  SELECT paymenttype,
+         SUM(CASE WHEN 0 <= totalprice AND totalprice < 10
+                  THEN 1 ELSE 0 END) as cnt_0_10,
+         SUM(CASE WHEN 10 <= totalprice AND totalprice < 100
+                  THEN 1 ELSE 0 END) as cnt_10_100,
+         SUM(CASE WHEN 100 <= totalprice AND totalprice < 1000
+                  THEN 1 ELSE 0 END) as cnt_100_1000,
+         SUM(CASE WHEN totalprice >= 1000 THEN 1 ELSE 0 END) as cnt_1000,
+         COUNT(*) as cnt, SUM(totalprice) as revenue
+  FROM orders
+  GROUP BY paymenttype
+  ORDER BY 1
+
+The data divides the orders into four groups, based on the size of the orders. It is a good set of data for showing different ways to compare values using column charts.
+
+Side-by-Side Columns
+
+Side-by-side columns, as shown in Figure 2-4, are the first method for comparing order sizes among different payment types. This chart shows the actual value of the number of orders for different groups. Some combinations are so small that the column is not even visible.
+
+Orders by Payment Type and Order Size — Side by Side
+70,000 60,000 50,000 40,000 30,000 20,000 10,000
+0
+90,000 80,000 70,000 60,000 50,000 40,000 30,000 20,000 10,000
+0
+100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+?? AE DB MC OC VI
+cnt_0_10 cnt_10_100 cnt_100_1000 cnt_1000
+Orders by Payment Type and Order Size — Stacked
+cnt_1000
+cnt_100_1000
+cnt_10_100 cnt_0_10
+?? AE DB MC OC VI
+Orders by Payment Type and Order Size — Stacked Normalized
+cnt_1000 cnt_100_1000 cnt_10_100 cnt_0_10
+?? AE DB MC OC VI
+
+Figure 2-4: Three different charts using the same data emphasize different types of information, even though they contain the same raw data.
+
+Orders Number of Orders Number of Orders
+
+This chart makes it clear that three payment methods predominate: AE (American Express), MC (MasterCard), and VI (Visa). It also makes it clear that orders in the range of $10 to $100 predominate.
+
+To create such a side-by-side chart, highlight the first five columns of the data, and then follow the chart wizard as described earlier. The side-by-side chart is the default when more than one data column is selected.
+
+Stacked Columns
+
+The middle figure in Figure 2-4 shows stacked columns. This communicates the total number of orders for each payment type, making it possible to find out, for instance, where the most popular payment mechanisms are. Stacked columns maintain the actual values; however, they do a poor job of communicating proportions, particularly for smaller groups.
+
+To create stacked columns, choose the second option under the column charts, to the right of the basic chart.
+
+Stacked and Normalized Columns
+
+Stacked and normalized columns provide the ability to see proportions across different groups, as shown in the bottom chart in Figure 2-4. Their drawback is that small numbers — in this case, very rare payment types — have as much weight visually as the more common ones. These outliers can dominate the chart.
+
+One solution is to include payment type codes that have only some minimum number of orders. Filtering the data, using the Data ➪ Filter ➪ Autofilter functionality, is one way to do this. Another is by sorting the data in descending order by the total count, and then choosing the top rows to include in the chart.
+
+To create the chart, choose the third “Column Chart” option in the chart wizard. This is on the upper-right side.
+
+Number of Orders and Revenue
+
+Figure 2-5 shows another variation, where one column has the number of orders, and the other has the total revenue. The number of orders varies up to several tens of thousands. The revenue varies up to several millions of dollars. On a chart with both series, the number of orders would disappear, because the numbers are so much smaller.
+
+The trick is to plot the two series of data using different scales, which means plotting them on different axes: the number of orders on the left and the total revenue on the right. Set the colors of the axes and axis labels to match the colors of the columns.
+
+Using a second axis for column charts creates overlapping columns. To get around this, the number of orders is wide and the revenue is narrow. Also, either chart can be modified to be of a different type, making it possible to create many different effects.
+
+Number of Orders and Revenue — Overlapping on Two Axes
+80,000 70,000 60,000 50,000 40,000 30,000 20,000 10,000
+$8,000,000 $7,000,000 $6,000,000 $5,000,000 $4,000,000 $3,000,000 $2,000,000 $1,000,000
+0 $0 ?? AE DB MC OC VI
+
+Figure 2-5: Showing the number of orders and revenue requires using two axes.
+
+The first step is to include the revenue and number of orders data in the chart. One way to do this is to choose all the columns in the data. After creating the chart, right-click, choose “Source data,” and go to the “Series” tab. One by one, remove the series that should not be part of the chart, in this case, all the counts of orders of particular size. An alternative method would be to add each series, one by one.
+
+Second, the revenue series needs to move to the secondary axis. To do this, right-click the revenue columns. Choose “Format data series” and go to the “Axis” tab. There, click the “Secondary axis.”
+
+Third, add a title to the secondary axis by right-clicking the chart and choosing “Chart Options.” The bottom choice is “Second value (y) axis.” After adding the title, change the colors of the two axes to match the series; this makes it possible to eliminate the legend, reducing clutter on the chart.
+
+When creating charts with two Y-axes, the grid lines should align to the tick marks on both axes. This requires some adjustment. In this case, set the scale on the right-hand axis so the maximum is $8,000,000, instead of the default $6,000,000. To do this, double-click the axis, go to the “Scale” tab, and change the “Maximum” value. The grid lines match the scales on both sides.
+
+The final step is to get the effect of the fat and skinny columns. To create the fat column, double-click the number of orders data columns. Then go to the last tab, “Options,” and set the “Overlap” to 0 and the “Gap Width” to 50. To get the skinny columns, double-click the revenue data series. Set the “Overlap” to 100 and the “Gap Width” to 400.
+
+Number of Orders
+Revenue
+
+Other Types of Charts
+
+A few other types of charts are used throughout the book. This section is intended as an introduction to these charts. Many of the options are similar to the options for the column charts, so the specific details do not need to be repeated.
+
+Line Charts
+
+The data in the column charts can all be represented as line charts, such as in Figure 2-6. Line charts are particularly useful when the horizontal axis represents a time dimension, because they naturally show changes over time. Line charts can also be stacked the same way as column charts, as well as normalized and stacked.
+
+Line charts have some interesting variations that are used in later chapters. The simplest is deciding whether the line should have icons showing each point, or simply the line that connects them. This is controlled by choosing the sub-type of chart.
+
+Other capabilities with line charts are the ability to add a trend line and error bars, which are introduced in later chapters as needed.
+70,000 60,000 50,000 40,000 30,000 20,000 10,000
+0
+Orders by Payment Type and Order Size — Line Chart
+cnt_0_10
+cnt_10_100
+cnt_100_1000
+cnt_1000
+?? AE DB MC OC VI
+
+Figure 2-6: The line chart is an alternative to a column chart. Line charts can make it easier to spot certain types of trends.
+
+Number of Orders
+
+Area Charts
+
+Area charts show data as a shaded region. They are similar to column charts, but instead of columns, there is only the colored region with no spaces between data points. They should be used sparingly, because they fill the plot area with color that does not convey much information. Their primary use is to convey information on the secondary axis using lighter, background colors.
+
+Figure 2-7 shows the total orders as columns (with no fill on the columns) and the total revenue presented as an area chart on the secondary Y-axis. This chart emphasizes that there are three main payment types, AE, MC, and VI, which are responsible for most orders and most revenue. Notice, though, that AE and MC have about the same number of orders, but AE has much more revenue. This means that the average revenue for customers who pay by American Express is larger than the average revenue for customers who pay by MasterCard.
+
+80,000 70,000 60,000 50,000 40,000 30,000 20,000 10,000
+$8,000,000 $7,000,000 $6,000,000 $5,000,000 $4,000,000 $3,000,000 $2,000,000 $1,000,000
+Number of Orders and Revenue — Overlapping on Two Axes
+0 $0 ?? AE DB MC OC VI
+
+Figure 2-7: This example shows the revenue on the secondary axis as an area chart.
+
+To create this chart, follow the same steps as used for Figure 2-5. Click once on the number of orders series to choose it. Then right-click and choose “Chart type.” Under chart type, select “Area.” The default sub-type is the correct one. To change the colors, double-click the colored area and choose appropriate borders and colors for the region.
+
+To change the column fill to transparent, double-click the number of orders series. Under “Area” on the left, choose the button by “None.”
+
+X-Y Charts (Scatter Plots)
+
+Scatter plots are very powerful and are used for many examples. Figure 2-8 has a simple scatter plot that shows the number of orders and revenue for each payment type. This example has both horizontal and vertical gridlines, which is a good idea for scatter plots.
+
+Unfortunately, in Excel, it is not possible to label the points on the scatter plot with codes or other information. You have to go back to the original data to see what the points refer to. The point above the trend line is for American Express. Orders paid for by American Express have more revenue than the trend line suggests.
+
+In this example, there is an obvious relationship between the two variables — payment types with more orders have more revenue. According to the equation for the trend line, each additional order brings in about $75 additional revenue. To see the relationship, add a trend line (which is discussed in more detail in Chapter 11). Click the series to choose it, then right-click and choose “Add Trendline.” On the “Options” tab, you can choose to see the equation by clicking the button next to the “Display equation on Chart.” Click “OK” and the trend line appears. It is a good idea to make the trend line a similar color to the original data, but lighter, perhaps using a dashed line. Double-clicking the line brings up a dialog box with these options.
+
+$6,000,000 $5,000,000 $4,000,000 $3,000,000 $2,000,000 $1,000,000
+Revenue vs Num Orders for Different Payment Types
+y = 74.406x - 108372 R2= 0.9207
+$0
+0 10,000 20,000 30,000 40,000 50,000 60,000 70,000 80,000
+Number of Orders
+
+Figure 2-8: This scatter plot shows the relationship between the number of orders and revenue for various payment types.
+
+This section has discussed credit card types without any discussion of how to determine the type. The aside “Credit Card Numbers” discusses the relationship between credit card numbers and credit card types.
+
+Revenue
+
+What Values Are in the Columns?
+
+The basic charting mechanisms are a good way to see the data, but what do we want to see? The rest of this chapter discusses things of interest when exploring a single table. Although this discussion is in terms of a single table, remember that SQL makes it quite easy to join tables together to make them look like a single table — and the methods apply equally well in this case.
+
+CREDIT CARD NUMBERS
+
+This section used payment types as the example, skipping how credit card types are extracted from credit card numbers. Credit card numbers have some structure:
+
+- The first six digits are the Bank Identification Number (BIN). These are a special case of Issuer Identification Numbers defined by an international standard called ISO 7812.
+
+- An account number follows, controlled by whoever issues the credit card.
+
+- A checksum is at the end to verify the card number is valid.
+
+Credit card numbers themselves are interesting, but don’t use them! Storing credit card numbers, unencrypted in a database, poses privacy and security risks. However, there are two items of interest in the numbers: the credit card type and whether the same credit card is used on different transactions.
+
+Extracting the credit card type, such as Visa, MasterCard, or American Express, from the credit card number is only challenging because the folks who issue the BINs are quite secretive about who issues which number. However, over the years, the most common credit card types have become known (Wikipedia is a good source of information). The BINs for the most common credit card types are in the following table:
+
+PREFIX
+4
+6011
+2014, 2149 300–305, 36, 38, 55 34, 37
+35, 2131, 1800 51–55
+560, 561
+CC TYPE
+VISA DISCOVER enRoute DINERS CLUB AMEX
+JCB MASTERCARD DEBIT
+
+Continued on next page
+
+CREDIT CARD NUMBERS (CONTINUED)
+
+The length of the prefix varies from 1 number to 4 numbers, which makes it a bit difficult to do a lookup in Excel. The following CASE statement shows how to assign credit card types in SQL:
+
+SELECT (CASE WHEN LEFT(ccn, 2) IN (‘51’, ‘52’, ‘53’, ‘54’, ‘55’)
+             THEN ‘MASTERCARD’
+             WHEN LEFT(ccn, 1) IN (‘4’) THEN ‘VISA’
+             WHEN LEFT(ccn, 2) IN (‘34’, ‘37’) THEN ‘AMERICAN EXPRESS’
+             WHEN LEFT(ccn, 3) IN (‘300’, ‘301’, ‘302’, ‘303’, ‘304’,
+                                   ‘305’) OR
+                  LEFT(ccn, 2) IN (‘36’, ‘38’, ‘55’)
+                  THEN ‘DINERS CLUB’
+             WHEN LEFT(ccn, 4) IN (‘6011’) THEN ‘DISCOVER’
+             WHEN LEFT(ccn, 4) IN (‘2014’, ‘2149’) THEN ‘ENROUTE’
+             WHEN LEFT(ccn, 2) IN (‘35’) OR
+                  LEFT(ccn, 4) IN (‘2131’, ‘1800’)
+                  THEN ‘JCB’
+             WHEN LEFT(ccn, 3) IN (‘560’, ‘561’) THEN ‘DEBIT’
+             ELSE ‘OTHER’ END) as cctypedesc
+
+Recognizing when the same credit card number is used multiple times is both easy and challenging. The simple solution is to store the credit card number in the decision support database. However, this is not a good idea, for security reasons. A better approach is to transform the number into something else that doesn’t look like a credit card number. One possibility is to encrypt the number (if your database supports this). Another mechanism is to maintain a lookup table for credit card numbers that does not allow duplicates. The row number in this table is then a good proxy for the credit card number. Using the row number instead makes it possible to identify the same credit card over time, without storing the credit card number explicitly.
+
+The section starts by looking at frequencies of values, using histograms, for both categorical and numeric values. It then continues to discuss interesting measures (statistics) on columns. Finally, it shows how to gather all these statistics in one rather complex query.
+
+Histograms
+
+A histogram is a basic chart that shows the distribution of values that a column contains. For instance, the following query creates a table with the number of orders in each state and the population of each state, answering the question: What is the distribution of orders by state and how is this related to the state’s population?
+
+SELECT state, SUM(numorders) as numorders, SUM(pop) as pop
+FROM ((SELECT o.state, COUNT(*) as numorders, 0 as pop
+FROM orders o
+GROUP BY o.state
+        )
+        UNION ALL
+        (SELECT state, 0 as numorders, SUM(pop) as pop
+         FROM zipcensus
+         GROUP BY state)) summary
+  GROUP BY state
+  ORDER BY 2 DESC
+
+This query combines information from the Zipcensus and Orders tables. The first subquery counts the number of orders and the second calculates the population. These are combined using UNION ALL, to ensure that all states that occur in either database are included in the final result. Alternatively, there could be two queries producing two result tables that are then combined in Excel.
+
+Figure 2-9 shows the results. Notice that in this chart, the population is shown as a lighter shaded area on the secondary axis and the number of orders as a column chart. These are ordered by the number of orders.
+
+The chart shows several things. For instance, California, which has the largest population, is third in number of orders. Perhaps this is an opportunity for more marketing in California. At the very least, it suggests that marketing efforts are focused on the northeast, because New York and New Jersey have larger numbers of orders. This chart also suggests a measure of penetration in the state, the number of orders divided by the population.
+
+Orders and Population by State
+60,000  30,000,000 50,000 25,000,000 40,000  20,000,000 30,000 15,000,000 20,000 10,000,000 10,000  5,000,000
+00
+State Abbreviation
+
+Figure 2-9: This example shows the states with the number of orders in columns and the population as an area.
+
+The resulting chart is a bit difficult to read, because there are too many state abbreviations to show on the horizontal axis. In this case, it is possible to expand the horizontal axis and make the font small enough so all the abbreviations fit, just barely. This works for state abbreviations; for other variables it might be impractical, particularly if there are more than a few dozen values.
+
+State Population
+NY NJ CA FL CT PA MA TX IL VA MD OH MI WA GA NC AZ CO DC MN WI MO OR IN TN ON RI SC VT ME KY NH LA NM DE NV AL IA KS OK UT HI NE BC AR MS ID PQ WV PR AK AB MT WY SD AE ND
+Number of Orders
+
+One way to make the results more intelligible is to place the data into groups. That is, take the states with few orders and collect them together into one “OTHER” category; states with many orders are kept individually. For this purpose, let’s say that states with fewer than 100 orders are placed in the “OTHER” category. The following query answers the question: What is the distribution of orders among states that have 100 or more orders?
+
+  SELECT (CASE WHEN cnt >= 100 THEN state ELSE ‘OTHER’ END) as state,
+          SUM(cnt) as cnt
+  FROM (SELECT o.state, COUNT(*) as cnt
+        FROM orders o
+GROUP BY o.state )a
+  GROUP BY (CASE WHEN cnt >= 100 THEN state ELSE ‘OTHER’ END)
+  ORDER BY 2 desc
+
+This query puts the data in the same two-column format used previously for making a histogram.
+
+This approach has one drawback, which is the requirement for a fixed value in the query — the “100” in the comparison. One possible modification is to ask a slightly different question: What is the distribution of orders by state, for states that have more than 2% of the orders?
+
+  SELECT (CASE WHEN bystate.cnt >= 0.02*total.cnt
+               THEN state ELSE ‘OTHER’ END) as state,
+          SUM(bystate.cnt) as cnt
+  FROM (SELECT o.state, COUNT(*) as cnt
+FROM orders o
+        GROUP BY o.state
+       ) bystate CROSS JOIN
+       (SELECT COUNT(*) as cnt FROM orders) total
+  GROUP BY (CASE WHEN bystate.cnt >= 0.02*total.cnt
+            THEN state ELSE ‘OTHER’ END)
+  ORDER BY 2 desc
+
+The first subquery calculates the total orders in each state. The second calculates the total orders. Because the total orders has only one row, the query uses a CROSS JOIN. The aggregation then uses a CASE statement that chooses states that have at least 2% of all orders.
+
+Actually, this query answers the question and goes one step beyond. It does not filter out the states with fewer than 2% of the orders. Instead, it groups them together into the “OTHER” group. This is preferable, because it ensures that no orders are filtered out, which helps prevent mistakes in understanding the data.
+
+TIP When writing exploration queries that analyze data, keeping all the data is usually a better approach than filtering rows. In such a case, a special group can be made to keep track of what would have been filtered.
+
+Another alternative is to have some number of states, such as the top 20 states, with everything else placed in the other category, answering the question: What is the distribution of the number of orders in the 20 states that have the largest number of orders? Unfortunately, such a query is quite complex. The easiest approach requires a row number calculation, which is non-standard across SQL dialects:
+
+  SELECT (CASE WHEN rank < 20 THEN state ELSE ‘OTHER‘ END) as state,
+         SUM(numorders) as numorders
+  FROM (SELECT o.state, COUNT(*) as numorders, <rownumber> as rank
+        FROM orders o
+        GROUP BY o.state
+        ORDER BY COUNT(*) DESC
+        ) bystate
+  GROUP BY (CASE WHEN rank < 20 THEN state ELSE ‘OTHER‘ END)
+  ORDER BY 2 DESC
+
+This query could also be accomplished in Microsoft SQL using the TOP option and a subquery with an ORDER BY clause (both of these are SQL extensions):
+
+  SELECT state, numorders
+  FROM (SELECT TOP 20 o.state, COUNT(*) as numorders
+        FROM orders o
+        GROUP BY o.state
+        ORDER BY COUNT(*) DESC
+       ) bystate
+  ORDER BY numorders desc
+
+In this version, the subquery sorts the data by the number of orders in descending order. The TOP option then chooses the first twenty rows and returns only these. This method does not make it possible to create the “OTHER” category, so the results do not include data for all states.
+
+The following version groups the other states into an “OTHER” category:
+
+  SELECT (CASE WHEN rank < 20 THEN state ELSE ‘OTHER’ END) as state,
+         SUM(numorders) as numorders
+  FROM (SELECT bystate.*,
+               ROW_NUMBER() OVER (ORDER BY numorders DESC) as rank
+        FROM (SELECT o.state, COUNT(*) as numorders
+              FROM orders o
+              GROUP BY o.state
+             ) bystate
+)a
+GROUP BY (CASE WHEN rank < 20 THEN state ELSE ‘OTHER’ END) ORDER BY 2 DESC
+
+This query uses the ROW_NUMBER() window function to define the ranking. A second layer of subqueries is needed because the window functions cannot be combined with aggregations. The ranking window functions are discussed in more detail in Chapter 8.
+
+An interesting variation on histograms is the cumulative histogram, which makes it possible to determine, for instance, how many states account for half the orders. To create one of these, order the results by the number of orders in descending order (so the biggest states are at the top). Then, in Excel, add a cumulative column.
+
+To do this, let’s assume that the number of orders is in column B and the data starts in cell B2. The easiest way to calculate the cumulative total is type the formula “=C1+B2” in cell C2 and then copy this down the column. An alternative formula that does not reference the previous cell is “=SUM($B$2:$B2).” If desired, the cumulative number can be divided by the total orders to get a percentage, as shown in Figure 2-10.
+
+Cumulative Proportion of Orders by State
+100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+
+Figure 2-10: The cumulative histogram shows that four states account for more than half of all orders.
+
+Histograms of Counts
+
+The number of states is relatively well-known. We learn that there are fifty states in the United States, although the Post Office recognizes 59 — because places such as Puerto Rico (PR), the District of Columbia (DC), Guam (GM), and the Virgin Islands (VI) are treated as states — plus two more abbreviations for “states” used for military post offices. Corporate databases might have even more, sometimes giving equal treatment to Canadian provinces and American states, and even intermingling foreign country or province codes with state abbreviations.
+
+NY NJ CA FL CT PA MA TX IL VA MD OH MI WA GA NC AZ CO DC MN WI MO OR IN TN
+ON RI SC VT ME KY NH LA NM DE NV AL IA KS OK UT HI NE BC AR MS ID PQ WV PR AK AB MT WY SD AE ND MB NS SK UK VI AP NF NB AA EN GU NT QL SP PE UK
+FR CH YU SR US VC CN BD DF GD LC KM QC SO PC. NL MG
+
+Still, there are a relatively small number of states. By contrast, there are thousands of zip codes. More than fit in a single histogram. Where to start with such columns? A good question to ask is the histogram of counts question: What is the number of zip codes that have a given number of orders? The following query answers this:
+
+  SELECT numzips, COUNT(*) as numorders, MIN(zipcode), MAX(zipcode)
+  FROM (SELECT o.zipcode, COUNT(*) as numzips
+FROM orders o
+        GROUP BY o.zipcode
+       ) bystate
+  GROUP BY numzips
+  ORDER BY 1
+
+The subquery calculates the histogram. The outer SELECT counts how often each count occurs in the histogram.
+
+The result set says how many values occur exactly one time, exactly two times, and so on. For instance, in this data, there are 5,954 zip codes that occur exactly once. The query also returns the minimum and maximum values, which provide examples of such zip codes. Because the two examples in the first row are not valid zip codes, some or all of the one-time zip codes seem to be errors in the data. Note that for a primary key, all the values should be unique, so the histogram of counts shows all values as being one-time.
+
+TIP The histogram of counts for a primary key always has exactly one row, where CNT is 1.
+
+Another example comes from the Orderline table. The question is: What is the number of order lines where the product occurs once (overall), twice, and so on? The query that answers this is quite similar to the preceding query:
+
+  SELECT numol, COUNT(*) as numprods, MIN(productid), MAX(productid)
+  FROM (SELECT productid, COUNT(*) as numol
+        FROM orderline
+GROUP BY productid )a
+  GROUP BY numol
+  ORDER BY 1
+
+The subquery counts the number of order lines where each product appears. The outer query then creates a histogram of this number.
+
+This query returns 385 rows; the first few rows and last row are in Table 2-1. The last row of the table has the most common product, whose ID is 12820 and appears in 18,648 order lines. The least common products are in the first row; there are 933 that occur only once — about 23.1% of all products. However, these rare products occur in only 933/286,017 orders, about 0.02% of orders.
+
+Table 2-1: Histogram of Counts of Products in Orderlines Table
+NUMBER OF ORDERS
+1 2 3 4 5 6 7 8
+... 18,648
+NUMBER OF PRODUCTS
+933 679 401 279 201 132 111
+84 1
+MINIMUM MAXIMUM PURCHASEID PURCHASEID
+10017 14040 10028 14036 10020 14013 10025 14021 10045 13998 10014 13994 10019 13982 10011 13952
+12820 12820
+
+How many different values of PRODUCTID are there? This is the sum of the second column in the table, which is 4,040. How many order lines? This is the sum of the product of the first two columns, which is 286,017. The ratio of these two numbers is the average number of order lines per product, 70.8; that is, a given product occurs in 70.8 order lines, on average. Calculating the number of order lines uses the Excel function SUMPRODUCT(), which takes two columns, multiplies them together cell by cell, and then adds the results together.The specific formula is “=SUMPRODUCT(C13:C397, D13:D397).”
+
+Cumulative Histograms of Counts
+
+An interesting question is: What is the proportion of products that account for half of all order lines? Answering this question requires two cumulative columns, the cumulative number of order lines and the cumulative number of products, as shown in Table 2-2:
+
+This table shows that products with 6 or fewer order lines account for 65.0% of all products. However, they appear in only 2.2% of order lines. We have to go to row 332 (out of 385) to find the middle value. In this row, the product appears in 1,190 order lines and the cumulative proportion of order lines crosses the halfway point. This middle value — called the median — shows that 98.7% of all products account for half the order lines, so 1.3% account for the other half. In other words, the common products are much more common than the rare ones. This is an example of the long tail that occurs when working with thousands or millions of products.
+
+Table 2-2: Histogram of Counts of Products in Order Lines Table with Cumulative Order
+Lines and Products
+NUMBER PRODUCTS
+      933
+      679
+      401
+      279
+      201
+      132
+1
+1
+CUMULATIVE
+CUMULATIVE % ORDER PRODUCTS LINES
+0.3% 23.1% 0.8% 39.9% 1.2% 49.8% 1.6% 56.7% 2.0% 61.7% 2.2% 65.0%
+50.2% 98.7% 100.0% 100.0%
+ORDER LINES
+1 2 3 4 5 6
+... 1,190 ...
+18,648
+ORDER LINES
+933 2,291 3,494 4,610 5,615 6,407
+143,664
+286,017
+PRODUCTS
+933 1,612 2,013 2,292 2,493 2,625
+3,987
+4,040
+
+The cumulative number of products is the sum of all values in NUMPRODS up to a given row. A simple way to calculate this is =SUM($D$284:$D284). When this formula is copied down the column, the first half of the range stays constant (that is, remains $D$284) and the second half increments (becoming $D284 then $D285 and so on). This form of the cumulative sum is preferable to the =H283+D284 form, because cell H283 contains a column title, which is not a number, causing problems in the first sum. (One way around this is to use: =IF(ISNUMBER(H283), H283, 0) + D284.)
+
+The cumulative number of order lines is the sum of the product of the NUMOL and NUMPRODS values (columns C and D) up to that point. The formula is:
+
+  =SUMPRODUCT($C$284:$C284, $D$284:$D284)
+
+The ratios are the value in each cell divided by the last value in the column.
+
+Histograms (Frequencies) for Numeric Values
+
+Histograms work for numeric values as well as categorical ones. For instance, the NUMUNITS column contains the number of different units of a product included in an order and it takes on just a handful of values. How do we know this? The following query answers the question: How many different values does NUMUNITS take on?
+
+  SELECT COUNT(*) as numol, COUNT(DISTINCT numunits) as numvalues
+  FROM orderline
+
+It only takes on 158 values. On the other hand, the column TOTALPRICE in the same table takes on over 4,000 values, which is a bit cumbersome for a histogram, although the cumulative histogram is still quite useful. A natural way to look at numeric values is by grouping them into ranges. The next section explains several methods for doing this.
+
+Ranges Based on the Number of Digits, Using Numeric Techniques
+
+Counting the number of important digits — those to the left of the decimal point — is a good way to group numeric values into ranges. For instance, a value such as “123.45” has three digits to the left of the decimal point. For numbers greater than one, the number of digits is one plus the log in base 10 of the number, rounded down to the nearest integer:
+
+  SELECT FLOOR(1+ LOG(val) / LOG(10)) as numdigits
+
+However, not all values are known to be greater than 1. For values between –1 and 1, the number of digits is zero, and for negative values, we might as well identify them with a negative sign. The following expression handles these cases:
+
+  SELECT (CASE WHEN val >= 1 THEN FLOOR(1+ LOG(val) / LOG(10))
+               WHEN -1 < val AND val < 1 THEN 0
+               ELSE - FLOOR(1+ LOG(-val) / LOG(10)) END) as numdigits
+
+Used in a query for TOTALPRICE in Orders, this turns into:
+
+SELECT numdigits, COUNT(*) as numorders, MIN(totalprice), MAX(totalprice) FROM (SELECT (CASE WHEN totalprice >= 1
+                     THEN FLOOR(1+ LOG(totalprice) / LOG(10))
+                     WHEN -1 < totalprice AND totalprice < 1 THEN 0
+                     ELSE - FLOOR(1+ LOG(-totalprice) / LOG(10)) END
+               ) as numdigits, totalprice
+        FROM orders
+)a
+GROUP BY numdigits
+ORDER BY 1
+
+In this case, the number of digits is a small number between 0 and 4, because TOTALPRICE is never negative and always under $10,000.
+The following expression turns the number of digits into a lower and upper bounds, assuming that the underlying value is never negative:
+
+  SELECT SIGN(numdigits)*POWER(10, numdigits-1) as lowerbound,
+         POWER(10, numdigits) as upperbound
+
+This expression uses the SIGN() function, which returns –1, 0, or 1 depending on whether the argument is less than zero, equal to zero, or greater than zero. A similar expression can be used in Excel. Table 2-3 shows the results from the query.
+
+Table 2-3: Ranges of Values for TOTALPRICE in Orders Table
+# DIGITS LOWER BOUND
+0 $0 1 $1 2 $10 3 $100 4 $1,000
+UPPER BOUND
+$1 $10 $100 $1,000 $10,000
+# ORDERS
+9,130
+6,718 148,121 28,055 959
+MINIMUM
+$0.00
+$1.75 $10.00 $100.00 $1,001.25
+MAXIMUM
+$0.64
+$9.99 $99.99 $1,000.00 $9,848.96
+Ranges Based on the Number of Digits, Using String Techniques
+
+There is a small error in the table. The number “1000” is calculated to have three digits rather than four. The discrepancy is due to a rounding error in the calculation. An alternative, more exact method is to use string functions.
+
+This calculates the length of the string representing the number, using only digits to the left of the decimal place. The SQL expression for this is:
+
+  SELECT LEN(CAST(FLOOR(ABS(val)) as INT))*SIGN(FLOOR(val)) as numdigits
+
+This expression uses the non-standard LEN() function and assumes that the integer is converted to a character value. See Appendix A for equivalent statements in other databases.
+
+More Refined Ranges: First Digit Plus Number of Digits
+
+Table 2-4 shows the breakdown of values of TOTALPRICE in Orders by more refined ranges based on the first digit and the number of digits. Assuming that values are always non-negative (and most numeric values in databases are non-negative), the expression for the upper and lower bound is:
+
+  SELECT lowerbound, upperbound, COUNT(*) as numorders, MIN(val), MAX(val)
+  FROM (SELECT FLOOR(val / POWER(10.0, SIGN(numdigits)*(numdigits - 1)))*
+POWER(10.0, SIGN(numdigits)*(numdigits-1)) as lowerbound, FLOOR(1+ (val / POWER(10.0, SIGN(numdigits)*(numdigits - 1))))* POWER(10.0, SIGN(numdigits)*(numdigits-1)) as upperbound, a.*
+        FROM (SELECT (LEN(CAST(FLOOR(ABS(totalprice)) as INT)) *
+                      SIGN(FLOOR(totalprice))) as numdigits,
+                     totalprice as val
+             FROM orders
+)a )b
+  GROUP BY lowerbound, upperbound
+  ORDER BY 1
+
+This query uses two subqueries. The innermost calculates NUMDIGITS and the middle calculates LOWERBOUND and UPPERBOUND. In the complicated expressions for the bounds, the SIGN() function is used to handle the case when the number of digits is zero.
+
+Table 2-4: Ranges of Values for TOTALPRICE in Orders Table by First Digit and Number of Digits
+LOWER- UPPER- BOUND BOUND
+$0 $1
+$1 $2
+$2 $3
+$3 $4
+$4 $5
+$5 $6
+$6 $7
+$7 $8
+$8 $9
+$9 $10
+$10 $20
+$20 $30 $30 $40 $40 $50 $50 $60 $60 $70 $70 $80 $80 $90 $90 $100
+$100 $200 $200 $300 $300 $400 $400 $500 $500 $600
+NUMBER OF ORDERS
+9,130 4 344 2 13 152 1,591 2,015 1,002 1,595 54,382 46,434 20,997 9,378 6,366 3,629 2,017 3,257 1,661 16,590 1,272 6,083 1,327 1,012
+MINIMUM MAXIMUM TOTALPRICE TOTALPRICE
+$0.00 $0.64 $1.75 $1.95 $2.00 $2.95 $3.50 $3.75 $4.00 $4.95 $5.00 $5.97 $6.00 $6.99 $7.00 $7.99 $8.00 $8.99 $9.00 $9.99
+$10.00 $19.99 $20.00 $29.99 $30.00 $39.99 $40.00 $49.98 $50.00 $59.99 $60.00 $69.99 $70.00 $79.99 $80.00 $89.99 $90.00 $99.99
+$100.00 $199.98 $200.00 $299.97 $300.00 $399.95 $400.00 $499.50 $500.00 $599.95
+
+Table 2-4 (continued)
+LOWER- UPPER- BOUND BOUND
+$600 $700 $700 $800 $800 $900 $900 $1,000
+NUMBER OF MINIMUM ORDERS TOTALPRICE
+670 $600.00 393 $700.00 320 $800.00 361 $900.00
+MAXIMUM TOTALPRICE
+$697.66 $799.90 $895.00 $999.00
+$1,994.00 $2,995.00 $3,960.00 $4,950.00 $5,960.00 $6,920.32 $8,830.00 $9,848.96
+731
+155 $4,000 54 $5,000 20 $6,000 10 $6,000 $7,000 12
+
+Breaking Numerics into Equal-Sized Groups
+$1,000 $2,000 $2,000 $3,000
+$1,000.00 $2,000.00 $3,000.00 $4,009.50 $5,044.44 $6,060.00 $8,830.00
+$3,000 $4,000 $5,000
+$8,000
+$9,000 $10,000 3 $9,137.09
+$9,000 1
+
+Equal-sized ranges are perhaps the most useful type of ranges. For instance, the middle value in a list (the median) splits a list of values into two equal-sized groups. Which value is in the middle? Unfortunately, SQL does not provide native support for finding median values.
+
+With a bit of cleverness — and useful SQL extensions — it is possible to find medians in most dialects of SQL. All that is needed is the ability to enumerate rows. If there are nine rows of data and with ranks one through nine, the median value is the value on the fifth row.
+
+Finding quintiles and deciles is the same process as finding the median. Quintiles break numeric ranges into five equal-sized groups; four breakpoints are needed to do this — the first for the first 20% of the rows; the second for the next 20%, and so on. Creating deciles is the same process but with nine breakpoints instead.
+
+The following query provides the framework for finding quintiles, using the ranking window function ROW_NUMBER():
+
+SELECT MAX(CASE WHEN rownum <= totalrows * 0.2 THEN <val> END) as break1, MAX(CASE WHEN rownum <= totalrows * 0.4 THEN <val> END) as break2, MAX(CASE WHEN rownum <= totalrows * 0.6 THEN <val> END) as break3,
+
+(continued)
+
+MAX(CASE WHEN rownum <= totalrows * 0.8 THEN <val> END) as break4
+  FROM (SELECT ROW_NUMBER() OVER (ORDER BY <val>) as rownum,
+               (SELECT COUNT(*) FROM <table>) as totalrows,
+               <val>
+        FROM <table>)
+
+It works by enumerating the rows in order by the desired column, and comparing the resulting row number with the total number of rows. This technique actually works for any type of columns. For instance, it can break up date ranges into equal-sized groups.
+
+More Values to Explore — Min, Max, and Mode
+
+Apart from breaking values into ranges, there are other interesting characteristics of columns. This section discusses extreme values and the most common value.
+
+Minimum and Maximum Values
+
+SQL makes it quite easy to find the minimum and maximum values in a table for any data type. By default, the minimum and maximum values for strings are based on the alphabetic ordering of the values. The query is simply:
+
+  SELECT MIN(<col>), MAX(<col>)
+  FROM <tab>
+
+A related question is the frequency of maximum and minimum values in a particular column. Answering this question uses a subquery in the SELECT clause of the query. The general form is:
+
+  SELECT SUM(CASE WHEN <col> = minv THEN 1 ELSE 0 END) as freqminval,
+         SUM(CASE WHEN <col> = maxv THEN 1 ELSE 0 END) as freqmaxval
+  FROM <tab> t CROSS JOIN
+       (SELECT MIN(<col>) as minv, MAX(<col>) as maxv
+        FROM <tab>) vals
+
+This query uses the previous query as a subquery to calculate the minimum and maximum values. Because there is only one row, the CROSS JOIN operator is used for the join. This technique can be extended. For instance, it might be interesting to count the number of values within 10% of the maximum or minimum value for a numeric value. This calculation is as simple as multiplying MAX(<col>) by 0.9 and MIN(<col>) by 1.1 and replacing the “=” with “>=” and “<=” respectively.
+
+The Most Common Value (Mode)
+
+The most common value is called the mode. The mode differs from other measures that we’ve looked at so far. There is only one maximum, minimum, median, and average. However, there can be many modes. A common, but not particularly interesting, example is the primary key of a table, which is never repeated. The only frequency is one, so all values are the mode.
+
+It is possible to calculate the mode in standard SQL. However, the process is a bit cumbersome, and there are some alternative methods as well. The next three sections show three different approaches to the calculation.
+Calculating Mode Using Standard SQL
+Calculating the mode starts with calculating the frequency of values in a column:
+
+  SELECT <col>, COUNT(*) as freq
+  FROM <tab>
+  GROUP BY <col>
+  ORDER BY 2
+
+The mode is the last row (or the first row if the list is sorted in descending order). Unfortunately, there is no way to get the last row in standard SQL.
+
+Instead, let’s ask the question: What column values have the same frequency as the maximum column frequency?
+
+  SELECT <col>, COUNT(*) as freq
+  FROM <tab>
+  GROUP BY <col>
+  HAVING COUNT(*) = (SELECT MAX(freq)
+                     FROM (SELECT <col>, COUNT(*) as freq
+                           FROM <tab> GROUP BY <col>) b)
+
+In this query, the HAVING clause is doing almost all the work. It selects the groups (column values) whose frequency is the same as the largest frequency. What is the largest frequency? The innermost subquery calculates all the frequencies, the level above that takes the maximum of these values. And the overall query returns all values whose frequency matches the maximum. The result is a list of the values whose frequencies match the maximum frequency, a list of the modes.
+
+Because there could be more than one, the following variation returns the first mode:
+
+  SELECT MIN(<col>) as minmode
+  FROM (SELECT <col>, COUNT(*) as freq
+        FROM <tab>
+        GROUP BY <col>
+        HAVING COUNT(*) = (SELECT MAX(freq)
+
+(continued)
+
+FROM (SELECT <col>, COUNT(*) as freq
+                                        FROM <tab> GROUP BY <col>) b)
+)a
+
+This variation simply uses the previous query as a subquery.
+
+If, instead, we were interested in the values with the smallest frequency, the “MAX(freq)” expression would be changed to “MIN(freq).” Such values could be considered the antimode values.
+
+These queries accomplish the task at hand. However, they are rather complex, with multiple levels of subqueries and two references to the table. It is easy to make mistakes when writing such queries, and complex queries are harder to optimize for performance. The next two sections look at alternatives that produce simpler queries, using SQL extensions.
+
+Calculating Mode Using SQL Extensions
+
+Different dialects of SQL have extensions that do one of the following: 
+
+- Enumerate rows in a subquery; or,
+
+- Return the first row from a subquery. 
+
+Microsoft SQL happens to support both.
+
+The following query uses enumeration to find the mode:
+
+         SELECT *
+         FROM (SELECT a.*,
+                      ROW_NUMBER() OVER (ORDER BY cnt DESC) as rownum
+               FROM (SELECT <col>, COUNT(*) as freq
+                     FROM <tab>
+                     GROUP BY <col>) a
+)b
+WHERE rownum = 1
+
+The innermost query produces the list of frequencies for values. The next level adds the row counter. Unfortunately, Microsoft SQL does not allow ROW_NUMBER() in the WHERE clause, which would eliminate the need for one of the subqueries. So, the value is assigned to a column, which is then referenced in the outermost query.
+
+An alternative approach is to return the first row from the frequencies subquery:
+
+         SELECT TOP 1 <col>, COUNT(*) as freq
+         FROM <tab>
+         GROUP BY <col>
+         ORDER BY COUNT(*) DESC
+
+In many ways, this approach is the simplest and clearest about what is happening.
+
+Calculating Mode Using String Operations
+
+The final method for calculating the mode looks at the problem in a different way. Instead of sorting the list and taking the maximum value, why can’t we just request the value of <col> where the <freq> is maximized? The construct might look like “SELECT MAX(<col> WHERE <freq> is MAX).” However, SQL does not support such a statement.
+
+There is a way to accomplish basically the same thing. Figure 2-11 shows the dataflow. The freq value is converted into a string representation, padded out with 0s. The <col> value is appended onto the string. The max of the result is the maximum frequency, with the associated <col> value appended. The SUBSTRING() function extracts the string at the end. Voila, the mode!
+
+READ orders
+orderid 1000001 1000002 1000003 1000004 1000005 1000006 1000007 1000043 1000044
+AGGREGATE group by state
+freq = count(*)
+customerid ... 47149 ... 104162 ... 47355 ... 125694 ... 104156 ... 27600 ... 18531 ... 14033 ... 46662 ...
+state ...
+APPEND var=lpad(freq, 6, ‘0’)+state
+state zipcode MA 01040
+GA 30012 PA 19119 PA 19085 VA 22209 NJ 07603 NY 11375 NY 11215 NY 11518
+freq
+AGGREGATE var = MAX(var)
+APPEND
+mode = substring(var, 6, 1000)
+NJ 21,274 NL 1
+NM 666
+NS 34 NT 4
+NV 615 NY 53,537
+OH 3,922 ...
+
+Figure 2-11: This dataflow shows how to calculate the mode using string operations. 
+
+... ... ... ... ... ... ... ... ... ...
+OUTPUT
+state ... NJ
+freq var
+var 053537NY
+mode NY
+21,274 21,274 NL 1
+666 666
+34 34 NT 4
+NM
+NS
+NV NY
+OH ...
+615 615 53,537 53,537
+3,922 3,922
+
+The following SQL finds the mode of STATE in the Orders table:
+
+SELECT SUBSTRING(MAX(RIGHT(REPLICATE(‘0’, 6) + CAST(freq as VARCHAR), 6) + CAST(state as VARCHAR)), 7, 1000)
+         FROM (SELECT state, COUNT(*) as freq
+               FROM orders
+               GROUP BY state) a
+
+Most of this expression is converting the frequency into a zero-padded 6-digit number. The zero padding is needed because string values are ordered alphabetically for the MAX() function. With alphabetic ordering, “100000” comes before “9.” Zero padding fixes this, so “100000” comes after “000009” alphabetically. STATE is then appended to the value, and the result is the maximum frequency with the state at the end. The SUBSTRING() function then extracts the most common value.
+
+Exploring String Values
+
+String values pose particular challenges for data exploration, because they can take on almost any value. This is particularly true for free-form strings, such as addresses and names, which may not be cleaned. This section looks at exploring the length and characters in strings.
+
+Histogram of Length
+
+A simple way to get familiar with string values is to do a histogram of the length of the values. The following answers the question: What is the length of values in the CITY column in the Orders table?
+
+         SELECT LEN(city) as length, COUNT(*) as numorders, MIN(city), MAX(city)
+         FROM orders
+         GROUP BY LEN(city)
+         ORDER BY 1
+
+The name of the LEN() function may differ among databases.
+
+This query provides not only a histogram of the lengths, but also examples of two values — the minimum and maximum values for each length. For the CITY column, there are lengths from 0 to 20, which is the maximum length the column stores.
+
+Strings Starting or Ending with Spaces
+
+Spaces at the beginning or end of string values can cause unexpected problems. The value “ NY” is not the same as “NY”, so a comparison operation or join might fail — even though the values look the same to humans. It depends on the database whether “NY ” and “NY” are the same.
+
+The following query answers the question: How many times do the values in the column have spaces at the beginning or end of the value?
+
+  SELECT COUNT(*) as numorders
+  FROM orders
+  WHERE city IS NOT NULL AND LEN(city) <> LEN(LTRIM(RTRIM(city)))
+
+This query works by stripping spaces from the beginning and end of the column, and then comparing the lengths of the stripped and unstripped values. The datasets provided with this book do not have this problem.
+
+Handling Upper- and Lowercase
+
+Databases can be either case sensitive or case insensitive. Case sensitive means that upper- and lowercase characters are considered different; case insensitive means they are the same. Don’t be confused by case sensitivity in strings versus case sensitivity in syntax. SQL keywords can be in any case (“SELECT,” “select,” “Select”). This discussion only refers to how values in columns are treated.
+
+For instance, in a case-insensitive database, the following values would all be equal to each other:
+
+- FRED;
+- Fred; and, 
+- fRed.
+
+By default, most databases are case insensitive. However, this can usually be changed by setting a global option or by passing hints to a particular query (such as using the COLLATE keyword in SQL Server).
+
+In a case-sensitive database, the following query answers the question: How often are the values uppercase, lowercase, or mixed case?
+
+  SELECT SUM(CASE WHEN city = UPPER(city) THEN 1 ELSE 0 END) as uppers,
+         SUM(CASE WHEN city = LOWER(city) THEN 1 ELSE 0 END) as lowers,
+         SUM(CASE WHEN city NOT IN (LOWER(city), UPPER(city))
+                  THEN 1 ELSE 0 END) as mixed
+FROM orders
+
+In a case-insensitive database, the first two values are the same and the third is zero. In a case-sensitive database, the three add up to the total number of rows.
+
+What Characters Are in a String?
+
+Sometimes, it is interesting to know exactly which characters are in strings. For instance, do email addresses provided by customers contain characters that they shouldn’t? Such a question naturally leads to which characters are actually in the values. SQL is not designed to answer this question, at least in a simple way. Fortunately, it is still possible to make an attempt. The answer starts with a simpler question, answered by the following query: What characters are in the first position of the string?
+
+  SELECT SUBSTRING(city, 1, 1) as onechar,
+         ASCII(SUBSTRING(city, 1, 1)) as asciival,
+         COUNT(*) as numorders
+  FROM orders
+  GROUP BY SUBSTRING(city, 1, 1)
+  ORDER BY 1
+
+The returned data has three columns: the character, the number that represents the character (called the ASCII value), and the number of times that the character occurs as the first character in the CITY column. The ASCII value is useful for distinguishing among characters that might look the same, such as a space and a tab.
+
+TIP When looking at individual characters, unprintable characters and space characters (space and tabs) look the same. To see what character is really there, use the ASCII() function.
+
+The following query extends this example to look at the first two characters in the CITY column:
+
+  SELECT onechar, ASCII(onechar) as asciival, COUNT(*) as cnt
+  FROM ((SELECT SUBSTRING(city, 1, 1) as onechar
+         FROM orders WHERE LEN(city) >= 1)
+        UNION ALL
+        (SELECT SUBSTRING(city, 2, 1) as onechar
+FROM orders WHERE LEN(city) >= 2) )a
+  GROUP BY onechar
+  ORDER BY 1
+
+This query combines all the first characters and all the second characters together, using UNION ALL in the subquery. It then groups this collection of characters together, returning the final result. Extending this query to all twenty characters in the city is a simple matter of adding more clauses to the UNION ALL subquery.
+
+There is a variation of this query, which might be more efficient under some circumstances. This variation pre-aggregates each of the subqueries. Rather than just putting all the characters together and then aggregating, it calculates the frequencies for the first position and then the second position, and then combines the results:
+
+  SELECT onechar, ASCII(onechar) as asciival, SUM(cnt) as cnt
+  FROM ((SELECT SUBSTRING(city, 1, 1) as onechar, COUNT(*) as cnt
+         FROM orders WHERE LEN(city) >= 1
+
+         GROUP BY SUBSTRING(city, 1, 1) )
+        UNION ALL
+        (SELECT SUBSTRING(city, 2, 1) as onechar, COUNT(*) as cnt
+         FROM orders WHERE LEN(city) >= 2
+GROUP BY SUBSTRING(city, 2, 1) ) )a
+  GROUP BY onechar
+  ORDER BY 1
+
+The choice between the two forms is a matter of convenience and efficiency, both in writing the query and in running it.
+
+What if the original question were: How often does a character occur in the first position versus the second position of a string? This is quite similar to the original question, and the answer is to modify the original query with information about the position of the string:
+
+  SELECT onechar, ASCII(onechar) as asciival, COUNT(*) as cnt,
+         SUM(CASE WHEN pos = 1 THEN 1 ELSE 0 END) as pos_1,
+         SUM(CASE WHEN pos = 2 THEN 1 ELSE 0 END) as pos_2
+  FROM ((SELECT SUBSTRING(city, 1, 1) as onechar, 1 as pos
+         FROM orders WHERE LEN(city) >= 1 )
+        UNION ALL
+        (SELECT SUBSTRING(city, 2, 1) as onechar, 2 as pos
+FROM orders WHERE LEN(city) >= 2) )a
+  GROUP BY onechar
+  ORDER BY 1
+
+This variation also works using the pre-aggregated subqueries.
+
+Exploring Values in Two Columns
+
+Comparing values in more than one column is an important part of data exploration and data analysis. There are two components to this. This section focuses on the first component, describing the comparison. Do two states differ by sales? Do customers who purchase more often have larger average purchases? The second component is whether the comparison is statistically significant, a topic covered in the next chapter.
+
+What Are Average Sales By State?
+
+The following two questions are good examples of comparing a numeric value within a categorical value:
+
+- What is the average order totalprice by state?
+
+- What is the average zip code population in a state?
+
+SQL is particularly adept at answering questions such as these, using aggregations.
+
+The following query provides the average sales by state:
+
+  SELECT state, AVG(totalprice) as avgtotalprice
+  FROM orders
+  GROUP BY state
+  ORDER BY 2 DESC
+
+This example uses the aggregation function AVG() to calculate the average. The following expression could also have been used:
+
+  SELECT state, SUM(totalprice)/COUNT(*) as avgtotalprice
+
+Although the two methods seem to do the same thing, there is a subtle difference between them, because they handle NULL values differently. In the first example, NULL values are ignored. In the second, NULL values contribute to the COUNT(*), but not to the SUM(). The expression COUNT(totalprice) fixes this, by returning the number of values that are not NULL.
+
+WARNING Two ways of calculating an average look similar and often return the same result. However, AVG(<col>) and SUM(<col>)/COUNT(*) treat NULL values differently.
+
+How Often Are Products Repeated within a Single Order?
+
+A reasonable assumption is that when a given product occurs multiple times in an order, there is only one order line for that product; the multiple instances are represented by the column NUMUNITS rather than by separate rows in Orderlines. It is always worthwhile to validate such assumptions. There are several different approaches.
+
+Direct Counting Approach
+
+The first approach directly answers the question: How many different order lines within an order contain the same product? This is a simple counting query, using two different columns instead of one:
+
+  SELECT cnt, COUNT(*) as numorders, MIN(orderid), MAX(orderid)
+  FROM (SELECT orderid, productid, COUNT(*) as cnt
+        FROM orderline ol
+GROUP BY orderid, productid )a
+  GROUP BY cnt
+  ORDER BY 1
+
+Here, CNT is the number of times that a given ORDERID and PRODUCTID appear in the Orderline table.
+
+The results show that some products are repeated within the same order, up to a maximum of forty times. This leads to more questions. What are some examples of orders where duplicate products occur? For this, the minimum and maximum ORDERID provide examples. Another question might be: Which products are more likely to occur multiple times within an order?
+
+A result table with the following information would help in answering this question:
+
+- PRODUCTID, to identify the product;
+
+- Number of orders containing the product any number of times; and,
+
+- Number of orders containing the product more than once.
+
+These second and third columns compare the occurrence of the given product overall with the multiple occurrence of the product within an order.
+
+The following query calculates these columns:
+
+  SELECT productid, COUNT(*) as numorders,
+         SUM(CASE WHEN cnt > 1 THEN 1 ELSE 0 END) as nummultiorders
+  FROM (SELECT orderid, productid, COUNT(*) as cnt
+        FROM orderline ol
+GROUP BY orderid, productid )a
+  GROUP BY productid
+  ORDER BY 2 desc
+
+The results (which have thousands of rows) indicate that some products are, indeed, more likely to occur multiple times within an order than other products. However, many products occur multiple times, so the problem is not caused by one or a handful of products.
+
+Comparison of Distinct Counts to Overall Counts
+
+Another approach to answering the question “How often are products repeated in an order?” is to consider the number of order lines in an order compared to the number of different products in the same order. That is, calculate two values for each order — the number of order lines and the number of distinct product IDs; these numbers are the same when order lines within an order all have different products.
+
+One way of doing the calculation is using the COUNT(DISTINCT) function. The following query returns orders that have more order lines than products:
+
+  SELECT orderid, COUNT(*) as numlines,
+         COUNT(DISTINCT productid) as numproducts
+  FROM orderline
+GROUP BY orderid
+         HAVING COUNT(*) > COUNT(DISTINCT productid)
+
+The HAVING clause chooses only orders that have at least one product on multiple order lines.
+
+Another approach to use a subquery:
+
+         SELECT orderid, SUM(numproductlines) as numlines,
+                COUNT(*) as numproducts
+         FROM (SELECT orderid, productid, COUNT(*) as numproductlines
+               FROM orderline
+               GROUP BY orderid, productid) op
+         GROUP BY orderid
+         HAVING SUM(numproductlines) > COUNT(*)
+
+The subquery aggregates the order lines by ORDERID and PRODUCTID. This makes it possible to count both the number of products and the number of order lines. In general, a query using COUNT(DISTINCT) (or the much less frequently used AVG(DISTINCT) and SUM(DISTINCT)) can also be rewritten to use a subquery.
+
+This results show that there are 4,878 orders that have more order lines than products, indicating that at least one product occurs on multiple lines in the order. However, the query does not give an idea of what might be causing this.
+
+The following query calculates the number of orders that have more than one product broken out by the number of lines in the order:
+
+         SELECT numlines, COUNT(*) as numorders,
+                SUM(CASE WHEN numproducts < numlines THEN 1 ELSE 0 END
+                    ) as nummultiorders,
+                AVG(CASE WHEN numproducts < numlines THEN 1.0 ELSE 0 END
+                    ) as ratiomultiorders,
+                MIN(orderid), MAX(orderid)
+         FROM (SELECT orderid, COUNT(*) as numproducts,
+                      SUM(numproductlines) as numlines
+               FROM (SELECT orderid, productid, COUNT(*) as numproductlines
+                     FROM orderline
+                     GROUP BY orderid, productid) a
+               GROUP BY orderid
+              ) op
+         GROUP BY numlines
+ORDER BY 1
+
+This query uses the subquery approach to calculate the number of products and order lines within a query.
+
+Table 2-5 shows the first few rows of the results. The proportion of multi-orders increases as the size of the order increases. However, for all order sizes, many orders still have distinct products. Based on this information, it seems that having multiple lines for a single product is a function of having larger orders, rather than being related to the particular products in the order.
+
+Table 2-5: Number of Products Per Order by Number of Lines in Order (First Ten Rows)
+
+ORDERS WITH MORE LINES THAN PRODUCTS
+
+LINES IN ORDER
+1 2 3 4 5 6 7 8 9
+10
+NUMBER OF ORDERS NUMBER
+139,561 0 32,758 977 12,794 1,407
+3,888 894 1,735 532 963 395 477 223 266 124 175 93 110 65
+%
+0.0%
+3.0% 11.0% 23.0% 30.7% 41.0% 46.8% 46.6% 53.1% 59.1%
+
+Which State Has the Most American Express Users?
+
+Overall, about 24.6% of the orders are paid by American Express (payment type AE). Does this proportion vary much by state? The following query answers this question:
+
+  SELECT state, COUNT(*) as numorders,
+         SUM(CASE WHEN paymenttype = ‘AE’ THEN 1 ELSE 0 END) as numae,
+         AVG(CASE WHEN paymenttype = ‘AE’ THEN 1.0 ELSE 0 END) as avgae
+  FROM orders
+  GROUP BY state
+  HAVING COUNT(*) >= 100
+  ORDER BY 4 DESC
+
+This query calculates the number and percentage of orders paid by American Express, and then returns them with the highest proportion at the top. Notice that the query only chooses states that have at least 100 orders, in order to eliminate specious state codes. Table 2-6 shows the top ten states by this proportion.
+
+Table 2-6: Percent of American Express Payment for Top Ten States with Greater Than
+100 Orders
+STATE # ORDERS
+GA 2,865 PR 168 LA 733 FL 10,185 NY 53,537 DC 1,969 NJ 21,274 MS 215 MT 111 UT 361
+# AE
+1,141 61 233 3,178 16,331 586 6,321 63 29 94
+% AE
+39.8% 36.3% 31.8% 31.2% 30.5% 29.8% 29.7% 29.3% 26.1% 26.0%
+
+From Summarizing One Column to Summarizing All Columns
+
+So far, the exploratory data analysis has focused on different aspects of summarizing values in a single column. This section combines the various results into a single summary for a column. It then extends this summary from a single column to all columns in a table. In the process, we use SQL (or alternatively Excel) to generate a SQL query, which we then run to get the summaries.
+
+Good Summary for One Column
+
+For exploring data, the following information is a good summary for a single column:
+
+- The number of distinct values in the column;
+
+- Minimum and maximum values;
+
+- An example of the most common value (called the mode in statistics);
+
+- An example of the least common value (called the antimode);
+
+- Frequency of the minimum and maximum values;
+
+- Frequency of the mode and antimode;
+
+- Number of values that occur only one time;
+
+- Number of modes (because the most common value is not necessarily unique); and,
+
+- Number of antimodes.
+
+These summary statistics are defined for all data types. Additional information might be of interest for other data types, such as the minimum and maximum length of strings, the average value of a numeric, and the number of times when a date has no time component.
+
+The following query calculates these values for STATE in Orders:
+
+  SELECT COUNT(*) as numvalues,
+         MAX(freqnull) as freqnull,
+         MIN(minval) as minval,
+         SUM(CASE WHEN state = minval THEN freq ELSE 0 END) as numminvals,
+         MAX(maxval) as maxval,
+         SUM(CASE WHEN state = maxval THEN freq ELSE 0 END) as nummaxvals,
+         MIN(CASE WHEN freq = maxfreq THEN state END) as mode,
+         SUM(CASE WHEN freq = maxfreq THEN 1 ELSE 0 END) as nummodes,
+         MAX(maxfreq) as modefreq,
+         MIN(CASE WHEN freq = minfreq THEN state END) as antimode,
+         SUM(CASE WHEN freq = minfreq THEN 1 ELSE 0 END) as numantimodes,
+         MAX(minfreq) as antimodefreq,
+         SUM(CASE WHEN freq = 1 THEN freq ELSE 0 END) as numuniques
+  FROM (SELECT state, COUNT(*) as freq
+        FROM orders
+        GROUP BY state) osum CROSS JOIN
+       (SELECT MIN(freq) as minfreq, MAX(freq) as maxfreq,
+MIN(state) as minval, MAX(state) as maxval,
+SUM(CASE WHEN state IS NULL THEN freq ELSE 0 END) as freqnull
+        FROM (SELECT state, COUNT(*) as freq
+              FROM orders
+              GROUP BY state) osum) summary
+
+This query follows a simple logic. There are two subqueries. The first summarizes the STATE column, calculating the frequency for it. The second summarizes the summary, producing values for:
+
+- Minimum and maximum frequency;
+
+- Minimum and maximum values; and
+
+- Number of NULL values.
+
+The results combine these two queries, making judicious use of the CASE statement.
+
+The results for STATE are as follows:
+
+- Number of values: 92
+
+- Minimum value: “”
+
+- Maximum
+
+- Mode:
+
+- Antimode:
+
+- Frequency
+
+- Frequency
+
+- Frequency
+
+- Frequency
+
+- Frequency
+
+- Number of Unique Values: 14
+
+- Number of Modes: 1
+
+- Number of Antimodes: 14
+
+- Number of values:
+
+- Minimum value:
+7,653
+$0.00 $9,848.96 $0.00 $0.20 0 9,128 1 9,128 1 4,115 1 4,115
+value: YU NY BD of Nulls: 0 of Min: 1,119 of Max: 2 of Mode: 53,537 of Antimode: 1
+
+As mentioned earlier, this summary works for all data types. So, the same query using the TOTALPRICE column results in the following information:
+
+- Maximum
+
+- Mode:
+
+- Antimode:
+
+- Frequency
+
+- Frequency
+
+- Frequency
+
+- Frequency
+
+- Frequency
+
+- Number of Unique Values:
+
+- Number of Modes:
+
+- Number of Antimodes:
+value:
+of Nulls:
+of Min:
+of Max:
+of Mode:
+of Antimode:
+
+The most common value of TOTALPRICE is $0. One reason for this is that all other values have both dollars and cents in their values. The proportion of orders with $0 value is small. This suggests doing the same analysis but using only the dollar amount of TOTALPRICE. This is accomplished by replacing the table name with a subquery such as “(SELECT FLOOR(totalprice) as dollars FROM orders)”.
+
+The next two sections approach the question of how to generate this information for all columns in a table. The strategy is to query the database for all columns in a table and then use SQL or Excel to write the query.
+
+Query to Get All Columns in a Table
+
+SQL does not have a standard mechanism for returning the names of all the columns in a table. However, databases are quite good at storing information. So, most databases store information about their columns and tables in special system tables. For instance, the following query returns the table name and column names of all the columns in the Orders table, using a syntax common to Microsoft SQL and mysql:
+
+  SELECT table_schema+’.’+table_name as table_name, column_name,
+         ordinal_position
+  FROM information_schema.columns
+  WHERE table_name = ‘orders’
+
+See the Appendix for mechanisms in other databases.
+
+The results are in Table 2-7, which is simply the table name and list of columns in the table. The information_schema.columns table also contains information that we are not using, such as whether the column allows NULL values and the type of the column.
+
+Table 2-7: Column Names in Orders
+
+TABLE_NAME COLUMN_NAME ORDINAL_POSITION Orders ORDERID 1
+Orders CUSTOMERID 2
+Orders CAMPAIGNID 3
+Orders ORDERDATE 4
+Orders CITY 5
+Orders STATE 6
+Orders ZIPCODE 7
+Orders PAYMENTTYPE 8
+Orders TOTALPRICE 9
+Orders NUMORDERLINES 10
+Orders NUMUNITS 11
+
+Using SQL to Generate Summary Code
+
+The goal is to summarize all the columns in a table, using an information summary subquery for each column. Such a query has the following pattern for Orders:
+
+         (INFORMATION SUBQUERY for orderid)
+         UNION ALL (INFORMATION SUBQUERY for customerid)
+         UNION ALL (INFROMATION SUBQUERY for campaignid)
+         UNION ALL (INFROMATION SUBQUERY for orderdate)
+         UNION ALL (INFROMATION SUBQUERY for city)
+         UNION ALL (INFROMATION SUBQUERY for state)
+         UNION ALL (INFROMATION SUBQUERY for zipcode)
+         UNION ALL (INFROMATION SUBQUERY for paymenttype)
+         UNION ALL (INFORMATION SUBQUERY for totalprice)
+         UNION ALL (INFORMATION SUBQUERY for numorderlines)
+         UNION ALL (INFORMATION SUBQUERY for numunits)
+
+The information subquery is similar to the earlier version, with the mode and antimode values removed (just to simplify the query for explanation).
+
+There are three other modifications to the query. The first is to include a placeholder called <start> at the beginning. The second is to include the column name and the third is to convert the minimum and maximum values to strings, because all values in a given column need to be of the same type for theUNION ALL.The resulting query has the general form:
+
+         <start> SELECT ‘<col>’ as colname, COUNT(*) as numvalues,
+                MAX(freqnull) as freqnull,
+                CAST(MIN(minval) as VARCHAR) as minval,
+                SUM(CASE WHEN <col> = minval THEN freq ELSE 0 END) as numminvals,
+                CAST(MAX(maxval) as VARCHAR) as maxval,
+                SUM(CASE WHEN <col> = maxval THEN freq ELSE 0 END) as nummaxvals,
+                SUM(CASE WHEN freq = 1 THEN freq ELSE 0 END) as numuniques
+         FROM (SELECT totalprice, COUNT(*) as freq
+               FROM <tab>
+               GROUP BY <col>) osum CROSS JOIN
+              (SELECT MIN(<col>) as minval, MAX(<col>) as maxval,
+                      SUM(CASE WHEN <col> IS NULL THEN 1 ELSE 0 END) as freqnull
+               FROM (SELECT <col>
+                     FROM <tab>) osum) summary
+
+The preceding query has been placed in a single line for generality, because some databases support strings that span multiple lines, and some do not. The resulting query is rather ugly:
+
+         SELECT REPLACE(REPLACE(REPLACE(‘<start> SELECT ‘’<col>’‘ as colname,
+         COUNT(*) as numvalues, MAX(freqnull) as freqnull, CAST(MIN(minval) as
+         VARCHAR) as minval, SUM(CASE WHEN <col> = minval THEN freq ELSE 0 END)
+         as numminvals, CAST(MAX(maxval) as VARCHAR) as maxval, SUM(CASE WHEN
+  <col> = maxval THEN freq ELSE 0 END) as nummaxvals, SUM(CASE WHEN freq =
+  1 THEN 1 ELSE 0 END) as numuniques FROM (SELECT <col>, COUNT(*) as freq
+  FROM <tab> GROUP BY <col>) osum CROSS JOIN (SELECT MIN(<col>) as minval,
+  MAX(<col>) as maxval, SUM(CASE WHEN <col> IS NULL THEN 1 ELSE 0 END) as
+  freqnull FROM (SELECT <col> FROM <tab>) osum) summary’,
+                                 ‘<col>’, column_name),
+                         ‘<tab>’, table_name),
+                 ‘<start>’,
+                   (CASE WHEN ordinal_position = 1 THEN ‘’
+                         ELSE ‘UNION ALL’ END))
+  FROM (SELECT table_name, column_name, ordinal_position
+        FROM information_schema.columns
+        WHERE table_name = ‘orders’) a
+
+This query replaces three placeholders in the query string with appropriate values. The “<col>” string gets replaced with the column name, which comes from the information_schema.columns table. The “<tab>” string gets replaced with the table name. And, the “<starting>” string gets “UNION ALL” for all but the first row.
+
+Table 2-8 shows the results from running the resulting query. This logic can also be accomplished in Excel, by copying the template query and using Excel’s SUBSTITUTE() function.
+
+Table 2-8: Information about the Columns in Orders Table # MINIMUM
+
+# MAXIMUM VALUE
+1 1 4 2 5 2 1
+77,017 1 1 1
+COLNAME # VALUES
+orderid 192,983 customerid 189,560 campaignid 239 orderdate 2,541
+city 12,825 state 92 zipcode 15,579 paymenttype 6 totalprice 7,653 numorderlines 41 numunits 142
+# NULL
+0 0 0 0 0 0 0 0 0 0 0
+VALUE
+1 3,424 5 181 17 1,119 144 313 9,128 139,561 127,914
+# UNIQUE
+192,983 189,559 24 0 6,318 14 5,954 0 4,115 14 55
+
+Lessons Learned
+
+Databases are well suited to data exploration because databases are close to the data. In fact, because they are inherently parallel — that is, they can take advantage of multiple processors and multiple disks — a database is often the best choice in terms of performance as well. Excel charting is a powerful companion, because it is familiar to end users and charts are a powerful way to communicate results. This chapter introduces several types of charts including column charts, line charts, and scatter plots.
+
+Data exploration starts by investigating the values that are stored in various columns in the data. Histograms are a good way to see distributions of values in particular columns, although numeric values often need to be grouped to see their distributions. There are various ways of grouping numeric values into ranges, including “tiling” — creating equal-sized groups such as quintiles and deciles.
+
+Various other things are of interest in columns. The most common value is called the mode, and there are several ways to calculate the mode using SQL. The standard mechanism is a bit cumbersome and often performs inefficiently. The alternatives are easier to understand, but require SQL extensions.
+
+Ultimately, though, it is more efficient to investigate all columns at once rather than each column one at a time. The chapter ends with a mechanism for creating a single query to summarize all columns at the same time. This method uses SQL to create a complex query, which is then run to get summaries for all the columns in a table.
+
+The next chapter moves from just looking at the data to determining whether patterns in the data are statistically significant.

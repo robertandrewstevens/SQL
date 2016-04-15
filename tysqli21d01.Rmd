@@ -254,21 +254,21 @@ Day 1 covers some of the history and structure behind SQL. Because SQL and relat
 
 ## Q&A
 
-Q Why should I be concerned about SQL?
+**Q** Why should I be concerned about SQL?
 
-A Until recently, if you weren't working on a large database system, you probably had only a passing knowledge of SQL. With the advent of client/server development tools (such as Visual Basic, Visual C++, ODBC, Borland's Delphi, and Powersoft's PowerBuilder) and the movement of several large databases (Oracle and Sybase) to the PC platform, most business applications being developed today require a working knowledge of SQL.
+**A** Until recently, if you weren't working on a large database system, you probably had only a passing knowledge of SQL. With the advent of client/server development tools (such as Visual Basic, Visual C++, ODBC, Borland's Delphi, and Powersoft's PowerBuilder) and the movement of several large databases (Oracle and Sybase) to the PC platform, most business applications being developed today require a working knowledge of SQL.
 
-Q Why do I need to know anything about relational database theory to use SQL?
+**Q** Why do I need to know anything about relational database theory to use SQL?
 
-A SQL was developed to service relational databases. Without a minimal understanding of relational database theory, you will not be able to use SQL effectively except in the most trivial cases.
+**A** SQL was developed to service relational databases. Without a minimal understanding of relational database theory, you will not be able to use SQL effectively except in the most trivial cases.
 
-Q All the new GUI tools enable me to click a button to write SQL. Why should I spend time learning to write SQL manually?
+**Q** All the new GUI tools enable me to click a button to write SQL. Why should I spend time learning to write SQL manually?
 
-A GUI tools have their place, and manually writing SQL has its place. Manually written SQL is generally more efficient than GUI-written SQL. Also, a GUI SQL statement is not as easy to read as a manually written SQL statement. Finally, knowing what is going on behind the scenes when you use GUI tools will help you get the most out of them.
+**A** GUI tools have their place, and manually writing SQL has its place. Manually written SQL is generally more efficient than GUI-written SQL. Also, a GUI SQL statement is not as easy to read as a manually written SQL statement. Finally, knowing what is going on behind the scenes when you use GUI tools will help you get the most out of them.
 
-Q So, if SQL is standardized, should I be able to program with SQL on any databases?
+**Q** So, if SQL is standardized, should I be able to program with SQL on any databases?
 
-A No, you will be able to program with SQL only on RDBMS databases that support SQL, such as MS-Access, Oracle, Sybase, and Informix. Although each vendor's implementation will differ slightly from the others, you should be able to use SQL with very few adjustments.
+**A** No, you will be able to program with SQL only on RDBMS databases that support SQL, such as MS-Access, Oracle, Sybase, and Informix. Although each vendor's implementation will differ slightly from the others, you should be able to use SQL with very few adjustments.
 
 ## Workshop
 
