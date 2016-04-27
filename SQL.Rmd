@@ -1,0 +1,139 @@
+---
+title: "SQL"
+author: "Robert A. Stevens"
+date: "April 27, 2016"
+output: html_document
+---
+
+## SQL Notes, References and To Do List 
+
+### Notes
+
+
+#### Quick tips on how to optimize SQL queries in R/RODBC:
+
+These should help speed up queries a bit. The key to having fast queries in RODBC will be how much data is pulled back from the server. Anytime you can filter out some of the data extracted from Hadoop the better off you will be.
+
+1. If you are only interested in data in one group (A or B) add the region to your WHERE clause For example this will return all group A data:
+
+```
+SELECT *
+FROM table
+WHERE group = 'A'
+```
+
+This will speed up a query if the database is partitioned by region. So by excluding a region that is not used will not be searched.
+
+2. If you are interested in only one group, JOIN on the 'look up' table. For example this will return all data for group "A"
+
+```
+SELECT *
+FROM data_table AS dt
+JOIN lookup_table AS lut ON lut.id = dt.id
+WHERE lut.group = 'A'
+```
+
+This will speed up your query because you will be transferring less data to R.
+		
+3. If you are only interested in a few parameters include only those parameters in your select clause. For instance you only want x and y:
+
+```
+SELECT x, y
+FROM table
+```
+
+This will also speed up your query because you will be transferring less data to R.
+
+### References
+
+- Structured Query Language http://en.wikibooks.org/wiki/Structured_Query_Language
+
+- SQLServerDataMining.com http://www.sqlserverdatamining.com/ssdm/Home/tabid/36/Default.aspx
+    + This site has been designed by the SQL Server Data Mining team to provide the SQL Server community with access to and information about our exciting data mining features. Catch up with the latest SQL Server Data Mining news in our newsletter.
+
+
+
+### To Do List
+
+- Databases for text analysis: archive and access texts using SQL
+<http://quantifyingmemory.blogspot.com/2013/11/databases-for-text-analysis-archive-and.html> 
+{Python interfaces - Based on R}
+
+- analyze the survey of business owners (sbo) with r [sqlite interface]
+<http://www.asdfree.com/2013/09/analyze-survey-of-business-owners-sbo.html> 
+
+- Version 1.0 of sqlutils available on CRAN
+<http://jason.bryer.org/posts/2013-01-15/Version_1_sqlutils.html> 
+
+- How R will turn into SQL
+<http://4dpiecharts.com/2013/07/16/how-r-will-turn-into-sql/> 
+
+- Translating between R and SQL: the basics
+<http://www.burns-stat.com/translating-r-sql-basics/?utm_source=rss&utm_medium=rss&utm_campaign=translating-r-sql-basics> 
+
+- Is SQL-on-Hadoop Right for Your Real-Time, Data-Driven Business? 
+<http://data-informed.com/sql-hadoop-right-real-time-data-driven-business/> 
+
+- PostgreSQL, Excel, R, and a Really Big Data Set!
+<http://rforwork.info/2012/04/20/postgresql-excel-r-and-a-really-big-data-set/> 
+
+- MADlib 
+<http://madlib.net/community/> 
+
+- The MADlib Analytics Library or MAD Skills, the SQL
+<http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-38.html> 
+
+- PageRank For SQL Lovers
+<http://aschinchon.wordpress.com/2014/09/24/pagerank-for-sql-lovers/> 
+{Using R for SQL}
+
+- Build Predictive Model on Big data: Using R and MySQL Part-3
+<http://pingax.com/build-predictive-model-big-data-using-r-mysql-part-3/> 
+
+- Using SQLite in R
+<http://www.r-bloggers.com/using-sqlite-in-r/> 
+
+- Text bashing in R for SQL
+<http://www.beardedanalytics.com/text-bashing-in-r-for-sql/> 
+[08/20/15]
+ 
+- Turning Data Into Awesome With sqldf and pandasql 
+<http://mathewanalytics.com/2015/06/29/turning-data-into-awesome-with-sqldf-and-pandasql/> 
+[08/20/15]
+
+- sqldf: SQL select on R data frames 
+<http://code.google.com/p/sqldf/> 
+Maps to ggrothendieck/sqldf
+<https://github.com/ggrothendieck/sqldf> 
+{See demo "sqldf-groupchoose.R"}
+
+- Performing SQL selects on R data frames
+<http://datascienceplus.com/performing-sql-selects-on-r-data-frames/>   
+[03/28/16]
+
+- SQL Server 2016 launch showcases R
+<http://blog.revolutionanalytics.com/2016/03/sql-server-2016-launch.html>
+[03/29/16]
+{more HW than SW}
+
+- Data table exercises: keys and subsetting
+<http://r-exercises.com/2016/03/21/data-table-exercises-keys-and-subsetting/>
+[03/29/16] {mimics SQL?}
+
+- Visual Representation of SQL Joins <http://www.codeproject.com/Articles/33052/Visual-Representation-of-SQL-Joins> 
+[03/29/16]
+{basics and good visuals}
+
+- Panama Papers, Quick Start in SQLite3 <https://blog.ouseful.info/2016/04/10/panama-papers-quick-start-in-sqlite3/> 
+[04/27/16]
+
+- Download MemSQL 
+<http://www.memsql.com/download/?utm_source=twitter&utm_medium=cpc&utm_content=download&utm_campaign=community> 
+[03/31/16]
+    + Unlimited Free Use
+    + Unlimited Scale and Capacity
+    + Real-Time In-Memory Processing
+    + Relational, JSON, and Geospatial Data
+    + Scale-Out on Commodity Servers or the Cloud
+    + Concurrent Transactions and Analytics
+
