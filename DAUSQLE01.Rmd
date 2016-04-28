@@ -5,6 +5,11 @@ date: "April 14, 2016"
 output: html_document
 ---
 
+```{r, comment=NA}
+library(sqldf)
+setwd("~/GitHub/SQL")
+```
+
 *Data Analysis Using SQL and Excel* by Gordon S. Linoff
 
 # CHAPTER 1: A Data Miner Looks at SQL
@@ -49,9 +54,9 @@ Some columns are permitted to take on the value NULL meaning that the value in a
 
 A table can have as many columns as needed to describe an instance, although for practical purposes tables with more than a few hundred columns are rare. A table can have as many rows as needed; here the numbers easily rise to the millions and even billions, because these often represent customers or customer transactions.
 
-As an example, Table 1-1 shows a few rows and columns from the Zipcensus table (which is available on the companion web site). This table shows that each zip code is in a particular state, which is the abbreviation in the STATE column. There is also a STATE2 column because some zip codes have parts in several states. For instance, 10004 is a zip code in New York City that covers Ellis Island. In 1998, the Supreme Court split jurisdiction of the island between New York and New Jersey, but the Post Office did not change the zip code. So, 10004 has a portion in New York and a smaller, unpopulated portion in New Jersey.
+As an example, **Table 1-1** shows a few rows and columns from the Zipcensus table (which is available on the companion web site). This table shows that each zip code is in a particular state, which is the abbreviation in the STATE column. There is also a STATE2 column because some zip codes have parts in several states. For instance, 10004 is a zip code in New York City that covers Ellis Island. In 1998, the Supreme Court split jurisdiction of the island between New York and New Jersey, but the Post Office did not change the zip code. So, 10004 has a portion in New York and a smaller, unpopulated portion in New Jersey.
 
-Table 1-1: Some Rows and Columns from Zipcensus
+**Table 1-1:** Some Rows and Columns from Zipcensus
 
 ZIPCODE STATE STATE2 POPULATION LAND AREA MILES
 ------- ----- ------ ---------- ---------------
@@ -76,6 +81,13 @@ FROM zipcensus zc
 WHERE zc.state <> NULL
 ```
 
+```{r, comment=NA}
+zipcensus <- read.csv("zipcensus.txt", header = TRUE, sep = "\t")
+sqldf("SELECT COUNT(*)
+       FROM zipcensus zc
+       WHERE zc.state <> NULL;")
+```
+
 All comparisons return FALSE when either argument is NULL, so no rows are ever selected. The count is zero even though STATE has many non-NULL values. Of course, determining which rows have NULL values is quite useful, so SQL provides the special operators IS NULL and IS NOT NULL to make the comparison. These behave as expected, with the preceding query returning 32,038 instead of 0.
 
 The problem is more insidious when comparing column values, either within a single table or between tables. For instance, the column STATE contains the primary state of a zip code and STATE2 contains the second state, if any. The following query counts the number of zip codes in total and the number where these two state columns have different values:
@@ -84,6 +96,12 @@ The problem is more insidious when comparing column values, either within a sing
 SELECT COUNT(*),
        SUM(CASE WHEN state <> state2 THEN 1 ELSE 0 END) as numsame
 FROM zipcensus zc
+```
+
+```{r, comment=NA}
+sqldf("SELECT COUNT(*),
+              SUM(CASE WHEN state <> state2 THEN 1 ELSE 0 END) as numsame
+       FROM zipcensus zc;")
 ```
 
 Or does it? The columns STATE and STATE2 should always have different values, so the two counts should be the same. In reality, the query returns the values 32,038 and 42. Once again, the problem is NULL values. When STATE2 is NULL, the test always fails.
@@ -112,9 +130,9 @@ Another type of data is character string data. These are commonly codes, such as
 
 ### What Is an Entity-Relationship Diagram?
 
-The “relational” in the name “relational databases” refers to the fact that different tables relate to each other via keys, and to the fact that columns in a given row relate to the values for that column. For instance, a zip code column in any table can link (that is “relate”) to the zip code table. The key makes it possible to look up information available in the zip code table. For instance, Figure 1-1 shows the relationships between tables in the purchases dataset.
+The “relational” in the name “relational databases” refers to the fact that different tables relate to each other via keys, and to the fact that columns in a given row relate to the values for that column. For instance, a zip code column in any table can link (that is “relate”) to the zip code table. The key makes it possible to look up information available in the zip code table. For instance, **Figure 1-1** shows the relationships between tables in the purchases dataset.
 
-Figure 1-1: This entity-relationship diagram shows the relationship among entities in the purchase dataset. Each entity corresponds to one table.
+**Figure 1-1:** This entity-relationship diagram shows the relationship among entities in the purchase dataset. Each entity corresponds to one table.
 
 These relationships have a characteristic called cardinality, which is the number of items related on each side. For instance, the relationship between Orders and Zipcensus is a zero/one-to-many relationship. This specifies that for every row in Orders there is at most one zip code. And, every zip code has zero, one, or more orders. Typically, this relationship is implemented by having a column in the first table contain the zip code, which is called a foreign key. A foreign key is just a column whose contents are the primary key of another table (ZIPCODE in Orders is a foreign key; ZIPCODE in Zipcensus is a primary key). To indicate that there is no match, the foreign key column could be nullable or contain a default missing value (such as “00000” which would indicate an invalid zip code).
 
@@ -134,99 +152,99 @@ The first few columns consist of overview information about each zip code, such 
 
 The following information is available for the general population:
 
-- Proportion of population in various racial categories.
+- Proportion of population in various racial categories
 
-- Proportion of population with various levels of education (among adults 25 years and older).
+- Proportion of population with various levels of education (among adults 25 years and older)
 
 The following information is available for households:
 
-- Proportion of population in various household configurations, such as the household size, gender of head of household, and presence of children.
+- Proportion of population in various household configurations, such as the household size, gender of head of household, and presence of children
 
-- Proportion of households with social security income.
+- Proportion of households with social security income
 
-- Proportion of households on public assistance.
+- Proportion of households on public assistance
 
-- Median household income.
+- Median household income
 
 The following information is available for families:
 
-- Proportion of families with 1999 income in various groups.
+- Proportion of families with 1999 income in various groups
 
 The following information is available for housing units:
 
-- Proportion with complete and lacking plumbing facilities.
+- Proportion with complete and lacking plumbing facilities
 
 The following information is available for occupied housing units:
 
-- Proportion that are owned and rented.
+- Proportion that are owned and rented
 
-- Proportion that are occupied by 1, 2, 3, 4, 5, 6, and 7 or more people.
+- Proportion that are occupied by 1, 2, 3, 4, 5, 6, and 7 or more people
 
-- Proportion that use various types of heating fuel.
+- Proportion that use various types of heating fuel
 
-- Proportion with various combinations of unmarried couples.
+- Proportion with various combinations of unmarried couples
 
 Information on the columns and exact definitions of terms such as ZCTA are available at www.census.gov.
 
 The second zip code table is Zipcounty, a companion table that maps zip codes to counties. It contains information such as the following:
 
-- County name;
+- County name
 
-- Post office name;
+- Post office name
 
-- Population of county;
+- Population of county
 
-- Number of households in county; and,
+- Number of households in county
 
-- County land area.
+- County land area
 
 This table has one row for each zip code, so it can be joined to Zipcensus and to other tables using the ZIPCODE column.
 
 ### Subscription Dataset
 
-The subscription data is a simple example of an entity-relationship diagram, because it consists of only two entities, shown in Figure 1-2. This dataset paints a picture of a subscriber at a given point in time (the date when the snapshot was created).
+The subscription data is a simple example of an entity-relationship diagram, because it consists of only two entities, shown in **Figure 1-2**. This dataset paints a picture of a subscriber at a given point in time (the date when the snapshot was created).
 
-Figure 1-2: An entity-relationship diagram with only two entities describes the data in the customer snapshot dataset.
+**Figure 1-2:** An entity-relationship diagram with only two entities describes the data in the customer snapshot dataset.
 
 The Subs table describes customers in a subscription business. It is an example of a snapshot table that shows what customers (and former customers) look like as of a particular date. The columns in this table describe customers as they start and as they stop. This particular snapshot table does not have any intermediate behavior information.
 
 The Calendar table is a general-purpose table that has information about dates, including:
 
-- Year;
+- Year
 
-- Month number;
+- Month number
 
-- Month name;
+- Month name
 
-- Day of month;
+- Day of month
 
-- Day of week;
+- Day of week
 
-- Day of year; and,
+- Day of year
 
-- Holiday information.
+- Holiday information
 
 This table has the date as a primary key, and covers dates from 1950 through 2050.
 
 ### Purchases Dataset
 
-The purchases dataset contains entities typical of retail purchases; the entities in this dataset and their relationships are shown in Figure 1-1:
+The purchases dataset contains entities typical of retail purchases; the entities in this dataset and their relationships are shown in **Figure 1-1**:
 
-- Customer;
+- Customer
 
-- Orders;
+- Orders
 
-- Orderline;
+- Orderline
 
-- Product;
+- Product
 
-- Campaign;
+- Campaign
 
-- Zipcensus;
+- Zipcensus
 
-- Zipcounty; and,
+- Zipcounty
 
-- Calendar.
+- Calendar
 
 The data in the purchases dataset captures the important entities associated with retail purchases. The most detailed information is in the Orderline table, which describes each of the items in an order. To understand the terminology, think of a receipt. Each line on the receipt represents a different item in the purchase. In addition, the line has other information such as the product number, the price, and the number of items, which are all in this table. To tie all the items in a single purchase together, each row of Orderline has an ORDERID.
 
@@ -237,34 +255,32 @@ By the way, it is generally good practice to name entities in the singular, so O
 Just as the ORDERID ties multiple order lines into an order, the CUSTOMERID assigns orders made at different points in time to the same customer. The existence of the CUSTOMERID prompts the question of how it is created. In one sense, it makes no difference how it is created; the CUSTOMERID is simply a given, defining the customer in the database. On the other hand, on occasion, it might be worth asking whether it is doing a good job — are a single customer’s purchases being tied together most of the time? The aside “The Customer ID: Identifying Customers Over Time” discusses the creation of customer IDs.
 
 ```
-```
-
-**THE CUSTOMER ID: IDENTIFYING CUSTOMERS OVER TIME**
+THE CUSTOMER ID: IDENTIFYING CUSTOMERS OVER TIME
 
 The CUSTOMERID column combines transactions over time into a single grouping, the customer (or household or similar entity). How is this accomplished? It all depends on the business and the business processes. Here are some ways:
+```
 
-- The purchases might contain name and address information. So, purchases with matching names and addresses would have the same customer ID.
+- The purchases might contain name and address information. So, purchases with matching names and addresses would have the same customer ID
 
-- The purchases might all have telephone numbers, so the telephone number could provide the customer ID.
+- The purchases might all have telephone numbers, so the telephone number could provide the customer ID
 
-- Customers may have loyalty cards, and the loyalty number might provide the customer ID.
+- Customers may have loyalty cards, and the loyalty number might provide the customer ID
 
-- The purchases might be on the web, so browser cookies could identify customers over time.
+- The purchases might be on the web, so browser cookies could identify customers over time
 
-- The purchases might all be by credit card, so purchases with the same credit card number would have the same customer ID.
+- The purchases might all be by credit card, so purchases with the same credit card number would have the same customer ID
 
-- And, of course, any combination of these or other methods might be used.
+- And, of course, any combination of these or other methods might be used
 
+```
 There are many ways to identify the same customer over time.
 
 And all of these have their challenges. What happens when a customer purchases a new computer (and the web cookie changes) or deletes her web cookies? Or when customers forget their loyalty cards (so the loyalty numbers are not attached to the purchases)? Or move? Or change phone numbers? Or change their names? Keeping track of customers over time can be challenging.
-
-```
 ```
 
 The Product table provides information about products, such as the product group name and the full price. The table does not contain detailed product names. These were removed as part of the effort to anonymize the data.
 
-The data model contains the Calendar table, which provides lookup information for dates. The final two tables in Figure 1-1 are Zipcensus and Zipcounty. These are the tables that provide information about zip codes and the lookup for county names.
+The data model contains the Calendar table, which provides lookup information for dates. The final two tables in **Figure 1-1** are Zipcensus and Zipcounty. These are the tables that provide information about zip codes and the lookup for county names.
 
 ## Picturing Data Analysis Using Dataflows
 
@@ -276,14 +292,21 @@ Because this book intends to combine the two technologies, it is useful to have 
 
 A dataflow is a graphical way of visualizing data transformations. Dataflows have two important elements. The nodes in a dataflow diagram perform transformations on data, taking zero or more inputs and producing output. The edges in a dataflow diagram are pipes connecting the nodes. Think of the data flowing through the pipes and getting banged and pushed and pulled and flattened into shape by the nodes. In the end, the data has been transformed into information.
 
-Figure 1-3 shows a simple dataflow that adds a new column, called SCF for Sectional Center Facility (something the U.S. Post Office uses to route mail). This column is the first three digits of a zip code. The output is each zip code with its SCF. The dataflow has four nodes, connected by three edges. The first, shaped like a cylinder, represents a database table or file and is the source of the data. The edge leaving this node shows some of the records being passed from it, records from the Zipcensus table.
+**Figure 1-3** shows a simple dataflow that adds a new column, called SCF for Sectional Center Facility (something the U.S. Post Office uses to route mail). This column is the first three digits of a zip code. The output is each zip code with its SCF. The dataflow has four nodes, connected by three edges. The first, shaped like a cylinder, represents a database table or file and is the source of the data. The edge leaving this node shows some of the records being passed from it, records from the Zipcensus table.
 
 The second node appends the new column to the table, which is also visible along the edge leading out from the node. The third selects two columns for output — in this case, ZIPCODE and SCF. And the final node simply represents the output. On the dataflow diagram, imagine a magnifying glass that makes it possible to see the data moving through the flow. Seeing the data move from node to node makes it easier to understand what is happening in the flow.
 
 The actual processing could be implemented in either SQL or Excel. The SQL code corresponding to this dataflow is:
 
-SELECT zc.zipcode, SUBSSTRING(zc.zipcode, 1, 3) as scf
+```
+SELECT zc.zipcode, SUBSTRING(zc.zipcode, 1, 3) as scf
 FROM zipcensus zc
+```
+
+```{r, comment=NA}
+head(sqldf("SELECT zc.zipcode, substr(zc.zipcode, 1, 3) as scf
+            FROM zipcensus zc;"), 10)
+```
 
 Alternatively, if the data in Zipcensus were in an Excel worksheet with the zip codes in column A, the following formula would extract the SCF:
 
@@ -293,7 +316,7 @@ Alternatively, if the data in Zipcensus were in an Excel worksheet with the zip 
 
 Of course, the formula would have to be copied down the column.
 
-Figure 1-3: A simple dataflow reads the ZIPCODE, calculates and appends a new field called SCF, and outputs the SCF and ZIPCODE.
+**Figure 1-3:** A simple dataflow reads the ZIPCODE, calculates and appends a new field called SCF, and outputs the SCF and ZIPCODE.
 
 Excel, SQL, and dataflows are three different ways of expressing similar transformations. The advantage of dataflows is that they provide an intuitive way of expressing data manipulations, independent of the tool used for the processing. Dataflows facilitate understanding, but in the end, the work described in this book will be in SQL or Excel.
 
@@ -303,13 +326,13 @@ TIP When column A has a column of data and we want to copy a formula down column
 
 2. Move the cursor to column A.
 
-3. Hit <control>-<down arrow> to go to the end of the data in column A.
+3. Hit \<control\>-\<down arrow\> to go to the end of the data in column A.
 
-4. Hit <right arrow> to move to column B.
+4. Hit \<right arrow\> to move to column B.
 
-5. Hit <control>-<shift>-<up arrow> to highlight all of column B.
+5. Hit \<control\>-\<shift\>-\<up arrow\> to highlight all of column B.
 
-6. Hit <control>-D to copy the formula down the column.
+6. Hit \<control\>-D to copy the formula down the column.
 
 Voila! The formula gets copied without a lot of fiddling with the mouse and with menus.
 
@@ -398,6 +421,11 @@ SELECT zc.zipcode, SUBSTRING(zc.zipcode, 1, 3) as scf
 FROM zipcensus zc
 ```
 
+```{r, comment=NA}
+head(sqldf("SELECT zc.zipcode, SUBSTR(zc.zipcode, 1, 3) as scf
+            FROM zipcensus zc;"), 10)
+```
+
 This query returns a table with two columns, one for the zip code and one for the scf. The rows might be returned in any order. In most databases, the rows are returned in the order that they are placed in the table, but you should never depend on this fact.
 
 If you want the rows in a particular order, add an explicit ORDER BY clause to the query:
@@ -408,7 +436,15 @@ FROM zipcensus zc
 ORDER BY zc.zipcode
 ```
 
+```{r, comment=NA}
+head(sqldf("SELECT zc.zipcode, SUBSTR(zc.zipcode, 1, 3) as scf
+            FROM zipcensus zc
+            ORDER BY zc.zipcode;"), 10)
+```
+
+```
 TIP If you want the result from a query to be in a particular order, add an ORDER BY clause. Without one, never assume that the result of a query will be in a particular order.
+```
 
 Although this is a simple query, it already shows some of the structure of the SQL language. All queries begin with the SELECT clause that lists the columns being returned. The tables being acted upon come from the FROM clause, which follows the SELECT statement. And, the ORDER BY is the last clause in the query.
 
@@ -425,9 +461,16 @@ WHERE state = ‘MN’
 ORDER BY 1
 ```
 
+```{r, comment=NA}
+head(sqldf("SELECT zc.zipcode, SUBSTR(zc.zipcode, 1, 3) as scf
+            FROM zipcensus zc
+            WHERE state = 'MN'
+            ORDER BY 1;"), 10)
+```
+
 The query has an additional clause, the WHERE clause, which, if present, always follows the FROM clause. The WHERE clause specifies a condition; in this case, that only rows where the STATE column is equal to “MN” are included by the query. The ORDER BY clause then sorts the rows by the first column; the “1” is a reference to the first column, in this case, ZC.ZIPCODE. Alternatively, the column name could be used in the ORDER BY clause.
 
-The dataflow corresponding to this modified query is in Figure 1-4. In this dataflow, the WHERE clause has turned into a filter after the data source, and the ORDER BY clause has turned into a SORT operator just before the output. Also notice that the dataflow contains several operators, even for a simple SQL query. SQL is a parsimonious language; some complex operations can be specified quite simply.
+The dataflow corresponding to this modified query is in **Figure 1-4**. In this dataflow, the WHERE clause has turned into a filter after the data source, and the ORDER BY clause has turned into a SORT operator just before the output. Also notice that the dataflow contains several operators, even for a simple SQL query. SQL is a parsimonious language; some complex operations can be specified quite simply.
 
 TIP When a column value is NULL, any comparison in a WHERE clause — with the important exception of “IS NULL” — always returns FALSE. So, the clause “WHERE state <> ‘MN‘” really means “WHERE state IS NOT NULL AND state <> ‘MN‘”.
 
@@ -440,9 +483,14 @@ SELECT COUNT(*) as numzip
 FROM zipcensus zc
 ```
 
-This query returns the number of rows in the table, and its form is very similar to the basic select query. The function COUNT(*), not surprisingly, counts the number of rows. The “*” means that all rows are being counted. It is also possible to count a column, such as COUNT(ZIPCODE), which counts the number of rows that do not have a NULL zip code.
+```{r, comment=NA}
+head(sqldf("SELECT COUNT(*) as numzip
+            FROM zipcensus zc;"), 10)
+```
 
-Figure 1-4: A WHERE clause in a query adds a filter node to the dataflow.
+This query returns the number of rows in the table, and its form is very similar to the basic select query. The function COUNT(\*), not surprisingly, counts the number of rows. The “\*” means that all rows are being counted. It is also possible to count a column, such as COUNT(ZIPCODE), which counts the number of rows that do not have a NULL zip code.
+
+**Figure 1-4:** A WHERE clause in a query adds a filter node to the dataflow.
 
 The preceding query is an aggregation query that treats the entire table as a single group. Within this group, the query counts the number of rows — which is the number of rows in the table. A very similar query returns the number of zip codes in each state:
 
@@ -453,11 +501,18 @@ GROUP BY state
 ORDER BY 2 DESC
 ```
 
-Conceptually, this query is quite similar to the previous one. The GROUP BY clause says to treat the table as consisting of several groups defined by the different values in the column STATE. The result is then sorted in reverse order of the count (DESC stands for “descending”), so the state with the most zip codes (Texas) is first. Figure 1-5 shows the dataflow diagram for this query.
+```{r, comment=NA}
+head(sqldf("SELECT state, COUNT(*) as numzip
+            FROM zipcensus zc
+            GROUP BY state
+            ORDER BY 2 DESC;"), 10)
+```
+
+Conceptually, this query is quite similar to the previous one. The GROUP BY clause says to treat the table as consisting of several groups defined by the different values in the column STATE. The result is then sorted in reverse order of the count (DESC stands for “descending”), so the state with the most zip codes (Texas) is first. **Figure 1-5** shows the dataflow diagram for this query.
 
 In addition to COUNT(), standard SQL offers three other useful aggregation functions. The SUM() and AVG() functions compute, respectively, the sum and average of numeric values. COUNT(DISTINCT) returns the number of distinct values. An example of using it is to answer the following question: How many SCFs are in each state?
 
-Figure 1-5: This dataflow diagram describes a basic aggregation query. 
+**Figure 1-5:** This dataflow diagram describes a basic aggregation query. 
 
 The following query answers this question:
 
@@ -468,6 +523,13 @@ GROUP BY zc.state
 ORDER BY zc.state
 ```
 
+```{r, comment=NA}
+head(sqldf("SELECT zc.state, COUNT(DISTINCT SUBSTR(zc.zipcode, 1, 3)) as numscf
+            FROM zipcensus zc
+            GROUP BY zc.state
+            ORDER BY zc.state;"), 10)
+```
+
 This query also shows that functions, such as SUBSTRING(), can be nested in the aggregation functions. SQL allows arbitrarily complicated expressions. Chapter 2 has other ways to answer this question using subqueries.
 
 ### What it Means to Join Tables
@@ -476,14 +538,15 @@ Because they bring together information from two tables, joins are perhaps the m
 
 As with anything powerful, joins need to be used carefully — not sparingly, but carefully. It is very easy to make mistakes using joins, especially the following two:
 
-- “Mistakenly” losing rows in the result set, and
+- “Mistakenly” losing rows in the result set
 
-- “Mistakenly” adding unexpected additional rows.
+- “Mistakenly” adding unexpected additional rows
 
 Whenever joining tables, it is worth asking whether either of these could be happening. These are subtle questions, because the answer depends on the data being processed, not by the syntax of the expression itself. There are examples of both problems throughout the book.
 
 The discussion of joins is about what joins do to data and how to use them rather than on the multitude of algorithms for implementing them (although the algorithms are quite interesting — to some people — they don’t help us understand customers and data). The most general type of join is the cross-join. The discussion then explains the more common variants: look up joins, equijoins, nonequijoins, and outer joins.
 
+```
 TIP Whenever joining two tables, ask yourself the following two questions:
 
 1. Could one of the tables accidentally be losing rows, because there are no matches in the other table?
@@ -491,10 +554,11 @@ TIP Whenever joining two tables, ask yourself the following two questions:
 2. Could the result set unexpectedly have duplicate rows due to multiple matches between the tables?
 
 The answers require understanding the underlying data.
+```
 
 #### Cross-Joins: The Most General Joins
 
-The most general form of joining two tables is called the cross-join or, for the more mathematically inclined, the Cartesian product of the two tables. As discussed earlier in the section on dataflows, a cross-join on two tables results in an output consisting of all columns from both tables and every combination of rows from one table with rows from the other. The number of rows in the output grows quickly as the two tables become bigger. If the first table has four rows and two columns, and the second has three rows and two columns, then the resulting output has twelve rows and four columns. This is easy enough to visualize in Figure 1-6.
+The most general form of joining two tables is called the cross-join or, for the more mathematically inclined, the Cartesian product of the two tables. As discussed earlier in the section on dataflows, a cross-join on two tables results in an output consisting of all columns from both tables and every combination of rows from one table with rows from the other. The number of rows in the output grows quickly as the two tables become bigger. If the first table has four rows and two columns, and the second has three rows and two columns, then the resulting output has twelve rows and four columns. This is easy enough to visualize in **Figure 1-6**.
 
 Because the number of rows in the output is the number of rows in each table multiplied together, the output size grows quickly. If one table has 3,000 rows and the other 4,000 rows, the result has 12,000,000 rows — which is a bit too big to illustrate here. The number of columns is the sum of the number of columns in each input table.
 
@@ -502,7 +566,7 @@ Tables in the business world often have thousands, or millions, or even more row
 
 The reason is that the general form of the join is not the form that gets used very often, unless one of the tables is known to have only one row. By imposing some restrictions — say by imposing a relationship between columns in the two tables — the result becomes more tractable. However, even though more specialized joins are more commonly used, the cross-join is still the foundation that explains what they are doing.
 
-Figure 1-6: A cross-join on two tables, one with four rows and one with three rows, results in a new table that has twelve rows and all columns from both tables.
+**Figure 1-6:** A cross-join on two tables, one with four rows and one with three rows, results in a new table that has twelve rows and all columns from both tables.
 
 #### Lookup: A Useful Join
 
@@ -510,9 +574,9 @@ Zipcensus is an example of a reference table that contains data derived from the
 
 A lookup join makes the following two assumptions about the base and reference tables:
 
-- All values of the key in the base table are in the reference table (missing join keys lose rows unexpectedly).
+- All values of the key in the base table are in the reference table (missing join keys lose rows unexpectedly)
 
-- The lookup key is the primary key in the reference table (duplicate join keys cause unexpected rows).
+- The lookup key is the primary key in the reference table (duplicate join keys cause unexpected rows)
 
 Unfortunately, SQL does not provide direct support for lookups because there is no simple check that these two conditions are true. However, the join mechanism does make it possible to do lookups, and this works smoothly when the two preceding conditions are true.
 
@@ -525,11 +589,19 @@ FROM orders o JOIN
      ON o.zipcode = zc.zipcode
 ```
 
+```{r, comment=NA}
+orders <- read.csv("orders.txt", header = TRUE, sep = "\t")
+head(sqldf("SELECT o.orderid, o.zipcode, zc.population
+            FROM orders o JOIN
+                 zipcensus zc
+                 ON o.zipcode = zc.zipcode;"), 10)
+```
+
 This example uses the ON clause to establish the condition between the tables. There is no requirement that the condition be equality in general, but for a lookup it is.
 
-From the dataflow perspective, the lookup could be implemented with CROSSJOIN. The output from the CROSSJOIN is first filtered to the correct rows (those where the two zip codes are equal) and the desired columns (all columns from Orders plus POPULATION) are selected. Figure 1-7 shows a dataflow that appends a population column to the Orders table using this approach. Of course, using the LOOKUP operator is simpler, but it is not directly implemented in SQL.
+From the dataflow perspective, the lookup could be implemented with CROSSJOIN. The output from the CROSSJOIN is first filtered to the correct rows (those where the two zip codes are equal) and the desired columns (all columns from Orders plus POPULATION) are selected. **Figure 1-7** shows a dataflow that appends a population column to the Orders table using this approach. Of course, using the LOOKUP operator is simpler, but it is not directly implemented in SQL.
 
-Figure 1-7: In SQL, looking up a value in one table is theoretically equivalent to creating the cross-join of the two tables and then restricting the values.
+**Figure 1-7:** In SQL, looking up a value in one table is theoretically equivalent to creating the cross-join of the two tables and then restricting the values.
 
 Unlike the dataflow diagram, the SQL query describes that a join needs to take place, but does not explain how this is done. The cross-join is one method, although it would be quite inefficient in practice. Databases are practical, so database writers have invented many different ways to speed up this type of operation. And, there are better ways to do a lookup. The details of such performance enhancements are beyond the scope of this book, and often proprietary to each database. It is worth remembering that databases are practical, not theoretical, and the database engine is usually trying to optimize the run-time performance of queries.
 
@@ -543,7 +615,7 @@ An equijoin is a join that has at least one restriction between the two tables b
 
 Lookups are a good example of an equijoin, because the join asserts that a foreign key in one table equals a primary key in a reference table. Lookups are a special case though, where the number of rows output is exactly the number of rows in the table with the foreign key.
 
-An equijoin can return extra rows the same way that a cross-join can. If a column value in the first table is repeated three times, and the same value occurs in the second table four times, the equijoin between the two tables produces twelve rows of output for that column. In this example, the two columns are clearly not primary keys on their respective tables, because the same value appears on multiple rows. This is similar to the situation as depicted in Figure 1-6 that illustrates the cross-join. Using an equijoin, it is possible to add many rows to output that are not intended, especially when the equijoin is on non-key columns.
+An equijoin can return extra rows the same way that a cross-join can. If a column value in the first table is repeated three times, and the same value occurs in the second table four times, the equijoin between the two tables produces twelve rows of output for that column. In this example, the two columns are clearly not primary keys on their respective tables, because the same value appears on multiple rows. This is similar to the situation as depicted in **Figure 1-6** that illustrates the cross-join. Using an equijoin, it is possible to add many rows to output that are not intended, especially when the equijoin is on non-key columns.
 
 Although joins on primary keys are more common, there are some cases where such a many-to-many equijoin is desired. The following question about the Zipcensus table does require a many-to-many equijoin to be answered in SQL: For each zip code, how many zip codes in the same state have a larger population?
 
@@ -558,9 +630,18 @@ FROM zipcensus zc1 JOIN zipcensus zc2
 GROUP BY zc1.zipcode
 ```
 
+```{r, comment=NA}
+head(sqldf("SELECT zc1.zipcode,
+                   SUM(CASE WHEN zc1.population < zc2.population THEN 1
+                            ELSE 0 END) as numzip
+            FROM zipcensus zc1 JOIN zipcensus zc2
+                 ON zc1.state = zc2.state
+            GROUP BY zc1.zipcode;"), 10)
+```
+
 Notice that the Zipcensus table is mentioned twice in the FROM clause, in order to express the self-join.
 
-The dataflow for this query is shown in Figure 1-8. This dataflow reads the Zipcensus table twice, with the two going into the JOIN operator. The JOIN in the dataflow is an equijoin, because the self-join is on the STATE column. The results from the join are then aggregated. Chapter 8 introduces a special class of functions called window functions that simplify this type of query.
+The dataflow for this query is shown in **Figure 1-8**. This dataflow reads the Zipcensus table twice, with the two going into the JOIN operator. The JOIN in the dataflow is an equijoin, because the self-join is on the STATE column. The results from the join are then aggregated. Chapter 8 introduces a special class of functions called window functions that simplify this type of query.
 
 #### Nonequijoins
 
@@ -579,9 +660,18 @@ FROM orders o JOIN
 GROUP BY zc
 ```
 
+```{r, comment=NA}
+head(sqldf("SELECT zc.state, COUNT(*) as numrows
+            FROM orders o JOIN
+                 zipcensus zc
+                 ON o.zipcode = zc.zipcode AND
+                    o.totalprice > zc.hhumediancashrent
+            GROUP BY zc.zipcode;"), 10)
+```
+
 The JOIN in this query has two conditions, one specifies that the zip codes are equal and the other specifies that the total amount of the order is greater than the median rent in the zip code. This is still an example of an equijoin, because of the condition on zip code.
 
-Figure 1-8: This dataflow illustrates a self-join and an equijoin on a non-key column.
+**Figure 1-8:** This dataflow illustrates a self-join and an equijoin on a non-key column.
 
 #### Outer Joins
 
@@ -600,6 +690,10 @@ FROM orders o LEFT OUTER JOIN
      ON o.zipcode = zc.zipcode AND
         o.totalprice > zc.hhumediancashrent
 GROUP BY zc.state
+```
+
+```{r, comment=NA}
+
 ```
 
 The results from this query are not particularly interesting. The results are the same as the previous query with one additional large group for NULL. This is because when there is no matching row in Zipcensus, ZC.ZIPCODE is NULL. On the other hand, if the SELECT and GROUP BY used O.ZIPCODE instead, the orders with non-matching zip codes would be spread through all the states.
@@ -638,6 +732,10 @@ WHERE population > 10000
 GROUP BY zc.state
 ```
 
+```{r, comment=NA}
+
+```
+
 This query uses a WHERE clause to choose the appropriate set of zip codes. 
 
 Now consider the related question: How many zip codes in each state have a population of more than 10,000, how many have a population of more than 1,000, and what is the total population of each of these sets?
@@ -654,6 +752,10 @@ SELECT zc.state,
           ) as num_1000
 FROM zipcensus zc
 GROUP BY zc.state
+```
+
+```{r, comment=NA}
+
 ```
 
 Notice that in this version, the SUM() function is being used to count the zip codes that meet the appropriate condition. COUNT() is not the right function, because it would count the number of non-NULL values.
@@ -744,13 +846,17 @@ FROM (SELECT zc.*,
 GROUP BY zc.state
 ```
 
-This version of the query uses two indicator variables, IS_POP_10000 and IS_POP_1000. These take on the value of 0 or 1, depending on whether or not the population is greater than 10,000 or 1,000. The query then sums the indicators to get the counts, and sums the product of the indicator and the population to get the population count. Figure 1-9 illustrates this process as a dataflow.
+```{r, comment=NA}
 
-TIP Subqueries with indicator variables, such as IS_POP_1000, are a powerful and flexible way to build queries.
+```
+
+This version of the query uses two indicator variables, IS\_POP\_10000 and IS\_POP\_1000. These take on the value of 0 or 1, depending on whether or not the population is greater than 10,000 or 1,000. The query then sums the indicators to get the counts, and sums the product of the indicator and the population to get the population count. **Figure 1-9** illustrates this process as a dataflow.
+
+TIP Subqueries with indicator variables, such as IS\_POP\_1000, are a powerful and flexible way to build queries.
 
 The dataflow does not include a “subquery.” SQL needs the subquery because the aggregation functions are using the indicator variables.
 
-Figure 1-9: This dataflow illustrates the process of using indicator variables to obtain information about zip codes.
+**Figure 1-9:** This dataflow illustrates the process of using indicator variables to obtain information about zip codes.
 
 One advantage of using indicator variables is that they are easy to change. For instance, changing the limit of 1000 to 500 only requires changing the indicator variable, rather than making multiple changes in several places that might (or might not) be consistent.
 
@@ -779,9 +885,13 @@ FROM (SELECT zc.*,
 GROUP BY zc.state
 ```
 
-The dataflow diagram for this query follows the same logic and is shown in Figure 1-10.
+```{r, comment=NA}
 
-Figure 1-10: This dataflow diagram compares the zip code population density to the average zip code population density in a state.
+```
+
+The dataflow diagram for this query follows the same logic and is shown in **Figure 1-10**.
+
+**Figure 1-10:** This dataflow diagram compares the zip code population density to the average zip code population density in a state.
 
 There are a few things to note about this query. First, the population density of each state is not the same as the average of the population density within each zip code. That is, the preceding question is different from: How many zip codes in each state have a population density greater than its state’s population density? The state’s population density would be calculated in zcsum as: 
 
@@ -806,7 +916,11 @@ WHERE zc.state IN (SELECT state
                    HAVING COUNT(*) < 100)
 ```
 
-The subquery creates a set of all states in the Zipcensus table where the number of zip codes in the state is less than 100 (that is, DC, DE, HI, and RI). The HAVING clause sets this limit. HAVING is very similar to WHERE, except it is used for filtering rows after aggregating, rather than before. Then, the outer SELECT chooses zip codes when the state matches one of the states in the IN set. This process actually takes place as a join operation, as shown in Figure 1-11.
+```{r, comment=NA}
+
+```
+
+The subquery creates a set of all states in the Zipcensus table where the number of zip codes in the state is less than 100 (that is, DC, DE, HI, and RI). The HAVING clause sets this limit. HAVING is very similar to WHERE, except it is used for filtering rows after aggregating, rather than before. Then, the outer SELECT chooses zip codes when the state matches one of the states in the IN set. This process actually takes place as a join operation, as shown in **Figure 1-11**.
 
 #### Rewriting the “IN” as a JOIN
 
@@ -823,6 +937,10 @@ FROM zipcensus zc JOIN
         zipstates.numstates < 100
 ```
 
+```{r, comment=NA}
+
+```
+
 Note that in the rewritten query, the Zipstates subquery has two columns instead of one. The second column contains the count of zip codes in each state, and could be added to the first SELECT clause. Using the IN statement with a subquery, it is not possible to get this information.
 
 On the other hand, the IN does have a small advantage, because it guarantees that there are no duplicate rows in the output, even when the “in” set has duplicates. To guarantee this using the JOIN, aggregate the subquery by the key used to join the tables. In this case, the subquery is doing aggregation anyway to find the states that have fewer than one hundred zip codes. This aggregation has the additional effect of guaranteeing that there are no duplicate states in the subquery.
@@ -831,7 +949,7 @@ On the other hand, the IN does have a small advantage, because it guarantees tha
 
 A correlated subquery occurs when the subquery in the IN clause includes a reference to the outer query. An example shows this best. Consider the following question: Which zip code in each state has the maximum population and what is the population?
 
-Figure 1-11: The processing for an IN with a subquery really uses a join operation.
+**Figure 1-11:** The processing for an IN with a subquery really uses a join operation.
 
 There are two different ways to approach this problem. The first is to use a correlated subquery. The second is using a standard join, because all correlated subqueries can be rewritten as joins. The correlated subquery looks like:
 
@@ -843,6 +961,10 @@ WHERE zc.population IN (SELECT MAX(zcinner.population)
                         WHERE zcinner.state = zc.state
                         GROUP BY zcinner.state)
 ORDER BY zc.state
+```
+
+```{r, comment=NA}
+
 ```
 
 The “correlated” part of the subquery is the WHERE clause, which specifies that the states in the inner table match the states in the outer table. Conceptually, this query reads one row from Zc (the table referenced in the outer query). Then, the subquery finds all rows in Zcinner that match this state and finds the maximum population. If the original row matches this maximum, it is selected. The outer query then moves on to the next row.
@@ -858,6 +980,10 @@ FROM zipcensus zc JOIN
      ON zc.state = zcsum.state AND
         zc.population = zcsum.maxpop
 ORDER BY zc.state
+```
+
+```{r, comment=NA}
+
 ```
 
 This query makes it clear that there is a summary of Zipcensus by STATE and that this summary chooses the maximum population. The JOIN then finds the zip code (or possibly zip codes) that match the maximum population, returning information about them. In addition, this method makes it possible to include another piece of information, the number of zip codes where the maximum population is achieved. This is simply another variable in Zcsum, calculated using COUNT(*).
@@ -878,6 +1004,10 @@ WHERE zipcode NOT IN (SELECT zipcode
 GROUP BY zipcode
 ```
 
+```{r, comment=NA}
+
+```
+
 This query is straightforward as written, choosing the zip codes in Orders with no matching zip code in Zipcensus, then grouping them and returning the number of purchases in each. One possible concern is performance. Many databases do a poor job of optimizing the NOT IN operator, perhaps because it is seldom used.
 
 Fortunately, there is a readily available alternative, which uses the LEFT OUTER JOIN operator. Because the LEFT OUTER JOIN keeps all zip codes in the Orders table — even those that don’t match — a filter afterwards can choose the non-matching set. This is how the following query is expressed:
@@ -892,9 +1022,13 @@ GROUP BY o.zipcode
 ORDER BY 2 DESC
 ```
 
+```{r, comment=NA}
+
+```
+
 This query joins the two tables using a LEFT OUTER JOIN and only keeps the results where there are no matching rows (because of the WHERE clause). This is equivalent to using NOT IN; however, many database engines optimize this version better than the NOT IN version.
 
-Figure 1-12 shows the dataflow associated with this query. As with the correlated subqueries,the examples in this book use the LEFT OUTER JOIN instead of the NOT IN with a subquery.
+**Figure 1-12** shows the dataflow associated with this query. As with the correlated subqueries,the examples in this book use the LEFT OUTER JOIN instead of the NOT IN with a subquery.
 
 ### Subqueries for UNION ALL
 
@@ -909,7 +1043,11 @@ FROM ((SELECT latitude as longlatval
       (SELECT longitude as longlatval
        FROM zipcensus zc
       ) 
-     )u
+     ) u
+```
+
+```{r, comment=NA}
+
 ```
 
 This example uses subqueries to be sure that each part of the UNION ALL has the same columns.
@@ -922,7 +1060,7 @@ One very important perspective is the data perspective — the tables themselves
 
 Of course, tables and databases store data, but they don’t actually do anything. Queries extract information, transforming data into information. The basic processing steps are better explained using dataflow diagrams rather than complex SQL statements. These diagrams show how various operators transform data. About one dozen operators suffice for the rich set of processing available in SQL. Dataflows are not only useful for explaining how SQL processes data; database engines generally use a form of dataflows for running SQL queries.
 
-Figure 1-12: This dataflow shows the LEFT OUTER JOIN version of a query using NOT IN.
+**Figure 1-12:** This dataflow shows the LEFT OUTER JOIN version of a query using NOT IN.
 
 In the end, though, transforming data into information requires SQL queries, whether simple or complex. The focus in this chapter, and throughout the book, is on SQL for querying.This chapter introduced the important functionality of SQL and how it is expressed, with particular emphasis on JOINs, GROUP BYs, and subqueries, because these play an important role in data analysis.
 
