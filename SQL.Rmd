@@ -137,3 +137,14 @@ Maps to ggrothendieck/sqldf
     + Scale-Out on Commodity Servers or the Cloud
     + Concurrent Transactions and Analytics
 
+Do You Really Understand SQL’s GROUP BY and HAVING clauses?
+https://blog.jooq.org/2014/12/04/do-you-really-understand-sqls-group-by-and-having-clauses/
+
+Companion page for Data Analysis Using SQL and Excel
+http://www.data-miners.com/sql_companion.htm
+
+Sams Teach Yourself SQL in 24 Hours
+http://www.informit.com/library/content.aspx?b=STY_Sql_24hours&seqNum=247
+
+
+

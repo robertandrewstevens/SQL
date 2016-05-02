@@ -1,491 +1,473 @@
-CHAPTER
-3
-ifferent?
-How Different Is D
-The previous two chapters show how to do various calculations and visual- izations using SQL and Excel. This chapter moves from calculating results to understanding the significance of the resulting measurements. When are two values so close that they are essentially the same? When are two values far enough apart that we are confident in their being different?
-The study of measurements and how to interpret them falls under the applied science of statistics. Although theoretical aspects of statistics can be daunting, the focus here is on applying the results, using tools borrowed from statistics to learn about customers through data. As long as we follow common sense and a few rules, the results can be applied without diving into theoreti- cal mathematics or arcane jargon.
-The word “statistics” itself is often misunderstood. It is the plural of “statis- tic,” and a statistic is just a measurement, such as the averages, medians, and modes calculated in the previous chapter. A big challenge in statistics is gener- alizing from results on a small group to a larger group. For instance, when a poll reports that 50% of likely voters support a particular political candidate, the pollsters typically also report a margin of error, such as 2.5%. This margin of error, called the sampling margin of error, means that the poll asked a certain number of people (the sample) a question and the goal is to generalize the results from the sample to the entire population. If another candidate has 48% support, then the two candidates are within the margin of error, and the poll does not show definitive support for either one.
-91
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼92 Chapter 3 ■ How Different Is Different?
-￼￼In business, the preferences or behaviors of one group of customers might be similar to or different from another group; the measures are calculated from data- bases rather than from samples. Of course, any calculation on any two groups of customers is going to be different, if only in the fifth or sixth decimal place. But does the difference matter? Do the measurements suggest that the groups are equivalent? Or do the measurements provide evidence that the groups differ? These are the types of questions that statistics can help answer.
+CHAPTER 3: How Different Is Different?
+
+The previous two chapters show how to do various calculations and visualizations using SQL and Excel. This chapter moves from calculating results to understanding the significance of the resulting measurements. When are two values so close that they are essentially the same? When are two values far enough apart that we are confident in their being different?
+
+The study of measurements and how to interpret them falls under the applied science of statistics. Although theoretical aspects of statistics can be daunting, the focus here is on applying the results, using tools borrowed from statistics to learn about customers through data. As long as we follow common sense and a few rules, the results can be applied without diving into theoretical mathematics or arcane jargon.
+
+The word “statistics” itself is often misunderstood. It is the plural of “statistic,” and a statistic is just a measurement, such as the averages, medians, and modes calculated in the previous chapter. A big challenge in statistics is generalizing from results on a small group to a larger group. For instance, when a poll reports that 50% of likely voters support a particular political candidate, the pollsters typically also report a margin of error, such as 2.5%. This margin of error, called the sampling margin of error, means that the poll asked a certain number of people (the sample) a question and the goal is to generalize the results from the sample to the entire population. If another candidate has 48% support, then the two candidates are within the margin of error, and the poll does not show definitive support for either one.
+
+In business, the preferences or behaviors of one group of customers might be similar to or different from another group; the measures are calculated from databases rather than from samples. Of course, any calculation on any two groups of customers is going to be different, if only in the fifth or sixth decimal place. But does the difference matter? Do the measurements suggest that the groups are equivalent? Or do the measurements provide evidence that the groups differ? These are the types of questions that statistics can help answer.
+
 This chapter introduces the statistics used for addressing the question “how different is different,” with an emphasis on the application of the ideas rather than their theoretical derivation. Throughout, examples use Excel and SQL to illustrate the concepts. The chapter starts with a discussion of key statistical concepts, such as confidence and the normal distribution, and how these are applied to the most common statistic of all, the average value.
-Two other statistical techniques are also introduced. One is the difference of proportions, which is often used for comparing the response rates between groups of customers. The other is the chi-square test, which is also used to com- pare results among different groups of customers and determine whether the groups are essentially the same or fundamentally different. Throughout the chap- ter there are simple examples with small amounts of data to illustrate the ideas. There are also larger examples using the purchase and subscriptions databases to illustrate how to apply the ideas on real datasets stored in databases.
+
+Two other statistical techniques are also introduced. One is the difference of proportions, which is often used for comparing the response rates between groups of customers. The other is the chi-square test, which is also used to compare results among different groups of customers and determine whether the groups are essentially the same or fundamentally different. Throughout the chapter there are simple examples with small amounts of data to illustrate the ideas. There are also larger examples using the purchase and subscriptions databases to illustrate how to apply the ideas on real datasets stored in databases.
+
 Basic Statistical Concepts
-Over the past two centuries, statistics has delved into the mathematics of understanding measurements and their interpretation. Although the theoreti- cal aspects of the subject are beyond the range of this book, there are some basic concepts that are very useful for our analyses. In fact, not using the foun- dation of statistics would be negligent, because so many brilliant minds have already answered questions quite similar to the ones being asked. Of course, the great minds of statistics who were developing these techniques a century ago did not have access to modern computing and data access, much less to the vast volumes of data available today. Many of their methods, however, have withstood the test of time.
+
+Over the past two centuries, statistics has delved into the mathematics of understanding measurements and their interpretation. Although the theoretical aspects of the subject are beyond the range of this book, there are some basic concepts that are very useful for our analyses. In fact, not using the foundation of statistics would be negligent, because so many brilliant minds have already answered questions quite similar to the ones being asked. Of course, the great minds of statistics who were developing these techniques a century ago did not have access to modern computing and data access, much less to the vast volumes of data available today. Many of their methods, however, have withstood the test of time.
+
 This section discusses the some important concepts in statistics, in the spirit of introducing useful ideas and terminology. These concepts are:
-■■ The Null Hypothesis;
-■■ Confidence (versus probability); and,
-■■ Normal Distribution.
+
+- The Null Hypothesis;
+
+- Confidence (versus probability); and,
+
+- Normal Distribution.
+
 The later sections in this chapter build on these ideas, applying the results to real-world data.
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 93
-￼￼The Null Hypothesis
-Statisticians are naturally skeptical, and that is a good thing. When looking at data, their default assumption is that nothing out-of-the-ordinary is going on. This, in turn, implies that any observed differences among groups are just due to chance. So, if one candidate is polling 50% and the other 45%, statisticians start with the assumption that there is no difference in support for the candi- dates. Others may be astounded by such an assumption, because 50% seems quite different from 45%. The statistician starts by assuming that the different polling numbers are just a matter of chance, probably due to the particular people who were included in the poll.
+
+The Null Hypothesis
+
+Statisticians are naturally skeptical, and that is a good thing. When looking at data, their default assumption is that nothing out-of-the-ordinary is going on. This, in turn, implies that any observed differences among groups are just due to chance. So, if one candidate is polling 50% and the other 45%, statisticians start with the assumption that there is no difference in support for the candidates. Others may be astounded by such an assumption, because 50% seems quite different from 45%. The statistician starts by assuming that the different polling numbers are just a matter of chance, probably due to the particular people who were included in the poll.
+
 TIP Perhaps the most important lesson from statistics is skepticism and the willingness to ask questions. The default assumption should be that differences are due to chance; data analysis has to demonstrate that this assumption is highly unlikely.
+
 The assumption that nothing extraordinary is occurring has a name, the Null Hypothesis. A vocabulary note: “Null” here is a statistical term and has nothing to do with the database use of the term. To avoid ambiguity, “Null Hypothesis” is a statistical phrase and any other use of “NULL” refers to the SQL keyword.
-The Null Hypothesis is the hallmark of skepticism, and also the beginning of a conversation. The skepticism leads to the question: How confident are we that the Null Hypothesis is true? This question is equivalent to: How confident are we that the observed difference is due just to chance? And these questions have an answer. The p-value is an estimate of how often the Null Hypothesis is true. When the p-value is very small, such as 0.1%, the statement “I have very little confidence that the observed difference is due just to chance” is quite reasonable. This, in turn, implies that the observed difference is due to something other than chance. In the polling example, a low p-value suggests the following: “The poll shows that there is a significant difference in sup- port for the two candidates.”
+
+The Null Hypothesis is the hallmark of skepticism, and also the beginning of a conversation. The skepticism leads to the question: How confident are we that the Null Hypothesis is true? This question is equivalent to: How confident are we that the observed difference is due just to chance? And these questions have an answer. The p-value is an estimate of how often the Null Hypothesis is true. When the p-value is very small, such as 0.1%, the statement “I have very little confidence that the observed difference is due just to chance” is quite reasonable. This, in turn, implies that the observed difference is due to something other than chance. In the polling example, a low p-value suggests the following: “The poll shows that there is a significant difference in support for the two candidates.”
+
 Statistical significance is equivalent to saying that the p-value is less than some low number, often 5% or 10%. When the p-value is larger, the Null Hypothesis has pretty good standing. The right way to think about this is “There is no strong evidence that something occurred, so I’ll assume that the difference was due to chance.” In the polling example, we might say “The polling shows no definitive difference in support for the two candidates.” One candidate might have slightly higher polling numbers than the other in the small number of people polled. Alas, the difference is not large enough for us to have confidence that one candidate has larger support than the other in the much larger general (or voting) population.
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼94 Chapter 3 ■ How Different Is Different?
-￼￼Imagine running a bunch of different polls at the same time, with the same questions and the same methodology. The only difference among these polls is the people who are contacted; each is a different random sample from the overall population. The p-value says what proportion of all these polls would have a difference at least as great as what the first poll finds, assuming that each question has equal support for both sides.
+
+Imagine running a bunch of different polls at the same time, with the same questions and the same methodology. The only difference among these polls is the people who are contacted; each is a different random sample from the overall population. The p-value says what proportion of all these polls would have a difference at least as great as what the first poll finds, assuming that each question has equal support for both sides.
+
 Sometimes, just formulating the Null Hypothesis is valuable, because it articulates a business problem in a measurable and testable way. This chapter includes various Null Hypotheses, such as:
-■■ The average order amount in New York is the same as the average in California.
-■■ A committee with five members was chosen without taking gender into account.
-■■ The stop rate for customers who started on 28 Dec 2005 is the same, regardless of the market where they started.
-■■ There is no affinity between the products that customers buy and the states where customers live. That is, all customers are as likely to pur- chase a particular product, regardless of where they live.
+
+- The average order amount in New York is the same as the average in California.
+
+- A committee with five members was chosen without taking gender into account.
+
+- The stop rate for customers who started on 28 Dec 2005 is the same, regardless of the market where they started.
+
+- There is no affinity between the products that customers buy and the states where customers live. That is, all customers are as likely to purchase a particular product, regardless of where they live.
+
 These hypotheses are stated in clear business terms. They can be validated, using available data. The answers, however, are not simply “true” or “false.” The answers are a confidence that the statement is true. Very low p-values (confidence values) imply a very low confidence that the statement is true, which in turn implies that the observed difference is significant.
+
 Confidence and Probability
-The idea of confidence is central to the notion of measuring whether two things are the same or different. Statisticians do not ask “are these different?” Instead, they ask the question “how confident are we that these are the same?” When this confidence is very low, it is reasonable to assume that the two mea- surements are indeed different.
-Confidence and probability often look the same, because both are measured in the same units, a value between zero and one that is often written as a per- centage. Unlike probabilities, confidence includes the subjective opinion of the observer. Probability is inherent in whatever is happening. There is a certain probability of rain today. There is a certain probability that heads will appear on a coin toss, or that a contestant will win the jackpot on a game show, or that a particular atom of uranium will decay radioactively in the next minute. These are examples where there is a process, and the opinions of the observer do not matter.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 95
-￼￼On the other hand, after an election has occurred and before the votes are counted, one might be confident in the outcome of the election. The votes have already been cast, so there is a result. Both candidates in the election might be confident, believing they are going to win. However, each candidate being 90% confident in his or her odds of winning does not imply an overall confi- dence of 180%! Although it looks like a probability, this is confidence, because it is based on subjective opinion.
-There is a tendency to think of confidence as a probability. This is not quite correct because a probability is exact, with the uncertainty in the measure- ment. A confidence may look exact, but the uncertainty is, at least partially, in the opinion of the observer. The Monty Hall Paradox, explained in the aside, is a simple “probability” paradox that illustrates the difference between the two.
-The inverse notion of “how different is different” is “when are two things the same.” One way of expressing this is by asking how confident we are that the difference is or is not zero. In the polling example, where one candidate has 50% support and the other 45%, the Null Hypothesis on the difference is: “The dif- ference in support between the two candidates is zero,” meaning the two can- didates actually have the same support in the overall population. A p-value of 1% means that if multiple polls were conducted at the same time, with the same methodology and with the only difference being the people randomly chosen to participate in the polls and the assumption that there is no difference in sup- port for the candidates, then we would expect 99% of the polls to have less than the observed difference. That is, the observed difference is big, so it suggests a real difference in support for the candidates in the overall population. If the p- value were 50%, then even though the difference is noticeable in the poll, it says very little about which candidate has greater support.
+
+The idea of confidence is central to the notion of measuring whether two things are the same or different. Statisticians do not ask “are these different?” Instead, they ask the question “how confident are we that these are the same?” When this confidence is very low, it is reasonable to assume that the two measurements are indeed different.
+
+Confidence and probability often look the same, because both are measured in the same units, a value between zero and one that is often written as a percentage. Unlike probabilities, confidence includes the subjective opinion of the observer. Probability is inherent in whatever is happening. There is a certain probability of rain today. There is a certain probability that heads will appear on a coin toss, or that a contestant will win the jackpot on a game show, or that a particular atom of uranium will decay radioactively in the next minute. These are examples where there is a process, and the opinions of the observer do not matter.
+
+On the other hand, after an election has occurred and before the votes are counted, one might be confident in the outcome of the election. The votes have already been cast, so there is a result. Both candidates in the election might be confident, believing they are going to win. However, each candidate being 90% confident in his or her odds of winning does not imply an overall confidence of 180%! Although it looks like a probability, this is confidence, because it is based on subjective opinion.
+
+There is a tendency to think of confidence as a probability. This is not quite correct because a probability is exact, with the uncertainty in the measurement. A confidence may look exact, but the uncertainty is, at least partially, in the opinion of the observer. The Monty Hall Paradox, explained in the aside, is a simple “probability” paradox that illustrates the difference between the two.
+
+The inverse notion of “how different is different” is “when are two things the same.” One way of expressing this is by asking how confident we are that the difference is or is not zero. In the polling example, where one candidate has 50% support and the other 45%, the Null Hypothesis on the difference is: “The difference in support between the two candidates is zero,” meaning the two candidates actually have the same support in the overall population. A p-value of 1% means that if multiple polls were conducted at the same time, with the same methodology and with the only difference being the people randomly chosen to participate in the polls and the assumption that there is no difference in support for the candidates, then we would expect 99% of the polls to have less than the observed difference. That is, the observed difference is big, so it suggests a real difference in support for the candidates in the overall population. If the p-value were 50%, then even though the difference is noticeable in the poll, it says very little about which candidate has greater support.
+
 Normal Distribution
-The normal distribution, also called the bell curve and the Gaussian distribu- tion, plays a special role in statistics. In many situations, the normal distribu- tion can answer the following question: Given an observed measure on a sample (such as a poll), what confidence do we have that the actual measure for the whole population falls within a particular range? For instance, if 50% of poll respondents say they support Candidate A, what does this mean about Candidate A’s support in the whole population? Pollsters report something like “There is a 95% confidence that the candidate’s support is between 47.5% and 52.5%.”
-In this particular case, the confidence interval is 47.5% to 52.5% and the confi- dence is 95%. A different level of confidence would produce a different interval. So the interval for 99.9% confidence would be wider. The interval for 90% would be narrower.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼96 Chapter 3 ■ How Different Is Different?
-￼￼￼￼MONTY HALL PARADOX
-Monty Hall was the famous host of the television show Let’s Make a Deal
-from 1963 through 1986. This popular show offered prizes, which were hidden behind three doors. One of the doors contained a grand prize, such as a car or vacation. The other two had lesser prizes, such as a goat or rubber chicken. In this simplification of the game show, a contestant is asked to choose one of the doors and can keep the prize behind it. One of the remaining two doors is then opened, revealing perhaps a rubber chicken, and the contestant is asked whether he or she wants to keep the unseen prize behind the chosen door or switch to the other unopened one.
+
+The normal distribution, also called the bell curve and the Gaussian distribution, plays a special role in statistics. In many situations, the normal distribution can answer the following question: Given an observed measure on a sample (such as a poll), what confidence do we have that the actual measure for the whole population falls within a particular range? For instance, if 50% of poll respondents say they support Candidate A, what does this mean about Candidate A’s support in the whole population? Pollsters report something like “There is a 95% confidence that the candidate’s support is between 47.5% and 52.5%.”
+
+In this particular case, the confidence interval is 47.5% to 52.5% and the confidence is 95%. A different level of confidence would produce a different interval. So the interval for 99.9% confidence would be wider. The interval for 90% would be narrower.
+
+MONTY HALL PARADOX
+
+Monty Hall was the famous host of the television show Let’s Make a Deal from 1963 through 1986. This popular show offered prizes, which were hidden behind three doors. One of the doors contained a grand prize, such as a car or vacation. The other two had lesser prizes, such as a goat or rubber chicken. In this simplification of the game show, a contestant is asked to choose one of the doors and can keep the prize behind it. One of the remaining two doors is then opened, revealing perhaps a rubber chicken, and the contestant is asked whether he or she wants to keep the unseen prize behind the chosen door or switch to the other unopened one.
+
 Assuming that the contestant is asked randomly regardless of whether the chosen door has the prize, should he or she keep the original choice or switch? Or, does it not make a difference? The rest of this aside gives the answer, so stop here if you want to think about it.
+
 A simple analysis of the problem might go as follows. When the contestant first makes a choice, there are three doors, so the odds of getting the prize are initially one in three (or 33.3% probability). After the other door is opened, though, there are only two doors remaining, so the probability of either door having the prize is 50%. Because the probabilities are the same, switching does not make a difference. It is equally likely that the prize is behind either door.
+
 Although an appealing and popular analysis, this is not correct for a subtle reason that involves a distinction similar to the distinction between confidence and probability: Just because there are two doors does not mean that the probabilities are equal.
+
 Monty knows where the prize is. So, after the contestant chooses a door, any door, Monty can always open one of the remaining two and show a booby prize. Opening one door and showing that there is no grand prize behind it adds no new information. This is always possible, regardless of where the grand prize is. Because opening some door with no grand prize offers no new information, showing a booby prize does not change the original probabilities.
-What are those probabilities? The probabilities are 33.3% that the prize
-is behind the door the contestant originally chose and 66.7% that the prize is behind one of the other two. These do not change, so the contestant doubles his or her chances of winning by switching.
+
+What are those probabilities? The probabilities are 33.3% that the prize is behind the door the contestant originally chose and 66.7% that the prize is behind one of the other two. These do not change, so the contestant doubles his or her chances of winning by switching.
+
 Confidence levels can help us understand this problem. At the beginning, the contestant should be 33.3% confident that the prize is behind the chosen door and 66.7% confident that the prize is behind one of the other two. This confidence does not change when another door without the prize is opened, because the contestant should realize that it is always possible to show a door with no prize. Nothing has changed. So given the opportunity to switch, the contestant should do so, and double his or her chances of winning.
-￼Measuring the confidence interval uses the normal distribution, shown in Figure 3-1 for the data corresponding to the polling example. In this example, the average is 50%, and the range from 47.5% and 52.5% has 95% confidence.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 97
-￼￼The two points define the ends of the confidence interval, and the area under the curve, between the two points, measures the confidence. The units on the vertical axis are shown, but they are not important. They just guarantee that the area under the entire curve equals 100%.
-The normal distribution is a family of curves, defined by two numbers, the average and standard deviation. The average determines where the center of the distribution is, so smaller averages result in curves shifted to the left, and larger averages have curves shifted to the right. The standard deviation deter- mines how narrow and high or how wide and flat the hump is in the middle. Small standard deviations make the curve spikier; larger standard deviations spread it out. Otherwise, the shape of the curve remains the same, and the area under all these curves is always one.
-Properties of the normal distribution are well understood. So, about 68% of the averages from samples fall within one standard deviation of the overall average. About 95.5% fall within two standard deviations, and 99.73% fall within three standard deviations. By tradition, statistical significance is often taken at the 95% level, and this occurs at the not-so-intuitive level of 1.96 stan- dard deviations from the average.
-Table 3-1 shows the confidence for various confidence intervals measured in terms of standard deviations. The distance from a value to the average, mea- sured in standard deviations, is called the z-score. This is actually a simple transformation on any set of data, where the difference between the value and average is divided by the standard deviation. Z-scores are particularly useful when comparing variables that have different ranges, such as the average age and average income of a group of people. Z-scores are also useful for trans- forming variables for data mining modeling.
-35
-30
-25
-20
-15
-10
-5
-0
-42% 43% 44% 45% 46% 47% 48% 49% 50% 51% 52% 53% 54% 55% 56% 57% 58%
+
+Measuring the confidence interval uses the normal distribution, shown in Figure 3-1 for the data corresponding to the polling example. In this example, the average is 50%, and the range from 47.5% and 52.5% has 95% confidence. The two points define the ends of the confidence interval, and the area under the curve, between the two points, measures the confidence. The units on the vertical axis are shown, but they are not important. They just guarantee that the area under the entire curve equals 100%.
+
+The normal distribution is a family of curves, defined by two numbers, the average and standard deviation. The average determines where the center of the distribution is, so smaller averages result in curves shifted to the left, and larger averages have curves shifted to the right. The standard deviation determines how narrow and high or how wide and flat the hump is in the middle. Small standard deviations make the curve spikier; larger standard deviations spread it out. Otherwise, the shape of the curve remains the same, and the area under all these curves is always one.
+
+Properties of the normal distribution are well understood. So, about 68% of the averages from samples fall within one standard deviation of the overall average. About 95.5% fall within two standard deviations, and 99.73% fall within three standard deviations. By tradition, statistical significance is often taken at the 95% level, and this occurs at the not-so-intuitive level of 1.96 standard deviations from the average.
+
+Table 3-1 shows the confidence for various confidence intervals measured in terms of standard deviations. The distance from a value to the average, measured in standard deviations, is called the z-score. This is actually a simple transformation on any set of data, where the difference between the value and average is divided by the standard deviation. Z-scores are particularly useful when comparing variables that have different ranges, such as the average age and average income of a group of people. Z-scores are also useful for transforming variables for data mining modeling.
+
 Figure 3-1: The area under the normal distribution, between two points, is the confidence that the measurement on the entire population falls in that range.
-￼￼￼￼￼￼￼￼￼￼￼￼47.5% 52.5%
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼98 Chapter 3 ■ How Different Is Different?
-Table 3-1: Confidence Levels Associated with Various Z-Scores (which is half the width of
-the confidence interval measured in standard deviations)
+
+Table 3-1: Confidence Levels Associated with Various Z-Scores (which is half the width of the confidence interval measured in standard deviations)
+
 Z-SCORE CONFIDENCE
-1.00 68.269% 1.64 89.899% 1.96 95.000% 2.00 95.450% 2.50 98.758% 3.00 99.730% 3.29 99.900% 3.89 99.990% 4.00 99.994% 4.42 99.999% 5.00 100.000%
+1.00 68.269% 
+1.64 89.899% 
+1.96 95.000% 
+2.00 95.450% 
+2.50 98.758% 
+3.00 99.730% 
+3.29 99.900% 
+3.89 99.990% 
+4.00 99.994% 
+4.42 99.999% 
+5.00 100.000%
+
 The values in Table 3-1 were calculated using the Excel formula:
-         <confidence> = NORMSDIST(<z-score>) – NORMSDIST(- <z-score>)
-In Excel, the function NORMSDIST() calculates the area under the normal distribu- tion up to a particular z-score. That is, it defines the confidence interval from minus infinity to the z-score. To get a finite confidence interval on either side of the average, calculate the one from minus infinity to <value> and then subtract out the one from minus infinity to minus z-score, as shown in Figure 3-2.
+
+<confidence> = NORMSDIST(<z-score>) – NORMSDIST(- <z-score>)
+
+In Excel, the function NORMSDIST() calculates the area under the normal distribution up to a particular z-score. That is, it defines the confidence interval from minus infinity to the z-score. To get a finite confidence interval on either side of the average, calculate the one from minus infinity to <value> and then subtract out the one from minus infinity to minus z-score, as shown in Figure 3-2.
+
 normsdist(y)
 normsdist(x)
 minus infinity x avg y normsdist(y) – normsdist(x)
+
 Figure 3-2: The Excel function NORMSDIST() can be used to calculate the confidence for an interval around the average.
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 99 The preceding formula works for z-scores that are positive. A slight varia-
-tion works for all z-scores:
-  <confidence> = ABS(NORMSDIST(<z-score>) – NORMSDIST(- <z-score>))
-From the preceding polling example, the standard deviation can be reverse engineered. The confidence is 95%, implying that the confidence interval ranges 1.96 times the standard deviation on either side of the average. Because the confidence interval is 2.5% on either side of the average, the standard devi- ation is 2.5%/1.96 or 1.276%. This information can be used to calculate the 99.9% confidence interval. It is 3.29 times the standard deviation. So, the confi- dence interval for the poll with 99.9% confidence ranges from 50% – 3.29*1.276% to 50% + 3.29*1.276%, or 45.8% to 54.2%.
-As a final note, the normal distribution depends on knowing the average and standard deviation. All we have is data, which does not include this infor- mation directly. Fortunately, statistics provides some methods for estimating these values from data, as explained in examples throughout this chapter.
+
+The preceding formula works for z-scores that are positive. A slight variation works for all z-scores:
+
+  <confidence> = ABS(NORMSDIST(<z-score>) – NORMSDIST(-<z-score>))
+
+From the preceding polling example, the standard deviation can be reverse engineered. The confidence is 95%, implying that the confidence interval ranges 1.96 times the standard deviation on either side of the average. Because the confidence interval is 2.5% on either side of the average, the standard deviation is 2.5%/1.96 or 1.276%. This information can be used to calculate the 99.9% confidence interval. It is 3.29 times the standard deviation. So, the confidence interval for the poll with 99.9% confidence ranges from 50% – 3.29*1.276% to 50% + 3.29*1.276%, or 45.8% to 54.2%.
+
+As a final note, the normal distribution depends on knowing the average and standard deviation. All we have is data, which does not include this information directly. Fortunately, statistics provides some methods for estimating these values from data, as explained in examples throughout this chapter.
+
 How Different Are the Averages?
+
 The retail purchase data has purchases from all fifty states, and then some. This section addresses the question of whether the average purchase amount (in the column TOTALPRICE) differs in different states. Statistics answers this question, and most of the calculations can be done using SQL queries.
+
 Let’s start with the observation that the average purchase amount for the 17,839 purchases from California is $85.48 and the average purchase amount for the 53,537 purchases from New York is $70.14. Is this difference significant?
+
 The Approach
-The approach to answering the question starts by putting all the orders from New York and California into one big bucket whose overall average total price is $73.98. The question is: What is the likelihood that a random subset of 17,839 purchases from this bucket has an average TOTALPRICE of $85.48? If this probability is largish, then orders from California look like a random sample, and there is nothing spe- cial about them. On the other hand, if the p-value is small, there is evidence that orders from California are different from a random sample of orders from the two states, leading to the conclusion that California orders are different.
-Looking at extreme cases can help shed light on this approach. Assume that all orders from California are exactly $85.48 and all orders from New York are exactly $70.14. In this case, there is only one group of orders from the bucket whose average amount is $85.48 — the group that consists of
-￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼100 Chapter 3 ■ How Different Is Different?
-￼￼exactly the California orders. If the orders took on only these two values, it would be safe to say that distinction between New York and California is not due just to chance. It is due to some other factor.
-A cursory look at the data shows that this is not the case. Given that TOTAL- PRICE runs the gamut of values from $0 to $10,000, can we say anything about whether the difference in average order size in New York and California is due to randomness, or due to a difference in the markets?
+
+The approach to answering the question starts by putting all the orders from New York and California into one big bucket whose overall average total price is $73.98. The question is: What is the likelihood that a random subset of 17,839 purchases from this bucket has an average TOTALPRICE of $85.48? If this probability is largish, then orders from California look like a random sample, and there is nothing special about them. On the other hand, if the p-value is small, there is evidence that orders from California are different from a random sample of orders from the two states, leading to the conclusion that California orders are different.
+
+Looking at extreme cases can help shed light on this approach. Assume that all orders from California are exactly $85.48 and all orders from New York are exactly $70.14. In this case, there is only one group of orders from the bucket whose average amount is $85.48 — the group that consists of exactly the California orders. If the orders took on only these two values, it would be safe to say that distinction between New York and California is not due just to chance. It is due to some other factor.
+
+A cursory look at the data shows that this is not the case. Given that TOTALPRICE runs the gamut of values from $0 to $10,000, can we say anything about whether the difference in average order size in New York and California is due to randomness, or due to a difference in the markets?
+
 Standard Deviation for Subset Averages
-The preceding question is about averages of samples. Something called the Cen- tral Limit Theorem in statistics sheds light on precisely the subject of the average of a subset of values randomly selected from a larger group. This theorem says that if we repeatedly take samples of a given size, then the distribution of the averages of these samples approximates a normal distribution, whose average and standard deviation are based on exactly three factors:
-■■ The average of the original data;
-■■ The standard deviation of the original data; and,
-■■ The size of the sample.
+
+The preceding question is about averages of samples. Something called the Central Limit Theorem in statistics sheds light on precisely the subject of the average of a subset of values randomly selected from a larger group. This theorem says that if we repeatedly take samples of a given size, then the distribution of the averages of these samples approximates a normal distribution, whose average and standard deviation are based on exactly three factors:
+
+- The average of the original data;
+
+- The standard deviation of the original data; and,
+
+- The size of the sample.
+
 Notice that the Central Limit Theorem says nothing about the distribution of the original values. The wonder of this theorem is that it works for basically any distribution of the original values. The Central Limit Theorem tells us about the distribution of the averages of the samples, not the distribution of the original values.
-Consider the average TOTALPRICE of ten orders taken randomly. If this process is repeated, the averages approximate a normal distribution. If instead we were to take one hundred orders repeatedly rather than ten, the averages also follow a normal distribution, but one whose standard deviation is a bit smaller. As the size of the samples increases, the distribution of the average forms a nar- rower band around the actual average in the original data. Figure 3-3 shows some distributions for the average value of TOTALPRICE for different sized groups coming from the California–New York orders.
-The Central Limit Theorem says that the average of the distribution is the average of the original data and the standard deviation is the standard devia- tion of the original data divided by the square root of the sample size. As the sample size gets larger, the standard deviation gets smaller, and the distribu- tion becomes taller and narrower and more centered on the average. This means that the average of a larger sample is much more likely to be very close to the overall average, than the average of a smaller sample. In statistics- speak, the standard deviation of the average of a sample is called the standard error (of the sample). So, the previous formulation says that the standard error of a sample is equal to the standard deviation of the population divided by the square root of the sample size.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 101
-￼￼Sample Size 250
+
+Consider the average TOTALPRICE of ten orders taken randomly. If this process is repeated, the averages approximate a normal distribution. If instead we were to take one hundred orders repeatedly rather than ten, the averages also follow a normal distribution, but one whose standard deviation is a bit smaller. As the size of the samples increases, the distribution of the average forms a narrower band around the actual average in the original data. Figure 3-3 shows some distributions for the average value of TOTALPRICE for different sized groups coming from the California–New York orders.
+
+The Central Limit Theorem says that the average of the distribution is the average of the original data and the standard deviation is the standard deviation of the original data divided by the square root of the sample size. As the sample size gets larger, the standard deviation gets smaller, and the distribution becomes taller and narrower and more centered on the average. This means that the average of a larger sample is much more likely to be very close to the overall average, than the average of a smaller sample. In statistics-speak, the standard deviation of the average of a sample is called the standard error (of the sample). So, the previous formulation says that the standard error of a sample is equal to the standard deviation of the population divided by the square root of the sample size.
+
+
+Sample Size 250
 Sample Size 100
 Sample Size 50
 Sample Size 10
-￼Sample Size 5
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$50 $52 $54 $56 $58 $60 $62 $64 $66 $68 $70 $72 $74 $76 $78 $80 $82 $84 $86 $88 $90 $92 $94 $96 $98
+Sample Size 5
+
 Figure 3-3: The theoretical distributions of TOTALPRICE for different sample sizes follow the normal distribution.
-Now, the question about the average values of California and New York gets a little tricky. It is trivial to calculate the average and standard deviation of the New York and California orders, using the SQL aggregation functions AVG() and STDDEV(). However, the question that we want to answer is slightly different. The question is: What is the likelihood that taking the average of 17,839 values ran- domly chosen from the population results in an average of $85.48 and taking a sample of 53,537 values results in $70.14?
-Looking at the distribution of values from each state helps to understand what is happening. The following SQL query returns the counts of the TOTAL- PRICE column in five-dollar increments:
+
+Now, the question about the average values of California and New York gets a little tricky. It is trivial to calculate the average and standard deviation of the New York and California orders, using the SQL aggregation functions AVG() and STDDEV(). However, the question that we want to answer is slightly different. The question is: What is the likelihood that taking the average of 17,839 values randomly chosen from the population results in an average of $85.48 and taking a sample of 53,537 values results in $70.14?
+
+Looking at the distribution of values from each state helps to understand what is happening. The following SQL query returns the counts of the TOTALPRICE column in five-dollar increments:
+
   SELECT 5*FLOOR(totalprice/5),
          SUM(CASE WHEN state = ‘CA’ THEN 1 ELSE 0 END) as CA,
          SUM(CASE WHEN state = ‘NY’ THEN 1 ELSE 0 END) as NY
   FROM orders o
   WHERE o.state IN (‘CA’, ‘NY’)
   GROUP BY 5*FLOOR(totalprice/5)
-A histogram of the results is shown in Figure 3-4, which has the averages for each state in the legend. Visually, the two histograms look quite similar, sug- gesting that the average sizes for each state might well be within the margin of error. However, the analysis is not yet complete.
+
+A histogram of the results is shown in Figure 3-4, which has the averages for each state in the legend. Visually, the two histograms look quite similar, suggesting that the average sizes for each state might well be within the margin of error. However, the analysis is not yet complete.
+
 Three Approaches
-There are at least three statistical approaches to determining whether the aver- age purchase sizes in New York and California are the same or different.
-￼￼￼￼￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼102 Chapter 3 ■ How Different Is Different?
-￼￼16% 14% 12% 10%
-8% 6% 4% 2% 0%
+
+There are at least three statistical approaches to determining whether the average purchase sizes in New York and California are the same or different.
+
 Figure 3-4: This chart shows the distribution of the TOTALPRICE of orders from New York and California.
-The first approach is to treat the orders as two samples from the same popu- lation and ask a question that is perhaps now familiar: What is the likelihood that the differences are due just to random variation? The second approach is to take the difference between the two means and ask: How likely it is that the difference could be zero? If the difference could reasonably be zero, then the two observed values are too close and should be treated as equivalent to each other.
-The third approach is to list out all the different possible combinations of purchases and to calculate the averages for all of them. The information from all possible combinations makes it possible to determine how often the aver- age in two groups exceeds the observed averages. This direct counting approach is too computationally intensive in this case, so this section does not go into detail into this approach. Later in this chapter, though, the counting approach is used for a different problem.
+
+The first approach is to treat the orders as two samples from the same population and ask a question that is perhaps now familiar: What is the likelihood that the differences are due just to random variation? The second approach is to take the difference between the two means and ask: How likely it is that the difference could be zero? If the difference could reasonably be zero, then the two observed values are too close and should be treated as equivalent to each other.
+
+The third approach is to list out all the different possible combinations of purchases and to calculate the averages for all of them. The information from all possible combinations makes it possible to determine how often the average in two groups exceeds the observed averages. This direct counting approach is too computationally intensive in this case, so this section does not go into detail into this approach. Later in this chapter, though, the counting approach is used for a different problem.
+
 Estimation Based on Two Samples
+
 There are 71,376 orders in New York and California, with an average order size of $73.98 and a standard deviation of $197.23. The orders from California are a subgroup of this population, comprising 17,839 orders with an average order size of $85.48. What is the confidence that this subgroup is just a random sample pulled from the data (meaning that the observed difference is due only to chance)?
+
 As mentioned earlier, the standard deviation of the sample average is the standard deviation of the overall data divided by the square root of the sample size. For instance, the 17,839 orders from California constitute a sample from the original population. Based on the overall data the average expected value should be $73.98 and the standard deviation $197.23 divided by the square root of 17,839, which is about $1.48.
-￼￼￼￼￼C
-A (avg i
-￼￼￼￼NY (avg
-s $85.
-is $70.14)
-48)
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼$0 $10 $20 $30 $40 $50 $60 $70 $80 $90 $100 $110 $120 $130 $140 $150
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 103
-￼￼An average of $85.48 seems quite far from $73.98, so it seems unlikely that the results for California are just “random” error. There is probably some cause for the difference. Perhaps Californians are different from New Yorkers in their affinity for various products. Perhaps marketing campaigns are different in the two states. Perhaps brand awareness differs in the two states.
-The NORMDIST() function in Excel makes it possible to quantify the confidence. The first argument to NORMDIST() is the observed average, the second is the expected average, and then the standard deviation. The last argument tells NOR- MDIST() to return the cumulative area from minus infinity to the observed value.
-Quantifying the confidence requires explaining what to look for. Getting any particular value for the average — whether $85.48 or $73.98 or $123.45 or whatever — is highly unlikely. Instead, the question is: What is the probability that a random sample’s average value is at least as far from the overall average as the observed sample average? Notice that this statement does not say whether the value is bigger or smaller than the average, just the distance away. The expres- sion to do this is:
-=2*MIN(1-NORMDIST(85.14, 73.98, 1.48, 1), NORMDIST(85.14, 73.98, 1.48, 1))
+
+An average of $85.48 seems quite far from $73.98, so it seems unlikely that the results for California are just “random” error. There is probably some cause for the difference. Perhaps Californians are different from New Yorkers in their affinity for various products. Perhaps marketing campaigns are different in the two states. Perhaps brand awareness differs in the two states.
+
+The NORMDIST() function in Excel makes it possible to quantify the confidence. The first argument to NORMDIST() is the observed average, the second is the expected average, and then the standard deviation. The last argument tells NORMDIST() to return the cumulative area from minus infinity to the observed value.
+
+Quantifying the confidence requires explaining what to look for. Getting any particular value for the average — whether $85.48 or $73.98 or $123.45 or whatever — is highly unlikely. Instead, the question is: What is the probability that a random sample’s average value is at least as far from the overall average as the observed sample average? Notice that this statement does not say whether the value is bigger or smaller than the average, just the distance away. The expression to do this is:
+
+=2*MIN(1 - NORMDIST(85.14, 73.98, 1.48, 1), NORMDIST(85.14, 73.98, 1.48, 1))
+
 This expression calculates the probability of a random sample’s average being in the tail of the distribution of averages — that is, as far away as or farther away from the overall average than the observed sample average.
-The multiplication by two is because the tail can be on either side of the overall average. The MIN() is needed because there are two cases. When the observed sample average is less than the overall average, the tail is from minus infinity to the observed value; NORMDIST() calculates this value. When the observed sample average is greater than the overall average, then the tail is on the other side and goes from the observed value to positive infinity; 1-NOR- MDIST() calculates this value.
+
+The multiplication by two is because the tail can be on either side of the overall average. The MIN() is needed because there are two cases. When the observed sample average is less than the overall average, the tail is from minus infinity to the observed value; NORMDIST() calculates this value. When the observed sample average is greater than the overall average, then the tail is on the other side and goes from the observed value to positive infinity; 1 - NORMDIST() calculates this value.
+
 For the case at hand, the calculated result gives a probability, a p-value, that is indistinguishable from zero, meaning that the high value for California relative to New York is not due to chance.
+
 Another way of looking at this is using the z-score, which measures the distance from the average to the observed value, in multiples of standard deviations. The expression to calculate the z-score is ($84.48 – $73.98)/$1.48, which comes to 7.8 standard deviations away. That is a long way away, and it is very, very, very unlikely that the average order size for California is due to nothing more than chance.
-TIP Thez-scoremeasureshowfarawayanobservedvalueisfromthemean, in units of standard deviations. It is the difference divided by the standard deviation. The z-score can be turned into a probability using the Excel formula 2*MIN(1-NORMSDIST(z-score), NORMSDIST(z-score)).
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼104 Chapter 3 ■ How Different Is Different? Estimation Based on Difference
-The previous calculation compared the results of one state to the combined orders from both states. The following series of questions is a chain of reason- ing that shows another way to think about this problem:
-■■ Does the average TOTALPRICE differ between New York and California?
-■■ Could the difference between the average TOTALPRICE for the two
+
+TIP The z-score measures how far away an observed value is from the mean, in units of standard deviations. It is the difference divided by the standard deviation. The z-score can be turned into a probability using the Excel formula 
+
+2*MIN(1-NORMSDIST(z-score), NORMSDIST(z-score)).
+
+Estimation Based on Difference
+
+The previous calculation compared the results of one state to the combined orders from both states. The following series of questions is a chain of reasoning that shows another way to think about this problem:
+
+- Does the average TOTALPRICE differ between New York and California?
+
+- Could the difference between the average TOTALPRICE for the two
 states be zero?
-■■ What is the confidence of the Null Hypothesis that the difference between the TOTALPRICE of New York and the TOTALPRICE of Cali- fornia is zero?
-That is, we can compare New York and California by looking at the difference between the two values rather than looking at the values themselves. The dif- ference is $15.34 = $85.48 – $70.14. Given the information about the two groups, is this statistically significant?
-Once again, the differences between the averages follow a distribution, whose average is zero (because samples from the same distribution have the same expected average). Calculating the standard deviation requires borrow- ing another formula from statistics. The standard deviation of the difference is the square root of the sum of the squares of the standard deviations of each sample. This formula is similar to the Pythagorean formula from high school geometry. Instead of sides of a right triangle, though, the formula is about standard deviations.
+
+- What is the confidence of the Null Hypothesis that the difference between the TOTALPRICE of New York and the TOTALPRICE of California is zero?
+
+That is, we can compare New York and California by looking at the difference between the two values rather than looking at the values themselves. The difference is $15.34 = $85.48 – $70.14. Given the information about the two groups, is this statistically significant?
+
+Once again, the differences between the averages follow a distribution, whose average is zero (because samples from the same distribution have the same expected average). Calculating the standard deviation requires borrowing another formula from statistics. The standard deviation of the difference is the square root of the sum of the squares of the standard deviations of each sample. This formula is similar to the Pythagorean formula from high school geometry. Instead of sides of a right triangle, though, the formula is about standard deviations.
+
 In the example, the standard deviation for California is $1.48 and for New York it is $0.85. The square root of the sum of the squares yields $1.71.
-The observed difference of $15.34 corresponds to about nine standard devi- ations from zero. The corresponding p-value is essentially zero, meaning that the observed difference is likely to be significant. This produces the same result as before; orders from California and New York have differences that are not due merely to chance.
-Investigating the distributions of the orders highlights some differences. New York has twice the proportion of orders whose TOTALPRICE is zero, which suggests that there is a difference between the states. For orders less than $100, the two states look identical. On the other hand, California has rel- atively more orders greater than $100.
+
+The observed difference of $15.34 corresponds to about nine standard deviations from zero. The corresponding p-value is essentially zero, meaning that the observed difference is likely to be significant. This produces the same result as before; orders from California and New York have differences that are not due merely to chance.
+
+Investigating the distributions of the orders highlights some differences. New York has twice the proportion of orders whose TOTALPRICE is zero, which suggests that there is a difference between the states. For orders less than $100, the two states look identical. On the other hand, California has relatively more orders greater than $100.
+
 Counting Possibilities
+
 Averages are interesting, but many of the comparisons between customers involve counts, such as the number of customers who have responded to an offer, or who have stopped, or who prefer particular products. Counting is a simple process, and one that computers excel at.
-￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 105
-￼￼Counting is not just about individuals, it is also about counting combinations. For instance, if there are ten teams in a baseball league, how many different pos- sible games are there? Figure 3-5 illustrates the 45 different possible games between two teams in the league; each possible game is a line segment connect- ing two boxes. This type of chart is called a link chart, and it can be created in Excel as explained in the aside “Creating a Link Chart Using Excel Charts.”
+
+Counting is not just about individuals, it is also about counting combinations. For instance, if there are ten teams in a baseball league, how many different possible games are there? Figure 3-5 illustrates the 45 different possible games between two teams in the league; each possible game is a line segment connecting two boxes. This type of chart is called a link chart, and it can be created in Excel as explained in the aside “Creating a Link Chart Using Excel Charts.”
+
 The study of such combinations is called combinatorics, a field that straddles the boundary between probability and statistics. The rest of the chapter looks at statistical approximations to questions about combinations, approximations that are good enough for everyday use.
+
 This section starts with a small example that can easily be illustrated and counted by hand. The ideas are then extended to the larger numbers found in customer databases, along with the SQL and Excel code needed for doing the calculations.
-￼￼A
-￼￼J
+
+A
+J
 B
-￼￼I
+I
 C
-￼￼H
+H
 D
-￼￼G
+G
 E
-￼F
+F
+
 Figure 3-5: There are 45 different possible games in a Little League club with ten teams. In this chart, each line connecting two boxes represents one possible game.
+
 How Many Men?
-This first counting example asks the following two questions about a commit- tee that has five members:
-■■ What is the probability that the committee has exactly two men?
-■■ What is the probability that the committee has at most two men?
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼106 Chapter 3 ■ How Different Is Different?
-￼￼For the purposes of this example, men and women are equally likely to be on the committee.
-￼￼CREATING A LINK CHART USING EXCEL CHARTS
-The chart in Figure 3-5 is a link chart that shows connections between pairs
-of things (in this case teams). Perhaps surprisingly, this is an Excel scatter
-plot. There are two advantages to doing this in Excel rather than manually in PowerPoint or another tool. First, the boxes and lines can be placed precisely where they need to be, which gives the chart a cleaner and more professional look. Second, making small changes, such as moving a box or changing a label, should be easier, because everything in the chart is created from data that describes what the chart looks like.
+
+This first counting example asks the following two questions about a committee that has five members:
+
+- What is the probability that the committee has exactly two men?
+
+- What is the probability that the committee has at most two men?
+
+For the purposes of this example, men and women are equally likely to be on the committee.
+
+CREATING A LINK CHART USING EXCEL CHARTS
+
+The chart in Figure 3-5 is a link chart that shows connections between pairs of things (in this case teams). Perhaps surprisingly, this is an Excel scatter plot. There are two advantages to doing this in Excel rather than manually in PowerPoint or another tool. First, the boxes and lines can be placed precisely where they need to be, which gives the chart a cleaner and more professional look. Second, making small changes, such as moving a box or changing a label, should be easier, because everything in the chart is created from data that describes what the chart looks like.
+
 When thinking about making a complicated, non-traditional chart, it is important to divide the problem into manageable pieces. This chart has three such pieces:
-■ The ten teams, which are represented as squares, arrayed around a circle; ■ The letter representing each team, inside the squares; and,
-■ The lines connecting the teams together.
+
+- The ten teams, which are represented as squares, arrayed around a circle;
+
+- The letter representing each team, inside the squares; and,
+
+- The lines connecting the teams together.
+
 The first step is to place the squares representing the teams. For this, we dip into trigonometry, and set the X-coordinates using the sine of an angle and the Y-coordinate using the cosine. The basic formula for the nth team is:
+
    <x-coordinate> = SIN(2*PI()/<n>)
-   <y- coordinate > = COS(2*PI()/<n>)
+   <y-coordinate> = COS(2*PI()/<n>)
+
 In the actual chart, these are rotated by a fraction, by adding an offset inside the SIN() and COS() functions. These formulas give the positions of the teams, as X- and Y-coordinates.
+
 Labeling the points with the team names is a bit more challenging. There are three options for labeling points. Two of them use the X- and Y-coordinates, but these are always numbers. The third option, the “Series name” option, is the only way to get a name. This unfortunately requires creating a separate series for each point, so each has a unique name. The following steps accomplish this:
-■ Put the X-coordinate in one column.
-■ Label the columns to the right sequentially with the desired names (A, B,
-C, and so on). These columns contain the Y-coordinate for the points.
-■ In the column for team “A,” all the values are NA(), except for the one corresponding to the A value, and so on for the other columns.
+
+- Put the X-coordinate in one column.
+
+- Label the columns to the right sequentially with the desired names (A, B, C, and so on). These columns contain the Y-coordinate for the points.
+
+- In the column for team “A,” all the values are NA(), except for the one corresponding to the A value, and so on for the other columns.
+
 A useful formula to set the values in this table is something like:
-   =IF($G3=J$2, $E3, NA())
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 107
-￼￼￼￼CREATING A LINK CHART USING EXCEL CHARTS (CONTINUED)
-This formula assumes that the Y-coordinates are in column E, and the team labels are in both row 2 as column headers and in column G as row labels.
-By careful use of absolute and relative references (the use of “$” in the cell reference), this formula can be copied through the whole range of cells.
+
+=IF($G3=J$2, $E3, NA())
+
+This formula assumes that the Y-coordinates are in column E, and the team labels are in both row 2 as column headers and in column G as row labels. By careful use of absolute and relative references (the use of “$” in the cell reference), this formula can be copied through the whole range of cells.
+
 The result is an array of cells with values shown in Table 3-2. The first column is the X-coordinate, the second is the Y-coordinate, and the rest are the Y-coordinates for a single team, with other values in the columns being #N/A.
+
 Table 3-2: Pivoting the Y-Values for a Circular Link Chart
-￼￼￼Y X-VALUE ALL
+
+Y X-VALUE ALL
 Y-VALUE
 A B C D ... J
-A 0.00
-B 0.59
-C 0.95
-D 0.95
-E 0.59
-F 0.00
-G -0.59
-H -0.95
-I -0.95
-J -0.59
-1.00 1.00 0.81 #N/A 0.31 #N/A
--0.31 #N/A -0.81 #N/A -1.00 #N/A -0.81 #N/A -0.31 #N/A
-0.31 #N/A 0.81 #N/A
-#N/A #N/A #N/A #N/A 0.81 #N/A #N/A #N/A #N/A 0.31 #N/A #N/A #N/A #N/A -0.31 #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A #N/A
-#N/A #N/A #N/A 0.81
-￼￼￼￼￼￼￼￼￼￼With this arrangement, select the whole table starting from the X-value and insert a scatter plot with no lines. The first series represents all ten teams. For these, set the marker to squares with a white background and shadow; this chart uses a size of 15 for the marker. The rest of the series are for the labels, which have to be inserted individually. To do this, select the series on the chart and set the line and marker patterns to “None.” Then click the “Data Labels” tab and choose “Series name” and click “OK.” When the label appears, right-click it
-and choose “Format Data Labels.” On the “Alignment” tab, set the “Label Position” to be “Center.” With this process, the boxes and their labels are on the chart.
-The final step is to include the lines that connect the squares. The idea is to have a table of X- and Y-coordinates and to add a new series into the scatter plot that has lines between the points, but no markers. Unfortunately, the scatter plot connects all points, one after the other, which is like trying to draw the lines without lifting a pencil from the paper. This is hard. Fortunately, when a point has an #N/A value, the scatter plot does not draw the lines going to or
-www.it-ebooks.info
-Continued on next page
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼108 Chapter 3 ■ How Different Is Different?
-￼￼￼￼CREATING A LINK CHART USING EXCEL CHARTS (CONTINUED)
-from the point; this is like lifting the pencil off the paper. So, each pair of points that defines a connection needs to be interspersed with #N/A values.
+
+With this arrangement, select the whole table starting from the X-value and insert a scatter plot with no lines. The first series represents all ten teams. For these, set the marker to squares with a white background and shadow; this chart uses a size of 15 for the marker. The rest of the series are for the labels, which have to be inserted individually. To do this, select the series on the chart and set the line and marker patterns to “None.” Then click the “Data Labels” tab and choose “Series name” and click “OK.” When the label appears, right-click it and choose “Format Data Labels.” On the “Alignment” tab, set the “Label Position” to be “Center.” With this process, the boxes and their labels are on the chart.
+
+The final step is to include the lines that connect the squares. The idea is to have a table of X- and Y-coordinates and to add a new series into the scatter plot that has lines between the points, but no markers. Unfortunately, the scatter plot connects all points, one after the other, which is like trying to draw the lines without lifting a pencil from the paper. This is hard. Fortunately, when a point has an #N/A value, the scatter plot does not draw the lines going to or from the point; this is like lifting the pencil off the paper. So, each pair of points that defines a connection needs to be interspersed with #N/A values.
+
 There are forty-five unique line segments in the chart, because each team only needs to be connected to the teams after it alphabetically. “A” gets connected to “B” and “C” and so on. However, “I” only gets connected to “J.” These segments are placed in a table, where three rows define the segment. Two rows define the beginning and ending of the line, and the third contains the function NA(). There is no redundancy in these line segments, so removing a point from the table makes the line disappear from the chart.
+
 The resulting chart uses twelve different series. One series defines the points, which are placed as boxes. Ten define the labels inside the boxes. And the twelfth series defines the line segments that connect them together.
-￼Table 3-3 lists the 32 possible combinations of people that could be on the committee, in terms of gender. One combination has all males. One has all females. Five each have exactly one male or exactly one female. In all, there are 32 combinations, which is two raised to the fifth power: “Two,” because there are two possibilities, male or female; “Fifth power,” because there are five people on the committee.
+
+Table 3-3 lists the 32 possible combinations of people that could be on the committee, in terms of gender. One combination has all males. One has all females. Five each have exactly one male or exactly one female. In all, there are 32 combinations, which is two raised to the fifth power: “Two,” because there are two possibilities, male or female; “Fifth power,” because there are five people on the committee.
+
 All these combinations are equally likely, and they can be used to answer the original questions. Ten rows in the table have exactly two males: rows 8, 12, 14, 15, 20, 22, 23, 26, 27, and 29. That is, 10/32 or about 31% of the combinations have exactly two males. There are an additional six rows that have zero or one males, for a total of sixteen combinations with two or fewer males. So, exactly half of all possible committees have two or fewer men.
-Listing the combinations provides insight, but is cumbersome for all but the simplest problems. Fortunately, there are two functions in Excel that do the work for us. The function COMBIN(n, m) calculates the number of combi- nations of m things taken from n things. The question “How many committees of five people have two males” is really asking “How many ways are there to choose two things (male) from five (the committee size).” The Excel formula is “=COMBIN(5, 2)”.
-This function returns the number of combinations, but the original ques- tions asked for the proportion of possible committees having exactly two, or two or fewer, males. This proportion is answered using something called the binomial formula, which is provided in Excel as the function BINOMDIST(). This function takes four arguments:
-■■ The size of the group (the bigger number);
-■■ The number being chosen (the smaller number);
-■■ The probability (50%, in this case) of being chosen; and,
-■■ A flag that is 0 for the exact probability and 1 for the probability of less than or equal to the number chosen.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 109 Table 3-3: Thirty-two Possibilities of Gender on a Committee of Five
-PERSON PERSON PERSON PERSON PERSON
-#1 #2 #3 #4 #5 #M#F
-1MMMMM50 2MMMMF41 3MMMFM41 4MMMFF32 5MMFMM41 6MMFMF32 7MMFFM32 8MMFFF23 9MFMMM41
-10 M F M M F 3 2 11 M F M F M 3 2 12 M F M F F 2 3 13 M F F M M 3 2 14 M F F M F 2 3 15 M F F F M 2 3 16 M F F F F 1 4 17 F M M M M 4 1 18 F M M M F 3 2 19 F M M F M 3 2 20 F M M F F 2 3 21 F M F M M 3 2 22 F M F M F 2 3 23 F M F F M 2 3 24 F M F F F 1 4 25 F F M M M 3 2 26 F F M M F 2 3 27 F F M F M 2 3 28 F F M F F 1 4 29 F F F M M 2 3 30 F F F M F 1 4 31 F F F F M 1 4 32 F F F F F 0 5
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼110 Chapter 3 ■ How Different Is Different?
+
+Listing the combinations provides insight, but is cumbersome for all but the simplest problems. Fortunately, there are two functions in Excel that do the work for us. The function COMBIN(n, m) calculates the number of combinations of m things taken from n things. The question “How many committees of five people have two males” is really asking “How many ways are there to choose two things (male) from five (the committee size).” The Excel formula is “= COMBIN(5, 2)”.
+
+This function returns the number of combinations, but the original questions asked for the proportion of possible committees having exactly two, or two or fewer, males. This proportion is answered using something called the binomial formula, which is provided in Excel as the function BINOMDIST(). This function takes four arguments:
+
+- The size of the group (the bigger number);
+
+- The number being chosen (the smaller number);
+
+- The probability (50%, in this case) of being chosen; and,
+
+- A flag that is 0 for the exact probability and 1 for the probability of less than or equal to the number chosen.
+
+Table 3-3: Thirty-two Possibilities of Gender on a Committee of Five
+
 So, the following two formulas provide the answers to the original questions:
-         =BINOMDIST(5, 2, 50%, 0)
-         =BINOMDIST(5, 2, 50%, 1)
-These formulas simplify the calculations needed to answer each question to a single function call. The purpose here is not to show the actual steps that BINOMDIST() uses to make the calculation (which is just a lot of messy arith- metic). Instead, the purpose is to describe intuitively what’s happening in terms of combinations of people. The binomial distribution function merely simplifies the calculation.
+
+= BINOMDIST(5, 2, 50%, 0)
+= BINOMDIST(5, 2, 50%, 1)
+
+These formulas simplify the calculations needed to answer each question to a single function call. The purpose here is not to show the actual steps that BINOMDIST() uses to make the calculation (which is just a lot of messy arithmetic). Instead, the purpose is to describe intuitively what’s happening in terms of combinations of people. The binomial distribution function merely simplifies the calculation.
+
 How Many Californians?
+
 The second example asks a very similar question about a group of five people. In this case, the question is about where people are from. Let’s assume that one in ten people who could be on the committee are from California (because very roughly about one in ten Americans are from California).
-■■ What is the probability that the committee has exactly two Californians?
-■■ What is the probability that the committee has at most two Californians?
-Table 3-4 lists all the possibilities. This table is similar to the example for gen- der, but with two differences. First, each possibility consists of five probabili- ties, one for each person in the group. The probability is either 10% for the possibility that someone is from California or 90% for the possibility that the person is from somewhere else.
+
+- What is the probability that the committee has exactly two Californians?
+
+- What is the probability that the committee has at most two Californians?
+
+Table 3-4 lists all the possibilities. This table is similar to the example for gender, but with two differences. First, each possibility consists of five probabilities, one for each person in the group. The probability is either 10% for the possibility that someone is from California or 90% for the possibility that the person is from somewhere else.
+
 In addition, the overall probability for that occurrence is included as an additional column. In the gender example, each gender was equally likely, so all rows had equal weights. In this case, being from California is much less likely than not being from California, so the rows have different weights. The overall probability for any given row is the product of that row’s probabilities. The probability that all five people are from California is 10%*10%*10%*10%*10%, which is 0.001%. The probability that none of the five are from California is 90%*90%*90%*90%*90%, or about 59%. The possibilities are no longer equally likely.
-Once again, the detail is interesting. In such a small example, it is possible to count all the different possibilities to answer questions. For example, Table 3-5 shows the probabilities for having zero to five Californians in the group. These numbers can be readily calculated in Excel using the BINOMDIST() function, usinganexpressionsuchasBINOMDIST(5, 2, 10%, 0)tocalculatetheproba- bility that the committee has exactly two Californians.
-￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 111 Table 3-4: Thirty-two Possibilities of State of Origin on a Committee of Five
-￼￼￼#1 #2
-1 10% 10%
-2 10% 10%
-3 10% 10%
-4 10% 10%
-5 10% 10%
-6 10% 10%
-7 10% 10%
-8 10% 10%
-9 10% 90%
-10 10% 90%
-11 10% 90%
-12 10% 90%
-13 10% 90%
-14 10% 90%
-15 10% 90%
-16 10% 90%
-17 90% 10%
-18 90% 10%
-19 90% 10%
-20 90% 10%
-21 90% 10%
-22 90% 10%
-23 90% 10%
-24 90% 10%
-25 90% 90%
-26 90% 90%
-27 90% 90%
-28 90% 90%
-29 90% 90%
-30 90% 90%
-31 90% 90%
-32 90% 90%
-#3 #4 #5
-10% 10% 10% 10% 10% 90% 10% 90% 10% 10% 90% 90% 90% 10% 10% 90% 10% 90% 90% 90% 10% 90% 90% 90% 10% 10% 10% 10% 10% 90% 10% 90% 10% 10% 90% 90% 90% 10% 10% 90% 10% 90% 90% 90% 10% 90% 90% 90% 10% 10% 10% 10% 10% 90% 10% 90% 10% 10% 90% 90% 90% 10% 10% 90% 10% 90% 90% 90% 10% 90% 90% 90% 10% 10% 10% 10% 10% 90% 10% 90% 10% 10% 90% 90% 90% 10% 10% 90% 10% 90% 90% 90% 10% 90% 90% 90%
-PROB # CA
-0.001% 5 0.009% 4 0.009% 4 0.081% 3 0.009% 4 0.081% 3 0.081% 3 0.729% 2 0.009% 4 0.081% 3 0.081% 3 0.729% 2 0.081% 3 0.729% 2 0.729% 2 6.561% 1 0.009% 4 0.081% 3 0.081% 3 0.729% 2 0.081% 3 0.729% 2 0.729% 2 6.561% 1 0.081% 3 0.729% 2 0.729% 2 6.561% 1 0.729% 2 6.561% 1 6.561% 1
-59.049% 0
-# NOT CA
-    0
-    1
-    1
-    2
-    1
-    2
-    2
-    3
-    1
-    2
-    2
-    3
-    2
-    3
-    3
-    4
-    1
-    2
-    2
-    3
-    2
-    3
-    3
-    4
-    2
-    3
-    3
-    4
-    3
-    4
-    4
-    5
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼112 Chapter 3 ■ How Different Is Different?
+
+Once again, the detail is interesting. In such a small example, it is possible to count all the different possibilities to answer questions. For example, Table 3-5 shows the probabilities for having zero to five Californians in the group. These numbers can be readily calculated in Excel using the BINOMDIST() function, using an expression such as BINOMDIST(5, 2, 10%, 0) to calculate the probability that the committee has exactly two Californians.
+
+Table 3-4: Thirty-two Possibilities of State of Origin on a Committee of Five
+
 Table 3-5: Probability of Having n Californians on a Committee of Five
-￼￼￼# CA
-0 1 2 3 4 5
-# NON-CA
-5 4 3 2 1 0
-PROBABILITY
-59.049% 32.805% 7.290% 0.810% 0.045% 0.001%
-￼￼￼￼￼￼Null Hypothesis and Confidence
+
+Null Hypothesis and Confidence
+
 Let’s return to the gender breakdown of five people on a committee. This example shows that even when there is a 50% chance of members being male or female, there is still a chance of finding a unisex committee (either all male or all female). In fact, 6.2% of the time the committee is unisex assuming that the participants are chosen randomly. Another way of looking at this is that if there were enough committees, about 6.2% of them would be unisex, assuming the members are chosen randomly from a pool that is half women and half men.
-Does one committee that is unisex support that idea that gender was used to select the members? Or, is it reasonable that the committee was selected ran- domly? Intuitively we might say that it is obvious that gender was used as a selection criterion. Because people of only one gender were included, it seems obvious that people of the other gender were excluded. This intuition would be wrong over 6% of the time. And without any other information, whether we think the committee shows bias or not depends on our own personal confi- dence thresholds.
+
+Does one committee that is unisex support that idea that gender was used to select the members? Or, is it reasonable that the committee was selected randomly? Intuitively we might say that it is obvious that gender was used as a selection criterion. Because people of only one gender were included, it seems obvious that people of the other gender were excluded. This intuition would be wrong over 6% of the time. And without any other information, whether we think the committee shows bias or not depends on our own personal confidence thresholds.
+
 The Null Hypothesis is that the committee members are chosen randomly, without regard to gender. What is the confidence that the Null Hypothesis is true, assuming that there is one committee and that committee is unisex? Out of 32 possible gender combinations, two are unisex. Randomly, unisex committees would be chosen 2/32 or 6% of the time. A common statistical test is 5%, so this exceeds the statistical threshold. Using this level of statistical significance, even a unisex committee is not evidence of bias.
-On the other hand, a unisex committee is either all female or all male. Look- ing at the particular gender reduces the possibilities to one out of 32 (that is, one out of 32 possible committees are all female; and one out of 32 are all male). Including the gender changes the confidence to about 3%, in which case an all-male or all-female committee suggests that the Null Hypothesis is false,
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 113
-￼￼using the standard statistic level of significance. The fact that looking at the problem in two slightly different ways produces different results is a good les- son to remember when facing problems in the real world.
+
+On the other hand, a unisex committee is either all female or all male. Looking at the particular gender reduces the possibilities to one out of 32 (that is, one out of 32 possible committees are all female; and one out of 32 are all male). Including the gender changes the confidence to about 3%, in which case an all-male or all-female committee suggests that the Null Hypothesis is false, using the standard statistic level of significance. The fact that looking at the problem in two slightly different ways produces different results is a good lesson to remember when facing problems in the real world.
+
 WARNING Slightly changing the problem (such as looking at unisex committees versus all-male or all-female committees) can change the answer to a question. Be clear about stating the problem being solved.
-Let’s now look at the second example of Californians. What if all members were from California? The Null Hypothesis is that people in the committee are chosen irrespective of their state of origin. However, there is only a 0.001% chance that a randomly selected committee of five would consist only of Cali- fornians. In this case, we would be quite confident that the Null Hypothesis is false. And that in turn suggests some sort of bias in the process of choosing members in the committee. In this case, we would be right in assuming a bias 99.999% of the time.
+
+Let’s now look at the second example of Californians. What if all members were from California? The Null Hypothesis is that people in the committee are chosen irrespective of their state of origin. However, there is only a 0.001% chance that a randomly selected committee of five would consist only of Californians. In this case, we would be quite confident that the Null Hypothesis is false. And that in turn suggests some sort of bias in the process of choosing members in the committee. In this case, we would be right in assuming a bias 99.999% of the time.
+
 How Many Customers Are Still Active?
-Analyzing committees of five members gives insight into the process of count- ing possibilities to arrive at probabilities and confidence levels. More interesting examples use customer data. Let’s consider the customers in the subscription database who started exactly one year before the cutoff date, and of them, the proportion that stopped in the first year. In this table, active customers are iden- tified by having the STOP_TYPE column set to a value other than NULL. The fol- lowing SQL calculates this summary information:
+
+Analyzing committees of five members gives insight into the process of counting possibilities to arrive at probabilities and confidence levels. More interesting examples use customer data. Let’s consider the customers in the subscription database who started exactly one year before the cutoff date, and of them, the proportion that stopped in the first year. In this table, active customers are identified by having the STOP_TYPE column set to a value other than NULL. The following SQL calculates this summary information:
+
 SELECT COUNT(*) as numstarts,
 SUM(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as numstops, AVG(CASE WHEN stop_type IS NOT NULL THEN 1.0 ELSE 0 END
-￼￼￼￼￼￼            ) as stoprate
-  WHERE start_date = ‘2005-12-28’
+            ) as stoprate
+FROM subs
+WHERE start_date = ‘2005-12-28’
+
 Notice that the query uses the floating-point constant 1.0 for the average rather than the integer 1. This ensures that the average is a floating-point average, regardless of the database.
+
 This query returns the following results:
-■■ Exactly 2,409 customers started one year before the cutoff date.
-■■ Of these, 484 were stopped on the cutoff date.
-■■ The stop rate is 20.1%.
-Both the number stopped and the stop rate are accurate measurements about what happened to the 2,409 customers who started on Dec 28, 2005. How much confidence do we have in these numbers as representative of all customers one
-￼FROM subs
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼114 Chapter 3 ■ How Different Is Different?
-￼￼year after they start? The idea in answering this question is that there is a process that causes customers to stop. This process is random and behaves like a lottery. Customers who have the right lottery ticket stop (or perhaps cus- tomers that have the wrong ticket?); everyone else remains active. Our goal is to understand this process better.
-The first question assumes that the number of stops is fixed. Given the num- ber of stops, what range of stop rates is likely to cause exactly that number of stops?
-The second question assumes that the stop rate is really fixed at 20.1%. If this is the case, how many customers would we expect to stop? Remember the commit- tee example. Even though the members have an equal probability of being male or female, the committee can still take on any combination of genders. The same is true here. The next two subsections examine these questions in more detail. The methods are similar to the methods used for understanding the committee; however, the details are a bit different because the sizes are much larger.
+
+- Exactly 2,409 customers started one year before the cutoff date.
+
+- Of these, 484 were stopped on the cutoff date.
+
+- The stop rate is 20.1%.
+
+Both the number stopped and the stop rate are accurate measurements about what happened to the 2,409 customers who started on Dec 28, 2005. How much confidence do we have in these numbers as representative of all customers one year after they start? The idea in answering this question is that there is a process that causes customers to stop. This process is random and behaves like a lottery. Customers who have the right lottery ticket stop (or perhaps customers that have the wrong ticket?); everyone else remains active. Our goal is to understand this process better.
+
+The first question assumes that the number of stops is fixed. Given the number of stops, what range of stop rates is likely to cause exactly that number of stops?
+
+The second question assumes that the stop rate is really fixed at 20.1%. If this is the case, how many customers would we expect to stop? Remember the committee example. Even though the members have an equal probability of being male or female, the committee can still take on any combination of genders. The same is true here. The next two subsections examine these questions in more detail. The methods are similar to the methods used for understanding the committee; however, the details are a bit different because the sizes are much larger.
+
 Given the Count, What Is the Probability?
+
 The observed stop rate is 20.1% for the one-year subscribers. Let’s propose a hypothesis, that the stop process actually has a stop rate of 15% in the first year rather than the observed rate. The observed 484 stops are just an outlier, in the same way that five people chosen for a committee, at random, all turn out to be women.
-Figure 3-6 shows the distribution of values for the number of stops, given that the stop rate is 15%, both as a discrete histogram and as a cumulative dis- tribution. The discrete histogram shows the probability of getting exactly that number of stops; this is called the distribution. The cumulative distribution shows the probability of getting up to that many stops.
-2.50% ￼ ￼ ￼ ￼ ￼ ￼ 100% 2.25% ￼ ￼ 90% 2.00% ￼ ￼ 80% 1.75% ￼ ￼ 70% 1.50% ￼ ￼ ￼ 60% 1.25% ￼ ￼ 50% 1.00% ￼ ￼ 40%
-0.75%
-0.50% ￼ ￼ 20% 0.25% ￼ ￼ 10% 0.00% ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ ￼ 0%
-Number of Stops
-Figure 3-6: The proportion of combinations with a given number of stops, assuming a 15% stop rate and 2,409 starts, follows a binomial distribution.
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼30%
-￼￼￼￼www.it-ebooks.info
-250
-260
-270
-280
-290
-300
-310
-320
-330
-340
-350
-360
-370
-380
-390
-400
-410
-420
-430
-440
-450
-460
-470
-480
-490
-500
+
+Figure 3-6 shows the distribution of values for the number of stops, given that the stop rate is 15%, both as a discrete histogram and as a cumulative distribution. The discrete histogram shows the probability of getting exactly that number of stops; this is called the distribution. The cumulative distribution shows the probability of getting up to that many stops.
+
 Proportion of Combinations
 Cumulative Proportion
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 115
-￼￼A 15% stop rate should produce, on average, 361 stops (15% of 2,409); this overall average is called the expected value. The 484 stops are actually 123 more stops than the expected value, leading to the question: What is the probability (p- value) of being 123 or more stops away from the expected value? And this question has an answer. To a very close approximation, the probability is 0%. The actual number is more like 0.0000000015%; calculated using the formula 2*MIN(1- BINOMDIST(484, 2409, 15%, 1), BINOMDIST(484, 2409, 15%, 1)). The p-value is twice the size of the tail of the distribution.
+Number of Stops
+
+Figure 3-6: The proportion of combinations with a given number of stops, assuming a 15% stop rate and 2,409 starts, follows a binomial distribution.
+
+A 15% stop rate should produce, on average, 361 stops (15% of 2,409); this overall average is called the expected value. The 484 stops are actually 123 more stops than the expected value, leading to the question: What is the probability (p-value) of being 123 or more stops away from the expected value? And this question has an answer. To a very close approximation, the probability is 0%. The actual number is more like 0.0000000015%; calculated using the formula 2*MIN(1 - BINOMDIST(484, 2409, 15%, 1), BINOMDIST(484, 2409, 15%, 1)). The p-value is twice the size of the tail of the distribution.
+
 So, it is very, very, very unlikely that the original stop rate was 15%. In fact, it is so unlikely that we can simply ignore the possibility and assume that the stop rate was higher. Okay, so the stop rate is not 15%. What about 16%? Or 17%? Table 3-6 shows the probability of being in the tail of the distribution for a range of different stop rates. Based on this table, it is reasonable to say that the stop rate for the underlying stop process could really be anywhere from about 18.5% to about 21.5%.
+
 Table 3-6: Probability of Having 484 Stops on 2,409 Starts Given Various Hypothetical Stop Rates
-￼￼STOP RATE
-17.00% 18.00% 18.50% 18.75% 19.00% 19.25% 19.50% 19.75% 19.90% 20.00% 20.10% 20.25% 20.50% 20.75% 21.00% 21.25%
-EXPECTED STOPS
-409.5 433.6 445.7 451.7 457.7 463.7 469.8 475.8 479.4 481.8 484.2 487.8 493.8 499.9 505.9 511.9
-PROBABILITY OF DIFFERENCE THAT FAR OFF
--74.5 0.01% -50.4 0.77% -38.3 4.33% -32.3 8.86% -26.3 16.56% -20.3 28.35% -14.2 44.70%
--8.2 65.23% -4.6 79.06% -2.2 88.67%
-0.2 98.42% 3.8 87.01% 9.8 64.00%
-15.9 44.12% 21.9 28.43% 27.9 17.08%
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
-Continued on next page
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼116 Chapter 3 ■ How Different Is Different? Table 3-6 (continued)
-￼￼￼￼STOP RATE
-21.50% 21.75% 22.00% 22.50% 23.00%
-EXPECTED STOPS DIFFERENCE
-517.9 33.9 524.0 40.0 530.0 46.0 542.0 58.0 554.1 70.1
-PROBABILITY OF THAT FAR OFF
-9.56% 4.97% 2.41% 0.45% 0.06%
-￼￼￼￼￼This is a very important idea, so it is worth reconstructing the thought process. First, there was a hypothesis. This hypothesis stated that the actual stop process stop rate is 15% rather than the observed value of 20.1%. Assum- ing this hypothesis to be true, we then looked at all the different possible com- binations of stops that a 15% stop rate would result in. Of course, listing out all the combinations would be too cumbersome; fortunately, the binomial for- mula simplifies the calculations. Based on these counts, we saw that the observed number of stops — 484 — was quite far from the expected number of stops, 361. In fact, there is essentially a 0% probability that an observation 123 or more stops away from the average would be observed.
+
+This is a very important idea, so it is worth reconstructing the thought process. First, there was a hypothesis. This hypothesis stated that the actual stop process stop rate is 15% rather than the observed value of 20.1%. Assuming this hypothesis to be true, we then looked at all the different possible combinations of stops that a 15% stop rate would result in. Of course, listing out all the combinations would be too cumbersome; fortunately, the binomial formula simplifies the calculations. Based on these counts, we saw that the observed number of stops — 484 — was quite far from the expected number of stops, 361. In fact, there is essentially a 0% probability that an observation 123 or more stops away from the average would be observed.
+
 There is nothing magic or general about the fact that 15% does not work and values roughly in the range 19%–21% do work. The confidence depends on the number of starts in the data. If there were only 100 starts, the difference between 15% and 20% would not be statistically significant.
+
 Given the Probability, What Is the Number of Stops?
-The second question is the inverse of the first one: Given that the underlying stop process has stop rate of 20.1%, what is the likely number of stops? This is a direct appli- cationofthebinomialformula.Thecalculation,BINOMDIST(484, 2409, 20.1%, 0) returns 2.03%, saying that only about one time in fifty do exactly 484 stops result. Even with a stop rate of exactly 20.1%, the expected value of 484 stops is achieved only 2% of the time by a random process. With so many starts, getting a few more or a few less is reasonable assuming that the underlying process is random.
-The expected range accounting for 95% of the number of stops can be calcu- lated using the binomial formula. This range goes from 445 stops to 523 stops, which in turn corresponds to a measured stop rate between 18.5% and 21.7%. Table 3-7 shows the probability of the number of stops being in particular ranges around 484 stops.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 117
-￼￼Table 3-7: Probability of a 20% Stop Rate Resulting in Various Ranges Around the Expected Value of 484 Stops
-￼WIDTH
-3 15 25 51 75 79 101 126 151
-LOWER BOUND
-483.0 477.0 472.0 459.0 447.0 445.0 434.0 421.0 409.0
-HIGHER BOUND
-485.0 491.0 496.0 509.0 521.0 523.0 534.0 546.0 559.0
-PROBABILITY
-4.42% 27.95% 45.80% 79.46% 93.91% 95.18% 98.88% 99.86% 99.99%
-￼￼￼￼￼￼￼￼￼The Rate or the Number?
-Time for a philosophy break. This analysis started with very hard numbers: exactly 484 out of 2,409 customers stopped in the first year. After applying some ideas from statistics and probability, the hard numbers have become softer. What was an exact count becomes a confidence of a value within a cer- tain interval. Are we better off with or without the statistical analysis?
+
+The second question is the inverse of the first one: Given that the underlying stop process has stop rate of 20.1%, what is the likely number of stops? This is a direct application of the binomial formula. The calculation BINOMDIST(484, 2409, 20.1%, 0) returns 2.03%, saying that only about one time in fifty do exactly 484 stops result. Even with a stop rate of exactly 20.1%, the expected value of 484 stops is achieved only 2% of the time by a random process. With so many starts, getting a few more or a few less is reasonable assuming that the underlying process is random.
+
+The expected range accounting for 95% of the number of stops can be calculated using the binomial formula. This range goes from 445 stops to 523 stops, which in turn corresponds to a measured stop rate between 18.5% and 21.7%. Table 3-7 shows the probability of the number of stops being in particular ranges around 484 stops.
+
+Table 3-7: Probability of a 20% Stop Rate Resulting in Various Ranges Around the Expected Value of 484 Stops
+
+The Rate or the Number?
+
+Time for a philosophy break. This analysis started with very hard numbers: exactly 484 out of 2,409 customers stopped in the first year. After applying some ideas from statistics and probability, the hard numbers have become softer. What was an exact count becomes a confidence of a value within a certain interval. Are we better off with or without the statistical analysis?
+
 The situation is more reasonable than it appears. The first observation is that the range of 445 stops to 523 stops might seem wide. In fact, it is rather wide. However, if there were a million customers who started, with a stop rate of 20.1%, then the corresponding range would be much tighter. The equivalent confidence range would be from about 200,127 to 201,699 stops — or from 20.01% to 20.17%. More data implies narrower confidence intervals.
-Why is there a confidence interval at all? This is an important question. The answer is that we are making an assumption, and the assumption is that cus- tomers stop because of some unseen process that affects all customers. This process causes some percentage of customers to stop in the first year. How- ever, the decision of whether one particular customer stops is like rolling dice or tossing a coin, which means that there might be unusual lucky streaks (lower stop rates) or unusually unlucky streaks (higher stop rates), in the same way that a randomly chosen committee could have five men or five women.
-A random process is different from a deterministic process that says that every fifth customer is going to stop in the first year, or that we’ll cancel the accounts of everyone named “Pat” at day 241. The results from a deterministic
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼118 Chapter 3 ■ How Different Is Different?
-￼￼process are exact, ignoring the small deviations that might arise due to opera- tional error. For instance, for customers who have already started, the start process is deterministic; 2,409 customers started. There is no confidence inter- val on this. The number really is 2,409. The statistics measure the “decision-to- stop” process, something that is only observed by its actual effects on stops.
+
+Why is there a confidence interval at all? This is an important question. The answer is that we are making an assumption, and the assumption is that customers stop because of some unseen process that affects all customers. This process causes some percentage of customers to stop in the first year. However, the decision of whether one particular customer stops is like rolling dice or tossing a coin, which means that there might be unusual lucky streaks (lower stop rates) or unusually unlucky streaks (higher stop rates), in the same way that a randomly chosen committee could have five men or five women.
+
+A random process is different from a deterministic process that says that every fifth customer is going to stop in the first year, or that we’ll cancel the accounts of everyone named “Pat” at day 241. The results from a deterministic process are exact, ignoring the small deviations that might arise due to operational error. For instance, for customers who have already started, the start process is deterministic; 2,409 customers started. There is no confidence interval on this. The number really is 2,409. The statistics measure the “decision-to-stop” process, something that is only observed by its actual effects on stops.
+
 This section started with an example of a committee with five members and moved to a larger example on thousands of starts. As the size of the population increases, confidence in the results increases as well, and the corresponding confidence intervals become narrower. As the population gets larger, whether we look at the ratio or the absolute number becomes less important, simply because both appear to be quite accurate. Fortunately, there is a lot of data stored in databases, so corresponding confidence intervals are often small enough to ignore.
+
 TIP On large datasets, charts that show visible differences between groups of customers are usually showing differences that are statistically significant.
+
 Ratios, and Their Statistics
-The binomial distribution really just counts up all the different combinations and determines which proportion of them meets particular conditions. This is very powerful for finding confidence intervals for a random process, as shown in the previous section. This section introduces an alternative method that esti- mates a standard deviation for a ratio, and uses the normal distribution to approximate confidence ratios.
-Using the normal distribution has two advantages over the binomial distri- bution. First, it is applicable in more areas than the binomial distribution; for instance, the methods here are more suited for comparing two ratios and ask- ing whether they are the same. Second, SQL does not support the calculations needed for the binomial distribution, but it does support almost all the calcu- lations needed for this method.
+
+The binomial distribution really just counts up all the different combinations and determines which proportion of them meets particular conditions. This is very powerful for finding confidence intervals for a random process, as shown in the previous section. This section introduces an alternative method that estimates a standard deviation for a ratio, and uses the normal distribution to approximate confidence ratios.
+
+Using the normal distribution has two advantages over the binomial distribution. First, it is applicable in more areas than the binomial distribution; for instance, the methods here are more suited for comparing two ratios and asking whether they are the same. Second, SQL does not support the calculations needed for the binomial distribution, but it does support almost all the calculations needed for this method.
+
 This section introduces the method for estimating the standard deviation of a ratio (which is actually derived from the standard error of a proportion). This is then applied to comparing two different ratios. Finally, the section shows how to use these ideas to produce lower bounds for ratios that might be more appropriate for conservative comparisons of different groups.
+
 Standard Error of a Proportion
-Remember that a standard error is just the standard deviation of some statistic that has been measured on some subgroup of the overall data. In this case, the statistic is a proportion of two variables, such as the number of stops divided by
-￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 119 the number of starts. The formula for the standard error in this case is simple
+
+Remember that a standard error is just the standard deviation of some statistic that has been measured on some subgroup of the overall data. In this case, the statistic is a proportion of two variables, such as the number of stops divided by the number of starts. The formula for the standard error in this case is simple
 and can easily be expressed in SQL or Excel:
-  STDERR = SQRT(<ratio> * (1-<ratio>) / <number of data points>)
-That is, the standard error is the square root of the product of the observed prob- ability times one minus the observed probability divided by the sample size.
+
+STDERR = SQRT(<ratio> * (1 - <ratio>) / <number of data points>)
+
+That is, the standard error is the square root of the product of the observed probability times one minus the observed probability divided by the sample size.
+
 The following SQL query calculates both the standard error and the lower and upper bounds of the 95% confidence interval:
+
   SELECT stoprate - 1.96 * stderr as conflower,
          stoprate + 1.96 * stderr as confupper,
          stoprate, stderr, numstarts, numstops
@@ -493,29 +475,40 @@ The following SQL query calculates both the standard error and the lower and upp
                stoprate, numstarts, numstops
         FROM (SELECT COUNT(*) as numstarts,
                      SUM(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0
-￼￼￼￼￼￼￼￼￼￼END) as numstops,
+END) as numstops,
 AVG(CASE WHEN stop_type IS NOT NULL THEN 1.0 ELSE 0
-￼￼           END) as stoprate
+           END) as stoprate
 WHERE start_date = ‘2005-12-28’) s
-￼FROM subs
-￼￼)s
-This SQL query uses two nested subqueries to define the columns NUM- STOPS, STOPRATE, and STDERR. The overall expression could be written without subqueries, but that would result in a much messier query.
-This query uses the constant 1.96 to define the 95% confidence bounds for the interval. The result is the interval from 18.5% to 21.7%. Recall that using the binomial distribution, the exact confidence interval was 18.5% to 21.7%. The results are, fortunately and not surprisingly, remarkably close. Even though the standard error of proportions is an approximation that uses the normal dis- tribution, it is a very good approximation.
+FROM subs
+)s
+
+This SQL query uses two nested subqueries to define the columns NUMSTOPS, STOPRATE, and STDERR. The overall expression could be written without subqueries, but that would result in a much messier query.
+
+This query uses the constant 1.96 to define the 95% confidence bounds for the interval. The result is the interval from 18.5% to 21.7%. Recall that using the binomial distribution, the exact confidence interval was 18.5% to 21.7%. The results are, fortunately and not surprisingly, remarkably close. Even though the standard error of proportions is an approximation that uses the normal distribution, it is a very good approximation.
+
 The standard error can be used in reverse as well. In the earlier polling example, the standard error was 1.27% and the expected probability was 50%. What does this say about the number of people who were polled? For this, the calculation simply goes in reverse. The formula is:
-  <number> = <ratio>*(1-<ratio>)/(<stderr>^2)
+
+<number> = <ratio>*(1 - <ratio>)/(<stderr>^2)
+
 For the polling example, it gives the value of 1,552, which is a reasonable size for a poll.
-One important observation about the standard error and the population size is that halving the standard error corresponds to increasing the population size by a factor of four. In plainer language, there is a trade-off between cost and accuracy. Reducing the standard error on the poll to 0.635%, half of 1.27%, would require polling four times as many people, over 6,000 people instead of
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼120 Chapter 3 ■ How Different Is Different?
-1,500. This would presumably increase costs by a factor of four. Reducing the
+
+One important observation about the standard error and the population size is that halving the standard error corresponds to increasing the population size by a factor of four. In plainer language, there is a trade-off between cost and accuracy. Reducing the standard error on the poll to 0.635%, half of 1.27%, would require polling four times as many people, over 6,000 people instead of 1,500. This would presumably increase costs by a factor of four. Reducing the
 standard error increases costs.
+
 Confidence Interval on Proportions
+
 Confidence intervals can be derived from the standard error. For instance, there are three markets in the subscription data: Gotham, Metropolis, and Smallville. These three markets have the following stop rates for customers who started on 26 Dec 2005 (this example uses a slightly different stop rate from the previous example):
-■■ Gotham, 35.2%
-■■ Metropolis, 34.0%
-■■ Smallville, 20.9%
-Are we confident that these stop rates are different? Or, might they all be the same? Although it seems unlikely that they are the same, because Smallville is much smaller than the others, remember that a group of five people drawn at random will all have the same genders over 5% of the time. Even though Smal- lville has a lower stop rate, it might still be just another reasonable sample.
-The place to start is with the confidence intervals for each market. The fol- lowing query does this calculation:
+
+- Gotham, 35.2%
+
+- Metropolis, 34.0%
+
+- Smallville, 20.9%
+
+Are we confident that these stop rates are different? Or, might they all be the same? Although it seems unlikely that they are the same, because Smallville is much smaller than the others, remember that a group of five people drawn at random will all have the same genders over 5% of the time. Even though Smallville has a lower stop rate, it might still be just another reasonable sample.
+
+The place to start is with the confidence intervals for each market. The following query does this calculation:
+
          SELECT market, stoprate - 1.96 * stderr as conflower,
                 stoprate + 1.96 * stderr as confupper,
                 stoprate, stderr, numstarts, numstops
@@ -524,136 +517,137 @@ The place to start is with the confidence intervals for each market. The fol- lo
                       stoprate, numstarts, numstops
                FROM (SELECT market, COUNT(*) as numstarts,
                             SUM(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0
-￼￼￼￼￼￼￼￼￼￼￼END) as numstops,
+END) as numstops,
 AVG(CASE WHEN stop_type IS NOT NULL THEN 1.0 ELSE 0
            END) as stoprate
 FROM subs
 WHERE start_date in (‘2005-12-26’)
 GROUP BY market) s
-￼￼￼￼￼￼)s
+)s
+
 This query is very similar to the query for the overall calculation, with the addition of the aggregation by market.
-The results in Table 3-8 make it clear that the stop rate for Smallville is dif- ferent from the stop rate for Gotham and Metropolis. The 95% confidence interval for Smallville does not overlap with the confidence intervals of the other two markets, as shown in Figure 3-7. This is a strong condition. When the confidence intervals do not overlap, there is a high confidence that the ratios are different.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 121 Table 3-8: Confidence Intervals by Markets for Starts on 26 Dec 2005
-￼￼￼￼STOPS
-RATE
-35.2% 34.0% 20.9%
-95% CONFIDENCE
-￼￼MARKET
-Gotham Metropolis Smallville
-STARTS #
-2,256 794 1,134 385 666 139
-LOWER BOUND
-33.2% 31.2% 17.8%
-UPPER BOUND
-STANDARD ERROR
-37.2% 1.0% 36.7% 1.4% 24.0% 1.6%
-￼￼￼Figure 3-7, by the way, is an Excel scatter plot. The X-axis has the stop rate for each market. The Y-values are simply 1, 2, and 3 (because Excel does not allow names to be values for a scatter plot); the Y-axis itself has been removed, because it adds no useful information to the chart. The intervals use the X-Error Bar feature, and the labels on the points were added manually, by typing in text and placing the labels where desired.
-Metropolis
-17% 18% 19% 20% 21% 22% 23% 24% 25% 26% 27% 28% 29% 30% 31% 32% 33% 34% 35% 36% 37% 38%
+
+The results in Table 3-8 make it clear that the stop rate for Smallville is different from the stop rate for Gotham and Metropolis. The 95% confidence interval for Smallville does not overlap with the confidence intervals of the other two markets, as shown in Figure 3-7. This is a strong condition. When the confidence intervals do not overlap, there is a high confidence that the ratios are different.
+
+Table 3-8: Confidence Intervals by Markets for Starts on 26 Dec 2005
+
+Figure 3-7, by the way, is an Excel scatter plot. The X-axis has the stop rate for each market. The Y-values are simply 1, 2, and 3 (because Excel does not allow names to be values for a scatter plot); the Y-axis itself has been removed, because it adds no useful information to the chart. The intervals use the X-Error Bar feature, and the labels on the points were added manually, by typing in text and placing the labels where desired.
+
 Figure 3-7: When confidence intervals do not overlap, there is a high level of confidence that the observed values really are different. So Smallville is clearly different from Gotham and Metropolis.
+
 Difference of Proportions
-For Metropolis and Gotham, the situation is different, because their confidence intervals do overlap. The difference between their observed stop rates is 1.2%. How likely is it that this difference is due just to chance, if we assume the Null Hypoth- esis that the two values are really equal?
+
+For Metropolis and Gotham, the situation is different, because their confidence intervals do overlap. The difference between their observed stop rates is 1.2%. How likely is it that this difference is due just to chance, if we assume the Null Hypothesis that the two values are really equal?
+
 There is another estimate of the standard error that is used for the difference between two proportions, which is quite reasonably called the standard error of the difference of proportions. The formula for this is easily calculated in Excel or SQL:
-  STDERR = SQRT((<ratio1>*(1-<ratio1>)/<size1>) +
-                (<ratio2>*(1-<ratio2>)/<size2>)
-That is, the standard error of the difference of two proportions is the square root of the sum of the squares of the standard errors of each proportion (this is basically the same as the standard error of a difference of two values). The calculation yields a standard error of 1.7% for the difference. The observed
-￼Smallville
-￼www.it-ebooks.info
-Gotham
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼122 Chapter 3 ■ How Different Is Different?
-￼￼difference is 1.2%, resulting in a z-score of 0.72 (the z-score is 1.2%/1.7%). Such a small z-score is well within a reasonable range, so the difference is not significant.
+
+STDERR = SQRT((<ratio1>*(1 - <ratio1>)/<size1>) +
+              (<ratio2>*(1 - <ratio2>)/<size2>)
+
+That is, the standard error of the difference of two proportions is the square root of the sum of the squares of the standard errors of each proportion (this is basically the same as the standard error of a difference of two values). The calculation yields a standard error of 1.7% for the difference. The observed difference is 1.2%, resulting in a z-score of 0.72 (the z-score is 1.2%/1.7%). Such a small z-score is well within a reasonable range, so the difference is not significant.
+
 Another way of looking at this is using the 95% confidence interval. The lower bound is at the observed difference minus 1.96*1.7% and the upper bound is the observed difference plus 1.96*1.7%, which comes to a range from –2.2% to 4.6%. Because the confidence interval is both positive and negative, it includes zero. That is, Gotham and Metropolis could actually have the same stop rate, or Metropolis’s stop rate could even be bigger than Gotham’s (the opposite of the observed ordering). The observed difference could easily be due to randomness of the underlying stop process.
+
 This example shows the different ways that the standard error can be used. When confidence intervals do not overlap, the observed values are statistically different. It is also possible to measure the confidence of the difference between two values, using the standard error of the difference of proportions. This calculation uses similar methods. When the resulting confidence interval contains zero, the difference is not significant.
-The techniques are only measuring a certain type of significance, related to the randomness of underlying processes. The observed values can still provide guidance. There is some evidence that Gotham has a higher stop rate than Metropolis, some evidence but not enough to be confident in the fact. If we had to choose one market or the other for a retention program to save cus- tomers, Gotham would be the likely candidate, because its stop rate is larger. However, the choice of Gotham over Metropolis is based on weak evidence, because the difference is not statistically significant.
+
+The techniques are only measuring a certain type of significance, related to the randomness of underlying processes. The observed values can still provide guidance. There is some evidence that Gotham has a higher stop rate than Metropolis, some evidence but not enough to be confident in the fact. If we had to choose one market or the other for a retention program to save customers, Gotham would be the likely candidate, because its stop rate is larger. However, the choice of Gotham over Metropolis is based on weak evidence, because the difference is not statistically significant.
+
 Conservative Lower Bounds
+
 Notice that the confidence intervals for the three markets all have different standard errors. This is mostly because the size of each market is different (and to a much lesser extent to the fact that the measured stop rates are different). To be conservative, it is sometimes useful to use the observed value minus one standard error, rather than the observed value. This can change the relative values of different groups, particularly because the standard error on a small group is larger than the standard error on a larger group. In some cases, using a conservative estimate changes the ordering of the different groups, although that is not true in this case.
+
 TIP When comparing ratios on different groups that are different sizes, a conservative estimate for the comparison is the observed ratio minus one standard deviation.
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 123
-￼￼Chi-Square
-The chi-square test (pronounced to rhyme with “guy” and starting with a hard “c” sound) provides another method for addressing the question “how differ- ent is different?” The chi-square test is appropriate when there are multiple dimensions being compared to each other. Instead of just looking at the “stop rate” for customers, for instance, the customers are divided into two distinct groups, those who stopped and those who are active. These groups can then be compared across different dimensions, such as channel, market, or the period when they started.
-The chi-square test does not create confidence intervals, because confidence intervals do not make as much sense across multiple dimensions. Instead, it calculates the confidence that the observed counts are due to chance, by com- paring the observed counts to expected counts. Because the chi-square test does not use confidence intervals, it avoids some of the logical conundrums that occur at the edges, such as when the confidence interval for a ratio crosses the 0% or 100% thresholds. Proportions are in the range of 0% to 100%, and so too should be their confidence intervals.
+
+Chi-Square
+
+The chi-square test (pronounced to rhyme with “guy” and starting with a hard “c” sound) provides another method for addressing the question “how different is different?” The chi-square test is appropriate when there are multiple dimensions being compared to each other. Instead of just looking at the “stop rate” for customers, for instance, the customers are divided into two distinct groups, those who stopped and those who are active. These groups can then be compared across different dimensions, such as channel, market, or the period when they started.
+
+The chi-square test does not create confidence intervals, because confidence intervals do not make as much sense across multiple dimensions. Instead, it calculates the confidence that the observed counts are due to chance, by comparing the observed counts to expected counts. Because the chi-square test does not use confidence intervals, it avoids some of the logical conundrums that occur at the edges, such as when the confidence interval for a ratio crosses the 0% or 100% thresholds. Proportions are in the range of 0% to 100%, and so too should be their confidence intervals.
+
 Expected Values
+
 Consider customers who started on December 26, 2005. What is the number of stops expected for each of the three markets? A simple way to calculate these expected values is to observe that the overall stop rate is 32.5% for starts from that day. So, given that Gotham had 2,256 starts, there should be about 733.1 stops (32.5% * 2,256). In other words, assuming that all the markets behave the same way, the stops should be equally distributed.
-In actual fact, Gotham has 794 stops, not 733.1. It exceeds the expected num- ber by 60.9 stops. The difference between the observed value and the expected value is the deviation; Table 3-9 shows the observed values, expected values, and deviations for stops in all three markets.
+
+In actual fact, Gotham has 794 stops, not 733.1. It exceeds the expected number by 60.9 stops. The difference between the observed value and the expected value is the deviation; Table 3-9 shows the observed values, expected values, and deviations for stops in all three markets.
+
 Table 3-9: Observed and Expected Values of Active and Stopped Customers, by Market
-￼￼￼￼￼￼Gotham Metropolis Smallville
-OBSERVED ACTIVE STOP
-1,462 794 749 385 527 139
-EXPECTED ACTIVE STOP
-1,522.9 733.1 765.5 368.5 449.6 216.4
-DEVIATION ACTIVE STOP
--60.9 60.9 -16.5 16.5 77.4 -77.4
-￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼124 Chapter 3 ■ How Different Is Different?
-￼￼The expected values have some useful properties. For instance, the sum of the expected values is the same as the sum of the observed values. In addi- tion, the total number of expected stops is the same as the number of observed stops; and the totals in each market are the same. The expected values have the same numbers of actives and stops; they are just arranged differently.
-The deviations for each row have the same absolute values, but one is posi- tive and the other negative. For Gotham, the “active customer” deviation is –60.9 and the “stopped customer” deviation is +60.9, so the row deviations sum to zero. This property is not a coincidence. The sum of the deviations along each row and each column always adds up to zero, regardless of the number of rows and columns.
+
+The expected values have some useful properties. For instance, the sum of the expected values is the same as the sum of the observed values. In addition, the total number of expected stops is the same as the number of observed stops; and the totals in each market are the same. The expected values have the same numbers of actives and stops; they are just arranged differently.
+
+The deviations for each row have the same absolute values, but one is positive and the other negative. For Gotham, the “active customer” deviation is –60.9 and the “stopped customer” deviation is +60.9, so the row deviations sum to zero. This property is not a coincidence. The sum of the deviations along each row and each column always adds up to zero, regardless of the number of rows and columns.
+
 Calculating the expected values from the raw tabular data is quite simple. Figure 3-8 shows the Excel formulas. First, the sums of the counts in each row and each column are calculated, as well as the sum of all cells in the table. The expected value for each cell is the row sum total times the column sum divided by the overall sum. With good use of relative and absolute cell range references, it is easy to write this formula once, and then copy it to the other five cells.
-With this background, the chi-square question is: What is the likelihood that the deviations are due strictly to chance? If this likelihood is very low, then we are con- fident that there is a difference among the markets. If the likelihood is high (say over 5%), then there may be a difference among the markets, but the observed measurements do not provide enough evidence to draw that conclusion.
+
+With this background, the chi-square question is: What is the likelihood that the deviations are due strictly to chance? If this likelihood is very low, then we are confident that there is a difference among the markets. If the likelihood is high (say over 5%), then there may be a difference among the markets, but the observed measurements do not provide enough evidence to draw that conclusion.
+
 Chi-Square Calculation
+
 The chi-square measure of a single cell is the deviation squared divided by the expected value. The chi-square measure for the entire table is the sum of the chi-square measures for all the cells in the table.
-Table 3-10 extends Table 3-9 with the chi-square values of the cells. The sum of the chi-square values for all cells is 49.62. Notice that the chi-square values no longer have the property that the sum of each row is zero and the sum of each column is zero. This is obvious, because the chi-square value is never neg- ative. The two divisors are always positive: variance squared is positive, and the expected value of a count is always positive.
+
+Table 3-10 extends Table 3-9 with the chi-square values of the cells. The sum of the chi-square values for all cells is 49.62. Notice that the chi-square values no longer have the property that the sum of each row is zero and the sum of each column is zero. This is obvious, because the chi-square value is never negative. The two divisors are always positive: variance squared is positive, and the expected value of a count is always positive.
+
 Figure 3-8: Expected values are easy to calculate in Excel.
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 125
-￼￼The chi-square value is interesting, but it does not tell us if the value is expected or unexpected. For this, we need to compare the value to a distribu- tion, to turn the total chi-square of 49.62 into a p-value. Unfortunately, chi- square values do not follow a normal distribution. They do, however, follow another well-understood distribution.
+
+The chi-square value is interesting, but it does not tell us if the value is expected or unexpected. For this, we need to compare the value to a distribution, to turn the total chi-square of 49.62 into a p-value. Unfortunately, chi-square values do not follow a normal distribution. They do, however, follow another well-understood distribution.
+
 Table 3-10: Chi-Square Values by Market
-￼OBSERVED ACT STOP
-1,462 794 749 385 527 139
-2,738 1,318
-EXPECTED DEVIATION CHI-SQUARE
-￼￼￼￼￼Gotham Metropolis Smallville TOTAL
-ACT
-1,522.9 765.5 449.6 2,738.0
-STOP ACT STOP
-733.1 -60.9 60.9 368.5 -16.5 16.5 216.4 77.4 -77.4
-1,318.0 0.0 0.0
-ACT STOP
-2.4 5.1
-0.4 0.7 13.3 27.7 16.1 33.5
-￼￼￼￼Chi-Square Distribution
-The final step in the calculation is to translate the chi-square value into a p-value. Like the standard error, this is best understood by referring to an underlying distribution. In this case, the distribution is not the normal distrib- ution. It is the appropriately named chi-square distribution.
+
+Chi-Square Distribution
+
+The final step in the calculation is to translate the chi-square value into a p-value. Like the standard error, this is best understood by referring to an underlying distribution. In this case, the distribution is not the normal distribution. It is the appropriately named chi-square distribution.
+
 Actually, the chi-square distribution is a family of distributions, based on one parameter, called the degrees of freedom. The calculation of the degrees of freedom of a table is simple. It is one less than the number of rows in the table times one less than the number of columns in the table. This example has three rows (one for each market) and two columns (one for actives and one for stops), so the degrees of freedom is (3–1)*(2–1) which equals 2. The aside “Degrees of Freedom for Chi-Square” discusses what the concept means in more detail.
+
 Figure 3-9 shows the chi-square distributions for various degrees of freedom. As the degrees of freedom gets larger, the bump in the distribution moves to the left. In fact, the bump is at the value degrees of freedom minus two. The 95% confidence level for each of the curves is in parentheses. If the chi-square value exceeds this confidence level, it is reasonable to say that the distribution of values is not due to chance.
-The Excel function CHIDIST() calculates the confidence value associated withachi-squarevalueforaparticulardegreesoffreedom.CHIDIST(49.62, 2) returns the miniscule value of 0.0000000017%. This number is exceedingly small, which means that we have very little confidence that the actives and stops are randomly distributed by market. In other words, something else seems to be going on.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼126 Chapter 3 ■ How Different Is Different?
-￼￼DOF 1 (3.84)
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼DOF 3 (7.81)
-DOF 5 (11.07) DOF 10 (18.31)
-DOF 15 (25.00)
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼0 1 2 3 4 5 6 7 8 9 10111213141516171819202122232425
-Chi-Square Value
+
+The Excel function CHIDIST() calculates the confidence value associated with a chi-square value for a particular degrees of freedom. CHIDIST(49.62, 2) returns the minuscule value of 0.0000000017%. This number is exceedingly small, which means that we have very little confidence that the actives and stops are randomly distributed by market. In other words, something else seems to be going on.
+
 Figure 3-9: The chi-square distribution becomes flatter as the number of degrees of freedom increases; the 95% confidence bound is in parentheses.
-As shown earlier in Figure 3-8, the sequence of calculations from the expected value to the variance to the chi-square calculation can all be done in Excel. The formula for the degrees of freedom uses functions in Excel that return the number of rows and columns in the table, so the degrees of freedom of a range of cells is (ROWS(<table>)-1)*(COLUMNS(<table>)-1). The CHIDIST() function with the appropriate arguments then calculates the associ- ated probability.
-￼￼DEGREES OF FREEDOM FOR CHI-SQUARE
+
+As shown earlier in Figure 3-8, the sequence of calculations from the expected value to the variance to the chi-square calculation can all be done in Excel. The formula for the degrees of freedom uses functions in Excel that return the number of rows and columns in the table, so the degrees of freedom of a range of cells is (ROWS(<table>) - 1)*(COLUMNS(<table>) - 1). The CHIDIST() function with the appropriate arguments then calculates the associated probability.
+
+DEGREES OF FREEDOM FOR CHI-SQUARE
+
 The degrees of freedom for the chi-square calculation is not a difficult idea, although understanding it requires some algebra. Historically, the first person to investigate degrees of freedom was the British statistician Sir Ronald Fisher, perhaps the greatest statistician of the twentieth century. He was knighted for his contributions to statistics and science.
+
 The idea behind degrees of freedom addresses the question of how many independent variables are needed to characterize the observed data, given the expected values and the constraints on the rows and columns. This may sound like an arcane question, but it is important for understanding many types of statistical problems. This section shows how the particular formula in the text is calculated.
-The first guess is that each observed value is an independent variable. That is, the number of degrees of freedom is r*c, where r is the number of rows and c
-is the number of columns in the data. However, the constraints mean that there are some relationships among the variables. For instance, the sum of each row has to be equal to the sum of each corresponding row in the expected values. So, the number of variables needed to describe the observed values is reduced by the number of rows. Taking into account the row constraints reduces the degrees of freedom to r*c-r. Because similar constraints apply to the columns, the degrees of freedom becomes r*c – r – c.
-www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 127
-￼￼￼￼DEGREES OF FREEDOM FOR CHI-SQUARE (CONTINUED)
-However, the constraints on the rows and columns are themselves redundant, because the sum of all the rows is the same as the sum of the columns — in both cases, the sum is equal to total sum of all the cells. One of the constraints is unnecessary; the preceding formula has overcounted by 1. The formula for the degrees of freedom is r*c – r – c + 1. This is equivalent to (r-1) * (c-1), the formula given in the text.
-An example should help clarify this. Consider the general 2x2 table, where a, b, c, and d are the expected values in the cells, and R1, R2, C1, C2, and T are the constraints. So R1 refers to the fact that the sum of the observed values in the first row equals the sum of the expected values, a+b.
+
+The first guess is that each observed value is an independent variable. That is, the number of degrees of freedom is r*c, where r is the number of rows and c is the number of columns in the data. However, the constraints mean that there are some relationships among the variables. For instance, the sum of each row has to be equal to the sum of each corresponding row in the expected values. So, the number of variables needed to describe the observed values is reduced by the number of rows. Taking into account the row constraints reduces the degrees of freedom to r*c - r. Because similar constraints apply to the columns, the degrees of freedom becomes r*c – r – c.
+
+However, the constraints on the rows and columns are themselves redundant, because the sum of all the rows is the same as the sum of the columns — in both cases, the sum is equal to total sum of all the cells. One of the constraints is unnecessary; the preceding formula has over-counted by 1. The formula for the degrees of freedom is r*c – r – c + 1. This is equivalent to (r - 1)*(c - 1), the formula given in the text.
+
+An example should help clarify this. Consider the general 2x2 table, where a, b, c, and d are the expected values in the cells, and R1, R2, C1, C2, and T are the constraints. So R1 refers to the fact that the sum of the observed values in the first row equals the sum of the expected values, a + b.
+
 The degrees of freedom for this example is one. That means that knowing one of the observed values along with the expected values defines all the other observed values. Let’s call the observed values A, B, C, and D and assume the value of A is known. What are the other values?
+
 The following formulas give the answer:
-■ B=R1–A
-■ C=C1–A
-■ D=C2–B=C2–R1+A
+
+- B = R1 – A
+
+- C = C1 – A
+
+- D = C2 – B = C2 – R1 + A
+
 The degrees of freedom are the number of variables we need to know in order to derive the original data from the expected values.
+
 For the mathematically inclined, the degrees of freedom is the dimension of the space of observed values, subject to the row and column constraints. The precise definition is not needed to understand how to apply the ideas to the chi-square calculation. But it is interesting that the degrees of freedom characterizes the problem in a fundamental way.
-￼Chi-Square in SQL
-Calculating the chi-square value uses basic arithmetic, so it can be readily cal- culated in SQL. The challenge is keeping track of the intermediate values, such as the expected values and the variances.
+
+Chi-Square in SQL
+
+Calculating the chi-square value uses basic arithmetic, so it can be readily calculated in SQL. The challenge is keeping track of the intermediate values, such as the expected values and the variances.
+
 There are two dimensions in the chi-square table, the rows and the columns. The calculation in SQL uses four summaries along these dimensions:
-■■ An aggregation along both the row and column dimensions. This calcu- lates the values observed in each cell.
-■■ An aggregation along the row dimension. This calculates the sum for each row and is used for the expected value calculation.
-■■ An aggregation along the column dimension. This calculates the sum for each column and is used for the expected value calculation.
-■■ The sum of everything. www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼128 Chapter 3 ■ How Different Is Different?
-The following SQL shows the calculation, liberally using subqueries for each
-of the preceding aggregations:
+
+- An aggregation along both the row and column dimensions. This calculates the values observed in each cell.
+
+- An aggregation along the row dimension. This calculates the sum for each row and is used for the expected value calculation.
+
+- An aggregation along the column dimension. This calculates the sum for each column and is used for the expected value calculation.
+
+- The sum of everything. 
+
+The following SQL shows the calculation, liberally using subqueries for each of the preceding aggregations:
+
          SELECT market, isstopped, val, exp, SQUARE(val - exp) / exp as chisquare
          FROM (SELECT cells.market, cells.isstopped,
                       1.0*r.cnt * c.cnt /
@@ -681,49 +675,37 @@ ON cells.market = r.market LEFT OUTER JOIN
 GROUP BY (CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) )c
                     ON cells.isstopped = c.isstopped) a
          ORDER BY 1, 2
-This SQL follows the same logic as the Excel method for calculating the chi- square value. The row totals are in the query whose alias is R. The column totals are in the table whose alias is C. The expected value is then R.CNT times C.CNT divided by the sum for the entire table.
+
+This SQL follows the same logic as the Excel method for calculating the chi-square value. The row totals are in the query whose alias is R. The column totals are in the table whose alias is C. The expected value is then R.CNT times C.CNT divided by the sum for the entire table.
+
 What States Have Unusual Affinities for Which Types of Products?
-The overall chi-square value tells us how unlikely or likely the values in each cell are. The values for each cell can be used as a measure of likelihood for that particular combination. The purchases data contains eight product groups and over fifty states. The question is: Which states (if any) have an unusual affinity (positive or negative) for product groups? That is, is there a geographical compo- nent to product preferences at the product group level?
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 129
-￼￼Imagine the orders data summarized into a table, with product groups going across and states going down, and each cell containing the number of customers ordering that product group in that state. This looks like the tables used for chi-square calculations. Which cells have the largest chi-square values?
+
+The overall chi-square value tells us how unlikely or likely the values in each cell are. The values for each cell can be used as a measure of likelihood for that particular combination. The purchases data contains eight product groups and over fifty states. The question is: Which states (if any) have an unusual affinity (positive or negative) for product groups? That is, is there a geographical component to product preferences at the product group level?
+
+Imagine the orders data summarized into a table, with product groups going across and states going down, and each cell containing the number of customers ordering that product group in that state. This looks like the tables used for chi-square calculations. Which cells have the largest chi-square values?
+
 Data Investigation
+
 The first step in addressing a question such as this is investigating features of the data. Chapter 2 shows the distribution of orders by state. Figure 3-10 shows the distribution of orders by product group. A typical query to produce this distribution is:
-  SELECT productgroupname, COUNT(*) as numorderlines,
+
+SELECT productgroupname, COUNT(*) as numorderlines,
          COUNT(DISTINCT o.orderid) as numorders,
          COUNT(DISTINCT o.customerid) as numcustomers
-  FROM orders o LEFT OUTER JOIN
+FROM orders o LEFT OUTER JOIN
        orderline ol
        ON o.orderid = ol.orderid LEFT OUTER JOIN
        product p
        ON ol.productid = p.productid
   GROUP BY productgroupname
   ORDER BY 1
+
 The results show that books are the most popular product group. Is this true on a state-by-state basis? It is indeed true that with very few exceptions, the most popular items in each state are books.
-￼￼￼￼￼￼￼￼￼￼￼￼90,000 80,000 70,000 60,000 50,000 40,000 30,000 20,000 10,000
-0
-85,121
-￼￼￼￼￼￼￼￼10,679 5
-44,659
-￼8,794
-21,808
-11,779
-37,237
-4,902
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Figure 3-10: Some product groups attract more customers than other groups.
-The following SQL answers this question, by calculating the number of cus- tomers in each state that have ordered books, and then choosing the one that is largest for each state. Chapter 2 discussed various methods of pulling the largest
-www.it-ebooks.info
-Number of Customers
-#N/A APPAREL
-ARTWORK
-BOOK
-CALENDAR FREEBIE
-GAME OCCASION
-OTHER
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼130 Chapter 3 ■ How Different Is Different?
-value out from a list. This example converts the frequency to a zero-padded
-number, concatenates the product group name to it, and takes the maximum.
-         SELECT state,
+
+Figure 3-10: Some product groups attract more customers than other groups.
+
+The following SQL answers this question, by calculating the number of customers in each state that have ordered books, and then choosing the one that is largest for each state. Chapter 2 discussed various methods of pulling the largest value out from a list. This example converts the frequency to a zero-padded number, concatenates the product group name to it, and takes the maximum.
+
+SELECT state,
                 SUBSTRING(MAX(RIGHT(‘0000000’+CAST(numcustomers as VARCHAR), 7)+
                               productgroupname), 8, 100) as prodgroup,
                 MAX(numcustomers) as numcustomers
@@ -737,9 +719,13 @@ number, concatenates the product group name to it, and takes the maximum.
                GROUP BY o.state, productgroupname) a
          GROUP BY state
          ORDER BY 3 DESC
+
 The result confirms the hypothesis that books are, by far, the most popular product in most states. The first exception is the state “AE,” which has nine customers buying ARTWORK. By the way, the state “AE” is not a mistake. It refers to military post offices in Europe.
+
 SQL to Calculate Chi-Square Values
-Calculating the chi-square calculations for the state-group combinations requires a long SQL query. This query follows the same form as the earlier chi-square calculation, where there are three subqueries for the three aggregations of inter- est: by state and product group, by state alone, and by product group alone. The query itself joins these three tables and then does the appropriate aggregations.
+
+Calculating the chi-square calculations for the state-group combinations requires a long SQL query. This query follows the same form as the earlier chi-square calculation, where there are three subqueries for the three aggregations of interest: by state and product group, by state alone, and by product group alone. The query itself joins these three tables and then does the appropriate aggregations.
+
          SELECT state, productgroupname, val, exp,
                 SQUARE(val - exp) / exp as chisquare
          FROM (SELECT cells.state, cells.productgroupname,
@@ -757,9 +743,8 @@ Calculating the chi-square calculations for the state-group combinations require
                     (SELECT state, COUNT(DISTINCT customerid) as cnt
 FROM orders o
 GROUP BY state )r
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼Chapter 3 ■ How Different Is Different? 131
-￼￼￼             ON cells.state = r.state LEFT OUTER JOIN
+
+             ON cells.state = r.state LEFT OUTER JOIN
              (SELECT productgroupname,
                      COUNT(DISTINCT customerid) as cnt
               FROM orders o LEFT OUTER JOIN
@@ -770,29 +755,25 @@ GROUP BY state )r
 GROUP BY productgroupname )c
              ON cells.productgroupname = c.productgroupname) a
   ORDER BY 5 DESC
-The subquery for Cells calculates the observed value in each cell. The sub- query called R calculates the row summaries, and the one called C calculates the column summaries. With this information, the chi-square calculation is just a matter of arithmetic.
+
+The subquery for Cells calculates the observed value in each cell. The subquery called R calculates the row summaries, and the one called C calculates the column summaries. With this information, the chi-square calculation is just a matter of arithmetic.
+
 Affinity Results
+
 Table 3-11 shows top ten combinations of state and product group that are most unexpected, based on the chi-square calculation. The first row in the table says that the most unexpected combination is GAMES in New York. Based on the information in the database, we would expect to have 3,306.1 customers purchasing games in that state. Instead, there are only 2,598, a difference of 708 customers. On the other hand, customers in Massachusetts are more likely to purchase games than we would expect.
+
 Table 3-11: Unexpected Product-Group/State Combinations
-￼￼￼￼￼￼￼￼￼￼￼￼STATE
-NY FL NY NY NJ NY NJ AP FL MA NJ
-GROUP
-GAME ARTWORK FREEBIE ARTWORK ARTWORK OCCASION
-OBSERVED
-2,599 1,848 5,289
-13,592 5,636 9,710
-EXPECTED CHI-SQUARE
-3,306.4 151.4 2,391.6 123.5 6,121.4 113.2
-12,535.2 89.1 4,992.6 82.9 10,452.0 52.7 1,316.9 44.8 0.5 44.2 571.9 41.0 428.9 40.1 983.2 40.0
-￼￼￼￼￼￼GAME 1,074 OTHER 5 APPAREL 725 GAME 560 CALENDAR 785
-￼￼￼￼￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼132 Chapter 3 ■ How Different Is Different?
-￼￼This table cannot tell us that the results themselves are significant, simply that the differences exist. It does suggest asking about the differences between New York and Massachusetts that would explain why games are more popu- lar in one state than the other. Or why ARTWORK is less popular is Florida than in New Jersey. Perhaps by changing marketing practices, there is oppor- tunity to sell more products in the games category in New York, and more ARTWORK in Florida.
+
+This table cannot tell us that the results themselves are significant, simply that the differences exist. It does suggest asking about the differences between New York and Massachusetts that would explain why games are more popular in one state than the other. Or why ARTWORK is less popular is Florida than in New Jersey. Perhaps by changing marketing practices, there is opportunity to sell more products in the games category in New York, and more ARTWORK in Florida.
+
 Lessons Learned
-This chapter strives to answer the questions of the genre “how different is dif- ferent.” Such questions necessarily bring up the subject of statistics, which has been studying ways to answer such questions for almost two centuries.
-The normal distribution, which is defined by its average and standard devi- ation, is very important in statistics. Measuring how far a value is from the average, in terms of standard deviations, is the z-score. Large z-scores (regard- less of sign) have a very low confidence. That is, the value is probably not pro- duced by a random process, so something is happening.
+
+This chapter strives to answer the questions of the genre “how different is different.” Such questions necessarily bring up the subject of statistics, which has been studying ways to answer such questions for almost two centuries.
+
+The normal distribution, which is defined by its average and standard deviation, is very important in statistics. Measuring how far a value is from the average, in terms of standard deviations, is the z-score. Large z-scores (regardless of sign) have a very low confidence. That is, the value is probably not produced by a random process, so something is happening.
+
 Counts are very important in customer databases. There are three approaches to determining whether counts for different groups are the same or different. The binomial distribution counts every possible combination, so it is quite precise. The standard error of proportions is useful for getting z-scores. And, the chi-square test directly compares counts across multiple dimensions. All of these are useful for analyzing data.
-The chi-square value and the z-score can both be informative. Although they use different methods, they can both find groups in the data where par- ticular measures are unexpected. This can in turn lead to understanding things such as where certain products are more or less likely to be selling.
-The next chapter moves from statistical measures of difference to geogra- phy, because geography is one of the most important factors in differentiating between customer groups.
-￼www.it-ebooks.info
-￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼
+
+The chi-square value and the z-score can both be informative. Although they use different methods, they can both find groups in the data where particular measures are unexpected. This can in turn lead to understanding things such as where certain products are more or less likely to be selling.
+
+The next chapter moves from statistical measures of difference to geography, because geography is one of the most important factors in differentiating between customer groups.
