@@ -1,0 +1,55 @@
+Appendix B: SQL Departures from the Relational Model
+
+In this appendix I summarize, mainly for purposes of reference and with little by way of additional commentary, some of the ways in which SQL ─ by which I mean, as always in this book, the standard version of that language except where otherwise noted ─ departs from the relational model. Now, I know there are those who will quibble over specific items in this list; it’s not easy to compile such a list, especially if it’s meant to be orthogonal (i.e., if an attempt is made to keep the various items all independent of one another). But I don’t think such quibbling is important. What’s important is the cumulative effect, which quite frankly I think is overwhelming [1].
+
+- SQL fails to distinguish adequately between table values and table variables.
+
+- SQL tables aren’t the same as relations (or relvars), because they either permit or require, as the case may be, (a) duplicate rows; (b) nulls; (c) left to right column ordering; (d) anonymous columns; (e) duplicate column names; (f) pointers; and ─ at least in some products, though not in the standard as such ─ (g) hidden columns. Note that most if not all of these differences constitute violations of The Assignment Principle.
+
+- SQL has no proper table literals.
+
+- SQL often seems to think views aren’t tables.
+
+- SQL tables (views included!) must have at least one column.
+
+- SQL has no explicit table assignment operator.
+
+- SQL has no explicit multiple table assignment a fortiori (nor does it have an INSERT/DELETE analog).
+
+- SQL violates The Assignment Principle in numerous different ways (some but not all of them having to do with nulls).
+
+- SQL violates The Golden Rule in numerous different ways (some but not all of them having to do with nulls).
+
+- SQL has no proper “table type” notion. As a consequence, its support for table type inference (i.e., determining the type of the result of some table expression) is very incomplete.
+
+- SQL has no “=” operator for tables; in fact, it has no table comparison operators at all.
+
+- SQL supports “reducible keys” (i.e., it allows proper superkeys to be declared as keys).
+
+- Numerous SQL operators are “possibly nondeterministic.”
+
+- SQL supports various row level operators (cursor updates, row level triggers).
+
+- Although the SQL standard doesn’t, the dialects of SQL supported in various commercial products do sometimes refer to certain storage level constructs (e.g., indexes).
+
+- SQL’s view definitions include mapping information as well as structural information.
+
+- SQL’s support for view updating is weak, ad hoc, and incomplete.
+
+- SQL fails to distinguish properly between types and representations.
+
+- SQL’s “structured types” are sometimes encapsulated and sometimes not. (This issue wasn’t discussed in the body of this book.)
+
+- SQL fails to distinguish properly between types and type generators.
+
+- Although the SQL standard does support type BOOLEAN, commercial SQL products typically don’t.
+
+- SQL’s support for “=” is seriously deficient. To be more specific, SQL’s “=” operator (a) can give TRUE even when the comparands are clearly distinct; (b) can fail to give TRUE even when the comparands aren’t clearly distinct; (c) can have user defined, and hence arbitrary, semantics (for user defined types); (d) isn’t supported at all for the system defined type XML; and (e) in some products, isn’t supported for certain other types as well.
+
+- SQL is based on three-valued logic (sort of), whereas the relational model is based on two-valued logic.
+
+- SQL isn’t relationally complete. 
+
+The foregoing list is not exhaustive.
+
+[1] I remind you too (one more time) that All logical differences are big differences.

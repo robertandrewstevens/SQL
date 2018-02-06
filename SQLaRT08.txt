@@ -1,0 +1,408 @@
+
+                Chapter 8
+SQL and Constraints
+A foolish consistency is the hobgoblin of little minds.
+─Ralph Waldo Emerson: “Self Reliance” (1841)
+I’ve touched on the topic of integrity constraints here and there in previous chapters, but it’s time to get more specific. Here’s a rough definition, repeated from Chapter 1: An integrity constraint (constraint for short) is basically just a boolean expression that must evaluate to TRUE. Constraints in general are so called because they constrain the values that can legally appear as values of some variable; but the ones we’re interested in here are the ones that apply to variables in the database (i.e., relvars) specifically.1 Such constraints fall into two broad categories, type constraints and database constraints; in essence, a type constraint defines the values that constitute a given type, and a database constraint further constrains the values that can appear in a given database (where “further” means over and above the constraints imposed by the pertinent type constraints). As usual, in what follows I’ll discuss these ideas in both relational and SQL terms.
+By the way, it’s worth noting that constraints in general can be regarded as a formal version of what some people call business rules. Now, this latter term doesn’t really have a precise definition (at least, not one that’s universally accepted); in general, however, a business rule is a declarative statement─emphasis on declarative─of some aspect of the enterprise the database is meant to serve, and statements that constrain the values of variables in the database certainly fit that loose definition. In fact, I’ll go further. In my opinion, constraints are really what database management is all about. The database is supposed to represent some aspect of the enterprise in question; that representation is supposed to be as faithful as possible, in order to guarantee that decisions made on the basis of what the database says are right ones; and constraints are the best mechanism we have for ensuring that the representation is indeed as faithful as possible. Constraints are crucial, and proper DBMS support for them is crucial as well.
+A note on terminology: Let constraint C apply to relvar R (e.g., C might be the constraint that a certain subset of the heading of R constitutes a key for R and thus has the uniqueness property). Then we say relvar R is subject to constraint C; equivalently, we say constraint C holds in relvar R. Further, let r be a relation of the same type as R. If evaluating constraint C on relation r yields TRUE, we say r satisfies C; otherwise we say it violates C. Of course, if r violates C, it can’t be assigned to R; at all times, therefore, the current value of R satisfies all constraints to which R is subject, necessarily and by definition.
+TYPE CONSTRAINTS
+As we saw in Chapter 2, one of the things we have to do when we define a type is specify the values that make up that type─and that’s effectively what a type constraint does. Now, in the case of system defined types, it’s the system that carries out this task, and there’s not much more to be said. In the case of user defined types, by contrast, there certainly is more to say, much more. So let’s suppose for the sake of the example that shipment quantities,
+1 As we saw in Chapter 5, constraints constrain updates and updates apply to variables, not values, so it makes sense to talk of a constraint “applying to” some variable.
+ www.it-ebooks.info
+                170 Chapter 8 / SQL and Constraints
+instead of being of the system defined type INTEGER, are of some user defined type (QTY, say). Here then is a possible Tutorial D definition for that type:
+1. 2. 3. 4.
+ 
+ 
+TYPE QTY
+POSSREP QPR
+{ Q INTEGER
+CONSTRAINTQ ≥ 0ANDQ £ 5000};
+Explanation:
+Line1justsayswe’redefiningatypecalledQTY.
+Line 2 says quantities have a “possible representation” called QPR. Now, physical representations are always hidden from the user, as we know from Chapter 2. However, Tutorial D requires every TYPE statement to include at least one POSSREP specification,2 indicating that values of the type in question can possibly be represented in some specific way; and unlike physical representations, possible representations─which we usually abbreviate to just possreps─definitely are visible to the user (in the example, users do definitely know that quantities have a possrep called QPR). Note carefully, however, that there’s no suggestion that the specified possible representation is the same as any physical representation, whatever that happens to be; it might be or it might not, but either way it makes no difference to the user.
+Line3saysthepossrepQPRhasasinglecomponent,calledQ,whichisoftypeINTEGER;inotherwords, values of type QTY can possibly be represented by integers (and users are aware of this fact).
+Finally, line 4 says those integers must lie in the range 0 to 5000 inclusive. Thus, lines 2-4 together define valid quantities to be, precisely, values that can possibly be represented by integers in the specified range, and it’s that definition that constitutes the type constraint for type QTY. Observe, therefore, that such constraints are specified not in terms of the type as such but, rather, in terms of a possrep for the type. Indeed, one of the reasons the possrep concept is required in the first place is precisely to serve as a vehicle for formulating type constraints, as I think the example shows.
+Here’s a slightly more complicated example:
+TYPE POINT
+POSSREP CARTESIAN { X RATIONAL , Y RATIONAL
+CONSTRAINTSQRT(X**2+Y**2) £ 100.0};
+Type POINT denotes geometric points in two-dimensional space; it has a possrep called CARTESIAN with two components called X and Y (corresponding, presumably, to cartesian coordinates); those components are both of type RATIONAL; and there’s a CONSTRAINT specification that (in effect) says the only points we’re interested in are those that lie on or inside a circle with center the origin and radius 100 (SQRT = nonnegative square root). Note: I used a type called POINT in an example in Chapter 2, as you might recall, but I deliberately didn’t show the POSSREP and CONSTRAINT specifications for that type at that time; tacitly, however, I was assuming the type had a possrep called POINT, not CARTESIAN. See the subsection immediately following.
+2 There are some minor exceptions to this rule that need not concern us here.
+ www.it-ebooks.info
+                Selectors and THE_ Operators
+Before I continue with my discussion of type constraints as such, I need to digress for a few moments in order to clarify a few issues raised by the QTY and POINT examples.
+Recall from Chapter 2 that types generally have certain associated selector and THE_ operators. Well, those operators are intimately related to the possrep notion; in fact, selector operators correspond one to one to possreps, and THE_ operators correspond one to one to possrep components. Here are some examples:
+1. QPR(250)
+This expression is a selector invocation for type QTY. The selector has the same name, QPR, as the sole possrep for that type; it takes an argument that corresponds to, and is of the same type as, the sole component of that possrep; and it returns a quantity (that is, a value of type QTY). Note: In practice, possreps often have the same name as the associated type (I used different names in the QTY example to make it clear there’s a logical difference between the possrep and the type, but it would be much more usual not to). In fact, Tutorial D has a syntax rule that says we can omit the possrep name from the TYPE statement entirely if we want to, in which case it defaults to the associated type name. So let’s simplify the QTY type definition accordingly:
+TYPE QTY POSSREP { Q INTEGER CONSTRAINT Q ≥ 0 AND Q £ 5000 } ;
+Now the possrep and the corresponding selector are both called QTY, and the selector invocation shown above becomes just QTY(250)─which is the style I used for selectors in Chapter 2, if you care to go back and look. I’ll assume this revised definition for type QTY from this point forward, barring explicit statements to the contrary.
+2. QTY(A+B)
+The argument to a QTY selector invocation can be specified as an expression of arbitrary complexity (just so long as it’s of type INTEGER, of course). If that expression is a literal, as it was in the previous example, then the selector invocation is a literal in turn; thus, a literal is a special case of a selector invocation (as in fact we already know from Chapter 2).
+3. THE_Q ( QZ )
+This expression is a THE_ operator invocation for type QTY. The operator is named THE_Q because Q is the name of the sole component of the sole possrep for type QTY; it takes an argument (specified as an arbitrarily complex expression) of type QTY; and it returns the integer that’s the Q component of the possrep for that specific argument.
+As for type POINT, let’s first redefine that type so that the possrep has the same name as the type, as in the QTY example above:
+TYPE POINT POSSREP { X RATIONAL , Y RATIONAL CONSTRAINT ... } ;
+Now continuing with the examples:
+www.it-ebooks.info
+SQL and Constraints / Chapter 8 171
+                172
+Chapter 8 / SQL and Constraints
+4.
+5.
+POINT(5.7,-3.9)
+This expression is a POINT selector invocation (actually a POINT literal).
+THE_X(P)
+This expression returns the RATIONAL value that’s the X coordinate of the cartesian possible representation of the point that’s the current value of variable P (which must be of type POINT).
+Just as an aside, let me draw your attention to the fact that (as I said earlier) Tutorial D requires a TYPE statement to include at least one POSSREP specification. The fact is, Tutorial D does allow a type to have several distinct possreps. POINT is a good example─we might well want to define two distinct possreps for points, to reflect the fact that points in two-dimensional space can possibly be represented by either cartesian or polar coordinates. Temperatures provide another example─again, we might want to define two possreps, to reflect the fact that temperatures can be possibly represented in either degrees Celsius or degrees Fahrenheit. Further details don’t belong in a book of this nature; I’ll just note for the record that SQL has no analogous feature.
+More on Type Constraints
+Now let’s get back to type constraints as such. Suppose I had defined type QTY as follows, with no explicit CONSTRAINT specification:
+TYPE QTY POSSREP { Q INTEGER } ;
+This definition is defined to be shorthand for the following:
+TYPE QTY POSSREP { Q INTEGER CONSTRAINT TRUE } ;
+Given this definition, anything that could possibly be represented by an integer would be a legitimate QTY value, and so type QTY would necessarily still have an associated type constraint, albeit a rather weak one. In other words, the specified possrep defines an a priori constraint for the type, and the CONSTRAINT specification effectively imposes an additional constraint, over and above that a priori one. (Informally, however, we often take the term “type constraint” to refer to what’s stated in the CONSTRAINT specification as such.)
+Now, one important issue I’ve ducked so far is the question of when type constraints are checked. In fact, they’re checked whenever some selector is invoked. Assume again that values of type QTY are such that they must be possibly representable as integers in the range 0 to 5000 inclusive. Then the expression QTY(250) is an invocation of the QTY selector, and that invocation succeeds. By contrast, the expression QTY(6000) is also such an invocation, but it fails. In fact, it should be obvious that we can never tolerate an expression that’s supposed to denote a value of some type T but in fact doesn’t; after all, “a value of type T that’s not a value of type T” is a contradiction in terms. Since, ultimately, the only way any expression can yield a value of type T is by means of some invocation of some selector for type T, it follows that no variable─in particular, no relvar─can ever be assigned a value that’s not of the right type.
+One last point to close this section: Declaring anything to be of some particular type imposes a constraint on that thing, by definition.3 In particular, declaring attribute QTY of relvar SP (for example) to be of type QTY
+3 I would much have preferred to use the more formal term object in this sentence in place of the very vague term thing, but object has become a loaded word in computing contexts.
+ www.it-ebooks.info
+                imposestheconstraintthatnotupleinrelvarSPwillevercontainavalueintheQTYpositionthatfailsto satisfy the QTY type constraint. (As an aside, I note that this constraint on attribute QTY is an example of what’s sometimes called an attribute constraint.)
+TYPE CONSTRAINTS IN SQL
+As I’m sure you noticed, I didn’t give SQL versions of the examples in the previous section. That’s because, believe it or not, SQL doesn’t support type constraints at all!─apart from the rather trivial a priori ones, of course. For example, although SQL would certainly let you create a user defined type called QTY and specify that quantities must be representable as integers, it wouldn’t let you say those integers must lie in a certain range. In other words, an SQL definition for that type might look like this:
+CREATE TYPE QTY AS INTEGER FINAL ;
+(The keyword FINAL here just means type QTY doesn’t have any proper subtypes. Subtypes in general are beyond the scope of this book.)
+With the foregoing SQL definition, all available integers (including negative ones!) will be regarded as denoting valid quantities. If you want to constrain quantities to some particular range, therefore, you’ll have to specify an appropriate database constraint─in practice, probably a base table constraint (see the section “Database Constraints in SQL”)─on each and every use of the type. For example, if column QTY in base table SP is defined to be of type QTY instead of type INTEGER, then you might need to extend the definition of that table as follows (note the CONSTRAINT specification at the end):
+CREATE TABLE SP
+( SNO VARCHAR(5)
+PNO VARCHAR(6)
+QTY QTY
+UNIQUE ( SNO , PNO ) ,
+FOREIGN KEY ( SNO ) REFERENCES FOREIGN KEY ( PNO ) REFERENCES CONSTRAINT SPQC CHECK ( QTY >=
+QTY <=
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+The expressions QTY(0) and QTY(5000) in the CONSTRAINT specification here can be regarded as QTY selector invocations. I remind you, however, that selector isn’t an SQL term (and nor is THE_ operator); as indicated in Chapter 2, in fact, the situation regarding selectors and THE_ operators in SQL is too complicated to describe in detail in this book. Suffice it to say that analogs of those operators are usually available, though they aren’t always provided “automatically” as they are in Tutorial D.
+For interest, I also show an SQL definition for type POINT (and here I’ve specified NOT FINAL instead of FINAL, just to illustrate the possibility):
+CREATE TYPE POINT AS
+( X NUMERIC(5,1) , Y NUMERIC(5,1) ) NOT FINAL ;
+To say it again, then, SQL doesn’t really support type constraints. The reasons for the omission are complex─they have to do with type inheritance and are therefore beyond the scope of this book─but the implications are serious. Recommendation: Wherever possible, use database constraints to make up for the omission, as in the QTY example above. Of course, this recommendation might lead to a lot of duplicated effort,
+www.it-ebooks.info
+SQL and Constraints / Chapter 8 173
+S ( SNO ) ,
+P ( PNO ) , QTY(0) AND QTY(5000) ) ) ;
+                174 Chapter 8 / SQL and Constraints
+but such duplication is better than the alternative: namely, bad data in the database. See Exercise 8.8 at the end of
+the chapter.
+Aside: Although I’ve said type inheritance in general is beyond the scope of this book, I can’t resist pointing out one implication of SQL’s lack of support for type constraints in particular: namely, that SQL has to permit absurdities such as nonsquare squares (by which I mean, more precisely, values of a user defined type SQUARE whose sides are of different lengths and are thus not in fact squares at all). End of aside.
+DATABASE CONSTRAINTS
+A database constraint constrains the values that can appear in a given database. In Tutorial D, such constraints are specified by means of a CONSTRAINT statement (or some logically equivalent shorthand); in SQL, they’re specified by means of a CREATE ASSERTION statement (or, again, some equivalent shorthand). I don’t want to get into details of those shorthands─at least, not yet─because they’re essentially just a matter of syntax; for now, let me stay with the “longhand” forms. Here then are some examples (Tutorial D on the left and SQL on the right as usual):
+Example 1:
+CONSTRAINT CX1 IS_EMPTY │ ( S WHERE STATUS < 1 │ OR STATUS > 100 ) ; │ │ │
+CREATE ASSERTION CX1 CHECK ( NOT EXISTS
+( SELECT * FROM S
+WHERE STATUS < 1
+OR STATUS > 100));
+Constraint CX1 says: Supplier status values must be in the range 1 to 100 inclusive. This constraint involves just a single attribute of a single relvar. Note in particular that it can be checked for a given supplier tuple by examining just that tuple in isolation─there’s no need to look at any other tuples in the relvar or any other relvars in the database. For that reason, such constraints are sometimes referred to, informally, as tuple constraints, or row constraints in SQL─though this latter term is also used in SQL to mean, more specifically, a row constraint that can’t be formulated as a column constraint (see the section “Database Constraints in SQL”). Now, all such usages ought really to be deprecated, because constraints constrain updates, and as we saw in Chapter 5 there’s no such thing as a tuple or row level update in the relational world. (By the same token, there’s no such thing as a tuple variable, or row variable, in a relational database.) However, the terms can sometimes be convenient, and so─somewhat against my own better judgment─I’ll be using them occasionally myself in what follows.
+Recall now that (as mentioned in a footnote in Chapter 7) tuple constraints can alternatively be formulated in terms of the aggregate operator AND. Here by way of example is such a formulation for constraint CX1:
+CONSTRAINTCX1AND(S,STATUS ≥ 1ANDSTATUS £ 100);
+This formulation says, in effect, that the expression STATUS ≥ 1 AND STATUS £ 100 must evaluate to TRUE for every tuple in S. As you can see, the desired constraint (“Status values must be greater than or equal to 1 and less than or equal to 100”) is stated a little more directly with this formulation than it was with the IS_EMPTY version, where it had to be stated in the negative (“Status values mustn’t be less than 1 or greater than 100”).
+What about SQL? Well, SQL’s analog of AND is called EVERY. Here’s an SQL formulation of constraint CX1 that makes use of that operator:
+www.it-ebooks.info
+                CREATE ASSERTION CX1 CHECK
+( ( SELECT COALESCE ( EVERY ( STATUS >= 1 AND STATUS <= 100 ) ,
+TRUE ) FROM S)=TRUE);
+As you can see, however, this formulation isn’t as user friendly as the Tutorial D version, for at least two reasons:
+ First,EVERY,unlikeTutorialD’sAND,returnsnull,notTRUE,ifitsargumentisempty;hencetheneed for that COALESCE.
+ Second,IpointedoutinChapter7thatSQLdoesn’treallysupportaggregateoperatorsanyway,andthe present example brings that point home. To be specific, the parenthesized subexpression SELECT ... FROM S is, of course, a table expression; hence it denotes, not a truth value as such, but rather a one-row, one- column table that contains such a truth value. In fact, that subexpression, parentheses included, is a scalar subquery. As explained in Chapter 2, then, asking for that subquery and the literal value TRUE to be tested for equality causes a double coercion to occur; in other words, the truth value is effectively extracted from the table and then tested to see whether it’s equal to TRUE.
+The net of this discussion is that EVERY isn’t nearly as useful for the formulation of row constraints in SQL as AND is for the formulation of tuple constraints in Tutorial D.
+Aside: The foregoing might be a little unfair to SQL. To be specific, I think─according to my own reading of the standard─that it would be possible to simplify the example by omitting both the COALESCE and the explicit comparison with TRUE, thereby reducing the CHECK clause portion of the assertion to just:
+CHECK ( ( SELECT EVERY ( STATUS >= 1 AND STATUS <= 100 ) FROM S ) ) ;
+But these simplifications rely on several aspects of SQL that are, to put matters politely, hardly very respectable. First of all, note that the double enclosing parentheses are necessary─the outer parentheses enclose a subquery, which requires parentheses of its own. Second, the subquery in question is in fact a scalar subquery, and the table it returns gets doubly coerced to the single value─actually a truth value─in the single column of the single row of the table in question (see Chapter 12). Third, if the EVERY invocation in fact returns a null, that null is considered to stand for the truth value UNKNOWN (see Chapter 4). Fourth, if the boolean expression in a CHECK clause evaluates to UNKNOWN, that UNKNOWN gets coerced to TRUE! (See the answer to Exercise 8.20g in Appendix F for further discussion of this last point.) Speaking for myself, therefore, I would far rather include both the COALESCE and the comparison with TRUE, in the interest of explicitness if nothing else. End of aside.
+Example 2:
+CONSTRAINT CX2 IS_EMPTY
+( S WHERE CITY = ‘London’ AND STATUS≠20);
+Constraint CX2 says: Suppliers in London must
+attributes; however, it’s still the case, as it was with constraint CX1, that the constraint can be checked for a given
+SQL and Constraints / Chapter 8 175
+│ CREATE ASSERTION CX2 CHECK │ ( NOT EXISTS
+│ (SELECT*FROMS
+│ WHERE CITY = ‘London’
+│ AND STATUS<>20));
+have status 20. This constraint involves two distinct
+www.it-ebooks.info
+                176 Chapter 8 / SQL and Constraints
+supplier tuple by examining just that tuple in isolation (hence it too is a tuple or row constraint). Here for interest
+are AND and EVERY formulations:
+CONSTRAINT CX2 │ AND ( S , CITY ≠ ‘London’ │ OR STATUS = 20 ) ; │ │ │ │
+Example 3:
+CONSTRAINT CX3 │ COUNT ( S ) = │ COUNT ( S { SNO } ) ; │
+CREATE ASSERTION CX2 CHECK ( ( SELECT COALESCE
+( EVERY ( CITY <> ‘London’ OR STATUS = 20 ) ,
+TRUE )
+FROM S ) = TRUE ) ;
+CREATE ASSERTION CX3 CHECK ( UNIQUE ( SELECT SNO
+FROM S));
+Constraint CX3 says: Every supplier has a unique supplier number; in other words, {SNO} is a superkey─actually, of course, it’s a key─for relvar S (recall from Chapter 5 that a superkey is a superset of a key, loosely speaking). Like constraints CX1 and CX2, this constraint still involves just one relvar; however, it can’t be checked for a given supplier tuple by examining just that tuple in isolation, and so it isn’t a tuple or row constraint. Points arising:
+ In practice, of course, it’s very unlikely that constraint CX3 would be specified in longhand as shown─some kind of explicit KEY shorthand is almost certainly preferable. I give the longhand form merely to make the point that such shorthands are indeed, in the final analysis, just shorthands.4
+ Asyoucansee,theSQLformulationofconstraintCX3involvesaninvocationoftheSQLUNIQUE operator. That operator returns TRUE if and only if every row within its argument table is distinct; in the example, therefore, the UNIQUE invocation returns TRUE if and only if no two rows in table S have the same supplier number. Note, incidentally, that the SELECT expression in that invocation must─for once─definitely not specify DISTINCT! (Why not?) I’ll have more to say about SQL’s UNIQUE operator in Chapter 10.
+Here for interest is an SQL formulation of constraint CX3 that more closely resembles the Tutorial D formulation:5
+CREATE ASSERTION CX3 CHECK
+( ( SELECT COUNT ( ALL SNO ) FROM S ) =
+( SELECT COUNT ( DISTINCT SNO ) FROM S ) ) ;
+4 In SQL, that shorthand would involve a specification of the form UNIQUE(SNO) as part of the CREATE TABLE for table S. The semantics of such a specification are explained by the standard as follows (I’ve adapted the standard’s own generic phrasing to apply to the specific case at hand): “The constraint UNIQUE(SNO) is not satisfied if and only if EXISTS(SELECT * FROM S WHERE NOT(UNIQUE(SELECT SNO FROM S))) is true.” I hope that’s perfectly clear.
+5 But is this SQL formulation valid? As you can see, it involves an equality comparison in which the comparands are denoted by subqueries. Since subqueries evaluate to tables, it appears we’re trying to test two tables for equality─yet we saw in Chapter 3 that SQL doesn’t support table comparisons. See Exercise 12.5 in Chapter 12.
+ www.it-ebooks.info
+                Example 4:
+CONSTRAINT CX4
+COUNT ( S { SNO } ) =
+COUNT ( S { SNO , CITY } ) ;
+│ CREATE ASSERTION CX4 CHECK │ ( ( SELECT COUNT ( SNO ) │ FROM S)=
+│ ( SELECT COUNT ( * )
+│ FROM ( SELECT SNO , CITY │ FROM S)));
+Constraint CX4 says: Whenever two suppliers have the same supplier number, they also have the same city. In other words, a certain functional dependency (FD) holds in relvar S─namely, an FD from {SNO} to {CITY}. In practice, as I’m sure you know, that FD would more usually be expressed as follows:
+{SNO} Æ {CITY} Here’s a precise definition:
+Definition: Let A and B be subsets of the heading of relvar R. Then the functional dependency (FD) A Æ B holds in R if and only if, in every relation that’s a legal value for R, whenever two tuples have the same value for A, they also have the same value for B.
+The FD A Æ B is read as “B is functionally dependent on A,” or “A functionally determines B,” or, more simply, just “A arrow B.” As the example shows, however, a functional dependency is basically just another integrity constraint (though, like constraint CX3, it isn’t a tuple or row constraint).
+Now, as noted in Chapter 5, the fact that relvar S is subject to this particular FD is a logical consequence of the fact that {SNO} is a key for that relvar. For that reason, there’s no need to state it explicitly, just so long as the fact that {SNO} is a key is stated explicitly. But not all FDs are consequences of keys. For example, suppose it’s the case that if two suppliers are in the same city, then they must have the same status. This hypothetical new constraint (which is not satisfied by our usual sample values, please note) is clearly an FD:
+{CITY} Æ {STATUS}
+It can thus be stated in the style of constraint CX4 (see Exercise 8.22 at the end of the chapter).
+Now, you might be thinking some shorthand syntax would be desirable for stating FDs, similar to the
+shorthand we already have for stating keys. Myself, I don’t think so, because although not all FDs are consequences of keys in general, all FDs will almost certainly be consequences of keys if the database is well designed. In other words, the very fact that FDs are hard to state if the database is badly designed might be seen as a small argument in favor of not designing the database badly in the first place! Note: By “well designed” here, I really mean fully normalized. Normalization as such is beyond the scope of this book (it’s covered in depth in the book Normal Forms and All That Jazz, which is a companion to the present book─see Appendix G). Of course, relational (or SQL) statements and expressions will work regardless of whether or not the relvars (or tables) are fully normalized. But I should at least point out that those statements and expressions will often be easier to formulate (and, contrary to popular opinion, will often perform better too) if the tables are fully normalized. However, normalization as such is primarily a database design issue, not a relational model or SQL issue.
+www.it-ebooks.info
+SQL and Constraints / Chapter 8 177
+                178 Chapter 8 / SQL and Constraints Example 5:
+CONSTRAINT CX5 IS_EMPTY ( ( S JOIN SP )
+WHERE STATUS < 20 AND PNO=‘P6’);
+│ CREATE ASSERTION CX5 CHECK │ ( NOT EXISTS
+│ ( SELECT *
+│ FROM S NATURAL JOIN SP │ WHERE STATUS < 20
+│ AND PNO=‘P6’));
+Constraint CX5 says: No supplier with status less than 20 can supply part P6. Observe that this constraint involves (better: interrelates) two distinct relvars, S and SP. In general, a database constraint might involve, or interrelate, any number of distinct relvars. Terminology: A constraint that involves just a single relvar is known, informally, as a relvar constraint (sometimes a single relvar constraint, for emphasis); a constraint that involves two or more distinct relvars is known, informally, as a multirelvar constraint. (Thus, constraints CX1-CX4 were single relvar constraints, while constraint CX5 is a multirelvar constraint.) All of these terms are somewhat deprecated, however, for reasons to be discussed in the next chapter in connection with what’s called The Principle of Interchangeability.
+Example 6:
+CONSTRAINT CX6 │ SP{SNO} ⊆ S{SNO}; │ │ │ │
+CREATE ASSERTION CX6 CHECK ( NOT EXISTS
+( SELECT SNO FROM SP EXCEPT CORRESPONDING SELECT SNO FROM S ) ) ;
+Constraint CX6 says: Every supplier number in SP must appear in S. As you can see, the Tutorial D formulation involves a relational comparison; SQL doesn’t support relational comparisons, however, and so we have to indulge in some circumlocution in the SQL formulation. However, given that {SNO} is a key─in fact, the sole key─for relvar S, it’s clear that constraint CX6 is basically just the foreign key constraint from SP to S. The usual FOREIGN KEY syntax can thus be regarded as shorthand for constraints like CX6.
+DATABASE CONSTRAINTS IN SQL
+Any constraint that can be formulated by means of a CONSTRAINT statement in Tutorial D can be formulated by means of a CREATE ASSERTION statement in SQL, as examples CX1-CX6 in the previous section should have been sufficient to suggest.6 Unlike Tutorial D, however, SQL has a feature according to which any such constraint can alternatively be specified as part of the definition of some base table─i.e., as a base table constraint. For example, here again is the SQL version (using CREATE ASSERTION) of constraint CX5 from the previous section:
+CREATE ASSERTION CX5 CHECK
+( NOT EXISTS ( SELECT *
+FROM S NATURAL JOIN SP WHERE STATUS < 20
+AND PNO=‘P6’));
+6 Except that (as you’ll recall from Chapter 2) SQL constraints are supposed not to contain “possibly nondeterministic expressions,” a rule that could cause serious problems in practice if true. See Chapter 12 for further discussion.
+ www.it-ebooks.info
+                SQL and Constraints / Chapter 8 179 This example could have been stated in slightly different form as a base table constraint as part of the
+definition of base table SP, like this:
+CREATE TABLE SP ( ... ,
+CONSTRAINT CX5 CHECK /* “base table” constraint */ ( PNO <> ‘P6’ OR ( SELECT STATUS FROM S
+WHERE SNO=SP.SNO)>=20));
+Note, however, that a logically equivalent formulation could have been specified as part of the definition of base table S instead─or base table P, or absolutely any base table in the database, come to that (see Exercise 8.17 at the end of the chapter).
+Now, this alternative style can be useful for row constraints (i.e., constraints that can be checked for an individual row in isolation), because it’s a little simpler than its CREATE ASSERTION counterpart. Here, for example, are constraints CX1 and CX2 from the previous section, reformulated as base table constraints on base table S:
+CREATE TABLE S ( ... ,
+CONSTRAINT CX1 CHECK ( STATUS >= 1 AND STATUS <= 100 ) ) ;
+CREATE TABLE S ( ... ,
+CONSTRAINT CX2 CHECK ( STATUS = 20 OR CITY <> ‘London’ ) ) ;
+For a constraint involving more than one base table, however, CREATE ASSERTION is usually better, because it avoids having to make an arbitrary choice as to which table to attach the constraint to.
+Note: Certain constraints─for example, NOT NULL constraints and key constraints for keys that involve just one column─can optionally be formulated as “column constraints” in SQL. A column constraint is one that’s specified, not just as part of the definition of the base table in question, but as part of the definition of some specific column of that base table. For simplicity, I’ll ignore this possibility in this book, except for NOT NULL constraints in particular.
+Two last points to close this section:
+ BeawarethatanyconstraintstatedaspartoftheCREATETABLEforbasetableTisautomaticallysatisfied if T is empty─even if the constraint is of the form “T mustn’t be empty”! (Or even if it’s of the form “T must contain -5 rows,” or the form “1 = 0,” come to that.) See Exercises 8.15 and 8.16 at the end of the chapter.
+ (Important!) While most current SQL products do support key and foreign key constraints, they don’t support CREATE ASSERTION at all, and they don’t support base table constraints any more complicated than simple row constraints. (Formally, they don’t permit base table constraints to contain a subquery.) Recommendation: Specify constraints declaratively whenever you can. In practice, however, many constraints (perhaps most) will, regrettably, have to be enforced by means of procedural code (possibly triggered procedures)─and that code can be quite difficult to write, too.7 This state of affairs represents a serious defect in today’s products, and it needs to be remedied, urgently.
+7 In this connection, I’d like to recommend the book Applied Mathematics for Database Professionals, by Lex de Haan and Toon Koppelaars (see Appendix G)─especially Chapter 11 of that book.
+ www.it-ebooks.info
+                180 Chapter 8 / SQL and Constraints TRANSACTIONS
+Despite the defect identified at the end of the previous section, I do need to assume for the rest of the chapter (just as the relational model does, in fact) that database constraints of arbitrary complexity can be stated declaratively. The question now arises: When are such constraints checked? Conventional wisdom has it that single relvar constraint checking is immediate (meaning it’s done whenever the relvar in question is updated), while multirelvar constraint checking is deferred to end of transaction (“commit time”). I want to argue, however, that all checking should be immediate, and deferred checking─which is supported in the SQL standard, and indeed in at least one SQL product to my knowledge─is a logical mistake. In order to explain this unorthodox view, I need to digress for a moment to discuss transactions.
+Transaction theory is a large topic in its own right. But it doesn’t have much to do with the relational model as such (at least, not directly), and for that reason I don’t want to discuss it in detail here. In any case, you’re a database professional, and I’m sure you’re familiar with basic transaction concepts.8 All I want to do here is briefly review the so called ACID properties of transactions. ACID is an acronym, standing for atomicity - consistency - isolation - durability, where:
+ Atomicitymeansthattransactionsare“allornothing.”
+ Consistencymeansthatanygiventransactiontransformsaconsistentstateofthedatabaseintoanother consistent state, without necessarily preserving consistency at all intermediate points. Note: A database state is consistent if and only if it satisfies all defined constraints (consistency in this context is just another word for integrity).
+ Isolationmeansthatanygiventransaction’supdatesareconcealedfromallothertransactionsuntilsuchtime as the given transaction commits.
+ Durabilitymeansthatonceagiventransactioncommits,itsupdatessurviveinthedatabase,evenifthere’sa subsequent system crash.
+Now, one argument in favor of transactions has always been that they’re supposed to act as “a unit of integrity” (that’s what the consistency property is all about). But I don’t believe that argument. Rather, as I’ve more or less said already, I believe statements have to be that unit; in other words, I believe database constraints must be satisfied at statement boundaries. The section immediately following gives my justification for this position.
+WHY DATABASE CONSTRAINT CHECKING MUST BE IMMEDIATE
+I have at least five reasons for taking the position I do (viz., that database constraints must be satisfied at statement boundaries). The first and biggest one is this: As we know from Chapter 5, a database can be regarded as a collection of propositions, propositions we believe to be true ones. And if that collection is ever allowed to include any inconsistencies, then all bets are off; as I’ll show in the section “Constraints and Predicates” later, we can never trust the answers we get from an inconsistent database. And while it might be true, thanks to the isolation property, that no more than one transaction ever sees any particular inconsistency, the fact remains that that particular transaction does see the inconsistency and can therefore produce wrong answers.
+8 The standard reference─highly recommended, by the way─is Transaction Processing: Concepts and Techniques, by Jim Gray and Andreas Reuter (see Appendix G).
+ www.it-ebooks.info
+                Now, I think this first argument is strong enough to stand on its own, but for completeness I’ll give the other arguments as well. Second, then, I don’t agree that any given inconsistency can be seen by only one transaction, anyway; that is, I don’t really believe in the isolation property. Part of the problem here is that the word isolation doesn’t mean quite the same in the world of transactions as it does in ordinary English─in particular, it doesn’t mean that transactions can’t communicate with one another. For if transaction TX1 produces some result, in the database or elsewhere, that’s subsequently read by transaction TX2, then TX1 and XT2 aren’t truly isolated from each other (and this remark applies regardless of whether TX1 and TX2 run concurrently or otherwise). In particular, therefore, if (a) TX1 sees an inconsistent state of the database and therefore produces an incorrect result, and (b) that result is then seen by TX2, then (c) the inconsistency seen by TX1 has effectively been propagated to TX2. In other words, it can’t be guaranteed that a given inconsistency, if permitted, will be seen by just one transaction, anyway. Note: Similar remarks apply if TX1 (a) sees an inconsistency and therefore assigns an incorrect value to some local variable V and then (b) transmits the value of that variable V to some outside user (since local variables aren’t and can’t possibly be subject to the jurisdiction of the transaction management subsystem).
+Third, we surely don’t want every program (or other “code unit”) to have to deal with the possibility that the database might be inconsistent when it’s invoked. There’s a severe loss of orthogonality if some piece of code that assumes consistency can’t be used safely while constraint checking is deferred. In other words, I want to be able to specify code units independently of whether they’re to be executed as a transaction as such or just as part of a transaction. (In fact, I’d like support for nested transactions, but that’s a topic for another day.)
+Fourth, The Principle of Interchangeability (of base relvars and views─see the next chapter) implies that the very same constraint might be a single relvar constraint with one design for the database and a multirelvar constraint with another. For example, suppose we have two virtual relvars, or views, with Tutorial D definitions as follows (LS = London suppliers, NLS = non London suppliers):
+VAR LS VIRTUAL ( S WHERE CITY = ‘London’ ) ; VAR NLS VIRTUAL ( S WHERE CITY ≠ ‘London’ ) ;
+These views are subject to the constraint that no supplier number appears in both. However, there’s no need to state that constraint explicitly, because it’s implied by the fact that every supplier has exactly one city─i.e., the FD {SNO} Æ {CITY} holds in base relvar S─together with the real world fact that any given city is either equal to London or not equal to London. But suppose we made LS and NLS base relvars and then defined their union as a view called S. Then the constraint would have to be stated explicitly:
+CONSTRAINT CX7 IS_EMPTY ( LS { SNO } JOIN NLS { SNO } ) ;
+│ CREATE ASSERTION CX7 CHECK │ ( NOT EXISTS
+│ ( SELECT *
+│ FROM LS , NLS
+│ WHERE LS.SNO = NLS.SNO ) ) ;
+Now what was previously a single relvar constraint has become a multirelvar constraint instead. Thus, if we agree that single relvar constraints must be checked immediately, we must surely agree that multirelvar constraints must be checked immediately as well (since, logically, there’s no real difference between the two, as the example demonstrates).
+Fifth and last, there’s an optimization technique called semantic optimization (it involves expression transformation, but I deliberately didn’t discuss it in the section of that name in Chapter 6). By way of example, consider the expression (SP JOIN S){PNO}. Now, the join here is based on the correspondence between a foreign key in a referencing relvar, SP, and the relevant candidate key in the referenced relvar, S. As a consequence, every SP tuple does join to some S tuple, and every SP tuple thus does contribute a part number to the projection that’s the overall result. So there’s no need to do the join!─the expression can be simplified to just SP{PNO}. Note carefully,
+www.it-ebooks.info
+SQL and Constraints / Chapter 8 181
+                182 Chapter 8 / SQL and Constraints
+however, that this transformation is valid only because of the semantics of the situation; with join in general, each operand will include some tuples that have no counterpart in the other and so don’t contribute to the overall result, and transformations such as the one just shown therefore won’t be valid. But in the case at hand every SP tuple necessarily does have a counterpart in S, because of the integrity constraint─actually a foreign key constraint─that says that every shipment must have a supplier, and so the transformation is valid after all. A transformation that’s valid only because a certain integrity constraint is in effect is called a semantic transformation, and the resulting optimization is called a semantic optimization.
+Now, in principle, any constraint whatsoever can be used in semantic optimization; we’re not limited to foreign key constraints as in the example.9 For example, suppose the suppliers-and-parts database is subject to the constraint “All red parts must be stored in London,” and consider the query:
+Get suppliers who supply only red parts and are located in the same city as at least one of the parts they supply.
+This is a fairly complex query; but thanks to the integrity constraint, we see that it can be transformed─by the optimizer, I mean, not by the user─into this much simpler one:
+Get London suppliers who supply only red parts.
+We could easily be talking about several orders of magnitude improvement in performance here. And so, while commercial products do comparatively little in the way of semantic optimization at the time of writing (as far as I know), I certainly expect them to do more in the future, because the payoff is so dramatic.
+To get back to the main thread of the discussion, I now observe that if a given constraint is to be usable in semantic optimization, then that constraint must be satisfied at all times (or rather, and more precisely, at statement boundaries), not just at transaction boundaries. As we’ve just seen, semantic optimization means using constraints to simplify queries in order to improve performance. Clearly, then, if some constraint is violated at some time, then any simplification based on that constraint won’t be valid at that time, and query results based on that simplification will be wrong at that time (in general). Note: Alternatively, we could adopt the weaker position that “deferred constraints” (meaning constraints for which the checking is deferred) can’t be used in semantic optimization─but I think such a position would effectively just mean we’ve shot ourselves in the foot, that’s all.
+To sum up: Database constraints must be satisfied─that is, they must evaluate to TRUE, given the values currently appearing in the database─at statement boundaries (or, very informally, “at semicolons”); in other words, they must be checked at the end of any statement that might cause them to be violated. If any such check fails, the effects on the database of the offending statement must be undone and an exception raised.
+BUT DOESN’T SOME CHECKING HAVE TO BE DEFERRED?
+The arguments of the previous section notwithstanding, the conventional wisdom is that multirelvar constraint checking, at least, does have to be deferred to commit time. By way of example, suppose the suppliers-and-parts database is subject to the following constraint:
+9 The constraint must be stated declaratively, however; obviously there’s no way the optimizer can “understand” and exploit constraints that have been specified procedurally (and so we have here another strong reason for requiring declarative constraint support).
+ www.it-ebooks.info
+                CONSTRAINT CX8
+COUNT ( ( S WHERE SNO = ‘S1’ ) { CITY }
+UNION
+( P WHERE PNO = ‘P1’ ) { CITY } ) < 2 ;
+This constraint says that supplier S1 and part P1 must never be in different cities. To elaborate: If relvars S and P contain tuples for supplier S1 and part P1, respectively, then those tuples must contain the same CITY value (if they didn’t, the COUNT invocation would return the value two); however, it’s legal for relvar S to contain no tuple for S1, or relvar P to contain no tuple for P1, or both (in which case the COUNT invocation will return either one or zero). Given this constraint and our usual sample values, then, each of the following SQL UPDATEs will fail under immediate checking:
+UPDATE S SET CITY = ‘Paris’ WHERE SNO = ‘S1’ ; UPDATE P SET CITY = ‘Paris’ WHERE PNO = ‘P1’ ;
+I show these UPDATEs in SQL rather than Tutorial D precisely because checking is immediate in Tutorial D and the conventional solution to the problem therefore doesn’t work in Tutorial D. What is that conventional solution? Answer: We defer the checking of the constraint to commit time,10 and we make sure the two UPDATEs are part of the same transaction, as in this SQL code:
+START TRANSACTION ;
+UPDATE S SET CITY = ‘Paris’ WHERE SNO = ‘S1’ ; UPDATE P SET CITY = ‘Paris’ WHERE PNO = ‘P1’ ;
+COMMIT ;
+In this conventional solution, the constraint is checked at end of transaction, and the database is inconsistent between the two UPDATEs. In particular, if the transaction were to ask the question “Are supplier S1 and part P1 in different cities?” between the two UPDATEs (and assuming rows for S1 and P1 do exist), it would get the answer yes.
+Multiple Assignment
+A better solution to the foregoing problem is to support a multiple form of assignment, which allows any number of individual assignments to be performed “simultaneously,” as it were. For example (switching back now to Tutorial D):
+UPDATE S WHERE SNO = ‘S1’ : { CITY := ‘Paris’ } , UPDATE P WHERE PNO = ‘P1’ : { CITY := ‘Paris’ } ;
+Explanation: First, note the comma separator, which means the two UPDATEs are part of the same overall statement. Second, UPDATE is really assignment, as we know, and the foregoing “double UPDATE” is thus just shorthand for a double assignment of the following form:
+10 In case you’re wondering how the deferring is done, I should explain that in general─there are some exceptions that don’t need to concern us here─every SQL constraint is defined at compile time to be (a) either DEFERRABLE or NOT DEFERRABLE and (b) if DEFERRABLE, either INITIALLY DEFERRED or INITIALLY IMMEDIATE. Then, at run time, the statement SET CONSTRAINTS <constraint name commalist> <option>, where <option> is either DEFERRED or IMMEDIATE, sets the “mode” of the specified constraint(s) accordingly. (Of course, the constraint(s) in question must have been defined to be DEFERRABLE.) COMMIT forces all DEFERRABLE constraints into immediate mode; if some integrity check then fails, the COMMIT fails, and the transaction is rolled back.
+SQL and Constraints / Chapter 8 183
+ www.it-ebooks.info
+                184 Chapter 8 / SQL and Constraints S := ... , P := ... ;
+This double assignment assigns one value to relvar S and another to relvar P, all as part of the same overall operation. In general, the semantics of multiple assignment are as follows:
+ First,allofthesourceexpressionsontherightsidesareevaluated.
+ Second,theindividualassignments(tothevariablesontheleftsides)areexecuted.
+(Actually this definition requires a slight refinement in the case where two or more of the individual assignments specify the same target variable, but that refinement needn’t concern us here.) Observe that, precisely because all of the source expressions are evaluated before any of the individual assignments are executed, none of those individual assignments can depend on the result of any other (and so the sequence in which they’re executed is irrelevant; in fact, you can think of them as being executed in parallel, or “simultaneously”). Moreover, since multiple assignment is considered to be a semantically atomic operation, no integrity checking is performed “in the middle of” any such assignment─indeed, this fact is the major rationale for supporting the operation in the first place. In the example, therefore, the double assignment succeeds where the two separate single assignments failed. Note in particular that there’s now no way for the transaction to see an inconsistent state of the database between the two UPDATEs, because the notion of “between the two UPDATEs” now has no meaning. Note further that there’s now no need for deferred checking at all.
+Aside: Perhaps I should state for the record here that all statements are semantically atomic in the relational model. In fact, most statements are syntactically atomic too; multiple assignment is an exception, because it’s semantically atomic but not syntactically so. End of aside.
+So what about multiple assignment in SQL? Well, SQL does have some support for this operation; in fact, it’s had some such support for many years. First of all, referential actions such as CASCADE imply, in effect, that a single DELETE or UPDATE statement can cause several base tables to be updated “simultaneously,” as part of a single operation. Second, the ability to update (for example) certain join views, if it’s supported, implies the same thing. Third, FETCH INTO and SELECT INTO are both multiple assignment operations, of a kind. Fourth, SQL explicitly supports a multiple assignment form of the SET statement (indeed, that’s exactly what row assignment is─see Chapters 2 and 3). And so on (this isn’t an exhaustive list). However, the one kind of multiple assignment that SQL doesn’t currently support is an explicit “simultaneous” assignment to several different tables─which is precisely the case illustrated by the foregoing example, and precisely what we need in order to avoid having to do deferred checking.11
+One last point: Please understand that support for multiple assignment doesn’t mean we can discard support for transactions. Transactions are still necessary for recovery and concurrency purposes, if nothing else. All I’m saying is that transactions aren’t the “unit of integrity” they’re usually supposed to be.
+Recommendation: In SQL, use immediate checking whenever you can. Given the state of today’s products, however, some checking (especially for constraints that involve more than one table) will almost certainly have to be deferred. In such a case, you should do whatever it takes─which in practice might mean terminating the transaction─to force the check to be done before any operation is executed that might rely on the constraint being satisfied.
+11 I’m told, however, that this functionality is likely to be provided in some future version of the standard.
+ www.it-ebooks.info
+                CONSTRAINTS AND PREDICATES
+Recall from Chapter 5 that the predicate for any given relvar is the intended interpretation─loosely, the meaning─for that relvar. For example, the predicate for relvar S looks like this:
+Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY.
+In an ideal world, then, this predicate would serve as “the criterion for acceptability of updates” on relvar S─that is, it would dictate whether a given update operation on that relvar can be accepted. But of course this goal is unachievable:
+ For one thing, the system can’t know what it means for a “supplier” to be “under contract” or to be “located” somewhere; to repeat, these are matters of interpretation. For example, if the supplier number S1 and the city name London happen to appear together in the same tuple, then the user can interpret that fact to mean that supplier S1 is located in London,12 but there’s no way the system can do anything analogous.
+ Foranother,evenifthesystemcouldknowwhatitmeansforasuppliertobeundercontractortobelocated somewhere, it still couldn’t know a priori whether what the user tells it is true! If the user asserts to the system (by means of some update operation) that there’s a supplier S6 named Lopez with status 30 and city Madrid, then there’s no way for the system to know whether that assertion is true. All the system can do is check that the user’s assertion doesn’t cause any integrity constraint to be violated. Assuming it doesn’t, the system will accept the user’s assertion and will treat it as true from that point forward (until such time as the user tells the system, by executing another update, that it isn’t true any more).
+Thus, the pragmatic “criterion for acceptability of updates,” as opposed to the ideal one, is not the predicate but the corresponding set of constraints, which might thus be regarded as the system’s approximation to the predicate. Equivalently:
+The system can’t enforce truth, only consistency.
+Sadly, truth and consistency aren’t the same thing. To be specific, if the database contains only true propositions, then it’s consistent, but the converse isn’t necessarily so; if it’s inconsistent, then it contains at least one false proposition, but the converse isn’t necessarily so. Or to put it another way, correct implies consistent (but not the other way around), and inconsistent implies incorrect (but not the other way around)─where to say the database is correct is to say it faithfully reflects the true state of affairs in the real world, no more and no less.
+Now let me try to pin down these notions a little more precisely. Let R be a base relvar, and let C1, C2, ..., Cm (m ≥ 0) be all of the database constraints, single relvar or multirelvar, that mention R. Assume for simplicity that each Ci is just a boolean expression (i.e., ignore the constraint names, for simplicity). Then the boolean expression
+( C1 ) AND ( C2 ) AND ... AND ( Cm ) AND TRUE
+12 Or that supplier S1 used to be located in London, or that supplier S1 has an office in London, or that supplier S1 doesn’t have an office in London, or any of an infinite number of other possible interpretations (corresponding, of course, to an infinite number of possible relvar predicates).
+SQL and Constraints / Chapter 8 185
+ www.it-ebooks.info
+                186 Chapter 8 / SQL and Constraints
+is the total relvar constraint for relvar R (but I’ll refer to it for the purposes of this book as just the constraint for R). Note that final “AND TRUE,” by the way; the implication is that in the unlikely event that no constraints at all are defined for a given relvar (i.e., m = 0), then the default is just TRUE.13
+Now let RC be “the” relvar constraint for relvar R. Clearly, R must never be allowed to have a value that causes RC to evaluate to FALSE. This state of affairs is the motivation for (the first version of) what I like to call The Golden Rule:
+No update operation must ever cause the relvar constraint for any relvar to evaluate to FALSE.
+Now let DB be a database, and let R1, R2, ..., Rn (n ≥ 0) be all of the relvars in DB. Let the constraints for
+those relvars be RC1, RC2, ..., RCn, respectively. Then the boolean expression ( RC1 ) AND ( RC2 ) AND ... AND ( RCn ) AND TRUE
+is the total database constraint for DB (but I’ll refer to it for the purposes of this book as just the constraint for DB). And here’s a correspondingly extended─in fact, the final─version of The Golden Rule:
+No update operation must ever cause the database constraint for any database to evaluate to FALSE.
+Observe in particular that, in accordance with my position that all integrity checking must be immediate, The Golden Rule talks in terms of update operations, not transactions.
+Now I can take care of a piece of unfinished business. I’ve said we can never trust the answers we get from an inconsistent database; here’s the proof. As we know, a database can be regarded as a collection of propositions. Suppose that collection is inconsistent; that is, suppose it implies that both p and NOT p are true, where p is some proposition. Now let q be any arbitrary proposition. Then:
+ Fromthetruthofp,wecaninferthetruthofpORq.
+ FromthetruthofpORqandthetruthofNOTp,wecaninferthetruthofq.
+But q was arbitrary! It follows that any proposition whatsoever (even ones that are obviously false, like 1 = 0) can be shown to be “true” in an inconsistent system. Note: In case you’re still not convinced, let me refer you to the further discussion of this issue in Chapter 10.
+MISCELLANEOUS ISSUES
+There are a few further points to do with integrity that I need to cover somewhere but don’t fit very well into any of the preceding sections.
+First of all, a constraint, since it’s basically a boolean expression that must evaluate to TRUE, is in fact a proposition (I more or less suggested as much in the previous section, but I never came out and stated it explicitly). To see that this is so, consider constraint CX1 once again from the section “Database Constraints”:
+CONSTRAINT CX1 IS_EMPTY ( S WHERE STATUS < 1 OR STATUS > 100 ) ;
+13 “Unlikely” is right; every relvar is supposed to be subject to a key constraint at the very least.
+ www.it-ebooks.info
+                The relvar name “S” here constitutes what logicians call a designator; when the constraint is checked, it designates a specific value─namely, the value of that relvar at the time in question. By definition, that value is a relation (s, say), and so the constraint effectively becomes:
+CONSTRAINT CX1 IS_EMPTY ( s WHERE STATUS < 1 OR STATUS > 100 ) ;
+Clearly, the boolean expression here─which is really the constraint as such, “CONSTRAINT CX1” being little more than window dressing─is certainly either true or false, unequivocally, and that’s the definition of what it means to be a proposition (see Chapter 5).
+Second, suppose relvar S already contains a tuple that violates constraint CX1 when the CONSTRAINT statement just shown is executed; then that execution must fail. More generally, whenever we try to define a new database constraint, the system must first check to see whether that constraint is satisfied by the database at that time; if it isn’t, the constraint must be rejected, otherwise it can be accepted and enforced from that point forward.
+Third, relational databases are supposed to satisfy the referential integrity rule, which says there mustn’t be any unmatched foreign key values. Now, in Chapter 1, I referred to this rule as a “generic integrity constraint.” However, it should be clear by now that it’s somewhat different in kind from the constraints we’ve been examining in this chapter. It’s really a metaconstraint, in a sense; what it says is that every specific database must satisfy the specific referential constraints that apply to that particular database. In the case of the suppliers-and-parts database, for example, it says the referential constraints from SP to S and P must be satisfied─because if they aren’t, then that database will violate the referential integrity metaconstraint. Likewise, in the case of the departments-and- employees database from Chapter 1, the referential constraint from EMP to DEPT must be satisfied, because if it isn’t, then again that database will violate the referential integrity metaconstraint.
+Fourth, I remind you from Chapter 5 that update operators are always set level, and hence that constraint checking mustn’t be done until all of the updating has been done; i.e., a set level update mustn’t be treated as a sequence of individual tuple level updates (or row level updates, in SQL). I also said in that chapter that the SQL standard does conform to this requirement, but that products might not. Indeed, the last time I looked, there was at least one major product that didn’t conform but (on foreign key constraints, at least) did “inflight checking” instead. One problem with this state of affairs is that it can lead to undesirable and possibly complex prohibitions against certain operations. For example, suppose there’s a cascade delete rule from suppliers to shipments. Then the product in question won’t allow the following apparently innocuous, and reasonable, DELETE statement:
+DELETE
+FROM S
+WHERE SNO NOT IN
+( SELECT SNO FROM SP ) ;
+(an attempt to delete suppliers with no shipments).
+Another issue I didn’t mention previously is the possibility of supporting what are called transition
+constraints. A transition constraint is a constraint on the legal transitions that variables of some kind─relvars in particular─can make from one value to another (by contrast, a constraint that isn’t a transition constraint is sometimes said to be a state constraint). For example, a person’s marital status can change from “never married” to “married” but not the other way around. Here’s a database example (“No supplier’s status must ever decrease”):
+CONSTRAINT CX9 IS_EMPTY
+( ( ( S′ { SNO , STATUS } RENAME { STATUS AS OLD } )
+JOIN
+(S {SNO,STATUS}RENAME{STATUSASNEW}))
+WHERE OLD > NEW ) ;
+www.it-ebooks.info
+SQL and Constraints / Chapter 8 187
+                188 Chapter 8 / SQL and Constraints
+Explanation: I’m adopting the convention that a primed relvar name such as S′ refers to the pertinent relvar as it was prior to the update under consideration. Constraint CX9 thus says: If we join the old value of S and the new one on {SNO} and restrict the result to just those tuples where the old status is greater than the new one, the final result must be empty. (Since the join is on {SNO}, any tuple in the join for which the old status is greater than the new one would represent a supplier whose status had decreased.)
+Transition constraints aren’t currently supported in either Tutorial D or SQL (other than procedurally).
+Last, I hope you agree from everything we’ve covered in this chapter that constraints are vital─and yet they seem to be very poorly supported in current products; indeed, they seem to be underappreciated at best, if not completely misunderstood. The emphasis in practice always seems to be on performance, performance, performance; other objectives, such as ease of use, physical data independence, and in particular integrity, seem so often to be sacrificed to─or at best to take a back seat to─that overriding goal.14
+Now, I don’t want you to misunderstand me here. Of course performance is important too. Functionally speaking, a system that doesn’t deliver at least adequate performance isn’t a system (not a usable one, at any rate). But what’s the point of a system performing well if we can’t be sure the results we’re getting from it are correct? Frankly, I don’t care how fast a system runs if I don’t feel I can trust it to give me the right answers to my queries.
+EXERCISES
+8.1 Define the terms type constraint and database constraint. When are such constraints checked? What happens if the check fails?
+8.2 State The Golden Rule. Is it true that this rule can be violated if and only if some individually declared single relvar constraint is violated?
+8.3 What do you understand by the following terms?─assertion; attribute constraint; base table constraint; column constraint; multirelvar constraint; referential constraint; relvar constraint; row constraint; single relvar constraint; state constraint; “the” (total) database constraint; “the” (total) relvar constraint; transition constraint; tuple constraint. Which of these categories if any do (a) key constraints, (b) foreign key constraints, fall into?
+8.4 Distinguish between possible and physical representations.
+8.5 With the Tutorial D definition of type QTY as given in the body of the chapter, what do the following
+expressions return?
+a. THE_Q(QTY(345)) b. QTY(THE_Q(QTY))
+14 I don’t mean to suggest here that system enforcement of constraints implies bad performance; in fact, I think it ought to improve performance. (Not to mention the fact that user enforcement is highly nontrivial, and very likely to be incorrect! The book by Lex de Haan and Toon Koppelaars, Applied Mathematics for Database Professionals, mentioned in an earlier footnote, gives a good idea of what’s involved in such enforcement.) All I mean is, there tends to be a huge emphasis in vendor development effort on performance issues, to the exclusion of other matters such as data integrity.
+ www.it-ebooks.info
+                SQL and Constraints / Chapter 8 189 8.6 Explain as carefully as you can (a) what a selector is; (b) what a THE_ operator is. Note: This exercise
+essentially repeats ones in previous chapters, but now you should be able to be more specific in your answers. 8.7 Suppose the only legal CITY values are London, Paris, Rome, Athens, Oslo, Stockholm, Madrid, and
+Amsterdam. Define a Tutorial D type called CITY that satisfies this constraint.
+8.8 Following on from the previous exercise, show how you could impose the corresponding constraint in SQL on the CITY columns in base tables S and P. Give at least two solutions. Compare and contrast those solutions with each other and with your answer to the previous exercise.
+8.9 Define supplier numbers as a Tutorial D user defined type. You can assume the only legal supplier numbers are ones that can be represented by a character string of at least two characters, of which the first is an “S” and the remainder are numerals denoting a decimal integer in the range 1 to 9999. State any assumptions you make regarding the availability of operators to help with your definition.
+8.10 A line segment is a straight line connecting two points in the euclidean plane. Give a corresponding Tutorial D type definition.
+8.11 two or
+8.12 8.13 8.14
+Can you think of a type for which we might want to specify two different possreps? Does it make sense for more possreps for the same type each to include a type constraint?
+Can you think of a type for which different possreps might have different numbers of components? Which operations might cause constraints CX1-CX9 from the body of the chapter to be violated? Does Tutorial D have anything directly analogous to SQL’s base table constraints?
+8.15
+CREATE ASSERTION counterparts? Note: I haven’t covered enough in this book yet to enable you to answer this question. Nevertheless, you might want to think about it now, or possibly use it as a basis for group discussion.
+In SQL, what is it exactly (i.e., formally) that makes base table constraints a little easier to state than their
+8.16 Following on from the previous question, a base table constraint is automatically regarded as satisfied in SQL if the pertinent base table is empty. Why exactly do you think this is so (I mean, what’s the formal reason)? Does Tutorial D display any analogous behavior?
+8.17 In the body of the chapter, I gave a version of constraint CX5 as a base table constraint on table SP. However, I pointed out that it could alternatively have been formulated as such a constraint on base table S, or base table P, or in fact any base table in the database. Give such alternative formulations.
+8.18 Constraint CX1 (for example) had the property that it could be checked for a given tuple by examining just that tuple in isolation; constraint CX5 (for example) did not. What is it, formally, that accounts for this difference? What’s the pragmatic significance, if any, of this difference?
+8.19 Can you give either a Tutorial D database constraint or an SQL assertion that’s exactly equivalent to the specification KEY{SNO} for relvar S?
+8.20 Give an SQL formulation of constraint CX8 from the body of the chapter.
+www.it-ebooks.info
+                190 Chapter 8 / SQL and Constraints
+8.21 Using Tutorial D and/or SQL, write constraints for the suppliers-and-parts database to express the following
+requirements:
+a. All red parts must weigh less than 50 pounds.
+b. Every London supplier must supply part P2.
+c. No two suppliers can be located in the same city.
+d. At most one supplier can be located in Athens at any one time.
+e. There must be at least one London supplier.
+f. At least one red part must weigh less than 50 pounds.
+g. The average supplier status must be at least 10.
+h. No shipment can have a quantity more than double the average of all such quantities.
+i. No supplier with maximum status can be located in the same city as any supplier with minimum status.
+j. Every part must be located in a city in which there is at least one supplier.
+k. Every part must be located in a city in which there is at least one supplier of that part.
+l. Suppliers in London must supply more different kinds of parts than suppliers in Paris.
+m. The total quantity of parts supplied by suppliers in London must be greater than the corresponding total for suppliers in Paris.
+n. No shipment can have a total weight (part weight times shipment quantity) greater than 20,000 pounds.
+In each case, state which operations might cause the constraint to be violated.
+8.22 Suppose there’s a constraint in effect that says if two suppliers are in the same city, they must have the same status; in other words, suppose relvar S is subject to the functional dependency {CITY} Æ {STATUS} (I mentioned this possibility in the discussion of constraint CX4 in the body of the chapter). Do either of the following Tutorial D CONSTRAINT statements accurately represent this constraint?
+CONSTRAINT CX22a
+COUNT ( S { CITY } ) = COUNT ( S { CITY , STATUS } ) ;
+CONSTRAINT CX22b
+S = JOIN { S { ALL BUT STATUS } , S { CITY , STATUS } } ;
+8.23 In the body of the chapter, I defined the total database constraint to be a boolean expression of this form:
+( RC1 ) AND ( RC2 ) AND ... AND ( RCn ) AND TRUE
+www.it-ebooks.info
+                What’s the significance of that “AND TRUE”?
+8.24 In a footnote in the section “Constraints and Predicates,” I said that if the values S1 and London appeared together in some tuple, then it might mean (among many other possible interpretations) that supplier S1 doesn’t have an office in London. Actually, this particular interpretation is extremely unlikely. Why? Hint: Remember The Closed World Assumption.
+8.25 Suppose no cascade delete rule is stated for suppliers and shipments. Write a Tutorial D statement that will delete some specified supplier and all shipments for that supplier in a single operation (i.e., without raising the possibility of a referential integrity violation).
+8.26 Using the syntax sketched for transition constraints in the section “Miscellaneous Issues,” write transition constraints to express the following requirements:
+a. The total shipment quantity for a given part can never decrease.
+b. Suppliers in Athens can move only to London or Paris, and suppliers in London can move only to Paris.
+c. The total shipment quantity for a given supplier cannot be reduced in a single update to less than half its current value. (What do you think the qualification “in a single update” means here? Why is it important? Is it important?)
+8.27 Investigate any SQL product that might be available to you. What semantic optimization does it support, if any?
+8.28 Why do you think SQL fails to support type constraints? What are the consequences of this state of affairs?
+8.29 The discussion in this chapter of types in general, and type constraints in particular, tacitly assumed that
+types were all (a) scalar and (b) user defined. To what extent do the concepts discussed apply to nonscalar types and/or system defined types?
+8.30 Show that any arbitrary UPDATE can be expressed in terms of DELETE and INSERT.
+www.it-ebooks.info
+SQL and Constraints / Chapter 8 191
+                www.it-ebooks.info

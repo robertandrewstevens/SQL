@@ -1,0 +1,212 @@
+SQL and Relational Theory: How to Write Accurate SQL Code (2nd edition) 
+
+by C. J. Date
+
+Those who are enamored of practice without theory are like a pilot who goes into a ship without rudder or compass and never has any certainty where he is going Practice should always be based upon
+a sound knowledge of theory. — Leonardo da Vinci (1452–1519)
+
+The trouble with people is not that they don’t know but that they know so much that ain’t so. — Josh Billings (1818–1885)
+
+Languages die... mathematical ideas do not. — G. H. Hardy (1877–1947)
+
+Unfortunately, the gap between theory and practice is not as wide in theory as it is in practice. — Anon.
+
+These are my principles. If you don’t like them, I have others. — Groucho Marx (1890–1977)
+
+There is no royal road to geometry. — Euclid (c. 365–275 BCE), attrib.
+
+To all those who think an exercise like this one is worthwhile, and in particular to the memory of Lex de Haan, who is very much missed
+
+About the Author
+
+C. J. Date is an independent author, lecturer, researcher, and consultant, specializing in relational database technology. He is best known for his book An Introduction to Database Systems, 8th edition (Addison-Wesley, 2004), which has sold some 850,000 copies at the time of writing and is used by several hundred colleges and universities worldwide. He is also the author of many other books on database management, including most recently:
+
+- Databases, Types, and the Relational Model: The Third Manifesto, 3rd edition (coauthored with Hugh Darwen, 2006)
+
+- Date on Database: Writings 2000–2006 (2006)
+
+- Logic and Databases: The Roots of Relational Theory (2007)
+
+- The Relational Database Dictionary, Extended Edition (2008)
+
+- Database Explorations: Essays on The Third Manifesto and Related Topics (coauthored with Hugh Darwen, 2010)
+
+- Go Faster! The TransRelationalTM Approach to DBMS Implementation (2011)
+
+Another book, Normal Forms and All That Jazz: A Database Professional’s Guide to Database Design Theory (a companion to the present book), is also due for publication in the near future.
+
+Mr. Date was inducted into the Computing Industry Hall of Fame in 2004. He enjoys a reputation that is second to none for his ability to explain complex technical subjects in a clear and understandable fashion.
+
+Contents
+
+Preface to the First Edition
+
+Preface to the Second Edition 
+
+Chapter 1: Setting the Scene 
+
+Chapter 2: Types and Domains
+
+Chapter 3: Tuples and Relations, Rows and Tables
+
+Chapter 4: No Duplicates, No Nulls
+
+Chapter 5: Base Relvars, Base Tables
+
+Chapter 6: SQL and Relational Algebra I: The Original Operators
+
+Chapter 7: SQL and Relational Algebra II: Additional Operators
+
+Chapter 8: SQL and Constraints
+
+Chapter 9: SQL and Views
+
+Chapter 10: SQL and Logic
+
+Chapter 11: Using Logic to Formulate SQL Expressions
+
+Chapter 12: Miscellaneous SQL Topics
+
+Appendix A: The Relational Model
+
+Appendix B: SQL Departures from the Relational Model
+
+Appendix C: A Relational Approach to Missing Information
+
+Appendix D: A Tutorial D Grammar
+
+Appendix E: Summary of Recommendations
+
+Appendix F: Answers to Exercises
+
+Appendix G: Suggestions for Further Reading
+
+Index
+
+Preface to the First Edition
+
+SQL is ubiquitous. But SQL is hard to use: It’s complicated, confusing, and error prone (much more so, I venture to suggest, than its apologists would have you believe). In order to have any hope of writing SQL code that you can be sure is accurate, therefore — meaning it does exactly what it’s supposed to do, no more and no less — you must follow some appropriate discipline. And it’s the thesis of this book that using SQL relationally is the discipline you need. But what does this mean? Isn’t SQL relational anyway?
+
+Well, it’s true that SQL is the standard language for use with relational databases — but that fact in itself doesn’t make it relational. The sad truth is, SQL departs from relational theory in all too many ways; duplicate rows and nulls are two obvious examples, but they’re not the only ones. As a consequence, the language gives you rope to hang yourself with, as it were. So if you don’t want to hang yourself, you need to understand relational theory (what it is and why); you need to know about SQL’s departures from that theory; and you need to know how to avoid the problems they can cause. In a word, you need to use SQL relationally. Then you can behave as if SQL truly were relational, and you can enjoy the benefits of working with what is, in effect, a truly relational system.
+
+Now, a book like this wouldn’t be needed if everyone was using SQL relationally already — but they aren’t. On the contrary, I observe much bad practice in current SQL usage. I even observe such practice being recommended, in textbooks and similar publications, by writers who really ought to know better (no names, no pack drill); in fact, a review of the literature in this regard is a pretty dispiriting exercise. The relational model first saw the light of day in 1969, and yet here we are, over 40 years later, and it still doesn’t seem to be very well understood by the database community at large. Partly for such reasons, this book uses the relational model itself as an organizing principle; it explains various features of the model in depth, and shows in every case how best to use SQL in order to comply with the feature in question.
+
+Prerequisites
+
+I assume you’re a database practitioner and therefore reasonably familiar with SQL already. To be specific, I assume you have a working knowledge of either the SQL standard or (perhaps more likely in practice) at least one SQL product. However, I don’t assume you have a deep knowledge of relational theory as such (though I do hope you understand that the relational model is a good thing in general, and adherence to it wherever possible is a desirable goal). In order to avoid misunderstandings, therefore, I’ll be describing various features of the relational model in detail, as well as showing how to use SQL to conform to those features. But what I won’t do is attempt to justify all of those features; rather, I’ll assume you’re sufficiently experienced in database matters to understand why, e.g., the notion of a key makes sense, or why you sometimes need to do a join, or why many to many relationships need to be supported. (If I were to include such justifications, this would be a very different book — quite apart from anything else, it would be much bigger than it already is — and in any case, that book has already been written.)
+
+I’ve said I expect you to be reasonably familiar with SQL. However, I should add that I’ll be explaining certain aspects of SQL in detail anyway — especially aspects that might be encountered less frequently in practice. (The SQL notion of possibly nondeterministic expressions is a case in point here. See Chapter 12.)
+
+Database in Depth
+
+This book is based on, and intended to replace, an earlier one with the title Database in Depth: Relational Theory for Practitioners (O’Reilly Media Inc., 2005). My aim in that earlier book was as follows (this is a quote from the preface):
+
+After many years working in the database community in various capacities, I’ve come to realize there’s a real need for a book for practitioners (not novices) that explains the basic principles of relational theory in a way not tainted by the quirks and peculiarities of existing products, commercial practice, or the SQL standard. I wrote this book to fill that need. My intended audience is thus experienced database practitioners who are honest enough to admit they don’t understand the theory underlying their own field as well as they might, or should. That theory is, of course, the relational model — and while it’s true that the fundamental ideas of that theory are all quite simple, it’s also true that they’re widely misrepresented, or under-appreciated, or both. Often, in fact, they don’t seem to be understood at all. For example, here are a few relational questions... How many of them can you answer [1]?
+
+1. What exactly is first normal form?
+
+2. What’s the connection between relations and predicates?
+
+3. What’s semantic optimization?
+
+4. What’s an image relation?
+
+5. Why is semidifference important?
+
+6. Why doesn’t deferred integrity checking make sense?
+
+7. What’s a relation variable?
+
+8. What’s prenex normal form?
+
+9. Can a relation have an attribute whose values are relations?
+
+10. Is SQL relationally complete?
+
+11. Why is The Information Principle important?
+
+12. How does XML fit with the relational model?
+
+This book provides answers to these and many related questions. Overall, it’s meant to help database practitioners understand relational theory in depth and make good use of that understanding in their professional day-to-day activities.
+
+As the final sentence in this extract indicates, it was my hope that readers of that book would be able to apply its ideas for themselves, without further assistance from me as it were. But I’ve since come to realize that, contrary to popular opinion, SQL is such a difficult language that it can be far from obvious how to use it without violating relational principles. I therefore decided to expand the original book to include explicit, concrete advice on exactly that issue (how to use SQL relationally, I mean). So my aim in the present book is still the same as before — I want to help database practitioners understand relational theory in depth and make good use of that understanding in their professional activities — but I’ve tried to make the material a little easier to digest, perhaps, and certainly easier to apply. In other words, I’ve included a great deal of SQL-specific material (and it’s this fact, more than anything else, that accounts for the increase in size over the previous book).
+
+Further Remarks on the Text
+
+I need to take care of several further preliminaries. First of all, my own understanding of the relational model has evolved over the years, and continues to do so. This book represents my very latest thinking on the subject; thus, if you detect any technical discrepancies — and there are a few — between this book and other books you might have seen by myself (including in particular the one the present book is meant to replace), the present book should be taken as superseding. Though I hasten to add that such discrepancies are mostly of a fairly minor nature; what’s more, I’ve taken care always to relate new terms and concepts to earlier ones, wherever I felt it was necessary to do so.
+
+Second, I will, as advertised, be talking about theory — but it’s an article of faith with me that theory is practical. I mention this point explicitly because so many seem to believe the opposite: namely, that if something’s theoretical, it can’t be practical. But the truth is that theory (at least, relational theory, which is what I’m talking about here) is most definitely very practical indeed. The purpose of that theory is not just theory for its own sake; the purpose of that theory is to allow us to build systems that are 100 percent practical. Every detail of the theory is there for solid practical reasons. As Stéphane Faroult, a reviewer of the earlier book, wrote: “When you have a bit of practice, you realize there’s no way to avoid having to know the theory.” What’s more, that theory is not only practical, it’s fundamental, straightforward, simple, useful, and it can be fun (as I hope to demonstrate in the course of this book).
+
+Of course, we really don’t have to look any further than the relational model itself to find the most striking possible illustration of the foregoing thesis. Indeed, it really shouldn’t be necessary to have to defend the notion that theory is practical, in a context such as ours: namely, a multibillion dollar industry totally founded on one great theoretical idea. But I suppose the cynic’s position would be “Yes, but what has theory done for me lately?” In other words, those of us who do think theory is important must continually be justifying ourselves to our critics — which is another reason why I think a book like this one is needed.
+
+Third, as I’ve said, the book does go into a fair amount of detail regarding features of SQL or the relational model or both. (It deliberately has little to say on topics that aren’t particularly relational; for example, there isn’t much on transactions.) Throughout, I’ve tried to make it clear when the discussions apply to SQL specifically, when they apply to the relational model specifically, and when they apply to both. I should emphasize, however, that the SQL discussions in particular aren’t meant to be exhaustive. SQL is such a complex language, and provides so many different ways of doing the same thing, and is subject to so many exceptions and special cases, that to be exhaustive — even if it were possible, which I tend to doubt — would be counterproductive; certainly it would make the book much too long. So I’ve tried to focus on what I think are the most important issues, and I’ve tried to be as brief as possible on the issues I’ve chosen to cover. And I’d like to claim that if you do everything I tell you, and don’t do anything I don’t tell you, then to a first approximation you’ll be safe: You’ll be using SQL relationally. But whether that claim is justified, or to what extent it is, must be for you to judge.
+
+To the foregoing I have to add that, unfortunately, there are some situations in which SQL just can’t be used relationally. For example, some SQL integrity checking simply has to be deferred (usually to commit time), even though the relational model explicitly rejects such checking as logically flawed. The book does offer advice on what to do in such cases, but I fear it often boils down to just Do the best you can. At least I hope you’ll understand the risks involved in departing from the model.
+
+I should say too that some of the recommendations offered aren’t specifically relational anyway but are, rather, just matters of general good practice — though sometimes there are relational implications (implications that can be a little unobvious, too, perhaps I should add). Avoid coercions is a good example here.
+
+Fourth, please note that I use the term SQL throughout the book to mean the standard version of that language exclusively, not some proprietary dialect, barring explicit statements to the contrary. In particular, I follow the standard in assuming the pronunciation “ess cue ell,” not “sequel” (though this latter is common in the field), thereby saying things like an SQL table, not a SQL table.
+
+Fifth, the book is meant to be read in sequence, pretty much, except as noted here and there in the text itself (most of the chapters do rely to some extent on material covered in earlier ones, so you shouldn’t jump around too much). Also, each chapter includes a set of exercises. You don’t have to do those exercises, of course, but I think it’s a good idea to have a go at some of them at least. Answers, often giving more information about the subject at hand, are given in Appendix F.
+
+Finally, I’d like to mention that I have some live seminars available based on the material in this book. See www.justsql.co.uk/chris_date/chris_date.htm or www.thethirdmanifesto.com for further details. An online version of one of those seminars is available too, at http://oreilly.com/catalog/0636920010005/.
+
+Using Code Examples
+
+This book is here to help you get your job done. In general, you may use the code in this book in your programs and documentation. You do not need to contact us for permission unless you’re reproducing a significant portion of the code. For example, writing a program that uses several chunks of code from this book does not require permission. Selling or distributing a CD-ROM of examples from O’Reilly books does require permission. Answering a question by citing this book and quoting example code does not require permission. Incorporating a significant amount of example code from this book into your product’s documentation does require permission.
+
+We appreciate, but do not require, attribution. An attribution usually includes the title, author, publisher, and ISBN. For example: “SQL and Relational Theory, Second Edition, by C.J. Date (O’Reilly). Copyright 2012 C.J. Date, 9781449316402.”
+
+If you feel your use of code examples falls outside fair use or the permission given above, feel free to contact us at permissions@oreilly.com.
+
+Comments and Questions
+
+Please address comments and questions concerning this book to the publisher:
+
+O’Reilly Media, Inc.1005 Gravenstein Highway North Sebastopol, CA 95472
+(800) 998-9938 (in the United States or Canada)
+(707) 829-0515 (international or local)
+(707) 829-0104 (fax)
+
+We have a web page for this book, where we list errata, examples, and any additional information. You can access
+this page at http://shop.oreilly.com/product/0636920022879.do.
+
+To comment or ask technical questions about this book, send email to bookquestions@oreilly.com.
+
+For more information about our books, courses, conferences, and news, see our website at http://www.oreilly.com. 
+
+Find us on Facebook: http://facebook.com/oreilly.
+
+Follow us on Twitter: http://twitter.com/oreillymedia.
+
+Watch us on YouTube: http://www.youtube.com/oreillymedia.
+
+Safari® Books Online
+
+Safari Books Online is an on-demand digital library that lets you easily search over 7,500 technology and creative reference books and videos to find the answers you need quickly.
+
+With a subscription, you can read any page and watch any video from our library online. Read books on your cell phone and mobile devices. Access new titles before they are available for print, and get exclusive access to manuscripts in development and post feedback for the authors. Copy and paste code samples, organize your favorites, download chapters, bookmark key sections, create notes, print out pages, and benefit from tons of other time-saving features.
+
+O’Reilly Media has uploaded this book to the Safari Books Online service. To have full digital access to this book and others on similar topics from O’Reilly and other publishers, sign up for free at http://my.safaribooksonline.com.
+
+Acknowledgments
+
+I’d been thinking for some time about revising the earlier book to include more on SQL in particular, but the spur that finally got me down to it was sitting in on a class, late in 2007, for database practitioners. The class was taught by Toon Koppelaars and was based on the book he wrote with Lex de Haan (see Appendix G of the present book), and very good it was, too. But what struck me most about that class was seeing firsthand the kinds of difficulties the attendees had in applying relational and logical principles to their use of SQL. Now, I do assume those attendees had some knowledge of those topics — they were database practitioners, after all — but it seemed to me they really needed some guidance in the application of those ideas to their daily database activities. And so I put this book together. So I’m thankful, first of all, to Toon and Lex for providing me with the necessary impetus to get started on this project. I’m grateful also to my reviewers Herb Edelstein, Sheeri Ktitzer, Andy Oram, Peter Robson, and Baron Schwartz for their comments on earlier drafts, and Hugh Darwen and Jim Melton for other technical assistance. Next, I’d like to thank my wife Lindy, as always, for her support throughout this and all of my other database projects over the years. Finally, I’m grateful to everyone at O’Reilly — especially Isabel Kunkle and Andy Oram — for their encouragement, contributions, and support throughout the production of this book.
+
+C. J. Date, Healdsburg, California 2008
+
+Preface to the Second Edition
+
+This edition differs from its predecessor in a number of ways. The overall objective remains the same, of course — using SQL relationally is still the emphasis — but the text has been revised throughout to reflect, among other things, experience gained from teaching live seminars based on the first edition.
+
+One significant change is a deletion: The appendix on design theory has gone. There are two reasons for this change. First, design theory as such never really did have all that much to do with the book’s main message, anyway; second, the appendix was getting so extensive that it threatened to overwhelm the rest of the text. (It was already longer than any chapter or any other appendix in the book. In fact, I’ve since expanded the material into a separate book in its own right. That book — Normal Forms and All That Jazz: A Database Professional’s Guide to Database Design Theory — is due to be published soon by O’Reilly. It can be seen as a companion, or perhaps a sequel, to the present book.)
+
+On the positive side, a lot of new material has been added (including, importantly, a discussion of how to deal with missing information without using nulls); examples, exercises, and answers have been expanded and improved in various respects; and the treatment of SQL has been upgraded to cover recent changes to the SQL standard. A variety of corrections and numerous cosmetic improvements have also been made [2]. (In particular, the Tutorial D examples — Tutorial D being the language I use to illustrate relational concepts — have been upgraded to reflect several recent improvements to that language. See Appendix D.) The net effect is to make the text rather more comprehensive — but, sadly, some 25 percent bigger — than its predecessor.
+
+Talking of the text, I’d like to say something about my use of footnotes. Frankly, I’m rather embarrassed at how many footnotes there are; I’m well aware how annoying they can be — indeed, they can seriously impede readability. But any text dealing with SQL is more or less forced into a heavy use of footnotes, at least if it wants to be tutorial in nature and yet reasonably comprehensive at the same time. The reason is that SQL involves so many inconsistencies, exceptions, and special cases that treating everything “in line” — i.e., at the same level of description — makes it very difficult to see the forest for the trees. (Indeed, this is one reason why the SQL standard itself is so difficult to understand.) Thus, there are numerous places in the book where the major idea is described “in line” in the main body of the text, and exceptions and the like (which must at least be mentioned, for reasons of accuracy and completeness) are relegated to a footnote. It might be best simply to ignore all footnotes on a first reading.
+
+C. J. Date, Healdsburg, California 2012
+
+[1] For reasons that aren’t important here, I’ve replaced a few of the questions in this list by new ones.
+
+[2] In this connection, I’d like to acknowledge the contribution of a reader of the first edition, Thomas Uhren, who found an embarrassingly large number of errors. I’ll try harder in future. I promise.

@@ -1,0 +1,123 @@
+Appendix D: A Tutorial D Grammar
+
+For purposes of reference, this appendix gives a BNF grammar for Tutorial D relational expressions and assignments (nonrelational operations are mostly omitted, as are definitional operations such as those used to define types, base relvars, views, and constraints). The following are also omitted:
+
+- TUPLE FROM, because it doesn’t return a relation
+
+- THE_ operators and <attribute name> FROM, because these operators too don’t return relations (except in the unusual special case where the specified possrep component or attribute, as applicable, happens to be relation valued)
+
+- DIVIDEBY and SUMMARIZE, because (as explained in Chapter 7) these operators are both somewhat deprecated
+
+Also, the grammar is simplified in certain respects. In particular, it makes no attempt to say where image relations can and can’t be used, nor does it pay any attention to operator precedence rules. (As a result of this latter point, certain constructs permitted by the grammar ─ for example, the expression r1 MINUS r2 MINUS r3 ─ are potentially ambiguous. Additional syntax rules are needed to resolve such issues, but such rules are omitted here. Of course, parentheses can always be used to guarantee a desired order of evaluation anyway.) A few points of detail:
+
+- The shorthand exp is used as an abbreviation for expression.
+
+- All syntactic categories of the form <...name> are assumed to be <identifier>s and are defined no further here.
+
+- The categories <tuple exp> and <bool exp> are also left undefined ─ though it might help to recall in particular that a relational comparison is a special case of a boolean expression.
+
+- As usual, all of the various comma lists mentioned in what follows are allowed to be empty. 
+
+Relational Expressions
+
+<relation exp>
+    ::= <with exp> | <nonwith exp>
+
+<with exp>
+    ::= WITH ( <name intro commalist> ) : <relation exp>
+
+<name intro>
+    ::= <relvar name> := <relation exp>
+
+<nonwith exp>
+    ::= <image exp> | <relation op> | ( <relation op> )
+
+<image exp>
+    ::= !!<nonwith exp> | ( <image exp> ) 
+
+
+<relation op>
+    ::= <relation selector> | <monadic op> | <dyadic op> | <n-adic op>
+
+
+<relation selector>
+    ::= RELATION [ <heading> ] { <tuple exp commalist> } | TABLE_DUM | TABLE_DEE
+
+<heading>
+    ::= { <attribute commalist> } 
+
+<attribute>
+    ::= <attribute name> <type name> 
+
+<monadic op>
+    ::= <relvar name> | <rename> | <where> | <project> | <extend> | <group> | <ungroup> | <tclose>
+
+<rename>
+    ::= <relation exp> RENAME { <renaming commalist> }
+
+<renaming>
+    ::= <attribute name> AS <attribute name>
+
+<where>
+    ::= <relation exp> WHERE <bool exp>
+
+<project>
+    ::= <relation exp> { [ ALL BUT ] <attribute name commalist> }
+
+<extend>
+    ::= EXTEND <relation exp> : { <attribute assign commalist> } 
+
+<attribute assign>
+    ::= <attribute name> := <exp>
+
+Note: An alternative form of <attribute assign>, syntactically identical to a <relation assign> except that the pertinent <attribute name> appears in place of the target <relvar name> in that <relation assign>, is also supported if the attribute in question is relation valued.
+
+<group>
+    ::= <relation exp> GROUP ( { [ ALL BUT ] <attribute name commalist> } AS <attribute name> ) 
+
+<ungroup>
+    ::= <relation exp> UNGROUP ( <attribute name> )
+
+<tclose>
+    ::= TCLOSE ( <relation exp> )
+
+<dyadic op>
+    ::= <relation exp> <dyadic op name> <relation exp>                
+
+<dyadic op name>
+    ::= UNION | D_UNION | XUNION | INTERSECT | MINUS | I_MINUS | JOIN | TIMES | MATCHING | NOT MATCHING
+
+<n-adic op>
+    ::= <n-adic op name> [ <heading> ] { <relation exp commalist> }
+
+<n-adic op name>
+    ::= UNION | D_UNION | XUNION | INTERSECT | JOIN | TIMES
+
+<relation comp>
+    ::= <relation exp> <relation comp op> <relation exp>
+
+<relation comp op>
+    ::= = | ≠ | ⊆ | ⊂ | ⊇ | ⊃
+
+Assignments
+
+<relation assignment>
+    ::= [ WITH ( <name intro commalist> ) : ] <relation assign commalist> ; 
+
+<relation assign>
+    ::= <relvar name> := <relation exp> | <insert> | <d_insert> | <delete> | <i_delete> | <update>
+
+<insert>
+    ::= INSERT <relvar name> <relation exp> 
+
+<d_insert>
+    ::= D_INSERT <relvar name> <relation exp> 
+
+<delete>
+    ::= DELETE <relvar name> <relation exp> | DELETE <relvar name> [ WHERE <bool exp> ]
+
+<i_delete>
+    ::= I_DELETE <relvar name> <relation exp> 
+
+<update>
+    ::= UPDATE <relvar name> [ WHERE <bool exp> ] : { <attribute assign commalist> }

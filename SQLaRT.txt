@@ -1,0 +1,466 @@
+
+                Index
+For alphabetization purposes, (a) differences in fonts and case are ignored; (b) quotation marks are ignored; (c) other punctuation symbols─hyphens, underscores, parentheses, etc.─are treated as blanks; (d) numerals precede letters; (e) blanks precede everything else.
+≝ (is defined as), 127,158 | (Sheffer stroke), 397
+Ø (Peirce arrow), 397
+Œ (set membership), 57
+≡ (equivalent to), 218
+⇒ (implies), 218
+⇔ (bi-implies, equivalent to), 218 ⊂ (properly included in), 59
+⊃ (properly includes), 59
+⊆ (included in), 59
+⊇ (includes), 59
+∃ (existential quantifier), 224
+∀ (universal quantifier), 224
+!! (image relation reference), 136 q-join, 122
+0-tuple, 52,53
+1NF, see first normal form 2VL, see two-valued logic 3VL, see three-valued logic
+Abbey, Edward, 97,247
+access method, 13
+ACID properties, 180
+aggregate operators, 140-144,157
+empty argument, 143-144
+vs. summaries, see summary algebra, see relational algebra
+ALL BUT, 112
+ALL or ANY comparison, 42,265-268 alternate key, 93
+Anthony, Susan B., 105
+Appleby, Sir Humphrey, 273
+architecture, 330 argument, 222 Aristotle, 288 arity, 14 assignment
+multiple, see multiple assignment relational, see relational assignment tuple, 38
+Assignment Principle, The, 91,300 SQL violations, 76,96,340,353
+associativity, 125 Atkinson, Malcolm, 289 atomicity
+scalar value, 31-34 statement, 88 transaction, 10
+attribute
+attribute-name:type-name pair, 14 extracting value from tuple, 52 pictured as column, 5
+relation, 5,55
+relvar, 330
+tuple, 50
+attribute constraint, 173 attribute ordering (left to right)
+in SQL tables, 15
+not in relations, 15 attribute value, 50
+AVGX, 144
+axiom (database), 100
+bag, 33
+Bancilhon, François, 289 base relation, 18
+www.it-ebooks.info
+                420 Index
+base relvar, 21
+see also base relation
+base table constraint, 178
+bill of materials, 102,159
+Billings, Josh, iii
+binary relation (mathematics), 287 BNF grammar
+SQL, 281-285
+Tutorial D, 321-323 body
+relation, 14,55
+relvar, 330 BOOLEAN
+relational model, 25,294
+SQL, 40 bound variable, 226
+Boyce, Raymond F., 409 Breazu-Tannen, Val, 126 Buneman, Peter, 126 Bush, George W., 224 business rules, 169
+calculus, see relational calculus candidate key, 6,92-94 Cardelli, Luca, 25
+cardinality
+relation, 14,55
+relvar, 330 Carroll, Lewis, 60,406
+cartesian product, see product CASCADE (referential action), 96 Celko, Joe, 201,289
+Chamberlin, Don, 84,409 Chaudhuri, Surajit, 409
+CHECK option, 205
+Chudnovsky, Gregory, 302
+Closed World Assumption, The, 98,300,
+318-319,357 closure, 8,108-110
+CNF, see conjunctive normal form COALESCE, 78
+CODASYL, 288
+Codd, E. F., passim
+coercion, 29
+SQL, 40-42
+collation, 42
+column, see attribute
+column constraint, 179 column naming, 62-63 commalist, 6
+common attribute, 106 commutativity, 125 compensatory action, 208 component (tuple), 50 conjunct, 400
+conjunction, 400
+conjunctive normal form, 400 CONNECT BY (Oracle), 161 connective, 218,348 consistency, 180,185,243
+vs. correctness, 185 constant, 196
+constraint
+attribute, 173
+database, see database constraint relvar, see relvar constraint state, 187
+transition, 187
+tuple, 174
+type, see type constraint vs. performance, 188 vs. predicate, 185
+contradiction, 82
+contrapositive, 221
+correlated subquery, see subquery CORRESPONDING, 116
+correctness, see consistency
+correlation name (SQL), 275
+cost based optimizing, 123
+CREATE ASSERTION, 178
+cursor, 81
+CWA, see Closed World Assumption, The,
+D_INSERT, 89 expansion, 89
+www.it-ebooks.info
+                D_UNION, 89,117,314 n-adic, 117-118
+da Vinci, Leonardo, iii,4 Darwen, Hugh, passim data independence, 13
+logical, 211-212
+physical, 13 data model, 12,14
+two meanings, 12,14 data type, see type
+database, passim
+collection of propositions, 180 logical system, 100
+vs. DBMS, 27
+database administrator, 28 database constraint, 174-179
+checked immediately, 180-182 SQL, 178-179
+the (total) database constraint, 186
+database management system, 27 vs. database, 27
+database statistics, 123
+database variable, 297,298-299
+Date, C. J., passim
+DBA, 28
+DBMS, 27
+dbvar, 297,298-299
+DCO, 27-28
+De Haan, Lex, iii,179,188,417
+De Morgan’s laws, 249
+declarative, 22
+decomposition (missing information), 307
+horizontal, 309-311
+vertical, 308-309 DEE, see TABLE_DEE
+degree
+foreign key, 94
+key, 92 relation, 14,55 relvar, 330 tuple, 15,50
+DELETE, 88 expansion, 88
+via cursor (SQL), 87 Derbyshire, John, 131
+derived relation, 18
+derived relvar, see snapshot; view
+see also derived relation designator, 187
+DeWitt, David, 289 difference, 118-119
+see also semidifference disjoint INSERT, see D_INSERT disjoint union, see D_UNION disjunct, 400
+disjunction, 400
+disjunctive normal form, 400 DISTINCT, 73-74
+distributive law, 249 distributivity, 124
+Dittrich, Klaus, 289
+divide, 138-139
+DIVIDEBY, 138
+DNF, see disjunctive normal form domain, 5,26,329
+SQL, 40
+see also type domain calculus, 230
+“domain check override,” 27-28 dot qualification, 274-275 double negation law, 248 double underlining, 6,103,358 DUM, see TABLE_DEE duplicate elimination, 111 duplicates, 17,52.67ff
+in SQL tables, 15
+not in relations, 15 see also tuple equality
+durability, 180 dyadic predicate, 223
+Einstein, Albert, 292 Elmasri, Ramez, 416 Emerson, Ralph Waldo, 169
+www.it-ebooks.info
+Index 421
+                422 Index
+empty argument, see aggregate operator empty heading, 52
+empty key, 102
+empty range, 237-238
+empty relation, 57 empty set, 52
+SQL, 281-282 empty tuple, 52
+empty type, 340 encapsulation, 37
+entity integrity, 7,195
+EQD, see equality dependency equality, 17,26-31,294
+relation, see relation equality
+tuple, see tuple equality equality dependency, 313
+equijoin, 122,358 essentiality, 300
+Euclid, iii
+EXCEPT, 118
+exclusive union, see union existential quantifier, 224 EXISTS
+iterated OR, 236
+SQL, 229
+see also existential quantifier
+explicit table, 274
+expression transformation, 123 expression vs. statement, 27,340 EXTEND, 133-135,158
+Extensible Markup Language, see XML extension vs. intension, 98
+factorial, 50,354
+Faroult, Stéphane, 416
+FD, see functional dependency field (SQL), 44,53
+first normal form, 16
+relvar, 338 fixpoint, 160
+“flat relation,” 58
+FORALL
+iterated AND, 237
+not in SQL, 229
+see also universal quantifier foreign key, 7,94
+not fundamental, 96 free variable, 226
+see also bound variable function (SQL), 2
+functional dependency, 94,177
+Gehrke, Johannes, 418 generated type, 37
+generic type, 338
+Golden Rule, The, 186,301 googol, 81
+googolplex, 81
+Graunt, John, 49 Graves, Robert, 216 Gray, Jim, 180,417 gross requirements, 160 GROUP , 152
+GROUP BY redundant, 148
+Haldeman, H. R., 193 Hall, Patrick, 417
+Hardy, G. H., iii HAVING redundant, 150 heading
+relation, 14,55 relvar, 330 tuple, 50
+Held, G. D., 417 Hitchcock, Peter, 417 Hodge, Alan, 216 Hodges, Wilfrid, 417 hold (constraint), 169
+I_DELETE, 90 expansion, 90
+I_MINUS, 90 idempotence, 129,364 identity projection, 111
+www.it-ebooks.info
+                identity restriction, 111
+image relation, 135-138,144-145,150-151 implementation, 12
+vs. model, 12
+implementation defined, 273 implementation dependent, 273 implication, see logical implication implication law, 248
+IMS, 377
+inflight checking, 88
+information equivalence, 394 Information Principle, The, 38,295,300 INSERT, 88
+expansion, 88 instantiation, 98,222
+integrity constraint, see constraint intended interpretation, 97
+intension, 97
+interpretation, see intended interpretation intersect, 114,118
+introduced name, see WITH involution law, 248 irreducibility (key), 92 IS_EMPTY, 59 IS_NOT_EMPTY, 59 isolation, 180
+Jay, Antony, 237 join, 112-116
+n-adic, 114
+see also equijoin; q-join JOIN (SQL), 114-116
+joinability, 112
+key, 6
+for expression, 203
+irreducibility, 92 uniqueness, 92
+values are tuples, 93 see also candidate key
+Koppelaars, Toon, 179,188,417 Korth, Henry F., 418
+lateral subquery, see subquery Lincoln, Abraham, 244 literal, 36,196,335
+relation, 56 tuple, 51
+see also selector
+logical difference, 16
+logical implication, 219-220 logical system, 100 Lorentzos, Nikos A., 302,416 Lynn, Jonathan, 237
+Magritte, René, 16
+Maier, David, 289
+Marx, Groucho, iii
+MATCHING, 132-133 materialization (vs. substitution), 199 “materialized view,” see snapshot MAXX, see AVGX
+MAYBE, 82
+McGoveran, David, 416,418
+Melton, Jim, 418
+method (SQL), 3
+MINUS, see difference
+MINX, see AVGX
+missing information (without nulls), 307-320 model, 12,14
+vs. implementation, 12 modus ponens, 223
+modus tollens, 223
+monadic predicate, 223
+Muir, John, 294 multidimensional database, 58 multirelvar constraint, 178 multiple assignment, 183-184 multiset, 33
+n-adic predicate, 223 n-ary relation, 5
+n-ary tuple, see tuple n-place predicate, 223 n-tuple, see tuple
+www.it-ebooks.info
+Index 423
+                424 Index
+Nagel, Ernest, 216 NAND, 397
+natural join, see join Navathe, Shamkant, 416 Newton, Isaac, 292
+NO CASCADE (referential action), 355 NO PAD (collation), 42
+nonscalar, 37
+NOR, 397
+normalized, see first normal form NOT MATCHING, 133
+NOT NULL, 77
+null, 7,74-80
+not a value, 7
+not in relational model, 7 not in relations, 77
+not in tuples, 51
+object/relational, 33
+Ohori, Atsushi, 126, 33
+Open World Assumption, The, 102,357 operator, passim
+SQL, 2 optimizer, 67 ORDER, 163
+ORDER BY, 163
+not in views, 163
+ordinal position (SQL columns), 63-64 orthogonality (language design), 30 outer join, 79,153-155
+OWA, see Open World Assumption, The,
+PAD SPACE (collation), 42 parameter, 222 parameterized type, 338 part explosion, 161
+part implosion, 161 performance
+not a model issue, 12
+vs. constraint, 188 Peirce arrow, 397
+physical representation hidden, 28
+physical storage
+not in relational model, 18
+Pietarinen, Lauri, 216 pipelining, 108
+placeholder, 222
+PNF, see prenex normal form pointer, 45
+not in relational model, 45
+SQL, 45 polymorphic type, 338
+possible representation, 170
+possibly nondeterministic, 43,280-281 positioned update, 101
+“possrep,” 170
+predicate, 222
+compound, 223
+dyadic, 223
+monadic, 223
+n-adic, 223
+n-place, 223
+relvar, see relvar predicate simple, 223
+vs. constraint, 185
+predicate calculus, see predicate logic predicate logic, 223
+“predicate transitive closure,” 364
+prenex normal form, 230
+primary key, 6
+primitive operators, 119,302
+principle, 4
+Principle of Identity of Indiscernibles, The,
+301,346
+Principle of Interchangeability, The, 178,181,
+195,300 procedural, 22
+procedure (SQL), 2
+product (cartesian), 113 project, 111
+proper subset, see subset proper superkey, see superkey proper superset, see superset
+www.it-ebooks.info
+                proposition, 97,217 compound, 218
+simple, 218 proto tuple, 228
+pseudovariable, 299 public table, 126,214
+QBE, see Query-By-Example quantification law, 249 quantifier, 224
+don’t need both, 234,249 existential, 224
+other kinds, 237-238 sequence, 225
+universal, 224
+see also EXISTS; FORALL; UNIQUE Quarles, Francis, 1
+QUEL, 215 Query-By-Example, 215 query rewrite, 68
+quota query, 270,378
+Ramakrishnan, Raghu, 418
+range variable, 228,230-231,275-277 RANK, 378
+rational number, 26
+recommendations summarized, 325-328 recursion, 159-162
+REF type, 45
+referenced relvar, 94
+referencing relvar, 94
+referential action, 96
+referential constraint, see foreign key referential integrity, 7,329
+metaconstraint, 187 refresh, see snapshot
+Rel, 418 relation, 5,19,55
+n-dimensional, 58 pictured as table, 58 vs. relvar, 329
+vs. type, 99-101
+see also relvar
+relation constant, 196 relation equality, 58 relation selector, 56,345 relation type, 56
+inference, 108-109
+name, 56 RELATION {H}, 56
+RELATION type generator, 38 relation value, see relation
+relation valued attribute, 33,152-157 relation variable, see relvar relational algebra, 8
+generic, 105 purpose, 297-298 read-only, 105
+relational assignment, 8,20,88-91 not in SQL, 20
+relational calculus, 215,227-234 relational comparisons, 58-59 relational completeness, 242,297
+SQL, 401-402
+relational database, see The Information Principle relational inclusion, 59
+relational model, passim
+formal definition, 293-298 informal definition, 5-11 objectives, 299-300
+vs. other models, 288-291
+relations, tuples, and attributes, 2 relcon, 197
+relvar, 19
+base vs. stored, 18-19 constraint, see relvar constraint predicate, see relvar predicate virtual, see view
+vs. file, 97
+vs. relation, 329
+see also relation
+relvar constraint, 178
+the (total) relvar constraint, 186
+relvar predicate, 97-98,121-122,317-320 relvar reference, 106
+RENAME, 109
+www.it-ebooks.info
+Index 425
+                426 Index
+repeating group, 32 representation vs. type, 28 restrict, 110
+restriction condition, 110 Reuter, Andreas, 180,417 Riemann, Bernhard, 292 Robson, Peter, 416 routine (SQL), 2
+row, see tuple
+row constraint, 174
+row ID, 3,196
+row type (SQL), 53
+row type constructor (SQL), 53 row value constructor (SQL), 53 row variable (SQL), 44,53
+rules of inference, 223
+relation types, see relation type Russell, Bertrand, 224,293
+RVA, see relation valued attribute
+Sagan, Carl, 292
+“same as,” see equality
+satisfies (constraint), 169
+scalar, 37
+SELECT *, 273
+SELECT - FROM - WHERE, 122
+semantics, 122
+too rigid, 134 selector, 29,36,171-172,395
+relation, 56,345 scalar, 29,36,171-172 tuple, 51
+self-referencing relvar, 102
+semantic optimization, 181 semidifference, see NOT MATCHING semijoin, see MATCHING semistructured model, 288
+SEQUEL, 409
+“set function,” 147
+set level operations, 86
+set membership, 57
+Shakespeare, William, 97
+Sheffer stroke, 397
+Silberschatz, Avi, 418 Simon, Alan R., 418
+single relvar constraint, 178 snapshot, 212
+SQL, passim
+departures from relational model, 305-306 expression evaluation, 122
+legacy, 304
+means the SQL standard, xiii
+not the same as the relational model, 2 pronunciation, xiii
+vs. Tutorial D, 106
+SQL:1992, 3
+SQL:1999, 3
+SQL:2003, 3
+SQL:2008, 3
+state constraint, 187
+statement (two meanings), 98-99 statement vs. expression, 23,340 Stoll, Robert R., 418 Stonebraker, Mike, 290,417 strong typing, 30
+subject to (constraint), 169 subkey, 354
+subquery, 277-280,407
+correlated, 254,278 lateral, 278-279 row, 42,44,277 scalar, 42,277-278 table, 277
+subset, 17 proper, 17
+substitution procedure, 198-199 Sudarshan, S., 418
+summarize, 146-152 SUMMARIZE BY, 146 SUMMARIZE PER, 146 summary, 146
+superkey, 94 proper, 94
+superset, 17 proper, 17
+symmetric difference, 132
+www.it-ebooks.info
+                table, see relation; relvar SQL, 60-61
+TABLE_DEE, 59,111,114,130,197,318-319,344 and TABLE_DUM, 59
+identity with respect to join, 114 TABLE_DUM, see TABLE_DEE table value constructor (SQL), 60 “tables and views,” 19
+tables, rows, and columns, 2
+target key, 94
+target relvar, 94
+tautology, 82
+TCLOSE, 160,401
+THE_ operator, 30,36,171-172,336 theorem (database), 100
+theory, 291
+Third Manifesto, The, 20,290,301 three-valued logic, 74,229
+truth tables, 74 TIMES, 113,114
+Todd, Stephen, 417 transaction, 180 transition constraint, 187 transitive closure, 159 “trigger,” 87
+triggered action, 87
+truth functional completeness, 82,220 truth table, 214,348
+truth vs. consistency, 185
+tuple, 5,49-50
+extracting attribute value from, 52 pictured as row, 49
+relvar, 330
+tuple calculus, 230 tuple constraint, 174 tuple equality, 52,93 TUPLE FROM, 38 tuple selector, 51 tuple type, 50
+name, 50-51 TUPLE {H}, 50
+TUPLE type generator, 38
+tuple value, see tuple tuple variable, 38
+not in relational model, 174
+Tutorial D, passim
+used in The Third Manifesto, 20 vs. SQL, 106
+two-valued logic, 74,229 truth tables, 218
+type, 34
+vs. physical representation, 28
+vs. possible representation, see possible
+representation type constraint, 169-174
+checked during selector invocation, 172
+not in SQL, 173-174 type constructor, 43,338
+type error, 29 type generator, 38
+RELATION, 38
+TUPLE, 38 type template, 338
+“typed table,” 45
+Uhren, Thomas, xv UNGROUP, 152 union, 116
+disjoint, see D_UNION exclusive, 131-132 n-adic, 118
+SQL 27 varieties, 296 with coercion, 42
+UNIQUE (quantifier), 238,263 UNIQUE (SQL), 176,263-264 uniqueness (key), 92
+universal quantifier, 224 universal relation, 374 UNKNOWN, 74,229
+UPDA TE
+expansion, 158
+via cursor (SQL), 87 update vs. UPDA TE, 8
+“updating attributes,” 87 “updating tuples,” 87
+www.it-ebooks.info
+Index 427
+                428 Index
+updating views, see view
+value, 21
+can’t be updated, 21
+vs. variable, 21 value unknown, 7,74
+VALUES, 60 variable, 21
+can be updated, 21
+vs. value, 21 view, 194
+constraint, 199-203 “materialized,” see snapshot predicate, 197
+retrieval, 198-199
+two different purposes, 211 updating, 203-211
+view defining expression, 194 virtual relvar, see view Voorhis, Dave, 418
+Wegner, Peter, 25 Weikum, Gerhard, 409 “what if,” 157-158 “where used,” 161 WITH, 119,257
+SQL, 120 Wittgenstein, Ludwig, 16,215 Wong, E., 417
+Wright, Andrew, 336
+XML, 21,296,335,377 XPath, 35
+XQuery, 35 XUNION, see union
+Zdonik, Stanley, 289 Zloof, Moshé, 418
+www.it-ebooks.info

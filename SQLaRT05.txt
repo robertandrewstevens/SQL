@@ -1,0 +1,376 @@
+
+                Chapter 5
+Base Relvars, Base Tables
+Said a young mathematician named Gene “I always say what I mean─
+Or mean what I say─
+It’s the same, anyway─
+Or─at least─well, you know what I mean.”
+By now you should be very familiar with the idea that relation values (relations for short) vs. relation variables (relvars for short) is one of the great logical differences. Now it’s time to take a closer look at that difference; more specifically, it’s time to take a closer look at issues that are relevant to relvars in particular, as opposed to relations. Caveat: Unfortunately, you might find the SQL portions of the discussion that follows a little confusing, because SQL doesn’t clearly distinguish between the two concepts─as you know, it uses the same term table to mean sometimes a table value, sometimes a table variable. For example, the keyword TABLE in CREATE TABLE clearly refers to a table variable; but when we say, e.g., that table S has five rows, the phrase “table S” clearly refers to a table value (namely, the current value of the table variable called S). Be on your guard for potential confusion in this area.
+Let me also remind you of a few further points:
+ Firstofall,arelvarisavariablewhosepermittedvaluesarerelations,andit’sspecificallyrelvars,not relations, that are the target for INSERT, DELETE, and UPDATE operations (more generally, for relational assignment operations─recall that INSERT, DELETE, and UPDATE are all just shorthand for certain relational assignments).
+ Next,ifRisarelvarandrisarelationtobeassignedtoR,thenRandrmustbeofthesame(relation)type.
+ Last,thetermsheading,body,attribute,tuple,cardinality,anddegree,formallydefinedinChapter3for
+relations, can all be interpreted in the obvious way to apply to relvars as well (see Exercise 1.5 in Chapter 1).
+The present chapter deals with base relvars (base tables, in SQL). In fact, it won’t hurt too much if you assume throughout this book until further notice that all relvars are base relvars and all tables are base tables, barring explicit statements to the contrary; Chapter 9 discusses the special considerations, such as they are, that apply to virtual relvars or views. The topics I’ll be covering in the present chapter form something of a mixed bag, but generally speaking they fall into the following broad categories:
+ Updating(relationalassignment)  Candidateandforeignkeys
+ Predicates
+www.it-ebooks.info
+─Anon.: Where Bugs Go
+                86 Chapter 5 / Base Relvars, Base Tables
+As a basis for examples, I’ll use the following definitions for the suppliers-and-parts database (Tutorial D on the left and SQL on the right, a pattern I’ll follow in most of my examples in this chapter and throughout the rest of the book):
+VAR S BASE
+  { SNO
+    SNAME
+    STATUS
+    CITY
+RELATION
+CHAR ,
+CHAR ,
+INTEGER ,
+CHAR }
+│ CREATE TABLE S
+│ ( SNO VARCHAR(5) │ SNAME VARCHAR(25) │ STATUS INTEGER
+│ CITY VARCHAR(20) │ UNIQUE ( SNO ) ) ;
+│ CREATE TABLE P
+│ ( PNO VARCHAR(6) │ PNAME VARCHAR(25) │ COLOR CHAR(10)
+│ WEIGHT NUMERIC(5,1) │ CITY VARCHAR(20) │ UNIQUE(PNO));
+│ CREATE TABLE SP
+│ ( SNO VARCHAR(5)
+│ PNO VARCHAR(6)
+│ QTY INTEGER
+│ UNIQUE(SNO,PNO),
+│ FOREIGN KEY ( SNO )
+│ REFERENCES S ( SNO ) , │ FOREIGN KEY ( PNO )
+│ REFERENCES P ( PNO ) ) ;
+KEY { SNO } ;
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+VAR P BASE
+  { PNO
+    PNAME
+    COLOR
+    WEIGHT
+    CITY
+RELATION
+CHAR ,
+CHAR ,
+CHAR ,
+RATIONAL ,
+CHAR }
+KEY { PNO } ;
+VAR SP BASE RELATION { SNO CHAR , PNO CHAR ,
+QTY INTEGER } KEY { SNO , PNO } FOREIGN KEY { SNO }
+REFERENCES S FOREIGN KEY { PNO }
+REFERENCES P ;
+UPDATING IS SET LEVEL
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+The first point I want to stress is that, regardless of what syntax we use to express it, relational assignment is a set level operation. (In fact, all operations in the relational model are set level, meaning they take entire relations or relvars as operands, not just individual tuples.) Thus, INSERT inserts a set of tuples into the target relvar; DELETE deletes a set of tuples from the target relvar; and UPDATE updates a set of tuples in the target relvar. Now, it’s true that we often talk in terms of (for example) updating some individual tuple as such, but you need to understand that:
+a. Such talk really means the set of tuples we’re updating just happens to have cardinality one.
+b. What’s more, updating a set of tuples of cardinality one sometimes isn’t possible anyway.
+For example, suppose relvar S is subject to the integrity constraint (see Chapter 8) that suppliers S1 and S4
+are always in the same city. Then any “single tuple UPDATE” that tries to change the city for just one of those two suppliers will necessarily fail. Instead, we must change them both at the same time, perhaps like this:
+UPDATE S
+WHERE SNO = ‘S1’
+ORSNO=‘S4’:
+{ CITY := ‘New York’ } ;
+│ UPDATE
+│ SET
+│ WHERE
+│ OR
+S
+CITY = ‘New York’ SNO=‘S1’ SNO=‘S4’;
+What’s being updated in this example is a set of two tuples.
+www.it-ebooks.info
+                One consequence of the foregoing is that there’s nothing in the relational model corresponding to SQL’s “positioned updates” (i.e., UPDATE or DELETE “WHERE CURRENT OF cursor”), because those operations are tuple level (or row level, rather), not set level, by definition. They do happen to work, most of the time, in today’s SQL products, but that’s because those products aren’t very good at supporting integrity constraints. If they were to improve in that regard, those “positioned updates” might not work any more; that is, applications that succeed today might fail tomorrow─not a very desirable state of affairs, it seems to me. Recommendation: Don’t do SQL updates through a cursor, unless you can be absolutely certain that problems like the one in the example will never arise. (I say this in full knowledge of the fact that many SQL updates are done through a cursor at the time of writing.) Note: For another argument against updating through cursors, see Exercise 4.5 in Chapter 4.
+Now I need to ’fess up to something. The fact is, to talk as I’ve been doing of “updating a tuple”─or set of tuples, rather─is very imprecise (not to say sloppy) anyway. Recall the definitions of value and variable from Chapter 1. If V is subject to update, then V must be a variable, by definition─but tuples (like relations) are values and can’t be updated, again by definition. What we really mean when we talk of updating tuple t1 to t2 (say), within some relvar R, is that we’re replacing tuple t1 in R by another tuple t2. And that kind of talk is still sloppy!─what we really mean is that we’re replacing the relation r1 that’s the original value of R by another relation r2. And what exactly is relation r2 here? Well, let s1 and s2 be relations containing just tuple t1 and tuple t2, respectively; then r2 is (r1 MINUS s1) UNION s2. In other words, “updating tuple t1 to t2 in relvar R” can be thought of as, first, deleting t1 and then inserting t2─if despite everything I’ve been saying you’ll let me talk in terms of deleting and inserting individual tuples in this loose fashion.
+In the same kind of way, it doesn’t really make sense to talk in terms of “updating attribute A within tuple t”─or within relation r, or even within relvar R. Of course, we do it anyway, because it’s convenient (it saves a lot of circumlocution); I mean, we say things like “update the city for supplier S1 from London to New York”; but it’s like that business of user friendly terminology I discussed in Chapter 1─it’s OK to talk this way only if we all understand that such talk is only an approximation to the truth, and indeed that it tends to obscure the essence of what’s really going on.
+Triggered Actions
+The fact that updating is set level implies among other things that “referential triggered actions” such as ON DELETE CASCADE (see the section “More on Foreign Keys” later in this chapter)─more generally, triggered actions of all kinds— mustn’t be done until all of the explicitly requested updating has been done. In other words, a set level update must not be treated as a sequence of individual tuple level updates (or row level updates, in SQL). SQL, however, unfortunately does treat set level updates as a sequence of row level ones, at least in its support for “row level triggers” if nowhere else. Recommendation: Try to avoid operations that are inherently row level. Of course, this recommendation doesn’t prohibit set level operations in which the set just happens to be of cardinality one, as in the following example:
+UPDATE S WHERE SNO = ‘S1’ : │ { CITY := ‘New York’ } ; │
+Constraint Checking
+UPDATE S
+Base Relvars, Base Tables / Chapter 5 87
+SET CITY = ‘New York’ │ WHERE SNO = ‘S1’ ;
+The fact that updating is set level has another implication too: namely, that integrity constraint checking also mustn’t be done until all of the updating (including triggered actions, if any) has been done. (The constraint discussed earlier, involving a change to the city for suppliers S1 and S4, illustrates this point very clearly. See Chapter 8 for further discussion.) Again, therefore, a set level update mustn’t be treated as a sequence of individual tuple level updates (or row level updates, in SQL). Now, I believe the SQL standard does conform to this requirement─or
+www.it-ebooks.info
+                88 Chapter 5 / Base Relvars, Base Tables
+maybe not; its row level triggers might be a little suspect in this regard (see the subsection immediately preceding this one). In any case, even if the standard does conform, that’s not to say all commercial products do;1 thus, you should still be on your lookout for violations in this connection.
+A Final Remark
+The net of the discussions in this section overall is that update operations─in fact, all operations─in the relational model are always semantically atomic; that is, either they execute in their entirety, or they have no effect at all (except possibly for returning a status code or equivalent). Thus, although we do sometimes describe some set level operation, informally, as if it were shorthand for a sequence of tuple level operations, it’s important to understand that such descriptions are (as I said before) strictly incorrect and only approximations to the truth.
+RELATIONAL ASSIGNMENT
+Relational assignment in general works by assigning a relation value, denoted by some relational expression, to a relation variable, denoted by a relvar reference (where a relvar reference is basically just the pertinent relvar name). Here’s a Tutorial D example:
+S := S WHERE NOT ( CITY = ‘Athens’ ) ;
+Now, it’s easy to see that this particular assignment is logically equivalent to the following DELETE statement:
+DELETE S WHERE CITY = ‘Athens’ ;
+More generally, the Tutorial D DELETE statement DELETE R WHERE bx ;
+(where R is a relvar name and bx is a boolean expression) is shorthand for, and hence logically equivalent to, the following relational assignment:
+R := R WHERE NOT ( bx ) ;
+Alternatively, we might say it’s shorthand for this one (either way, it comes to the same thing):
+R := R MINUS ( R WHERE bx ) ;
+Turning to INSERT, the Tutorial D INSERT statement
+INSERT R rx ;
+(where R is again a relvar name and rx is a relational expression─typically but not necessarily a relation selector
+invocation) is shorthand for:
+1 There’s at least one that doesn’t (at least, not 100 percent), because it does what it calls inflight checking. See Chapter 8 for further discussion.
+ www.it-ebooks.info
+                R := R UNION rx ;
+For example, the INSERT statement─
+INSERT SP RELATION { TUPLE { SNO ‘S5’ , PNO ‘P6’ , QTY 700 } } ;
+─effectively inserts a single tuple into the shipments relvar SP.
+Finally, the Tutorial D UPDATE statement also corresponds to a certain relational assignment. However,
+the details are a little more complicated in this case than they are for INSERT and DELETE, and I’ll defer them to Chapter 7.
+D_INSERT and I_DELETE
+I’ve said the INSERT statement
+INSERT R rx ; is shorthand for:
+R := R UNION rx ;
+Observe now, however, that this definition implies that an attempt to insert “a tuple that already exists” (i.e., an INSERT in which the relations denoted by R and rx aren’t disjoint) will succeed. (It won’t insert a duplicate tuple, of course─it just won’t have any effect.) For that reason, Tutorial D additionally supports an operator called D_INSERT (“disjoint INSERT”), with syntax as follows:
+D_INSERT R rx ; This statement is shorthand for:
+R := R D_UNION rx ;
+D_UNION here stands for disjoint union. Disjoint union is just like regular union, except that its operand relations are required to have no tuples in common (see Chapter 6). It follows that an attempt to use D_INSERT to insert a tuple that already exists will fail.
+What about DELETE? Well, observe first that the syntax presented above─
+DELETE R WHERE bx ;
+─is actually just a special case (though it’s far and away the commonest case in practice). The more general form
+parallels the syntax of INSERT:
+DELETE R rx ;
+www.it-ebooks.info
+Base Relvars, Base Tables / Chapter 5 89
+                90 Chapter 5 / Base Relvars, Base Tables
+Here R is a relvar name and rx is a relational expression (possibly but not necessarily a relation selector invocation).2
+This more general form of DELETE is defined to be shorthand for:
+R := R MINUS rx ;
+For example, the DELETE statement─
+DELETE SP RELATION { TUPLE { SNO ‘S1’ , PNO ‘P1’ , QTY 300 } } ;
+─effectively deletes a single tuple from the shipments relvar SP.
+It should be clear, however, that the foregoing definition implies that an attempt to delete “a tuple that
+doesn’t exist” (i.e., a DELETE in which the relation denoted by rx isn’t wholly included in the relation denoted by R) will succeed. For that reason, Tutorial D additionally supports an operator called I_DELETE (“included DELETE”), with syntax as follows:
+I_DELETE R rx ; This statement is shorthand for:
+R := R I_MINUS rx ;
+I_MINUS here stands for included minus; the expression r1 I_MINUS r2 is defined to be the same as r1 MINUS r2 (see Chapter 6), except that every tuple appearing in r2 must also appear in r1─in other words, r2 must be included in r1. It follows that an attempt to use I_DELETE to delete a tuple that doesn’t exist will fail.
+Note: Now that I’ve introduced D_INSERT and I_DELETE, please understand that discussions elsewhere in this book that refer to INSERT and DELETE operations in Tutorial D should be taken for simplicity as applying to D_INSERT and I_DELETE operations as well, where the sense demands it.
+Table Assignment in SQL
+SQL has nothing directly comparable to Tutorial D’s D_INSERT and I_DELETE. Apart from this difference, however, SQL’s support for INSERT, DELETE, and UPDATE operations resembles that of Tutorial D fairly closely and there’s little more to be said, except for a few points regarding INSERT specifically:
+ First, the source for an SQL INSERT operation is specified by means of a table expression (typically but not necessarily a VALUES expression─see Chapter 3). Contrary to popular opinion, therefore, INSERT in SQL really does insert a table, not a row, though that table (the source table) might and often will contain just one row, or even no rows at all.
+ Second,INSERTinSQLisdefinedintermsofneitherUNIONnorD_UNION,butratherintermsofSQL’s “UNION ALL” operator (see Chapter 6). As a consequence, an attempt to insert a row that already exists will fail if the target table is subject to a key constraint but will succeed (and will insert a duplicate row) otherwise.
+2 The common special case “DELETE R WHERE bx;” can be thought of as shorthand for “DELETE R (R WHERE bx);”.
+ www.it-ebooks.info
+                 Third,INSERTinSQLsupportsanoptionaccordingtowhichthetargettablespecificationcanbefollowed by a parenthesized column name commalist, identifying the columns into which values are to be inserted; the ith target column corresponds to the ith column of the source table. Omitting this option is equivalent to specifying all of the columns of the target table, in the left to right order in which they appear within that table. Recommendation: Never omit this option. For example, the INSERT statement
+INSERT INTO SP ( PNO , SNO , QTY ) VALUES ( ‘P6’ , ‘S5’ , 700 ) ;
+is preferable to this one─
+INSERT INTO SP VALUES ( ‘S5’ , ‘P6’ , 700 ) ;
+─because this second formulation relies on the left to right ordering of columns in table SP and the first one doesn’t.3 Here’s another example (incidentally, this one makes it clear that INSERT really does insert a table and not a row):
+INSERT INTO SP ( SNO , PNO , QTY ) VALUES ( ‘S3’ , ‘P1’ , 500 ) , ( ‘S2’ , ‘P5’ , 400 ) ;
+As for relational assignment: Unfortunately SQL doesn’t have a direct counterpart to this operator. The closest it can get to the generic assignment
+R := rx ;
+is the following sequence of statements:
+DELETE FROM T ;
+INSERT INTO T ( ... ) tx ;
+(T and tx here are the SQL analogs of R and rx, respectively.) Note in particular that (as noted in the answer to Exercise 1.16 in Appendix F) this sequence of statements could fail where its relational counterpart, the relational assignment, would succeed─for example, if table T is subject to the constraint that it mustn’t be empty.
+The Assignment Principle
+I’d like to close this section by drawing your attention to a principle that, though it’s really quite simple, has far reaching consequences: The Assignment Principle, which states that after assignment of value v to variable V, the comparison v = V must evaluate to TRUE. Note: The Assignment Principle is a fundamental principle, not just for the relational model, but for computing in general. It applies to relational assignment in particular, of course, but (to repeat) it’s actually relevant to assignments of all kinds. In fact, as I’m sure you realize, it’s more or less the definition of the assignment operation. I’ll have more to say about it in Chapter 8, when I discuss what’s called multiple assignment.
+3 Even though this tactic─i.e., specifying the option─does fix the problem at hand, I’d like to inject here a comment that Hugh Darwen once made to me (in a private communication): “The syntax of a language should in all places be in the spirit of that language. Then it’s easier to learn, because people get to know what to expect. A proper relational language attaches no significance to column ordering. Not anywhere.”
+Base Relvars, Base Tables / Chapter 5 91
+ www.it-ebooks.info
+                92 Chapter 5 / Base Relvars, Base Tables MORE ON CANDIDATE KEYS
+I explained the basic idea of candidate keys in Chapter 1, but now I want to make the concept more precise. Here first is a definition:
+Definition: Let K be a subset of the heading of relvar R. Then K is a candidate key (or just key for short) for R if and only if it possesses both of the following properties:
+1. Uniqueness: No valid value for R contains two distinct tuples with the same value for K.
+2. Irreducibility: No proper subset of K has the uniqueness property.
+If K consists of n attributes, then n is the degree of K.
+Now, the uniqueness property is self-explanatory, but I need to say a little more about the irreducibility property. Consider relvar S and the set of attributes─let’s call it SC─{SNO,CITY}, which is certainly a subset of the heading of S that has the uniqueness property (no relation that’s a valid value for relvar S ever has two distinct tuples with the same SC value). But it doesn’t have the irreducibility property, because we could discard the CITY attribute and what’s left, the singleton set {SNO}, would still have the uniqueness property. So we don’t regard SC as a key, because it’s “too big.” By contrast, {SNO} is irreducible, and it’s a key.
+Why do we want keys to be irreducible? One important reason is that if we were to specify a “key” that wasn’t irreducible, the DBMS wouldn’t be able to enforce the proper uniqueness constraint. For example, suppose we told the DBMS (lying!) that SC was a key for relvar S. Then the DBMS couldn’t enforce the constraint that supplier numbers are “globally” unique; instead, it could enforce only the weaker constraint that supplier numbers are “locally” unique, in the sense that they’re unique within the pertinent city. So this is one reason─not the only one─why we require keys not to contain any attributes that aren’t needed for unique identification purposes. Recommendation: In SQL, never lie to the system by defining as a key some column combination that you know isn’t irreducible. (By the way, you might think this recommendation rather obvious, but I’ve certainly seen it violated in practice; in fact, I’ve even seen such a violation explicitly recommended, by writers who really ought to know better.)
+Now, all of the relvars we’ve seen so far have had just one key. Here by contrast are several self-explanatory examples (in Tutorial D only, for simplicity) of relvars with two or more. Note the overlapping nature of the keys in the second and third examples. Note: I assume the availability of certain user defined types in these definitions.
+VAR TAX_BRACKET BASE RELATION
+{ LOW MONEY , HIGH MONEY , PERCENTAGE INTEGER } KEY { LOW }
+KEY { HIGH }
+KEY { PERCENTAGE } ;
+VAR ROSTER BASE RELATION
+{ DAY DAY_OF_WEEK , TIME TIME_OF_DAY , GATE GATE , PILOT NAME } KEY { DAY , TIME , GATE }
+KEY { DAY , TIME , PILOT } ;
+www.it-ebooks.info
+                VAR MARRIAGE BASE RELATION
+{ SPOUSE_A NAME , SPOUSE_B NAME , DATE_OF_MARRIAGE DATE }
+/* assume no polygamy and no persons marrying */
+/* each other more than once ... */
+KEY { SPOUSE_A , DATE_OF_MARRIAGE } KEY { DATE_OF_MARRIAGE , SPOUSE_B } KEY { SPOUSE_B , SPOUSE_A } ;
+By the way, you might have noticed a tiny sleight of hand here. A key is supposed to be a set of attributes, and an attribute is supposed to be an attribute-name/type-name pair; yet the Tutorial D KEY syntax specifies just attribute names, not attribute-name/type-name pairs. The syntax works, however, because attribute names are unique within the pertinent heading, and the corresponding type names are thus specified implicitly. In fact, analogous remarks apply at various points in the Tutorial D language, and I won’t bother to repeat them every time, letting this one paragraph do duty for all.
+I’ll close this section with a few miscellaneous points. First, note that the key concept applies to relvars, not relations. Why? Because to say something is a key is to say a certain integrity constraint is in effect─a certain uniqueness constraint, to be specific─and integrity constraints apply to variables, not values.4 (By definition, integrity constraints constrain updates, and updates apply to variables, not values. See Chapter 8 for further discussion.)
+Second, in the case of base relvars in particular, it’s usual, as noted in Chapter 1, to single out one key as the primary key (and any other keys for the relvar in question are then sometimes said to be alternate keys). But whether some key is chosen as primary, and if so which one, are essentially psychological issues, beyond the purview of the relational model as such. As a matter of good practice, most base relvars probably should have a primary key─but, to repeat, this rule, if it is a rule, really isn’t a relational issue as such. Certainly it isn’t inviolable.
+Third, if R is a relvar, then R certainly does have, and in fact must have, at least one key. The reason is that every possible value of R is a relation and therefore contains no duplicate tuples, by definition; at the very least, therefore, the combination of all of the attributes of R─i.e., the entire heading─certainly has the uniqueness property. Thus, either that combination also has the irreducibility property, or there’s some proper subset of that combination that does. Either way, there’s certainly something that’s both unique and irreducible. Note: These remarks don’t necessarily apply to SQL tables─SQL tables allow duplicate rows and so might have no key at all. Strong recommendation: In SQL, for base tables at any rate, use UNIQUE and/or PRIMARY KEY specifications to ensure that every such table does have at least one key.
+Fourth, note that key values are tuples (rows, in SQL), not scalars. In the case of relvar S, for example, with its sole key {SNO}, the value of that key for some specific tuple─say that for supplier S1─is:
+TUPLE { SNO ‘S1’ }
+(a subtuple of the pertinent tuple─recall that every subset of a tuple is a tuple in turn). Of course, in practice we would usually say, informally, that the key value in this example is just S1─or ‘S1’, rather─but it really isn’t. And so now it should be clear just how keys, like so much else in the relational model, rely crucially on the concept of tuple equality. To spell the point out: In order to enforce some key uniqueness constraint, we need to be able to tell whether two key values are equal, and that’s precisely a matter of testing two tuples for equality─even when, as in the case of relvar S, the tuples in question are of degree one and “look like” simple scalar values.
+4 On the other hand, it does make sense to say of some relation that it either does or does not satisfy some key constraint. We might even go further and say, a trifle sloppily, that a relation that satisfies a given key constraint actually “has” the key in question─though such a manner of speaking is likely to cause confusion, and I wouldn’t recommend it.
+Base Relvars, Base Tables / Chapter 5 93
+ www.it-ebooks.info
+                94 Chapter 5 / Base Relvars, Base Tables
+Fifth, let SK be a subset of the heading of relvar R that possesses the uniqueness property but not necessarily the irreducibility property. Then SK is a superkey for R (and a superkey that isn’t a key is called a proper superkey). For example, {SNO} and {SNO,CITY} are both superkeys─and the latter is a proper superkey─for relvar S. Note that the heading of any relvar R is always a superkey for R, by definition.
+My final point has to do with the notion of functional dependency.5 I don’t want to get into a lot of detail regarding that concept here─I’ll come back to it in Chapter 8─but you’re probably familiar with it anyway. All I want to do here is call your attention to the following. Let SK be a superkey (possibly a key) for relvar R, and let X be any subset of the heading of R. Then the functional dependency (FD)
+SK Æ X
+holds in R, necessarily. To elaborate briefly: In general, the functional dependency SK Æ X means that whenever two tuples of R have the same value for SK, they also have the same value for X. But if two tuples have the same value for SK, where SK is a superkey, then by definition they must be the very same tuple!─and so they must have the same value for X. In other words, loosely: We always have functional dependency arrows “out of superkeys” (and therefore out of keys in particular) to everything else in the relvar.
+MORE ON FOREIGN KEYS
+I remind you from Chapter 1 that, loosely speaking, a foreign key is a set of attributes in one relvar whose values are supposed to correspond to values of some candidate key─the target key─in some other relvar (or possibly in the same relvar). In the suppliers-and-parts database, for example, {SNO} and {PNO} are foreign keys in SP whose values are required to match, respectively, values of the candidate key {SNO} in S and values of the candidate key {PNO} in P. (By required to match here, I mean that if, e.g., relvar SP contains a tuple with SNO value S1, then relvar S must also contain a tuple with SNO value S1─for otherwise SP would show some shipment as being supplied by a nonexistent supplier, and the database wouldn’t be “a faithful model of reality.”)
+Here now is a more precise definition:
+Definition: Let R1 and R2 be relvars, not necessarily distinct, and let K be a key for R1. Let FK be a subset of the heading of R2 such that there exists a possibly empty sequence of attribute renamings on R1 that maps K into K′ (say), where K′ and FK contain exactly the same attributes (i.e., are of the same type). Further, let R2 and R1 be subject to the constraint that, at all times, every tuple t2 in R2 has an FK value that’s the K′ value for some (necessarily unique) tuple t1 in R1 at the time in question. Then FK is a foreign key (with the same degree as K); K (not K′) is the corresponding target key; the associated constraint is a referential constraint; and R2 and R1 are the referencing relvar and the corresponding referenced relvar (or target relvar), respectively, for that constraint.
+As an aside, I note that the relational model as originally formulated required foreign keys to correspond not just to some key, but very specifically to the primary key, of the referenced relvar. Since we don’t insist on primary keys, however, we certainly can’t insist that foreign keys correspond to primary keys specifically, and we don’t (and SQL agrees with this position).
+In the suppliers-and-parts database, to repeat, {SNO} and {PNO} are foreign keys in SP, referencing the sole candidate key─which we can therefore regard, harmlessly, as the primary key, if we want to─in S and P, respectively. Here now is a more complicated example:
+5 Also known as functional dependence. The terms dependence and dependency are used interchangeably in the literature (and in this book), in contexts such as the one under discussion.
+ www.it-ebooks.info
+                VAR EMP BASE RELATION { ENO CHAR ,
+    MNO CHAR ,
+     ..... }
+KEY { ENO }
+FOREIGN KEY { MNO }
+REFERENCES EMP { ENO } RENAME{ENOASMNO}; │
+│
+As you can see, there’s a significant difference between the Tutorial D and SQL FOREIGN KEY specifications in this example. I’ll explain the Tutorial D one first. Attribute MNO denotes the employee number of the manager of the employee identified by ENO; for example, the EMP tuple for employee E3 might include an MNO value of E2, which constitutes a reference to the EMP tuple for employee E2. So the referencing relvar (R2 in the definition) and the referenced relvar (R1 in the definition) are one and the same in this example. More to the point, foreign key values, like candidate key values, are tuples; so we have to do some renaming in the foreign key specification, in order for the tuple equality comparison to be at least syntactically valid. (What tuple equality comparison? Answer: The one that’s implicit in the process of checking the foreign key constraint─recall that tuples must certainly be of the same type if they’re to be tested for equality, and “same type” means they must have the same attributes and thus certainly the same attribute names.) That’s why, in the Tutorial D specification, the target is specified not just as EMP but rather as EMP{ENO} RENAME {ENO AS MNO}. Note: The RENAME operator is described in detail in the next chapter; for now, I’ll just assume it’s self-explanatory.
+Turning now to SQL: In SQL the key K in the referenced table T1 and the corresponding foreign key FK in the referencing table T2 are sequences, not sets, of columns. (In other words, key and foreign key values in SQL are rows, not tuples, and left to right column ordering is significant once again.) Let those columns, in sequence as defined within the FOREIGN KEY specification in the definition of table T2, be B1, B2, ..., Bn (for FK) and A1, A2, ..., An (for K), thus:6
+FOREIGN KEY ( B1 , B2 , ..., Bn )
+REFERENCES T1 ( A1 , A2 , ..., An )
+Then columns Bi and Ai (1 £ i £ n) must be of the same type─no coercions here─but they don’t have to have the same name. That’s why the SQL specification
+FOREIGN KEY ( MNO ) REFERENCES EMP ( ENO )
+is sufficient as it stands, without any need for renaming.
+Recommendation: Despite this last point, ensure that foreign key columns do have the same name in SQL
+as the corresponding key columns wherever possible (see the discussion of column naming in Chapter 3). However, there are certain situations─two of them, to be precise─in which this recommendation can’t be followed 100 percent:
+ WhensometableThasaforeignkeycorrespondingtosomekeyofTitself(asintheEMPexample)
+6 Columns A1, A2, ..., An must be the columns named in some UNIQUE or PRIMARY KEY specification in the definition of table T1, but they don’t have to appear in that UNIQUE or PRIMARY KEY specification in the same sequence as they do in the FOREIGN KEY specification for table T2. Moreover, they, and the parentheses surrounding them, can be omitted entirely from this latter specification─but if so, then they must appear in a PRIMARY KEY specification, not a UNIQUE specification, for table T1, and they must appear in that specification in the appropriate sequence.
+Base Relvars, Base Tables / Chapter 5 95
+│ CREATE TABLE EMP
+│ ( ENO VARCHAR(6) NOT NULL , │ MNO VARCHAR(6) NOT NULL , │ ..... ,
+│ UNIQUE ( ENO ) ,
+│ FOREIGN KEY ( MNO )
+REFERENCES EMP ( ENO ) ) ;
+ www.it-ebooks.info
+                96 Chapter 5 / Base Relvars, Base Tables
+ WhensometableT2hastwodistinctforeignkeysbothcorrespondingtothesamekeyKintableT1
+Even here, however, you should at least try to follow the recommendation in spirit, as it were. For example, you might want to ensure in the second case that one of the foreign keys has the same column names as K, even though the other one doesn’t (and can’t). See Exercise 5.16 at the end of the chapter, and the answer to that exercise in Appendix F, for further discussion.
+Referential Actions
+As you probably know, SQL supports not just foreign keys as such but also certain associated referential actions, such as CASCADE. Such actions can be specified as part of either an ON DELETE clause or an ON UPDATE clause. For example, the CREATE TABLE statement for shipments might include the following:
+FOREIGN KEY ( SNO ) REFERENCES S ( SNO ) ON DELETE CASCADE
+Given this specification, an attempt to delete a specific supplier will cascade to delete all shipments for that supplier as well.
+Now, referential actions might well be useful in practice, but they aren’t part of the relational model as such. But that’s not necessarily a problem! The relational model is the foundation of the database field, but it’s only the foundation. In other words, there’s no reason why additional features shouldn’t be built on top of, or alongside, that foundation─just so long as those additions don’t violate any of the prescriptions of the model (and are in the spirit of the model and can be shown to be useful, I suppose I should add). To elaborate:
+ Type theory: Type theory provides the most obvious example of such an “additional feature.” We saw in Chapter 2 that “types are orthogonal to tables,” but we also saw that full and proper type support in relational systems─including support for user defined types, and perhaps even support for type inheritance─is highly desirable, to say the least. (In my own opinion, in fact, a system without such support scarcely deserves the label “relational.” See Appendix A for further discussion.)
+ Triggered procedures: Strictly speaking, a triggered procedure is an action (the triggered action) to be performed if a specified event (the triggering event) occurs─but the term is often used loosely to include the triggering event as well. Referential triggered actions such as ON DELETE CASCADE are just a pragmatically important example of this more general construct, in which the action is DELETE (actually the “procedure” in this particular case is specified declaratively), and the triggering event is ON DELETE.7 No triggered procedures are prescribed by the relational model, but they aren’t necessarily proscribed either─though they would be if they led to a violation of either the model’s set level nature or The Assignment Principle, both of which they’re likely to do in practice. Note: The combination of a triggering event and the corresponding triggered action is often known just as a trigger. Recommendation: As discussed earlier, avoid use of SQL’s row level triggers, and don’t use triggers of any kind in such a way as to violate The Assignment Principle.
+ Recovery and concurrency: By way of a third example, the relational model has almost nothing to say about recovery and concurrency controls, but this fact obviously doesn’t mean that relational systems shouldn’t provide such controls. (Actually it could be argued that the relational model does say something about such
+7 In case you’re wondering about the SQL terminology here, ON DELETE CASCADE is a “referential triggered action” and CASCADE by itself is a “referential action.”
+ www.it-ebooks.info
+                Base Relvars, Base Tables / Chapter 5 97 matters implicitly, because it does rely on the DBMS to implement updates properly and not to lose data─but
+it doesn’t prescribe anything specific.)
+One final remark to close this section: I’ve discussed foreign keys because they’re of considerable pragmatic importance, also because they’re part of the model as originally defined. But I’d like to stress the point that they’re not truly fundamental─they’re really just shorthand for certain integrity constraints that are commonly required in practice, as we’ll see in Chapter 8. (In fact, much the same could be said for candidate keys as well, but in that case the practical benefits of providing a shorthand are overwhelming.)
+RELVARS AND PREDICATES
+Now we come to what in many ways is the most important part of this chapter. The essence of it is this: There’s another way to think about relvars. I mean, most people think of relvars as if they were just files in the traditional computing sense─rather abstract files, perhaps (disciplined might be a better word than abstract), but files nonetheless. But there’s a different way to look at them, a way that I believe can lead to a much deeper understanding of what’s really going on. It goes like this.
+Consider the suppliers relvar S. Like all relvars, that relvar is supposed to represent some portion of the real world. In fact, I can be more precise: The heading of that relvar represents a certain predicate, meaning it’s a kind of generic statement about some portion of the real world (it’s generic because it’s parameterized, as I’ll explain in a moment). The predicate in question looks like this:
+Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY.
+This predicate is the intended interpretation─in other words, the meaning, also called the intension (note the spelling)─for relvar S.
+In general, you can think of a predicate as a truth valued function. Like all functions, it has a set of parameters; it returns a result when it’s invoked; and (because it’s truth valued) that result is either TRUE or FALSE. In the case of the predicate just shown, for example, the parameters are SNO, SNAME, STATUS, and CITY (corresponding of course to the attributes of the relvar), and they stand for values of the applicable types (CHAR, CHAR, INTEGER, and CHAR, respectively). When we invoke the function─when we instantiate the predicate, as the logicians say─we substitute arguments for the parameters. Suppose we substitute the arguments S1, Smith, 20, and London, respectively. Then we obtain the following statement:
+Supplier S1 is under contract, is named Smith, has status 20, and is located in city London.
+This statement is in fact a proposition, which in logic is something that’s unequivocally either true or false.
+Here are a couple of examples:
+1. Edward Abbey wrote The Monkey Wrench Gang.
+2. William Shakespeare wrote The Monkey Wrench Gang.
+The first of these is true and the second false. Don’t fall into the common trap of thinking that propositions
+must always be true! However, the ones I’m talking about at the moment are supposed to be true ones specifically, as I now explain:
+www.it-ebooks.info
+                98 Chapter 5 / Base Relvars, Base Tables
+ Firstofall,everyrelvarhasanassociatedpredicate,calledtherelvarpredicatefortherelvarinquestion.
+(The predicate shown above is thus the relvar predicate for relvar S.)
+ Let relvar R have predicate P. Then every tuple t appearing in R at some given time can be regarded as representing a certain proposition p, derived by invoking (or instantiating) P at that time with the attribute values from t as arguments.
+ And(veryimportant!)weassumebyconventionthateachpropositionpthat’sobtainedinthismanner evaluates to TRUE.
+Given our usual sample value for relvar S, for example, we assume the following propositions all evaluate to
+TRUE at this time:
+Supplier S1 is under contract, is named Smith, has status 20, and is located in city London. Supplier S2 is under contract, is named Jones, has status 10, and is located in city Paris. Supplier S3 is under contract, is named Blake, has status 30, and is located in city Paris.
+And so on. What’s more, we go further: If at some given time t a certain tuple plausibly could appear in some relvar but doesn’t, then we assume the corresponding proposition is false at that time t. For example, the tuple
+TUPLE { SNO ‘S6’ , SNAME ‘Lopez’ , STATUS 30 , CITY ‘Madrid’ }
+is─let’s agree─a plausible supplier tuple but doesn’t appear in relvar S at this time, and so we’re entitled to assume it’s not the case that the following proposition is true at this time:
+Supplier S6 is under contract, is named Lopez, has status 30, and is located in city Madrid.
+To sum up: A given relvar R contains, at any given time, all and only the tuples that represent true propositions (true instantiations of the relvar predicate for R) at the time in question─or, at least, that’s what we always assume in practice. In other words, in practice we adopt what’s called The Closed World Assumption (see Appendixes A and C for more on this topic).
+More terminology: Again, let P be the relvar predicate, or intension, for relvar R, and let the value of R at some given time be relation r. Then r─or the body of r, to be more precise─constitutes the extension of P at that time. Note, therefore, that the extension for a given relvar varies over time, but the intension does not.
+Two final points regarding terminology:
+ You’reprobablyfamiliarwiththetermpredicatealready,sinceSQLusesitextensivelytorefertowhatthis book calls a boolean expression (i.e., SQL talks about “comparison predicates,” “IN predicates,” “EXISTS predicates,” and so on). Now, this usage on SQL’s part isn’t exactly incorrect, but it does usurp a very general term─one that’s extremely important in relational contexts─and give it a rather specialized meaning, which is why I prefer not to follow that usage myself.
+ Talkingofusurpinggeneraltermsandgivingthemspecializedmeanings,there’sanotherpotentialconfusion in this area. It has to do with the term statement. As you might have realized, logic uses this term in a sense that’s very close to its natural language meaning. By contrast, programming languages give it a different and rather specialized meaning: They use it to mean a construct that causes some action to occur, such as
+www.it-ebooks.info
+                Base Relvars, Base Tables / Chapter 5 99 defining or updating a variable or changing the flow of control. And I’m afraid this book uses the term in
+both senses, relying on context to make it clear which meaning is intended. Caveat lector. RELATIONS vs. TYPES
+Chapter 2 discussed types and relations, among other things. However, I wasn’t in a position in that chapter to explain the most important logical difference between those two concepts─but now I am, and I will.
+I’ve shown that the database at any given time can be thought of as a collection of true propositions: for example, the proposition Supplier S1 is under contract, is named Smith, has status 20, and is located in city
+London. More specifically, I’ve shown that the argument values appearing in such a proposition (S1, Smith, 20, and London, in the example) are, precisely, the attribute values from the corresponding tuple, where each such attribute value is a value of the associated type. It follows that:
+Types are sets of things we can talk about; relations are (true) statements we make about those things.
+In other words, types give us our vocabulary─the things we can talk about─and relations give us the ability to say things about the things we can talk about. For example, if we limit our attention to suppliers only, for simplicity, we see that:
+ The things we can talk about are character strings and integers─and nothing else. (In a real database, of course, our vocabulary will usually be much more extensive than this, especially if any user defined types are involved.)
+ Thethingswecansayarethingsoftheform“Thesupplierwiththesuppliernumberdenotedbythespecified character string is under contract; has the name denoted by another specified character string; has the status denoted by the specified integer; and is located in the city denoted by yet another specified character string”─and nothing else. (Nothing else, that is, except for things logically implied by things we can say explicitly. For example, given the things we already know we can say explicitly about supplier S1, we can also say things like Supplier S1 is under contract, is named Smith, has status 20, and is located in some city─where the city is left unspecified. (And if you’re thinking that what I’ve just said is very reminiscent of, and probably has some deep connection to, relational projection ... well, you’d be absolutely right. See the section “What Do Relational Expressions Mean?” in Chapter 6 for further discussion.)
+The foregoing state of affairs has at least three important corollaries. To be specific, in order to “represent some portion of the real world” (as I put it in the previous section):
+1. Types and relations are both necessary─without types, we would have nothing to talk about; without relations, we couldn’t say anything.
+2. Types and relations are sufficient, as well as necessary─we don’t need anything else, logically speaking. (Well, we do need relvars, in order to reflect the fact that the real world changes over time, but we don’t need them to represent the situation at any given time.)8
+8 When I say types and relations are necessary and sufficient, I am of course talking only about the logical level. Obviously other constructs (pointers, for example) are needed at the physical level, as we all know─but that’s because the design goals are different at that level. The physical level is beyond the purview of the relational model, deliberately.
+ www.it-ebooks.info
+                100
+Chapter 5 / Base Relvars, Base Tables
+3.
+Types and relations aren’t the same thing. Beware of anyone who tries to pretend they are! In fact, pretending a type is just a special kind of relation is precisely what certain products try to do (though it goes without saying that they don’t usually talk in such terms)─and I hope it’s clear that any product that’s founded on such a logical error is doomed to eventual failure. (As a matter of fact, at least one of the products I have in mind here already has failed.) The products in question aren’t relational products, though; typically, they’re products that support “objects” in the object oriented sense, or products that try somehow to marry such objects and SQL tables. Further details of such products are beyond the scope of this book.
+Here’s a slightly more formal perspective on what I’ve been saying. As we’ve seen, a database can be thought of as a collection of true propositions. In fact, a database, together with the operators that apply to the propositions represented in that database (or sets of such propositions, rather), is a logical system. And by “logical system” here, I mean a formal system─like euclidean geometry, for example─that has axioms (“given truths”) and rules of inference by which we can prove theorems (“derived truths”) from those axioms. Indeed, it was Codd’s very great insight, when he invented the relational model back in 1969, that a database (despite the name) isn’t really just a collection of data; rather, it’s a collection of facts, or in other words true propositions. Those propositions─the given ones, that is to say, which are the ones represented by the tuples in the base relvars─are the axioms of the logical system under discussion. And the inference rules are essentially the rules by which new propositions can be derived from the given ones; in other words, they’re the rules that tell us how to apply the operators of the relational algebra.9 Thus, when the system evaluates some relational expression (in particular, when it responds to some query), it’s really deriving new truths from given ones; in effect, it’s proving theorems!
+Once we understand the foregoing, we can see that the whole apparatus of formal logic becomes available for use in attacking “the database problem.” In other words, questions such as
+ Whatshouldthedatabaselookliketotheuser?  Whatshouldintegrityconstraintslooklike?
+ Whatshouldthequerylanguagelooklike?
+ Howcanwebestimplementqueries?
+ Moregenerally,howcanwebestevaluatedatabaseexpressions?  Howshouldresultsbepresentedtotheuser?
+ Howshouldwedesignthedatabaseinthefirstplace?
+(and others like them) all become, in effect, questions in logic that are susceptible to logical treatment and can be given logical answers.
+It goes without saying that the relational model supports the foregoing perception very directly─which is why, in my opinion, that model is rock solid, and “right,” and will endure. It’s also why, again in my opinion, other data models are simply not in the same ballpark. Indeed, I seriously question whether those other data models deserve to be called models at all, in the same sense that the relational model does. Certainly most of them are ad
+9 Or the relational calculus. Either way, it comes to the same thing (see Chapter 10).
+ www.it-ebooks.info
+                Base Relvars, Base Tables / Chapter 5 101 hoc to a degree, instead of being firmly founded, as the relational model is, on set theory and predicate logic. I’ll
+expand on these issues in Appendix A.
+EXERCISES
+5.1 It’s sometimes suggested that a relvar is really just a traditional computer file, with tuples instead of records and attributes instead of fields. Discuss.
+5.2 Explain in your own words why remarks like (for example) “This UPDATE operation updates the status for suppliers in London” aren’t very precise. Give a replacement for that remark that’s as precise as you can make it.
+5.3 Why are SQL’s “positioned update” operations a bad idea?
+5.4 In Tutorial D, INSERT and D_INSERT are defined in terms of UNION and D_UNION, respectively, and
+DELETE and I_DELETE are defined in terms of MINUS and I_MINUS, respectively. In SQL, by contrast, INSERT is defined in terms of UNION ALL, and there’s nothing analogous to D_INSERT. There’s also nothing in SQL analogous to I_DELETE; but what about the regular SQL DELETE operator? How do you think that’s defined?
+5.5 Let the SQL base table SS have the same columns as table S. Consider the following SQL INSERT statements:
+INSERT INTO SS ( SNO , SNAME , STATUS , CITY ) ( SELECT SNO , SNAME , STATUS , CITY
+FROM S
+WHERE SNO=‘S6’);
+INSERT INTO SS ( SNO , SNAME , STATUS , CITY ) VALUES ( SELECT SNO , SNAME , STATUS , CITY
+FROM S
+WHERE SNO=‘S6’);
+Are these statements logically equivalent? If not, what’s the difference between them? Note: Thinking about Tutorial D analogs of the two statements might help you answer this question.
+5.6 (This is essentially a repeat of Exercise 2.22 from Chapter 2, but you should be able to give a more comprehensive answer now.) State The Assignment Principle. Can you think of any situations in which SQL violates that principle? Can you identify any negative consequences of such violations?
+5.7 Give definitions for SQL base tables corresponding to the TAX_BRACKET, ROSTER, and MARRIAGE relvars in the section “More on Candidate Keys.”
+5.8 Why doesn’t it make sense to say a relation has a key?
+5.9 In the body of the chapter, I gave one reason why key irreducibility is a good idea. Can you think of any
+others?
+5.10 “Key values are not scalars but tuples.” Explain this remark.
+www.it-ebooks.info
+                102
+5.11 5.12
+5.13 Relvar EMP from the section “More on Foreign Keys” is an example of what’s sometimes called a self- referencing relvar. Invent some sample data for that relvar. Do such relvars lead inevitably to a requirement for null support? (Answer: No, they don’t, but they do serve to show how seductive the nulls idea can be.) What can be done in the example if nulls are prohibited?
+5.14 Why doesn’t SQL have anything analogous to Tutorial D’s renaming option in its foreign key specifications?
+5.15 Can you think of a situation in which two relvars R1 and R2 might each have a foreign key referencing the other? What are the implications of such a situation?
+5.16 The well known bill of materials application involves a relvar─PP, say─showing which parts (“major” parts) contain which parts (“minor” parts) as immediate components, and showing also the corresponding quantities (e.g., “part P1 contains part P2 in quantity 4”). Of course, immediate components are themselves parts, and they can have further immediate components of their own. Give appropriate base relvar (Tutorial D) and base table (SQL) definitions. What referential actions do you think might make sense in this example?
+5.17 Investigate any SQL product available to you. What referential actions does that product support? Which ones do you think are useful? Can you think of any others the product doesn’t support but might be useful?
+5.18 Define the terms proposition and predicate. Give examples.
+5.19 State the predicates for relvars P and SP from the suppliers-and-parts database.
+5.20 What do you understand by the terms intension and extension?
+5.21 Let DB be any database you happen to be familiar with and let R be any relvar in DB. What’s the predicate
+for R? Note: The point of this exercise is to get you to apply some of the ideas discussed in the body of this chapter to your own data, in an attempt to get you thinking about data in general in such terms. Obviously the exercise has no unique right answer.
+5.22 Explain The Closed World Assumption in your own terms. Could there be such a thing as The Open World Assumption?
+5.23 A key is a set of attributes and the empty set is a legitimate set; thus, we could define an empty key to be a key where the pertinent set of attributes is empty. What are the implications? Can you think of any uses for such a key?
+5.24 A predicate has a set of parameters and the empty set is a legitimate set; thus, a predicate could have an empty set of parameters. What are the implications?
+Chapter 5 / Base Relvars, Base Tables
+Let relvar R be of degree n. What’s the maximum number of keys R can have?
+What’s the difference between a key and a superkey? And given that the superkey concept makes sense, do you think it would make sense to define any kind of subkey concept?
+www.it-ebooks.info
+                Base Relvars, Base Tables / Chapter 5 103 5.25 What’s the predicate for a relvar of degree zero? (Does this question even make sense? Justify your
+answer.)
+5.26 Every relvar has some relation as its value. Is the converse true?─that is, is every relation a value of some relvar?
+5.27 In Chapter 1 I said I’d be indicating primary key attributes, in tabular pictures of relations, by double underlining. At that point, however, I hadn’t discussed the logical difference between relations and relvars; and in this chapter we’ve seen that keys in general apply to relvars, not relations. Yet I’ve shown numerous tabular pictures in previous chapters that represent relations as such (I mean, relations that aren’t just a sample value for some relvar), and I’ve certainly been using the double underlining convention in those pictures. So what can we say about that convention now?
+www.it-ebooks.info
+                www.it-ebooks.info

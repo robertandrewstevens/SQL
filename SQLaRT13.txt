@@ -1,0 +1,405 @@
+Appendix A: The Relational Model
+
+I believe quite strongly that if you think about the issue at the appropriate level of abstraction, you’re inexorably led to the position that databases must be relational. Let me immediately try to justify this very strong claim [1]! My argument goes like this:
+
+- First of all, we saw in Chapter 5 that a database, despite the name, isn’t really just a collection of data; rather, it’s a collection of “true facts,” or (rather more respectably, since “facts” are supposed to be true by definition) true propositions ─ for example, the proposition “Joe’s salary is 50K.”
+
+- Propositions like “Joe’s salary is 50K” are easily encoded as ordered pairs ─ e.g., the ordered pair (Joe, 50K), in the case at hand (where “Joe” is a value of type NAME, say, and “50K” is a value of type MONEY, say).
+
+- But we don’t want to record just any old propositions; rather, we want to record all propositions that happen to be true instantiations of certain predicates. In the case of “Joe’s salary is 50K,” for example, the pertinent predicate is “x’s salary is y,” where x is a value of type NAME and y is a value of type MONEY.
+
+- In other words, we want to record the extension of the predicate “x’s salary is y,” which we can do in the form of a set of ordered pairs.
+
+- But a set of ordered pairs is, precisely, a binary relation, in the mathematical sense of that term. Here’s the definition:
+
+Definition: A (mathematical) binary relation over two sets A and B is a subset of the cartesian product of A and B; in other words, it’s a set of ordered pairs (a, b), such that the first element a is a value from A and the second element b is a value from B.
+
+- A binary relation in the foregoing sense can be depicted as a table. Here’s an example:
+
+values of type NAME values of type MONEY
+------------------- --------------------
+Joe                 50K
+Amy                 60K
+Sue                 45K 
+...                 ... 
+Ron                 60K
+
+(As an aside, I remark that this particular example is not just a relation but a function, because each person has just one salary. A function is a special case of a binary relation.) So we can regard this picture as depicting a subset of the cartesian product of the set of all names (“type NAME”) and the set of all money values (“type MONEY”), in that order.
+
+Given the argument so far, then, we can see we’re talking about some fairly humble (but very solid) beginnings. However, in 1969-1970, Codd realized that:
+
+- We need to deal with n-adic, not just dyadic, predicates and propositions (e.g., “Joe has salary 50K, works in department D4, and was hired in 1993”). So we need to deal with n-ary relations, not just binary ones, and n-tuples (tuples for short), not just ordered pairs.
+
+- Left to right ordering might be acceptable for pairs but soon gets unwieldy for n > 2; so let’s replace that ordering concept by the concept of attributes (identified by name), and let’s redefine the relation concept accordingly. The example now looks like this:
+
+PERSON SALARY
+------ ------
+Joe    50K
+Amy    60K
+Sue    45K
+...    ...
+Ron    60K
+
+PERSON = attribute of type NAME 
+SALARY = attribute of type MONEY
+
+No “first” or “second” attribute
+
+Note the logical difference between an attribute and its underlying type
+
+From this point forward, then, you can take the term relation to mean a relation in this revised and extended sense, barring explicit statements to the contrary.
+
+- Data representation alone isn’t the end of the story ─ we need operators for deriving further relations from the given (“base”) ones, so that we can do queries and the like (e.g., “Get all persons with salary 60K”). But since a relation is both a logical construct (the extension of a predicate) and a mathematical one (a special kind of set), we can apply both logical and mathematical operators to it. Thus, Codd was able to define both a relational calculus (based on logic) and a relational algebra (based on set theory). And the relational model was born.
+
+THE RELATIONAL MODEL vs. OTHERS
+
+Perhaps you can begin to see now why it’s my opinion that (to repeat something I said in Chapter 5) the relational model is rock solid, and “right,” and will endure. A hundred years from now, I fully expect database systems still to be based on Codd’s relational model. Why? Because the foundations of that model ─ namely, set theory and predicate logic ─ are themselves rock solid in turn. Elements of predicate logic in particular go back well over 2,000 years, at least as far as Aristotle (384–322 BCE).
+
+So what about other data models? ─ the “object oriented model,” for example, or the “hierarchic model,” or the CODASYL “network model,” or the “semistructured model”? In my view, these other models are just not in the same ballpark. Indeed, I seriously question whether they deserve to be called models at all [2]. The hierarchic and network models in particular never really existed in the first place! ─ as abstract models, I mean, preceding any implementations. Instead, they were invented after the fact; that is, hierarchic and network products were built first, and the corresponding models were defined afterward, by a process of induction ─ here just a polite term for guesswork ─ from those products. As for the object oriented and semistructured models, it’s entirely possible that the same criticism applies; I suspect it does, but it’s hard to be sure. One problem is that there doesn’t seem to be any consensus on what those models might consist of [3]. It certainly can’t be claimed, for example, that there’s a unique, clearly defined, and universally accepted object oriented model, and similar remarks apply to the semistructured model also. (Actually, some people have claimed there isn’t a unique relational model, either. I’ll deal with that argument in a few moments.)
+
+Aside: The following quote from “The Object Oriented Database Sysem Manifesto,” by Malcolm Atkinson, François Bancilhon, David DeWitt, Klaus Dittrich, David Maier, and Stanley Zdonik (Proc. 1st International Conference on Deductive and Object Oriented Databases, Kyoto, Japan, 1989) lends weight to my suggestion that in the case of the object oriented model, at least, implementations came first and the model itself was ─ or indeed, the quote rather strongly suggests, should be (?) ─ defined afterward:
+
+With respect to the specification of the system, we are taking a Darwinian approach: We hope that, out of the set of experimental prototypes being built, a fit model will emerge. We also hope that viable implementation technology for that model will evolve simultaneously.
+
+In other words, the authors are suggesting that the code should be written first, and that a model might possibly be developed later by abstracting from that code. End of aside.
+
+Another important reason why I don’t believe those other models really deserve to be called models at all is the following. First, I hope you agree it’s undeniable that the relational model is indeed a model and thus not, by definition, concerned with implementation issues. By contrast, those other models all fail, much of the time, to make a clear distinction between issues that truly are model issues and issues that have to do with matters of implementation; at the very best, they muddy that distinction considerably (they’re all much “closer to the metal,” as it were) [4]. As a consequence, they’re harder to use and understand, and they give implementers far less freedom ─ far less than the relational model does, I mean ─ to adopt inventive or creative approaches to questions of implementation.
+
+So what of those claims to the effect that there are several relational models, too? One example of such a claim can be found in the book Joe Celko’s Data and Databases: Concepts in Practice (Morgan Kaufmann, 1999), where the author, Joe Celko, says this:
+
+There is no such thing as the relational model for databases anymore [sic] than there is just one geometry. 
+
+And to bolster his argument, he goes on to identify what he says are six “different relational models.”
+
+Now, I wrote an immediate response to these claims when I first encountered them. Here’s a lightly edited version of what I said at the time:
+
+It’s true there are several different geometries (euclidean, elliptic, hyperbolic, and so forth). But is the analogy a valid one? That is, do those “different relational models” differ in the same way those different geometries differ? It seems to me the answer to this question is no. Elliptic and hyperbolic geometries are often referred to, quite explicitly, as non-euclidean geometries [5]; for the analogy to be valid, therefore, it would seem that at least five of those “six different relational models” would have to be non-relational models, and hence, by definition, not “relational models” at all. (Actually, I would agree that several of those “six different relational models” are indeed not relational. But then it can hardly be claimed ─ at least, it can’t be claimed consistently ─ that they’re different relational models.)
+
+And I went on to say this (again somewhat edited here):
+
+But I have to admit that Codd did revise his own definitions of what the relational model was, somewhat, throughout the 1970s and 1980s. One consequence of this fact is that critics have been able to accuse Codd in particular, and relational advocates in general, of “moving the goalposts” far too much. For example, Mike Stonebraker has written (in his introduction to Readings in Database Systems, 2nd edition, Morgan Kaufmann, 1994) that “one can think of four different versions” of the model:
+
+- Version 1: Defined by the 1970 CACM paper
+
+- Version 2: Defined by the 1981 Turing Award paper
+
+- Version 3: Defined by Codd’s 12 rules and scoring system
+
+- Version 4: Defined by Codd’s book
+
+Let me interrupt myself briefly to explain the references here. They’re all by Codd. The 1970 CACM paper is “A Relational Model of Data for Large Shared Data Banks,” CACM 13, No. 6 (June 1970), and it’s discussed in a little more detail in Appendix G of the present book. The 1981 Turing Award paper is “Relational Database: A Practical Foundation for Productivity,” CACM 25, No. 2 (February 1982). The 12 rules and the accompanying scoring system are described in Codd’s Computerworld articles “Is Your DBMS Really Relational?” and “Does Your DBMS Run By The Rules?” (October 14th and October 21st, 1985). Finally, Codd’s book is The Relational Model for Database Management Version 2 (Addison-Wesley, 1990). Now back to my response:
+
+Perhaps because we’re a trifle sensitive to such criticisms, Hugh Darwen and I have tried to provide, in our book Databases, Types, and the Relational Model: The Third Manifesto, our own careful statement of what we believe the relational model is (or ought to be!). Indeed, we’d like our Manifesto to be seen in part as a definitive statement in this regard. I refer you to the book itself for the details; here just let me say that we see our contribution in this area as primarily one of dotting a few i’s and crossing a few t’s that Codd himself left un-dotted or uncrossed in his own work. We most certainly don’t want to be thought of as departing in any major respect from Codd’s original vision; indeed, the whole of the Manifesto is very much in the spirit of Codd’s ideas and continues along the path that he originally laid down.
+
+To all of the above I’d now like to add another point, which I think clearly refutes Celko’s original argument. I agree there are several different geometries. But the reason why those geometries are all different is: They start from different axioms. By contrast, we’ve never changed the axioms for the relational model. We have made a number of changes over the years to the model itself ─ for example, we’ve added relational comparisons ─ but the axioms (which are basically those of classical set theory and classical predicate logic) have remained unchanged ever since Codd’s first papers. Moreover, what changes have occurred have all been, in my view, evolutionary, not revolutionary, in nature. Thus, I really do claim there’s only one relational model, even though it has evolved over time and will presumably continue to do so. As I said in Chapter 1, it can be seen as a small branch of mathematics; as such, it grows over time as new theorems are proved and new results discovered. What’s more ─ as with mathematics in general ─ those new theorems and results can be proved and discovered by anyone who’s competent to do so. The relational model began as the brainchild of one man, but now belongs to the world [6].
+
+So what are those evolutionary changes? Here are some of them:
+
+- As already mentioned, we’ve added relational comparisons.
+
+- We’ve clarified the logical difference between relations and relvars.
+
+- We’ve clarified the concept of first normal form; as a consequence, we’ve embraced the concept of relation valued attributes in particular.
+
+- We have a better understanding of the nature of relational algebra, including the relative significance of various operators and an appreciation of the importance of relations of degree zero, and we’ve identified certain useful new operators (for example, extend and semijoin).
+
+- We’ve added the concept of image relations.
+
+- We have a better understanding of updating, including view updating in particular.
+
+- We have a better understanding of the fundamental significance of integrity constraints in general, and we have many good theoretical results regarding certain important special cases.
+
+- We’ve clarified the nature of the relationship between the model and predicate logic.
+
+- Finally, we have a clearer understanding of the relationship between the relational model and type theory (more specifically, we’ve clarified the nature of domains).
+
+THE SIGNIFICANCE OF THEORY
+
+Note: The bulk of this section consists of an abbreviated and slightly revised version of material from an interview I did in 2005 (published in my book Date on Database: Writings 2000–2006, Apress, 2006).
+
+The relational model, whatever else it might be, is certainly a theory ─ so I’d like to say a few words about the significance of theory in general before getting into details of the relational model in particular. As I said in the preface to the present book, it’s an article of faith with me that theory is practical. The purpose of relational theory in particular is not just theory for its own sake; the purpose of that theory is to allow us to build systems that are 100 percent practical. Thus, I believe that, in the relational context specifically, departures from the underlying theory are A Big Mistake.
+
+Unfortunately, however, the term “theory” has two quite different meanings. In common parlance, it’s almost pejorative ─ “oh, that’s just your theory.” Indeed, in such contexts it’s effectively just a synonym for opinion (and the adverb merely ─ it’s merely your opinion ─ is often implied, too). But to a scientist, the term has a very different meaning. To a scientist, a theory is a set of ideas or principles that explain some set of observable phenomena, such as the motion of the planets. Of course, when I say I it explains something, I mean it does so coherently: It fits the facts, as it were. Moreover (and very importantly), it doesn’t just explain something, it also makes predictions ─ predictions that can be tested and (at least in principle) can be shown to be false. And if any of those predictions do indeed turn out to be false, then we move on: Either we modify the existing theory, or we adopt a new one. That’s the scientific method:
+
+- First, we observe certain phenomena, empirically
+
+- We construct a theory or hypothesis to explain those phenomena
+
+- We use that theory to make predictions
+
+- We test the accuracy of those predictions
+
+- Based on the results of those tests, we refine our theory (or reject it, in extreme cases) 
+
+- And we iterate
+
+That’s how the Copernican system replaced epicycles; how Einstein’s cosmology replaced Newton’s; how general relativity replaced special relativity; and so on. Incidentally, Carl Sagan has a nice observation in this regard:
+
+In science it often happens that scientists say, “You know, that’s a really good argument, my position is mistaken,” and then they actually change their minds, and you never hear that old view from them again. They really do it. It doesn’t happen as often as it should, because scientists are human and change is sometimes painful. But it happens every day. I cannot recall the last time something like that happened in politics or religion.
+
+Anyway, I claim the relational model is indeed a theory in the scientific sense; more specifically, I claim it’s a mathematical theory. Now, mathematical theories are a little special, in a way. First of all, the observed phenomena they’re supposed to explain tend to be rather abstract ─ not nearly as concrete as something like the motion of the planets, for example. Second, the predictions they make are essentially the theorems that can be proved within the theory; thus, those “predictions” can be falsified only if there’s something wrong with the premises, or axioms, on which the theorems are based. But even this does happen from time to time! For example, in euclidean geometry, you can prove that every triangle has angles that sum to 180 degrees. So if we ever found a triangle that didn’t have this property, we would have to conclude that the premises ─ the axioms of euclidean geometry ─ must be wrong. And in a sense exactly that happened: Triangles on the surface of a sphere (for example, on the surface of the Earth) turned out to have angles that sum to more than 180 degrees. And the problem turned out to be the euclidean axiom regarding parallel lines. Riemann replaced that axiom by a different one and thereby defined a different (but equally valid) kind of geometry.
+
+In the same kind of way, the theory that’s the relational model might be falsified in some way ─ but I think it’s pretty unlikely, because (as I said in the previous section) the premises on which the relational model is based are essentially those of set theory and predicate logic, and those premises have stood up pretty well for a very long time.
+
+So, to get to the real point of this section: Given that the relational model is a scientific theory, the question is whether that theory is really important. Of course, my own answer to this question is yes. In fact, I’d like to turn the question on its head... First of all, database management is a field in which some solid theory does exist. Furthermore, we know the value of that theory; we know the benefits that accrue if we follow that theory. We also know there are costs associated with not following that theory (we might not know exactly what those costs are ─ I mean, it might be hard to quantify them ─ but we do know there are going to be costs).
+
+If you’re traveling on an airplane, you’d like to be sure it’s been constructed in accordance with the principles of physics and aerodynamics. If you live or work in a high rise building, you’d like to be sure it’s been constructed in accordance with sound engineering and architectural principles. In the same kind of way, if you’re using a DBMS, wouldn’t you like to be sure it’s been constructed in accordance with solid database principles? If it hasn’t, you know things will go wrong. And while it might be hard to say exactly what will go wrong, and it might be hard to say whether things will go wrong in a major or minor way, you know ─ it’s guaranteed ─ that things will go wrong.
+
+So I don’t think people should be asking “What’s the business value of implementing the relational model?” Rather, I think they should be asking, or perhaps trying to explain, what the business value is of not implementing it. In other words, those who ask “What’s the value of the relational model?” are basically saying “What’s the value of theory?” ─ and I hereby challenge them to tell me what the value is of not abiding by the theory.
+
+THE RELATIONAL MODEL DEFINED
+
+Now I’d like to give a precise definition of just what it is that constitutes the relational model. The trouble is, the definition I’ll give is indeed reasonably precise: so much so, in fact, that I think it would have been pretty hard to understand if I’d given it in Chapter 1. (As Bertrand Russell once memorably said: Writing can be either readable or precise, but not at the same time.) Now, I did give a definition in Chapter 1 ─ a definition, that is, of what I there called “the original model” ─ but I frankly don’t think that definition is even close to being good enough, for the following reasons among others:
+
+- For starters, it was much too long and rambling. (Well, that was fair enough, given the intent of that preliminary chapter; but now I want a definition that’s reasonably succinct, as well as being precise.)
+
+- I don’t really much care for the idea that the model should be thought of as consisting of “structure plus integrity plus manipulation”; in some ways, in fact, I think it’s actively misleading to think of it in such terms. The truth is, those three aspects of the model are inextricably intertwined. For example, the relvars in any given database (structural piece) will be subject to a variety of integrity constraints (integrity piece), and those constraints will be expressed using a variety of relational operators (manipulative piece). Moreover, those relvars will (or should) have been designed in accordance with relational design theory, which likewise involves all three pieces. And of course they’ll be subject to update, which again involves all three pieces.
+
+- “The original model” included a few things I’m not too comfortable with: for instance, divide, nulls, the entity integrity rule, the idea of being forced to choose one key and make it primary, and the idea (still argued on occasion) that domains and types might somehow be different things. Regarding nulls, incidentally, I note that Codd invented the relational model in 1969 and didn’t introduce nulls until 1979; in other words, the model managed perfectly well ─ in my opinion, better ─ for some ten years without any notion of nulls at all. What’s more, early languages and implementations managed perfectly well without them, too.
+
+- The original model also omitted a few things I now consider vital. For example, it excluded any mention ─ at least, any explicit mention ─ of all of the following: predicates, constraints (other than key and foreign key constraints), relation variables, relational comparisons, relation type inference and associated features, image relations, certain algebraic operators (especially rename, extend, summarize (?), semijoin, and semidifference), and the important relations TABLE_DUM and TABLE_DEE. (On the other hand, I think it could fairly be argued that these features at least weren’t precluded by the original model; it might even be argued in some cases that they were in fact included, in a kind of embryonic form. For example, it was certainly always intended that implementations should include support for constraints other than just key and foreign key constraints. Relational comparisons too were at least implicitly required, even in Codd’s very first paper.)
+
+Without further ado, then, let me give my own preferred definition.
+
+Definition: The relational model consists of five components:
+
+1. An open ended collection of scalar types, including type BOOLEAN in particular [7]
+
+2. A relation type generator and an intended interpretation for relations of types generated thereby
+
+3. Facilities for defining relation variables of such generated relation types
+
+4. A relational assignment operator for assigning relation values to such relation variables
+
+5. A relationally complete (but otherwise open ended) collection of generic relational operators for deriving relation values from other relation values
+
+The following subsections elaborate on each of these components in turn. First, however, a word of caution. As John Muir once said, when we try to pick out anything by itself, we find it hitched to everything else in the universe (often quoted in the form “Everything is connected to everything else”). John Muir was referring to the natural world, of course, but he might just as well have been talking about the relational model [8]. The fact is, the various features of the relational model are highly interconnected ─ remove just one of them, and the whole edifice crumbles. Translated into concrete terms, this metaphor means that if we build a “relational” DBMS that fails to support some aspect of the model, the resulting system (which shouldn’t really be called relational, anyway) will be bound to display behavior on occasion that’s certainly undesirable and possibly unforeseeable. I can’t stress the point too strongly: Every feature of the model is there for solid practical reasons; if we choose to ignore some detail, then we do so at our own peril.
+
+Scalar Types
+
+Scalar types can be either system defined or user defined, in general; thus, a means must be available for users to define their own scalar types (this requirement is implicit in the fact that the set of scalar types is open ended). A means must therefore also be available for users to define their own operators, since types without operators are useless. The set of system defined scalar types is required to include type BOOLEAN ─ the most fundamental type of all, containing precisely two values (viz., the truth values TRUE and FALSE) ─ but a real system will surely support others as well (INTEGER, CHAR, and so on). Support for type BOOLEAN implies support for the usual logical operators (NOT, AND, OR, and so on) as well as other operators, system or user defined, that return boolean values. In particular, the equality comparison operator “=” (which is a boolean operator by definition) must be available in connection with every type, non-scalar as well as scalar, for without it we couldn’t even say what the values are that constitute the type in question. What’s more, the model prescribes the semantics of that operator, too. To be specific, if v1 and v2 are values of the same type, then v1 = v2 returns TRUE if v1 and v2 are the very same value and FALSE otherwise.
+
+Aside: The following is a logical consequence of the foregoing definition of equality that can be very helpful in practice. Let Op be an operator with a parameter P; let P be of type T, so that the argument corresponding to P in any given invocation of Op is also of type T; and let v1 and v2 be values of type T. If two successful invocations of Op that are identical in all respects except that the argument corresponding to P is v1 in one invocation and v2 in the other are somehow distinguishable in their effect, then v1 = v2 will (in fact, must) evaluate to FALSE. End of aside.
+
+Let T be some scalar type. Associated with type T, then, there’s at least one selector operator, with the properties that (a) every invocation of that operator returns a value of type T and (b) every value of type T is returned by some invocation of that operator (more specifically, by some corresponding literal ─ recall that a literal is a special case of a selector invocation).
+
+Relation Types
+
+The relation type generator allows users to specify individual relation types as desired: for example, as the type for some relation variable or some relation valued attribute. The intended interpretation for a given relation of a given type, in a given context, is as a set of propositions; each such proposition (a) constitutes an instantiation of some predicate that corresponds to the relation heading, (b) is represented by a tuple in the relation body, and (c) is assumed to be true. If the context in question is some relvar ─ that is, if we’re talking about the relation that happens to be the current value of some relvar ─ then the predicate in question is the relvar predicate for that relvar. Relvars in particular are interpreted in accordance with The Closed World Assumption (see later in this appendix, also Chapter 5).
+
+Let RT be some relation type. Associated with RT, then, there’s a relation selector operator, with the properties that (a) every invocation of that operator returns a relation of type RT and (b) every relation of type RT is returned by some invocation of that operator (more specifically, by some relation literal). Also, since the equality comparison operator “=” is available in connection with every type, it’s available in connection with type RT in particular. So too is the relational inclusion operator “⊆”; if relations r1 and r2 are of the same type, then r1 is included in r2 if and only if the body of r1 is a subset of that of r2.
+
+Relation Variables
+
+As noted above, one use ─ a particularly important one ─ for the relation type generator is in specifying the type of a relation variable, or relvar, when that relvar is defined. Such a variable is the only kind permitted in a relational database; all other kinds of variables, scalar variables or tuple variables or any other kind, are prohibited. (In programs that access such a database, by contrast, they’re not prohibited ─ in fact, they’re probably required.)
+
+The statement that the database contains nothing but relvars is one possible formulation of what Codd originally called The Information Principle, though I don’t think it’s a formulation he ever used himself. Instead, he usually stated the principle like this:
+
+The entire information content of the database at any given time is represented in one and only one way: namely, as explicit values in attribute positions in tuples in relations.
+
+I heard Codd refer to this principle on more than one occasion as the fundamental principle underlying the relational model. Any violation of it thus has to be seen as serious [9]. Database tables that involve top to bottom row ordering or left to right column ordering, or contain duplicate rows, or pointers, or nulls, or have anonymous columns or duplicate column names, all constitute such violations. But why is the principle so important? The answer is bound up with the observations I made in Chapter 5 to the effect that (along with types) relations are both necessary and sufficient to represent any data whatsoever at the logical level. In other words, the relational model gives us everything we need in this respect, and it doesn’t give us anything we don’t need.
+
+I’d like to pursue this point a moment longer. In general, it’s axiomatic that if we have n different ways of representing data, then we need n different sets of operators. For example, if we had arrays as well as relations, we’d need a full complement of array operators as well as a full complement of relational ones [10]. If n is greater than one, therefore, we have more operators to implement, document, teach, learn, remember, and use (and choose among). But those extra operators add complexity, not power! There’s nothing useful that can be done if n is greater than one that can’t be done if n equals one (and in the relational model, of course, n does equal one).
+
+What’s more, not only does the relational model give us just one construct, the relation itself, for representing data, but that construct is ─ to quote Codd himself (see the section “Objectives of the Relational Model,” later in this appendix) ─ of spartan simplicity: It has no ordering to its tuples, it has no ordering to its attributes, it has no duplicate tuples, it has no pointers, and (at least as far as I’m concerned) it has no nulls. Any contravention of these properties is tantamount to introducing another way of representing data, and therefore to introducing more operators as well. In fact, SQL is living proof of this observation. For example, SQL has nine different union operators (and ought by rights to have 18, if not 27), while the relational model has just one.
+
+Aside: Perhaps I should explain these last remarks. First of all, SQL supports six different unions for tables as such ─ UNION DISTINCT, UNION DISTINCT CORRESPONDING, UNION DISTINCT CORRESPONDING BY, and three variants on these in which DISTINCT is replaced by ALL. The funny thing is, the one kind of union it doesn’t support for tables as such is true bag union! For the record, here’s the definition: Let b1 and b2 be bags; let x appear exactly n1 times in b1 and exactly n2 times in b2; and let b be the bag union of b1 and b2. Then x appears exactly n times in b, where ─ to adopt a self-explanatory notation ─ n = MAX(n1,n2). So SQL ought by rights to support BAG (or some such keyword) as an alternative to DISTINCT and ALL, giving us three more unions. Nine so far. Next, SQL supports two different unions for what it calls “multiset values” (as opposed to tables), viz., MULTISET UNION DISTINCT and MULTISET UNION ALL; but it ought really to support seven more possibilities here too (involving BAG, CORRESPONDING, and so on), at least if those “multiset values” are multisets of rows specifically. Now we’re up to 18. Finally, SQL also supports a union “set function” (for use in summarization), though it calls it not UNION but FUSION. FUSION has no variants, but by rights the same possibilities that apply to tables should apply here too (again, if the “multiset values” in question are multisets of rows specifically). Total: 27 [11]. End of aside.
+
+As you can see, then, The Information Principle is certainly important ─ but it has to be said that its name hardly does it justice. Other names that have been proposed, mainly by Hugh Darwen or myself or both, include The Principle of Uniform Representation and The Principle of Uniformity of Representation. (This latter is clumsy, I admit, but at least it’s accurate.)
+
+There’s one more point I should mention under the heading of “Relation Variables.” As Darwen and I demonstrate in our book on The Third Manifesto, the database isn’t really just “a container for relvars,” even though we usually talk about it as if it were. Rather, it’s a variable. After all, it can certainly be updated ─ and that means it’s a variable by definition! Logically speaking, in other words, the database in its entirety is one (typically rather large) variable in itself, which we might call a dbvar. I’ll elaborate on this concept in the section “Database Variables” later in this appendix.
+
+Relational Assignment
+
+Like the equality comparison operator “=”, the assignment operator “:=” must be available in connection with every type (for without it we would have no way of assigning values to a variable of the type in question), and again relation types are no exception to this rule. The operators INSERT, DELETE, and UPDATE (likewise D_INSERT and I_DELETE) are permitted and indeed useful, but strictly speaking they’re only shorthands. What’s more, support for relational assignment (a) must include support for multiple relational assignment in particular and (b) must abide by both The Assignment Principle and The Golden Rule.
+
+Relational Operators
+
+The “generic relational operators” are the operators that make up the relational algebra (or something logically equivalent to the algebra), and they’re therefore built in ─ though there’s no inherent reason why users shouldn’t be able to define additional operators of their own, if desired. Precisely which operators are included isn’t specified, but they’re required to provide, in their totality, at least the expressive power of the relational calculus. (In other words, they’re required to be relationally complete ─ see further discussion below.)
+
+Now, there seems to a widespread misconception concerning the purpose of the algebra. To be specific, many people seem to think it’s meant just for writing queries ─ but it’s not; rather, it’s for writing relational expressions. Those expressions in turn serve many purposes, including query but certainly not limited to query alone. Here are some other important ones (this isn’t an exhaustive list):
+
+- Defining views and snapshots
+
+- Defining the set of tuples to be inserted into, deleted from, or updated in, some relvar (or, more generally, defining the set of tuples to be assigned to some relvar)
+
+- Defining constraints (though here the relational expression in question will be just a subexpression of some boolean expression, typically but not invariably an IS_EMPTY invocation)
+
+- Serving as a basis for investigations into other areas, such as optimization and database design
+
+The algebra also serves as a kind of yardstick against which the expressive power of database languages can be measured. Essentially, a language is said to be relationally complete if and only if it’s at least as powerful as the algebra (or the calculus ─ it comes to the same thing), meaning its expressions permit the definition of every relation that can be defined by means of expressions of the algebra (or the calculus). As noted in Chapter 10, relational completeness is a basic measure of the expressive capability of a language; if a language is relationally complete, it means (among other things, and speaking a trifle loosely) that queries of arbitrary complexity can be formulated without having to resort to branching or iterative loops. In other words, as I also said in that earlier chapter, it’s relational completeness that allows end users ─ at least in principle, though possibly not in practice ─ to access the database directly, without having to go through the potential bottleneck of the IT department.
+
+DATABASE VARIABLES
+
+Note: This section consists of a revised version of material from Appendix D (“What Is a Database?”) from the book Databases, Types, and the Relational Model: The Third Manifesto, by Hugh Darwen and myself (see Appendix G).
+
+I mentioned in the previous section that databases are really variables (as I said in that section, if a database can be updated, then it’s a variable by definition). In other words, we can draw a distinction between database values and database variables, precisely analogous to the one we already draw between relation values and relation variables. As a matter of fact, we ─ i.e., Darwen and myself ─ did draw exactly such a distinction in the first version of The Third Manifesto. Here’s an edited quote:
+
+The first version of this Manifesto distinguished databases per se (i.e., database values) from database variables ... It suggested that the unqualified term database be used to mean a database value specifically, and it introduced the term dbvar as shorthand for “database variable.” While we still believe this distinction to be a valid one, we found it had little direct relevance to other aspects of the Manifesto. We therefore decided, in the interests of familiarity, to revert to more traditional terminology. [In other words, we went on to use the term “database” to mean a database variable rather than a database value, and we didn’t use the terms “database variable” or “dbvar” at all.]
+
+And of course I’ve done the same thing ─ I mean, I’ve used the term database in the traditional way, and I haven’t used the terms database variable or dbvar at all ─ throughout the present book, prior to this point. However, the most recent edition of the Manifesto book, after quoting the foregoing text, goes on to say:
+
+Now this bad decision has come home to roost! With hindsight, it would have been much better to “bite the bullet” and adopt the more logically correct terms database value and database variable (or dbvar), despite their lack of familiarity.
+
+That same book gives arguments in support of this position, of course, but I don’t need to get into those arguments here; the simple fact is, a database simply is a variable (its value changes over time), regardless of whether we call it a “dbvar” or just a database.
+
+Now, it follows from the foregoing that when we “update some relvar” (within some database), what we’re really doing is updating the pertinent dbvar. (For clarity, I’ll adopt the term dbvar for the remainder of the present section.) For example, the Tutorial D statement
+
+DELETE SP WHERE QTY < 150 ;
+
+“updates the shipments relvar SP” and thus really updates the entire suppliers-and-parts dbvar (the “new” database value for that dbvar being the same as the “old” one except that certain shipment tuples have been removed). In other words, while we might say a database “contains variables” (viz., the applicable relvars), such a manner of speaking is only approximate, and in fact quite informal. A more formal and more accurate way of characterizing the situation is this:
+
+A dbvar is a tuple variable.
+
+The tuple variable in question has one attribute for each relvar in the dbvar (and no other attributes), and each of those attributes is relation valued. In the case of suppliers and parts, for example, we can think of the entire dbvar as a tuple variable of the following tuple type:
+
+TUPLE { S  RELATION { SNO CHAR , SNAME CHAR ,
+                      STATUS INTEGER, CITY CHAR } ,
+        P  RELATION { PNO CHAR , PNAME CHAR ,
+                      COLOR CHAR , WEIGHT RATIONAL , CITY CHAR } , 
+        SP RELATION { SNO CHAR , PNO CHAR , QTY INTEGER } }
+
+Suppose we call the suppliers-and-parts dbvar (or tuple variable) SPDB. Then the DELETE statement shown above might be regarded as shorthand for the following tuple assignment:
+
+SPDB := TUPLE { S  ( SFROMSPDB), 
+                P  ( PFROMSPDB),
+                SP ( ( SP FROM SPDB ) WHERE NOT ( QTY < 150 ) ) } ;
+
+Explanation: The expression on the right side of this assignment is a tuple selector invocation, and it denotes a tuple with three attributes called S, P, and SP, each of which is relation valued. Within that tuple, the value of attribute S is the current value of relvar S; the value of attribute P is the current value of relvar P; and the value of attribute SP is the current value of relvar SP, minus tuples for which the quantity is less than 150.
+
+In sum: A dbvar is a tuple variable, and a database (i.e., the value of some given dbvar at some given time) is a tuple. What’s more, given a relational assignment of the form
+
+R := rx
+
+(where R is a relvar reference ─ i.e., a relvar name ─ and rx is a relational expression), that relvar reference R is really a pseudo-variable reference (see the paragraph immediately following). In other words, the relational assignment is shorthand for an assignment that “zaps” one component of the corresponding dbvar (which is, to repeat, really a tuple variable). It follows that “relation variables” (at least, relation variables in the database) aren’t really variables at all; rather, they’re a convenient fiction that gives the illusion that the database ─ or the dbvar, rather ─ can be updated in a piecemeal fashion, individual relvar by individual relvar.
+
+A note on pseudo-variables: Essentially, a pseudo-variable reference consists of an operational expression appearing in an assignment in the target position. For example, let X be a variable of type CHAR, and let ‘Middle’ be the current value of X. Then the assignment SUBSTR(X,2,1) := ‘u’ has the effect of “zapping” the second character position within X, replacing the ‘i’ by a ‘u’. The expression on the left side of that assignment is a pseudo-variable reference. The paper “On the Logical Differences Between Types, Values, and Variables” (see Appendix G) discusses the concept in detail.
+
+OBJECTIVES OF THE RELATIONAL MODEL
+
+For purposes of reference if nothing else, it seems appropriate in this appendix to document Codd’s own stated objectives in introducing his relational model. The following list is based on one he gave in his paper “Recent Investigations into Relational Data Base Systems” (an invited paper to the 1974 IFIP Congress), but I’ve edited it just slightly here:
+
+1. To provide a high degree of data independence
+
+2. To provide a community view of the data of spartan simplicity, so that a wide variety of users in an enterprise, ranging from the most computer naïve to the most computer sophisticated, can interact with a common model (while not prohibiting superimposed user views for specialized purposes)
+
+3. To simplify the potentially formidable job of the DBA
+
+4. To introduce a theoretical foundation, albeit modest, into database management (a field sadly lacking in solid principles and guidelines)
+
+5. To merge the fact retrieval and file management fields in preparation for the addition at a later time of inferential services in the commercial world
+
+6. To lift database application programming to a new level ─ a level in which sets (and more specifically relations) are treated as operands instead of being processed element by element
+
+I’ll leave it to you to judge to what extent you think the relational model meets these objectives. Myself, I think it does pretty well.
+
+SOME DATABASE PRINCIPLES
+
+In Chapter 1, I said I was interested in principles, not products, and we’ve encountered several principles at various points in the book. Here I collect them together for ease of reference.
+
+- The Information Principle (also known as The Principle of Uniform Representation or The Principle of Uniformity of Representation): The database contains nothing but relvars; equivalently, the entire information content of the database at any given time is represented in one and only one way ─ namely, as explicit values in attribute positions in tuples in relations [12].
+
+- The Closed World Assumption: Let relation r correspond to predicate P. If tuple t appears in r, then the proposition p corresponding to t is assumed to be true. Conversely, if tuple t plausibly could appear in r but doesn’t in fact appear, then the proposition p corresponding to t is assumed to be false. Note: In Chapter 5 I explained The Closed World Assumption in terms of relvars, not relations, but the definition just given is slightly more general. Note that it applies to relations that are the current values of relvars in particular, but it isn’t limited to such relations.
+
+- The Principle of Interchangeability: There must be no arbitrary and unnecessary distinctions between base and virtual relvars.
+
+- The Assignment Principle: After assignment of the value v to the variable V, the comparison V = v must evaluate to TRUE.
+
+- The Golden Rule: No update operation must ever cause the database constraint for any database to evaluate
+to FALSE.
+
+- The Principle of Identity of Indiscernibles: Let a and b be any two things (any two “entities,” if you prefer); then, if there’s no way whatsoever of distinguishing between a and b, there aren’t two things but only one [13]. Note: I didn’t mention this principle earlier in the book, but I appealed to it tacitly on many occasions. It can alternatively be stated thus: Every entity has its own unique identity. In the relational model, such identities are represented in the same way as everything else ─ namely, by means of attribute values (see The Information Principle above) ─ and numerous benefits accrue from this simple fact.
+
+WHAT REMAINS TO BE DONE?
+
+All of the above is not to say we won’t continue to make progress or there isn’t still work to be done in this important field. In fact, I see at least four areas, somewhat interrelated, where developments are either under way or are needed: implementation, foundations, higher level abstractions, and higher level interfaces.
+
+Implementation
+
+In some ways the message of this book can be summed up very simply:
+
+Let’s implement the relational model!
+
+To elaborate: First of all, I think it’s clear from the body of the book that it’s being extremely charitable to SQL to describe it as a relational language. It follows that SQL products can be considered relational only to a first approximation. The truth is, the relational model has never been properly implemented in commercial form (at least, not in any mainstream product), and users have never really enjoyed the benefits that a truly relational product would bring. Indeed, that’s one of the reasons why I wrote this book, and it’s also one of the reasons why Hugh Darwen and I have been working for so long on The Third Manifesto. The Third Manifesto ─ the Manifesto for short ─ is a formal proposal for a solid foundation for future DBMSs. And it goes without saying that what it really does, in as careful and precise a manner as the authors are capable of, is define the relational model and spell out some of the implications of that definition. (It also goes into a great deal of detail on the impact of type theory on that model; in particular, it proposes a comprehensive model of type inheritance as a logical consequence of that type theory.)
+
+So we’d really like to see the ideas of the Manifesto implemented properly in commercial form (“we” here meaning, primarily, Hugh Darwen and myself) [14]. We believe such an implementation would serve as a solid basis on which to build so many other things ─ for example, “object/relational” DBMSs; spatiotemporal DBMSs; DBMSs used in connection with the World Wide Web; and “rule engines” (also known as “business logic servers”), which some see as the next generation of general purpose DBMS products. We further believe we would then have the right framework for supporting the other items that are suggested below as also being desirable. Personally, in fact, I would go further; I would suggest that trying to implement those items in any other kind of framework is likely to prove more difficult than doing it right. To quote the well known mathematician Gregory Chudnovsky: “If you do it the stupid way, you will have to do it again” (from an article in The New York Times, December 24th, 1997).
+
+Foundations
+
+There’s still much interesting work to be done on theoretical foundations (in other words, it’s certainly not the case that all of the foundation problems have been solved). Here are three examples:
+
+- Let rx be some relational expression. By definition, the relation r denoted by rx satisfies a constraint rc that’s derived from the constraints satisfied by the relations in terms of which rx is expressed. To what extent can the process of determining that constraint rc be mechanized?
+
+- Can we inject more science into the database design process? In particular, can we come up with a precise and operationally useful characterization of the notion of redundancy? Note: The book Normal Forms and All That Jazz: A Database Professional’s Guide to Database Design Theory (see Appendix G) offers some proposals in this connection.
+
+- Can we come up with a good way ─ that is, a way that’s robust, logically sound, and ergonomically satisfactory ─ of dealing with the “missing information” problem? Note: Appendix C of the present book offers some suggestions in this regard.
+
+Higher Level Abstractions
+
+One way we make progress in computer languages and applications is by raising the level of abstraction. For example, I pointed out in Chapter 5 that the familiar KEY and FOREIGN KEY specifications are really just shorthand for constraints that can be expressed more longwindedly using the general integrity features of any relationally complete language like Tutorial D. But those shorthands are useful: Quite apart from the fact that they save us some writing, they also serve to raise the level of abstraction, by allowing us to talk in terms of certain bundles of concepts that belong naturally together. In a sense, they make it easier to see the forest as well as the trees.
+
+By way of another illustration, consider the relational algebra. I showed in Chapters 6 and 7 that many of the operators of the algebra ─ including ones we use all the time, even if we don’t realize it, like semijoin ─ are really shorthand for certain combinations of other operators [15]. In other words, what’s really going on here is again a raising of the level of abstraction (rather as macros raise the level of abstraction in a conventional programming language).
+
+Raising the level of abstraction in the relational world can be regarded as building on top of the relational model; it doesn’t change the model, but it does make it more directly useful for certain tasks. And one area where this approach looks as if it’s going to prove really fruitful is temporal databases. In our book Temporal Data and the Relational Model (see Appendix G), Hugh Darwen, Nikos Lorentzos, and I ─ building on original work by Lorentzos ─ introduce interval types as a basis for supporting temporal data in a relational framework. For example, consider the “temporal relation” in Fig. A.1 opposite, which shows that certain suppliers supplied certain parts during certain intervals of time (you can read d04 as “day 4,” d06 as “day 6,” and so on; likewise, you can read [d04:d06] as “the interval from day 4 to day 6 inclusive,” and so on). Attribute DURING in that relation is interval valued.
+
+SNO PNO DURING
+--- --- ---------
+S1  P1  [d04:d06]
+S1  P1  [d09:d10]
+S1  P3  [d05:d10]
+S2  P1  [d02:d04]
+S2  P1  [d08:d10]
+S2  P2  [d03:d03]
+S2  P2  [d09:d10]
+
+Fig. A.1: A relation with an interval valued attribute
+
+Support for interval attributes, and hence for temporal databases, involves among other things support for generalized versions of the regular algebraic operators. For reasons that aren’t important here, we call those generalized operators “U_ operators”; thus, there’s a U_restrict operator, a U_join operator, a U_union operator, and so on. But ─ and here comes the point ─ those U_ operators are all, in the last analysis, nothing but shorthand for certain combinations of regular (i.e., conventional) algebraic operators, as described in this book. Once again, then, what’s fundamentally going on is a raising of the level of abstraction.
+
+Two further points on this topic: First, our approach to temporal data involves not just “U_” versions of the algebraic operators but also (a) “U_” keys and foreign keys, (b) “U_” comparison operators, and (c) “U_” versions of INSERT, DELETE, and UPDATE ─ but, again, all of these constructs turn out to be essentially just shorthand. Second, it also turns out that the Manifesto’s type inheritance model has a crucial role to play in that temporal support ─ and so once again we see an example of the interconnectedness of all of these issues.
+
+Higher Level Interfaces
+
+There’s another way in which we can build on the relational model, and that’s by means of various kinds of applications that run on top of the relational interface and provide various specialized services. One example might be decision support; another might be data mining; another might be a natural language front end. For the users of such applications, the relational model will disappear under the covers, at least to some degree. (Though even if it does, and even if most users interact with the database only through some such front end, it seems to me that database design and the like will still necessarily be based on solid relational principles. At least, I certainly hope so.)
+
+By the way: Suppose it’s your job to implement one of those front end applications. Which would you prefer as a target? ─ a relational DBMS, or some other kind (an object oriented DBMS, say)? And if you opt for the former, as I obviously think you should, which would you prefer? ─ a DBMS that supports the relational model as such, or one that supports SQL?
+
+In case it’s not clear, my point is this: We’ve come a long way from the early days when SQL was being touted as a language that end users could use for themselves [16], and I know many people will dismiss my numerous criticisms of SQL as mere carping for that very reason. Real users don’t use it anyway, right? Only programmers use it. And in any case, much of the SQL code that’s actually executed is never written by a human programmer at all but is generated by some kind of front end application. However, it seems to me that SQL is bad as a target language for all of the same reasons that it’s bad as a source language. And it further seems to me, therefore, that my criticisms are still germane.
+
+So What about SQL?
+
+SQL is incapable of providing the kind of firm foundation we need for future growth and development. Instead, it’s the relational model that has to provide that foundation. In The Third Manifesto, therefore, Darwen and I reject SQL as such; in its place, we argue that some truly relational language like Tutorial D should be implemented as soon as possible. Of course, we aren’t so naïve as to think that SQL will ever disappear. Rather, we hope that Tutorial D, or some other true relational language, will be sufficiently superior that it will become the database language of choice (by a process of natural selection), and SQL will become “the database language of last resort.” In fact, we see a parallel with the world of programming languages, where COBOL has never disappeared (and never will); but COBOL has become “the programming language of last resort” for developing applications, because better alternatives exist. We see SQL as a kind of database COBOL, and we would like to see some other language become available as a better alternative to it.
+
+To say it again, we do realize that SQL databases and applications are going to be with us for quite a long time ─ to think otherwise would be quite unrealistic ─ and so we do have to pay some attention to the question of what to do about today’s SQL legacy. The Manifesto therefore does include some specific proposals in this regard. In particular, it offers some suggestions for implementing SQL on top of a true relational language, so that existing SQL applications can continue to work. Detailed discussion of those proposals would be out of place here; suffice it to say, however, that we believe we can simulate various non-relational features of SQL ─ even things like duplicates and nulls ─ without having to support such concepts directly in the underlying relational language.
+
+[1] One obvious objection is that there are clearly many non-relational databases in existence already. True enough ─ but (unlike modern databases) those existing databases were never meant to be general purpose and application neutral; rather, they were typically built to serve some specific application. As a consequence, they don’t and can’t provide all of the functionality we’ve come to expect from a modern database (ad hoc query, view support, full data independence, flexible security and integrity controls, and so forth). In other words, I regard those older databases as nothing more than application specific data stores, and I would frankly prefer not to call them databases at all.
+
+[2] Which is why I set them all in quotation marks. I’ll drop those quotation marks from this point forward because I know how annoying they can be, but you should think of them as still being there in some virtual kind of sense.
+
+[3] My own opinion (for what it’s worth) is that the semistructured model and the object model are, respectively, just the old hierarchic model warmed over and the old network model warmed over.
+
+[4] Actually I think these remarks are rather charitable; in my opinion, those other models are really little more than slightly abstract, but otherwise ad hoc, storage structures that have been elevated above their station and will not stand the test of time.
+
+[5] I’ll have a little more to say about those non-euclidean geometries in the next section.
+
+[6] “I see relational theory as simply a body of theory to which many people are contributing in different ways” (E. F. Codd, in an interview in Data Base Newsletter 10, No. 2, March 1982).
+
+[7] As explained in Chapter 2, the relational model doesn’t rely on the scalar vs. non-scalar distinction in any formal sense. I appeal to it here (as elsewhere in this book) merely as an aid to intuition.
+
+[8] I’ve already said it’s misleading to think of the relational model as structure plus integrity plus manipulation because all three aspects are inextricably intertwined; well, of course, the same goes for the five components described in the following subsections, to some extent.
+
+[9] It goes without saying that object databases, XML databases, and more generally non-relational databases of any kind, do all violate it, necessarily.
+
+[10] We’d also have to choose which data we wanted to represent as relations and which as arrays, probably without any good guidelines to help us in making such choices. And what about the catalog? Would it contain relations, or arrays? Or a mixture?
+
+[11] To all of the foregoing I’d like to add a comment Hugh Darwen once made to me (in a private communication): “UNION CORRESPONDING was added to SQL in 1992, presumably to fill some perceived gap in functionality. Suppose it had been part of the language as originally defined; when if ever would the need have emerged to introduce a UNION based on left to right column ordering instead?” I note too that questions like this one apply to a whole host of constructs that have been added to SQL since it was first defined.
+
+[12] The concept of essentiality is closely related to The Information Principle. To elaborate briefly: Let DM be a data model in the first sense of that term (see Chapter 1) and let DS be a data structure provided by DM. Let dm be a data model in the second sense of that term (again, see Chapter 1), created using the facilities of DM, and let dm include an occurrence ds of DS. Let db be a database conforming to dm. If removal from db of the data corresponding to ds would cause a loss of information from db, then ds is essential in dm (and, loosely, DS is essential in DM). Clearly, then, relational systems provide just one essential data construct, viz., the relation itself. By contrast, non-relational systems provide numerous different ways of representing information essentially, including (e.g.) pointers, record ordering, repeating groups, and so forth.
+
+[13] So here we have another reason ─ a somewhat philosophical reason, perhaps ─ for rejecting the notion of duplicates.
+
+[14] In this connection, we’d also like to see an implementation that’s more sophisticated in certain respects than most current SQL implementations typically are. More specifically, we’d like to see an implementation based on what’s called The TransRelational Model (see Appendix G).
+
+[15] As a matter of fact, Darwen and I show in our Manifesto book that every algebraic operator discussed in this book ─ with the sole exception of TCLOSE ─ can be expressed in terms of just two primitives, remove (which is basically “project over all attributes but one”) and either nand or nor (which are basically algebraic analogs of the logical operators with the same names ─ see the answer to Exercise 10.4 in Appendix F).
+
+[16] Yes, it really was thought of in such terms. Here’s a quote from the very first paper on the language we now know as SQL (see Appendix G): “Examples of such users are accountants, engineers, architects, and urban planners. It is for this class of users that [SQL] is intended.”

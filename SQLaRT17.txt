@@ -1,0 +1,116 @@
+Appendix E: Summary of Recommendations
+
+In this appendix I present for purposes of quick reference a brief summary of the recommendations from Chapters 1-12. The page numbers against the various items show where the individual recommendations are discussed in the body of the text.
+
+- Don’t use SQL like a simple access method. (Page 13)
+
+- Avoid the use of any SQL construct that references physical access paths such as indexes. (Pages 13-14)
+
+- Don’t use table to mean a base table specifically unless your intended meaning is clear from the context. Don’t think of views as if they were somehow different from tables. (Page 19)
+
+- Avoid coercions wherever possible. (Page 41)
+
+- Ensure that columns with the same name are of the same type. (Page 41)
+
+- Avoid type conversions where possible. When they can’t be avoided, do them explicitly if you can. (Pages 41-42)
+
+- Don’t use PAD SPACE. (Page 43)
+
+- Avoid possibly nondeterministic expressions. (Page 43)
+
+- Don’t use “typed tables,” reference values, REF types, or any SQL construct related to these features. (Page 45)
+
+- If you must talk about nulls, call them nulls, not “null values.” (Page 51)
+
+- Don’t use the comparison operators “<”, “<=”, “>”, and “>=” on rows of degree greater than one. (Page 55)
+
+- Use AS specifications whenever necessary (and possible) to give proper column names to columns that otherwise (a) wouldn’t have a name at all or (b) would have a name that wasn’t unique. (Pages 62, 110)
+
+- If two columns represent the same kind of information, give them the same name wherever possible. (Page 63)
+
+- Never write code that relies on left to right column positioning. (Pages 63-64)
+
+- Avoid duplicates. Make sure you know when SQL eliminates duplicates without you asking it to; when you do have to ask, make sure you know whether it matters if you don’t; when it does matter, specify DISTINCT; and never specify ALL. (Pages 73-74,117)
+
+- Avoid nulls: (Pages 77-78)
+
+a. Specify NOT NULL, explicitly or implicitly, for every column in every base table.
+
+b. Don’t use the keyword NULL anywhere other than in the context of such a NOT NULL specification.
+
+c. Don’t use the keyword UNKNOWN in any context whatsoever.
+
+d. Don’t omit the ELSE clause from a CASE expression unless omitting it makes no logical difference.
+
+e. Don’t use NULLIF.
+
+f. Don’t use the keywords OUTER, FULL, LEFT, and RIGHT on JOIN (except, just possibly, in connection with COALESCE).
+
+g. Don’t use union join.
+
+h. Don’t specify PARTIAL or FULL on MATCH; don’t use MATCH on foreign key constraints; and don’t use IS DISTINCT FROM.
+
+i. Don’t use IS TRUE, IS NOT TRUE, IS FALSE, or IS NOT FALSE.
+
+j. Use COALESCE on every scalar expression that might “evaluate to null” without it.
+
+- Don’t use DELETE or UPDATE through a cursor unless you can be certain that integrity constraint problems will never arise in connection with such use. (Page 87)
+
+- Avoid operations that are inherently row level (e.g., row level triggers). (Pages 87,110)
+
+- Specify target columns explicitly on INSERT. (Page 90)
+
+- Don’t define as a key some column combination that you know not to be irreducible. (Page 92)
+
+- Use UNIQUE and/or PRIMARY KEY specifications to ensure that every base table has at least one key. (Page 93)
+
+- Ensure that foreign key columns have the same name as the corresponding key columns wherever possible. (Page 95)
+
+- Don’t use triggers if they violate The Assignment Principle. (Page 96)
+
+- Don’t use any operation that violates the relational closure property if you want the result to be amenable to further relational processing. (Page 108)
+
+- Use NATURAL JOIN in preference to other methods of formulating a join (but make sure columns with the same name are of the same type). (Page 115)
+
+- If you use JOIN ON, make sure columns with the same name are of the same type, and make sure you rename columns appropriately. (Pages 115-116)
+
+- If you use JOIN USING, make sure columns with the same name are of the same type. (Page 116)
+
+- If you use CROSS JOIN, make sure there aren’t any common column names. (Page 116)
+
+- For UNION, INTERSECT, and EXCEPT, make sure corresponding columns have the same name and type. (Page 117)
+
+- For UNION, INTERSECT, and EXCEPT, always specify CORRESPONDING if possible. If it isn’t possible, then make sure columns line up properly. Preferably avoid use of the BY option, unless it makes no difference anyway. (Page 117)
+
+- If you use GROUP BY or HAVING, make sure the table you’re summarizing is the one you really want to summarize; also, be on the lookout for the possibility that some summarization is being done on an empty set, and use COALESCE wherever necessary. (Page 150)
+
+- Where possible, use database constraints to make up for SQL’s lack of support for type constraints. (Page 173)
+
+- Specify constraints declaratively whenever you can. (Page 179)
+
+- Use immediate checking whenever you can. If checking has to be deferred on some constraint, make sure the check is done before doing any operation that might rely on the constraint being satisfied. (Page 184)
+
+- In CREATE VIEW, don’t use the option that allows you to specify the view column names immediately following the view name itself. (Page 194)
+
+- Specify WITH CASCADED CHECK OPTION on view definitions whenever possible. (Pages 194,
+205-206)
+
+- Specify constraints that apply to views (e.g., key constraints) in the form of comments ─ typically on the view definition. (Page 200)
+
+- Never use view, unqualified, to mean a snapshot; never use materialized view; and watch out for violations of these recommendations on the part of others. (Page 213)
+
+- Be careful over the use of COUNT; in particular, don’t use it where EXISTS would be more logically
+correct. (Page 242)
+
+- Use the techniques described in Chapter 11, at least for formulating “complex” SQL expressions. (Pages
+247ff)
+
+- Don’t use ALL or ANY comparisons. (Page 266)
+
+- Don’t use “SELECT *” at the outermost level in a cursor definition or view definition. (Page 273)
+
+- Favor the use of explicit range variables, especially in “complex” expressions. (Page 277)
+
+Well... after this rather lengthy list of admonitions, it seems only right to close this appendix by reminding you of what in Chapter 1 I called the overriding rule:
+
+You can do what you like, so long as you know what you’re doing.

@@ -1,0 +1,460 @@
+
+                Chapter 9
+SQL and Views
+They’re concerned by adverse publicity and that I have to move more into public eye. Problem is to define first the exact view we want to project.
+─H. R. Haldeman: The Haldeman Diaries: Inside the Nixon White House (1994) Intuitively, there are several different ways of looking at what a view is, all of which are valid and all of which can
+be helpful in the right circumstances:
+ Aviewisavirtualrelvar;inotherwords,it’sarelvarthat“looksandfeels”justlikeabaserelvarbut(unlike a base relvar) doesn’t exist independently of other relvars─rather, it’s defined in terms of such other relvars.
+ A view is a derived relvar; in other words, it’s a relvar that’s explicitly derived (and known to be derived, at least by some people) from certain other relvars. Note: If you’re wondering what the difference is between a derived relvar and a virtual one (see the previous bullet item), I should explain that all virtual relvars are derived but some derived ones aren’t virtual. See the section “Views and Snapshots” later in this chapter.
+ A view is a “window into” the relvars from which it’s derived; thus, operations on the view are to be understood as “really” being operations on those underlying relvars.
+ A view is what some writers call a “canned query” (more precisely, it’s a named relational expression).
+As usual, in what follows I’ll discuss these ideas in both relational and SQL terms. Regarding SQL specifically, however, let me remind you of something I said in Chapter 1: A view is a table!─or, as I would prefer to say, a relvar. SQL documentation often uses expressions like “tables and views,” thereby suggesting that tables and views are different things─but they’re not; in many ways, in fact, it’s the whole point about a view that it is a table (just as, in mathematics, the whole point about, e.g., the union or intersection of two sets is that the result is a set). So don’t fall into the common trap of thinking the term table means a base table specifically. People who fall into that trap aren’t thinking relationally, and they’re likely to make mistakes as a consequence; in fact, several such mistakes can be found in the design of SQL itself. Indeed, it could be argued that the very names of the operators CREATE TABLE and CREATE VIEW in SQL are at least a psychological mistake, in that they tend to reinforce both (a) the idea that the term table means a base table specifically and (b) the idea that views and tables are different things. Be on the lookout for confusion in this area.
+One last preliminary point: On the question of whether the database should “always” be accessed through views, see the section “SQL Column Naming” in Chapter 3 or the section “The Reliance on Attribute Names” in Chapter 6.
+www.it-ebooks.info
+                194 Chapter 9 / SQL and Views VIEWS ARE RELVARS
+Of those informal characterizations listed above of what a view is, the following definition might appear to favor one over the rest─but those informal characterizations are all equivalent anyway, loosely speaking:
+Definition: A view V is a relvar whose value at time t is the result of evaluating a certain relational expression at that time t. The expression in question (the view defining expression) is specified when V is defined and must mention at least one relvar.
+The following examples (“London suppliers” and “non London suppliers”) are repeated from Chapter 8, except that I now give SQL definitions as well:
+VAR LS VIRTUAL (SWHERECITY=‘London’);
+VAR NLS VIRTUAL (SWHERECITY≠‘London’);
+│ CREATE VIEW LS AS
+│ (SELECT*
+│ FROMS
+│ WHERE CITY = ‘London’ ) │ WITH CHECK OPTION ;
+│ CREATE VIEW NLS AS
+│ (SELECT*
+│ FROMS
+│ WHERE CITY <> ‘London’ ) │ WITH CHECK OPTION ;
+Note that these are restriction views─their value at any given time is a certain restriction of the value at that time of relvar S. Some syntax issues:
+ The parentheses in the SQL examples are unnecessary but not wrong; I include them for clarity. The parentheses in the Tutorial D examples are required.
+ CREATEVIEWinSQLallowsaparenthesizedcommalistofviewcolumnnamestoappearfollowingthe view name, as in this example:
+CREATE VIEW SDS ( SNAME , DOUBLE_STATUS ) AS ( SELECT DISTINCT SNAME , 2 * STATUS
+FROM S);
+Recommendation: Don’t do this─follow the recommendations given in Chapter 3 under “Column Naming in SQL” instead. For example, the foregoing view can equally well (in fact, better) be defined like this:
+CREATE VIEW SDS
+AS ( SELECT DISTINCT SNAME , 2 * STATUS AS DOUBLE_STATUS
+FROM S);
+Note in particular that this latter style means we’re telling the system once instead of twice that one of the view columns is called SNAME.
+ CREATEVIEWinSQLalsoallowsWITHCHECKOPTIONtobespecifiedif(butonlyif!)itregardsthe view as updatable. Recommendation: Always specify this option if possible. See the section “Update Operations” for further discussion.
+www.it-ebooks.info
+                The Principle of Interchangeability
+Since views are relvars, essentially everything I said in previous chapters regarding relvars in general applies to views in particular. Subsequent sections discuss specific aspects of this observation in detail. First, however, there’s a more fundamental point I need to explain.
+Consider the example of London vs. non London suppliers again. In that example, S is a base relvar and LS and NLS are views. But it could have been the other way around─that is, we could have made LS and NLS base relvars and S a view, like this (Tutorial D only, for simplicity):
+VAR LS BASE RELATION
+{ SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } KEY { SNO } ;
+VAR NLS BASE RELATION
+{ SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } KEY { SNO } ;
+VAR S VIRTUAL ( LS UNION NLS ) ;
+Note: In order to guarantee that this design is logically equivalent to the original one, we would also have to state and enforce certain additional constraints─including in particular constraints to the effect that every CITY value in LS is London and no CITY value in NLS is─but I omit such details here. See the sections “Views and Constraints” and “Update Operations” later for further consideration of such matters.
+Anyway, the message of the example is that, in general, which relvars are base ones and which virtual is arbitrary (at least from a formal point of view). In the example, we could design the database in at least two different ways: ways, that is, that are logically distinct but information equivalent. (By information equivalent here, I mean the two designs represent the same information; i.e., for any query on one, there’s a logically equivalent query on the other.) And The Principle of Interchangeability follows logically from such considerations:
+Definition: The Principle of Interchangeability (of base and virtual relvars) states that there must be no arbitrary and unnecessary distinctions between base and virtual relvars; i.e., virtual relvars should “look and feel” just like base relvars so far as users are concerned.
+Here are some implications of this principle:
+ As I’ve already suggested, views are subject to integrity constraints, just like base relvars. (We usually think of integrity constraints as applying to base relvars specifically, but The Principle of Interchangeability shows this position isn’t really tenable.) See the section “Views and Constraints,” later.
+ Inparticular,viewshavekeys(andsoIshouldperhapshaveincludedsomekeyspecificationsinmy examples of views prior to this point; Tutorial D permits such specifications but SQL doesn’t). They might also have foreign keys, and foreign keys might refer to them. Again, see the section “Views and Constraints,” later.
+ Ididn’tmentionthispointinChapter1,butthe“entityintegrity”ruleissupposedtoapplyspecificallyto base relvars, not views. It thereby violates The Principle of Interchangeability. Of course, I reject that rule anyway, because it has to do with nulls (I also reject it because it has to do with primary keys specifically instead of keys in general, but let that pass).
+www.it-ebooks.info
+Chapter 9 / SQL and Views 195
+                196 Chapter 9 / SQL and Views
+ Many SQL products, and the SQL standard, provide some kind of “row ID” feature.1 If that feature is available for base tables but not for views─which in practice is quite likely─then it violates The Principle of Interchangeability. (It probably violates The Information Principle, too. See Appendix A.) Now, row IDs as such aren’t part of the relational model, but that fact in itself doesn’t mean they’re prohibited. But I observe as an important aside that if those row IDs are regarded─as they are, most unfortunately, in the SQL standard, as well as in at least some of the major SQL products─as some kind of object ID in the object oriented sense, then they are prohibited, very definitely! Object IDs are effectively pointers, and (to repeat from Chapter 2) the relational model explicitly prohibits pointers.
+ Thedistinctiondiscussedinthepreviouschapterbetweensinglerelvarandmultirelvarconstraintsismore apparent than real (and the terminology is therefore deprecated, somewhat, for that very reason). Indeed, an example in that chapter─essentially the same London vs. non London suppliers example, in fact─showed that the very same constraint could be a “single relvar” constraint with one design for the database and a “multirelvar” constraint with another.
+ Perhapsmostimportantofall,wemustbeabletoupdateviews─becauseifnot,thenthatfactinitselfwould constitute the clearest possible violation of The Principle of Interchangeability. Again, see the section “Update Operations,” later.
+Relation Constants
+You might have noticed that, in the formal definition I gave for what a view was at the beginning of the present section, I said the defining expression had to mention at least one relvar. Why? Because if it didn’t, the “virtual relvar” wouldn’t be a relvar at all!─I mean, it wouldn’t be a variable, and it wouldn’t be updatable. For example, the following is a valid CREATE VIEW statement in SQL:
+CREATE VIEW S_CONST AS
+( SELECT TEMP.* FROM ( VALUES
+( ‘S1’ , ‘Smith’ , 20 , ‘London’ ) , (‘S2’,‘Jones’,10,‘Paris’ ), (‘S3’,‘Blake’,30,‘Paris’ ), ( ‘S4’ , ‘Clark’ , 20 , ‘London’ ) , ( ‘S5’ , ‘Adams’ , 30 , ‘Athens’ ) )
+AS TEMP ( SNO , SNAME , STATUS , CITY ) ) ;
+But this view certainly can’t be updated. In other words, it’s not a variable at all, let alone a virtual one; rather, it’s what might be called a named relation constant. Let me elaborate:
+ First of all, I regard the terms constant and value as synonymous. Note, therefore, that there’s a logical difference between a constant and a literal; a literal isn’t a constant but is, rather, a symbol─sometimes referred to as a self-defining symbol─that denotes a constant (as in fact we already know from Chapter 2).
+ Strictlyspeaking,there’salsoalogicaldifferencebetweenaconstantandanamedconstant;aconstantisa value, but a named constant is like a variable, except that its value can’t be changed. That said, however, for the remainder of this brief discussion I’ll take the term constant to mean a named constant specifically, for brevity.
+1 In the standard, that feature goes by the name of REF types and reference values (see Chapter 2).
+ www.it-ebooks.info
+                 Constantscanbeofanytypewelike,naturally,butrelationconstants(i.e.,constantsofsomerelationtype) are our major focus here. Now, Tutorial D doesn’t currently support relation constants, but if it did, a relation constant (or “relcon”) definition would probably look something like this example:
+CONST PERIODIC_TABLE INIT ( RELATION
+{ TUPLE { ELEMENT ‘Hydrogen’ , SYMBOL ‘H’ , ATOMICNO 1 } ,
+TUPLE { ELEMENT ‘Helium’ , SYMBOL ‘He’ , ATOMICNO 2 } , ....................................................
+TUPLE { ELEMENT ‘Uranium’ , SYMBOL ‘U’ , ATOMICNO 92 } } ) ;
+Now, I do believe it would be desirable to provide some kind of relation constant or “relcon” functionality along the lines sketched above. In fact, Tutorial D already provides two system defined relcons: namely, TABLE_DUM and TABLE_DEE, both of which are extremely important, as we know. Apart from these two, however, neither Tutorial D nor SQL currently provides any direct support for relcons. It’s true that (as we’ve seen) such support can be simulated by means of the conventional view mechanism; however, there’s a serious logical difference involved here, and I don’t think it helps the cause of understanding to pretend that constants are variables.
+VIEWS AND PREDICATES
+The Principle of Interchangeability implies that a view (just like a base relvar) has a relvar predicate, in which the parameters correspond one to one to the attributes of the relvar─i.e., the view─in question. However, the predicate that applies to a view V is a derived predicate: It’s derived from the predicates for the relvars in terms of which V is defined, in accordance with the semantics of the relational operations involved in the view defining expression. In fact, you already know this: In Chapter 6, I explained that every relational expression has a corresponding predicate, and of course a view has exactly the predicate that corresponds to its defining expression. For example, consider view LS (“London suppliers”) once again, as defined near the beginning of the section “Views Are Relvars.” That view is a restriction of relvar S, and its predicate is therefore the logical AND of the predicate for S and the restriction condition:
+Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY
+AND
+city CITY is London.
+Or more colloquially:
+Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in London.
+Note, however, that this more colloquial form obscures the fact that CITY is a parameter. Indeed it is a parameter, but the corresponding argument is always the constant ‘London’. (Precisely for this reason, in fact, a more realistic version of view LS would probably project away the CITY attribute. I prefer not to do this here, in order to keep the example as simple as possible.)
+Similarly, the predicate for view NLS is:
+www.it-ebooks.info
+Chapter 9 / SQL and Views 197
+                198 Chapter 9 / SQL and Views
+Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY, which
+isn’t London.
+RETRIEVAL OPERATIONS
+The Principle of Interchangeability implies that (a) users should be able to operate on views as if they were base relvars and (b) the DBMS should be able to map those user operations into suitable operations on the base relvars in terms of which the views are ultimately defined. I say “ultimately defined” here because if views really do behave just like base relvars, then one thing we can do is define further views on top of them, as in this SQL example:
+CREATE VIEW LS_STATUS
+AS ( SELECT SNO , STATUS
+FROM LS ) ;
+In this section, I limit my attention to the mapping of read-only or “retrieval” operations, for simplicity (I remind you that the operations of the relational algebra are indeed all read-only). In fact, the process of mapping a read-only operation on a view to operations on the underlying relvars is in principle quite straightforward. For example, suppose we issue this SQL query on the London suppliers view LS (I deliberately show all name qualifications explicitly):
+SELECT LS.SNO
+FROM LS
+WHERE LS.STATUS > 10
+First, then, the DBMS replaces the reference to the view in the FROM clause by the expression that defines that view, yielding:
+SELECT FROM (
+WHERE
+LS.SNO
+SELECT S.*
+FROM S
+WHERE S.CITY = ‘London’ ) AS LS LS.STATUS > 10
+This expression can now be directly evaluated. However─and for performance reasons perhaps more significantly─it can first be simplified to:
+SELECT S.SNO
+FROM S
+WHERE S.CITY = ‘London’ AND S.STATUS > 10
+In all likelihood, this latter expression is the one that will actually be evaluated.
+Now, it’s important to understand that the reason the foregoing procedure works is precisely because of the relational closure property. Closure implies among other things that wherever we’re allowed to use the name of a variable to denote the value of the variable in question─for example, in a query─we can always replace that name by a more general expression (just so long as that expression denotes a value of the appropriate type, of course). In the FROM clause, for example, we can have an SQL table name; thus we can also have a more general SQL table expression, and that’s why we’re allowed to substitute the expression that defines the view LS for the name LS in the example.
+www.it-ebooks.info
+                For obvious reasons, the foregoing procedure for implementing read-only operations on views is known as the substitution procedure. Incidentally, it’s worth noting that the procedure didn’t always work in early versions of SQL─to be specific, in versions prior to 1992─and the reason was that those early versions didn’t fully support the closure property. As a result, certain apparently innocuous queries against certain apparently innocuous tables (actually views) failed, and failed, moreover, in ways that were hard to explain. Here’s a simple example. First the view definition:
+CREATE AS (
+Now a query:
+SELECT
+FROM V
+WHERE SST > 25
+This query failed in the SQL standard, prior to 1992, because simple substitution yielded something like the following syntactically invalid expression:
+SELECT CITY
+FROM S
+WHERE SUM ( STATUS ) > 25 /* warning: invalid !!! */ GROUP BY CITY
+(This expression is invalid because SQL doesn’t allow “set function” invocations like SUM(STATUS) to be used in the WHERE clause in this manner.)
+Now, the standard has been fixed in this regard, as you probably know;2 however, it doesn’t follow that the products have!─and indeed, the last time I looked, there was at least one major product that hadn’t. Indeed, precisely because of problems like the foregoing among others, the product in question actually implements certain view retrievals by materialization instead of substitution; that is, it actually evaluates the view defining expression, builds a table to hold the result of that evaluation, and then executes the requested retrieval against that materialized table. And while such an implementation might be argued to conform to the letter of the relational model, as it were, I don’t think it can be said to conform to the spirit. (It probably won’t perform very well, either.)
+VIEWS AND CONSTRAINTS
+The Principle of Interchangeability implies that views not only have relvar predicates like base relvars, they also have relvar constraints like base relvars─by which I mean they have both individual relvar constraints and what in Chapter 8 I called a total relvar constraint (for the relvar in question). As with predicates, however, the constraints that apply to a view V are derived: They’re derived from the constraints for the relvars in terms of which V is defined, in accordance with the semantics of the relational operations involved in the defining expression. By way of example, consider view LS once again. That view is a restriction of relvar S─i.e., its defining expression specifies a restriction operation on relvar S─and so its (total) relvar constraint is the logical AND of the (total) relvar constraint for S and the specified restriction condition. Let’s suppose for the sake of the example that the only
+2 According to the standard, in the example under discussion, the substitution procedure now yields an expression along the following lines: SELECT CITY FROM S WHERE (SELECT AST FROM (SELECT CITY, SUM(STATUS) AS AST FROM S GROUP BY CITY)) > 25.
+VIEW V
+SELECT CITY , SUM ( STATUS ) AS SST FROM S
+GROUP BY CITY ) ;
+CITY
+Chapter 9 / SQL and Views 199
+ www.it-ebooks.info
+                200 Chapter 9 / SQL and Views
+constraint that applies to base relvar S is the constraint that {SNO} is a key. Then the total relvar constraint for view LS is the AND of that key constraint and the constraint that the city is London, and view LS is required to satisfy that constraint at all times. (In other words, The Golden Rule applies to views just as it does to base relvars.)
+For simplicity, from this point forward I’ll use the term view constraint to refer to any constraint that applies to some view. Now, just because view constraints are always derived in the sense explained above, it doesn’t follow that there’s no need to declare them explicitly. For one thing, the system might not be “intelligent” enough to carry out the inferences needed to determine for itself the constraints that apply to some view; for another, such explicit declarations can at least serve documentation purposes (i.e., they can help explain the semantics of the view in question to users, if not to the system); and there’s another reason too, which I’ll get to in a little while.
+I claim, then, that it should be possible to declare explicit constraints for views. In particular, it should be possible (a) to include explicit KEY and FOREIGN KEY specifications in view definitions and (b) to allow the target relvar in a FOREIGN KEY specification to be a view. Here’s an example to illustrate possibility (a):
+VAR LS VIRTUAL ( S WHERE CITY = ‘London’ ) KEY { SNO } ;
+Tutorial D does permit such specifications; SQL doesn’t. Recommendation: In SQL, include such specifications in the form of comments. For example:
+CREATE VIEW LS
+AS ( SELECT S.*
+FROM S
+WHERE S.CITY = ‘London’ ) /* UNIQUE ( SNO ) */
+WITH CHECK OPTION ;
+Note: As I’ve said, SQL doesn’t permit view constraints to be formulated explicitly as part of the view definition; however, logically equivalent constraints can always be formulated by means of CREATE ASSERTION (if it’s supported, that is). More generally, in fact, CREATE ASSERTION allows us to formulate constraints of any kind we like for any table that could be a view if we chose to define it as such─in other words, for any table that can be defined by some arbitrarily complex table expression (which is to say, any table at all).3 I’ll have more to say about this possibility in a few moments.
+Now, having said that it should be possible to declare explicit constraints on views, I should now add that sometimes it might be a good idea not to, because it could lead to redundant checking. For example, as I’ve said, the specification KEY{SNO} clearly applies to view LS─but that’s because it applies to base relvar S as well,4 and declaring it explicitly for view LS might simply lead to the same constraint being checked twice. (But it should still be stated as part of the view documentation, somehow, because it’s part of the semantics of the view.)
+Perhaps more to the point, there certainly are situations where declaring view constraints explicitly could be a good idea. Here’s an example, expressed in SQL for definiteness. We’re given two base tables that look like this (in outline):
+3 Any table, that is, so long as the definition of the table in question doesn’t involve a possibly nondeterministic expression, a complication I choose to ignore for now. See Chapter 12 for further discussion.
+4 A more accurate statement is: The specification KEY{SNO} applies to view LS as a logical consequence of the fact that it applies to base relvar S. Note, however, that the two specifications don’t mean quite the same thing─the one for view LS means suppliers numbers are unique with respect to London suppliers, the one for base relvar S means they’re unique with respect to all suppliers.
+ www.it-ebooks.info
+                CREATE TABLE FDH
+( FLIGHT ... ,
+DESTINATION ... , HOUR ... ,
+UNIQUE ( FLIGHT ) ) ;
+CREATE TABLE DFGP ( DAY ... ,
+FLIGHT ... ,
+GATE ... ,
+PILOT ... ,
+UNIQUE ( DAY , FLIGHT ) ) ;
+The tables have predicates as follows:5
+ FDH: Flight FLIGHT leaves at hour HOUR for destination DESTINATION.
+ DFGP: On day DAY, flight FLIGHT with pilot PILOT leaves from gate GATE.
+They’re subject to the following constraints (expressed here in a kind of pseudo logical style):
+IF(f1,n1,h),(f2,n2,h) Œ FDHAND ( d,f1,g,p1 ) , ( d,f2,g,p2 ) Œ DFGP
+THEN f1 = f2 AND p1 = p2 /* and n1 = n2, incidentally */
+IF(f1,n1,h),(f2,n2,h) Œ FDHAND ( d,f1,g1,p ) , ( d,f2,g2,p ) Œ DFGP
+THEN f1 = f2 AND g1 = g2 /* and n1 = n2, incidentally */ Explanation: The first of these constraints says:
+a. If two rows of FDH, one for flight f1 (with destination n1) and one for flight f2 (with destination n2), have the same HOUR h, and
+b. Two rows of DFGP, one each for the FLIGHTs f1 and f2 from the two FDH rows, have the same DAY d and GATE g, then
+c. The two FDH rows must be the same and the two DFGP rows must be the same. In other words, if we know the HOUR, DAY, and GATE, then the FLIGHT and PILOT (and DESTINATION) are determined.
+The second constraint is analogous:
+a. If two rows of FDH, one for flight f1 (with destination n1) and one for flight f2 (with destination n2), have
+the same HOUR h, and
+5 The tables are rather obviously not very well designed, and thus you might think I’m “stacking the deck” in an attempt to make my point seem more convincing than it really is. So I’d like to say the example isn’t in fact mine at all; rather, it’s a lightly edited version of one from Joe Celko’s article “Back to the Future” (Database Programming & Design 4, No. 12, December 1991).
+Chapter 9 / SQL and Views 201
+ www.it-ebooks.info
+                202
+b. c.
+Chapter 9 / SQL and Views
+Two rows of DFGP, one each for the FLIGHTs f1 and f2 from the two FDH rows, have the same DAY d and
+PILOT p, then
+The two FDH rows must be the same and the two DFGP rows must be the same─in other words, if we know
+the HOUR, DAY, and PILOT, then the FLIGHT and GATE (and DESTINATION) are determined. Now, stating these constraints directly in terms of the two base tables is fairly nontrivial:
+CREATE ASSERTION BTCX1 CHECK
+( NOT ( EXISTS (
+( NOT ( EXISTS (
+SELECT
+SELECT
+SELECT
+SELECT * FROM DFGP AS
+FY.HOUR = FX.HOUR AND DX.FLIGHT = FX.FLIGHT DY.FLIGHT = FY.FLIGHT
+DY.DAY = DX.DAY AND
+DY.PILOT = DX.PILOT AND FX.FLIGHT <> FY.FLIGHT OR DX.GATE <> DY.GATE ) ) ) ) ) )
+EXISTS
+EXISTS
+EXISTS
+( ( (
+* FROM FDH AS FX WHERE * FROM FDH AS FY WHERE
+(
+CREATE ASSERTION BTCX2 CHECK
+) ) ;
+EXISTS
+EXISTS
+EXISTS
+( ( (
+(
+* FROM FDH AS FX WHERE * FROM FDH AS FY WHERE
+SELECT
+SELECT
+SELECT
+SELECT * FROM DFGP AS
+FY.HOUR = FX.HOUR AND DX.FLIGHT = FX.FLIGHT DY.FLIGHT = FY.FLIGHT
+DY.DAY = DX.DAY AND
+DY.GATE = DX.GATE AND FX.FLIGHT <> FY.FLIGHT OR DX.PILOT <> DY.PILOT ) ) ) ) )
+* FROM DFGP AS
+DX WHERE
+DY WHERE
+* FROM DFGP AS
+DX WHERE
+DY WHERE
+But stating them in the form of key constraints on a view definition, if that were permitted, would take care of matters nicely:
+CREATE VIEW V AS
+( SELECT * FROM FDH NATURAL JOIN DFGP ,
+UNIQUE ( DAY , HOUR , GATE ) , /* hypothetical */ UNIQUE ( DAY , HOUR , PILOT ) ) ; /* syntax !!!!! */
+Since this solution isn’t available, we should at least specify those hypothetical view constraints in terms of suitable assertions:
+CREATE
+CREATE
+CREATE
+VIEW V AS ( SELECT * FROM FDH NATURAL JOIN DFGP ) ;
+ASSERTION VCX1
+CHECK ( UNIQUE ( SELECT DAY , HOUR , GATE FROM V ) ) ;
+ASSERTION VCX2
+CHECK ( UNIQUE ( SELECT DAY , HOUR , PILOT FROM V ) ) ;
+www.it-ebooks.info
+AND AND
+AND AND
+) ;
+                In fact, of course, we don’t actually have to define the view V in order to define these constraints─we could simply replace the references to view V in the UNIQUE expressions in the constraints by the defining expression for V, like this:6
+CREATE ASSERTION VCX1 CHECK ( UNIQUE
+CREATE ASSERTION VCX2 CHECK ( UNIQUE
+( SELECT DAY , HOUR , GATE
+FROM FDH NATURAL JOIN DFGP ) ) ;
+( SELECT DAY , HOUR , PILOT
+FROM FDH NATURAL JOIN DFGP ) ) ;
+Note: I didn’t mention the point in Chapter 8, but Tutorial D does provide direct support for saying the relation denoted by some relational expression is required to satisfy some key constraint. By way of illustration, here are Tutorial D analogs of assertions VCX1 and VCX2:
+CONSTRAINT VCX1 ( FDH JOIN DFGP ) KEY { DAY , HOUR , GATE } ; CONSTRAINT VCX2 ( FDH JOIN DFGP ) KEY { DAY , HOUR , PILOT } ;
+UPDATE OPERATIONS
+I claimed earlier that The Principle of Interchangeability implies that views must be updatable (i.e., assignable to). Now, I can hear some readers objecting right away: Surely some views just can’t be updated, can they? For example, consider a view defined as the join─a many to many join, observe─of relvars S and P on {CITY}; surely we can’t insert a tuple into, or delete a tuple from, that view, can we? Note: I apologize for the sloppy manner of speaking here; as we know from Chapter 5, there’s no such thing as “inserting or deleting a tuple” in the relational model. But to be too pedantic about such matters in the present discussion would get in the way of understanding, probably.
+Well, even if it’s true─which it might or might not be─that we can’t insert a tuple into or delete a tuple from S JOIN P, let me point out that certain updates on certain base relvars can’t be done, either. For example, inserting a tuple into relvar SP will fail if the SNO value in that tuple doesn’t currently exist in relvar S. Thus, updates on base relvars can always fail on integrity constraint violations─and the same is true for updates on views. In other words, it isn’t that some views are inherently nonupdatable; rather, it’s that some updates on some views will fail on integrity constraint violations (i.e., violations of The Golden Rule). Note: Actually, updates, on both base relvars and views, can fail on violations of The Assignment Principle too, as we’ll quickly see.
+To illustrate the point (albeit briefly), let’s take a slightly closer look at the foregoing many to many join example (S JOIN P). Here’s a Tutorial D definition:
+VAR SCP VIRTUAL ( S JOIN P ) KEY { SNO , PNO } ;
+Now, as a basis for discussing updates on this or any other view, it’s helpful to think of the view in question as if it were another base relvar, living alongside (as it were) the base relvars in terms of which it’s defined. Let’s
+6 If you look carefully, you’ll see I’m not exactly replacing those references to V by the defining expression for V. The reason is that (as we saw in Chapter 6) SQL requires an explicit JOIN invocation like FDH NATURAL JOIN DFGP to have a “SELECT * FROM” prefix if it appears at the outermost level of nesting but allows it not to have such a prefix otherwise.
+Chapter 9 / SQL and Views 203
+ www.it-ebooks.info
+                204 Chapter 9 / SQL and Views
+see what happens if we adopt this mode of thinking in the case at hand. First of all, note that─by definition─relvar
+SCP is subject to the constraint that it’s equal to the join of S and P on {CITY}:
+CONSTRAINT VCX SCP = S JOIN P ;
+Given our usual sample values, then, the following INSERT will succeed:
+INSERT SCP RELATION { TUPLE { SNO ‘S6’ , ... , CITY ‘Madrid’ , PNO ‘P7’ , ... } } ;
+(I’m making the obvious assumption here that inserting a tuple into SCP causes appropriate subtuples of that tuple to be inserted into S and P.) By contrast, consider the following INSERT:
+INSERT SCP RELATION { TUPLE { SNO ‘S6’ , ... , CITY ‘London’ , PNO ‘P7’ , ... } } ;
+Here there are two possibilities:
+ AppropriatesubtuplesareinsertedintoSandP,buttheonlytupleinsertedintoSCPistheonespecifiedin the INSERT statement. Net effect: The Golden Rule is violated (to be specific, constraint VCX is violated), so the INSERT fails.
+ AppropriatesubtuplesareinsertedintoSandPandcertainadditionaltuples,overandabovetheone specified, are inserted into SCP in order to ensure constraint VCX remains satisfied. Net effect: The Assignment Principle is violated, so the INSERT fails. Note: We could─and in my opinion we should─avoid this failure, however, by specifying some appropriate compensatory actions. See the subsection “London vs. Non London Suppliers Revisited,” later.
+From these examples, I hope you can see that it’s not that INSERT operations are intrinsically impossible on view SCP; rather, it’s that some INSERTs (not all) on that view fail on a violation of either The Golden Rule or The Assignment Principle. I’ll go into more detail regarding such matters later; for now, let me just say that a much more detailed discussion of the foregoing example and others like it can be found in the paper “How to Update Views” (see Appendix G).
+So let V be a view; in order to support updates on V properly, then, the system needs to know the total constraint, VC say, for V. In other words, it needs to be able to perform constraint inference, so that, given the constraints that apply to the relvars in terms of which V is defined, it can determine VC. As I’m sure you realize, however, SQL products today do, or are capable of doing, very little in the way of such constraint inference. As a result, SQL’s support for view updating is quite weak (and this is true of the standard as well as the major products). Typically, in fact, SQL products don’t allow updating on views any more complex than simple restrictions and/or projections of a single underlying base table (and even here there are problems). By way of example, consider view LS once again. That view is just a restriction of base table S, and we can certainly perform the following DELETE on it:
+DELETE
+FROM LS
+WHERE STATUS > 15 ;
+This DELETE maps to:
+www.it-ebooks.info
+                DELETE
+FROM S
+WHERE CITY = ‘London’ AND STATUS > 15 ;
+But what about INSERTs on this view? Here there are at least two problems:
+1. The new row might violate the requirement that the city must be London.
+2. The new row might have the same supplier number as some non London supplier.
+I’ll address the first of these issues in the subsection “The CHECK Option” below and the second in the
+subsection “London vs. Non London Suppliers Revisited” later. As for SQL view updatability in general, I’ll have a little more to say on that topic in the next subsection but one (“More on SQL”).
+The CHECK Option
+Consider the following SQL INSERT on view LS:
+INSERT INTO LS ( SNO , SNAME , STATUS , CITY ) VALUES ( ‘S6’, .............. , ‘Madrid’ ) ;
+This INSERT maps to:
+INSERT INTO S ( SNO , SNAME , STATUS , CITY ) VALUES ( ‘S6’, .............. , ‘Madrid’ ) ;
+(The change is just in the target table name.) Observe now that the new row violates the constraint for view LS, because the city isn’t London. So what happens? By default, SQL will insert that row into base table S; precisely because it doesn’t satisfy the defining expression for view LS, however, it won’t be visible through that view. From the perspective of that view, in other words, the new row just drops out of sight (alternatively, we might say the INSERT is a “no op”─again, from the perspective of the view). Actually, however, what’s happened from the perspective of view LS is that The Assignment Principle has been violated.
+Now, I hope it goes without saying that the foregoing behavior is logically incorrect. It wouldn’t be tolerated in Tutorial D. As for SQL, the CHECK option is provided to address the problem: If (but only if) WITH CASCADED CHECK OPTION is specified for a given view, then updates to that view are required to conform to the defining expression for that view. Recommendation: Specify WITH CASCADED CHECK OPTION on view definitions whenever possible. Be aware, however, that SQL permits such a specification only if it regards the view as updatable,7 and (as previously noted) not all logically updatable views are regarded as such in SQL. Note: The alternative to CASCADED is LOCAL, but don’t use it. (The reason I say this is that the semantics of LOCAL are bizarre in the extreme─so bizarre, in fact, that (a) I don’t want to waste time and space and energy attempting to explain them here, and in any case (b) it’s hard to see why anyone would ever want such semantics. Indeed, it’s hard to resist the suspicion that LOCAL was included in the standard originally for no other reason than to allow
+7 And then only if the view defining expression isn’t possibly nondeterministic (see Chapter 12). Incidentally, note the implication here that SQL allows updates on “possibly nondeterministic views,” and the further implication that SQL is apparently quite willing to allow certain updates to have unpredictable results! This state of affairs strikes me as odd, given that (as far as I know) the rationale for not allowing possibly nondeterministic expressions in constraints was precisely to avoid updates having unpredictable results.
+Chapter 9 / SQL and Views 205
+ www.it-ebooks.info
+                206 Chapter 9 / SQL and Views
+certain flawed implementations, extant at the time, to be able to claim conformance.) It’s all right to specify neither
+CASCADED nor LOCAL, however, because CASCADED is the default.
+More on SQL
+As we’ve seen, SQL’s support for view updating is limited. It’s also extremely hard to understand!─in fact, the standard is even more impenetrable in this area than it usually is. The following extract from the 2003 version of the standard gives some idea of the complexities involved:
+[The] <query expression> QE1 is updatable if and only if for every <query expression> or <query specification> QE2 that is simply contained in QE1:
+a) QE1 contains QE2 without an intervening <query expression body> that specifies UNION DISTINCT, EXCEPT ALL, or EXCEPT DISTINCT.
+b) If QE1 simply contains a <query expression body> QEB that specifies UNION ALL, then:
+i) QEB immediately contains a <query expression> LO and a <query term> RO such that no leaf generally
+underlying table of LO is also a leaf generally underlying table of RO.
+ii) For every column of QEB, the underlying columns in the tables identified by LO and RO, respectively,
+are either both updatable or not updatable.
+c) QE1 contains QE2 without an intervening <query term> that specifies INTERSECT.
+d) QE2 is updatable.
+Here’s my own gloss on the foregoing extract:
+ The extract doesn’t seem to make sense, at least on the face of it. For one thing, the opening sentence says, in effect, that four conditions a), b), c), and d) have to be satisfied “for every ... QE2 that is simply contained in QE1”─yet item b) in particular doesn’t even mention QE2 (?). For another, a careful reading appears to indicate that the following <query expression> is updatable, which surely can’t be correct (I’m assuming here, not unreasonably, that columns X and Y are “both ... not updatable”):
+SELECT 2 * STATUS AS X FROM S
+UNION ALL
+SELECT 3 * QTY AS Y FROM SP
+ Next,evenifI’mwrongandtheextractdoesmakesense,notethatit(i.e.,theextract)statesjustoneofthe many rules that have to be taken in combination in order to determine whether a given view is updatable in SQL.
+ Therulesinquestionaren’tgivenallinoneplacebutarescatteredovermanydifferentportionsofthe standard.
+www.it-ebooks.info
+                Chapter 9 / SQL and Views 207  Allofthoserulesrelyonavarietyofadditionalconceptsandconstructs─e.g.,updatablecolumns,leaf
+generally underlying tables, <query term>s─that are in turn defined in still further portions of the standard.
+Because of such considerations, I won’t even attempt a precise characterization here of just which views SQL regards as updatable. Loosely speaking, however, they do at least include the following:
+1. Views defined as a restriction and/or projection of a single base table
+2. Views defined as a one to one or one to many join of two base tables (in the one to many case, only the many side is updatable)
+3. Views defined as a UNION ALL or INTERSECT of two distinct base tables
+4. Certain combinations of Cases 1-3 above
+But even these limited cases are treated incorrectly, thanks to SQL’s lack of understanding of (a) constraint
+inference, (b) The Golden Rule, and (c) The Assignment Principle, and thanks also to the fact that SQL permits nulls and duplicate rows. And the picture is complicated still further by the fact that SQL identifies four distinct cases: A view in SQL can be updatable, potentially updatable, simply updatable, or insertable into. Now, the standard defines these terms formally but gives no insight into their intuitive meaning or why they were given those names. However, I can at least say that “updatable” refers to UPDATE and DELETE and “insertable into” refers to INSERT, and a view can’t be insertable into unless it’s updatable.8 But note the suggestion that some views might permit some updates but not others (e.g., DELETEs but not INSERTs), and the further suggestion that it’s therefore possible that DELETE and INSERT might not be inverses of each other. Both of these facts, if facts they are, I regard as further violations of The Principle of Interchangeability.
+Regarding Case 1 above, however, I can be a little more precise. To be specific, an SQL view is certainly updatable if all of the following conditions are satisfied:
+ Thedefiningexpressioniseither(a)asimpleSELECTexpression(notaUNION,INTERSECT,orEXCEPT involving two such expressions) or (b) an “explicit table” (see Chapter 12) that’s logically equivalent to such an expression. Note: I’ll assume for simplicity in what follows that Case (b) is automatically converted to Case (a).
+ The SELECT clause in that SELECT expression specifies ALL, not DISTINCT.
+ Afterexpansionofany“asteriskstyle”items,everyitemintheSELECTitemcommalistisasimplecolumn
+name (possibly qualified, and possibly with an AS specification), and no such item appears more than once.
+ The FROM clause in that SELECT expression takes the form FROM T [AS ...], where T is the name of an updatable table (either a base table or an updatable view).
+8 The asymmetry here is intuitively odd. An argument might be made─not by me!─that you can do DELETEs but not INSERTs on a union view, because the delete rule is obvious (delete from both operands) but the insert rule isn’t (do we insert into both operands or just one─and if just one, which?). But an exactly analogous argument would surely say you can do INSERTs but not DELETEs on an intersection view (?). In other words, if some views are “deletable from but not insertable into,” then surely others must be “insertable into but not deletable from.”
+ www.it-ebooks.info
+                208 Chapter 9 / SQL and Views
+ The WHERE clause, if any, in that SELECT expression contains no subquery in which the FROM clause
+references T.
+ The SELECT expression has no GROUP BY or HAVING clause.
+Recommendation: Lobby the SQL vendors to improve their support for view updating as soon as possible. London vs. Non London Suppliers Revisited
+Consider the case of London vs. non London suppliers once again (relvars LS and NLS). By The Principle of Interchangeability, the behavior of these relvars, and indeed that of relvar S also, shouldn’t depend on which relvars if any are base ones and which if any are views. Until further notice, therefore, let’s suppose all three are base relvars:
+VARS BASERELATION{...}KEY{SNO}; VARLS BASERELATION{...}KEY{SNO}; VAR NLS BASE RELATION { ... } KEY { SNO } ;
+As the definitions show, {SNO} is a key for each of these relvars. The relvars are also clearly subject to the following constraints:
+CONSTRAINT ... LS = S WHERE CITY = ‘London’ ; CONSTRAINT ... NLS = S WHERE CITY ≠ ‘London’ ;
+What’s more, these constraints taken singly or together imply certain additional ones, as follows:
+CONSTRAINT ... IS_EMPTY ( LS WHERE CITY ≠ ‘London’ ) ; CONSTRAINT ... IS_EMPTY ( NLS WHERE CITY = ‘London’ ) ;
+CONSTRAINT ... S = UNION { LS , NLS } ;
+CONSTRAINT ... IS_EMPTY ( JOIN { LS { SNO } , NLS { SNO } } ) ;
+The first two of these additional constraints are self-explanatory; the third says every supplier is represented in either LS or NLS, and the fourth says no supplier is represented in both. (In other words, the union in the third constraint is actually a disjoint union, and the join in the fourth constraint is actually an intersection.)
+Now, in order to ensure these constraints remain satisfied when updates are done, certain compensatory actions need to be in effect. In general, a compensatory action is an additional update (over and above some update that’s requested by the user) that’s performed automatically by the DBMS, precisely in order to avoid some integrity violation that might otherwise occur. Cascade delete is a typical example (see Chapter 5).9 In the case at hand, in fact, it should be clear that “cascading” is exactly what we need to deal with DELETE operations in particular. To be specific, deleting a tuple from either LS or NLS clearly needs to “cascade” to cause that same tuple to be deleted from S. So we might imagine a couple of compensatory actions─actually cascade delete rules─that look something like this (hypothetical syntax):
+9 Cascade delete in particular is usually thought of as applying to foreign key constraints specifically, but the concept of compensatory actions in general is applicable to constraints of all kinds. Also, don’t get the idea that such actions must always take the form of simple “cascades”; while all of the examples examined in the present subsection do happen to take that form, more complicated cases are likely to require actions of some less straightforward form.
+ www.it-ebooks.info
+                ON DELETE ls FROM LS : DELETE ls FROM S ; ON DELETE nls FROM LS : DELETE nls FROM S ;
+Likewise, deleting a tuple from S clearly needs to “cascade” to cause that same tuple to be deleted from whichever of LS or NLS it appears in:
+ON DELETE s FROM S : DELETE ( s WHERE CITY = ‘London’ ) FROM LS , DELETE ( s WHERE CITY ≠ ‘London’ ) FROM NLS ;
+As an aside, I remark that, given that an attempt (via DELETE, as opposed to I_DELETE) to delete a nonexistent tuple has no effect─see Chapter 5─we could replace each of the expressions in parentheses here by just s. However, the expressions in parentheses are perhaps preferable, inasmuch as they’re clearly more specific.
+Analogously, we’ll need some compensatory actions (“cascade insert rules”) for INSERT operations:
+ON INSERT ls INTO LS : INSERT ls INTO S ;
+ON INSERT nls INTO LS : INSERT nls INTO S ;
+ON INSERT s INTO S : INSERT ( s WHERE CITY = ‘London’ ) INTO LS , INSERT ( s WHERE CITY ≠ ‘London’ ) INTO NLS ;
+As for UPDATE operations, they can be regarded, at least in the case at hand, as a DELETE followed by an INSERT; in other words, the necessary compensatory actions are just a combination of the corresponding delete and insert rules, loosely speaking. For example, consider the following UPDATE on relvar S:
+UPDATE S WHERE SNO = ‘S1’ : { CITY := ‘Oslo’ } ;
+What happens here is this:
+1. The existing tuple for supplier S1 is deleted from relvar S and (thanks to the cascade delete rule from S to LS) from relvar LS also.
+2. Another tuple for supplier S1, with CITY value Oslo, is inserted into relvar S and (thanks to the cascade insert rule from S to NLS) into relvar NLS also. In other words, the tuple for supplier S1 has moved from relvar LS to relvar NLS!─now speaking very loosely, of course.
+Suppose now that the original UPDATE had been directed at relvar LS rather than relvar S:
+UPDATE LS WHERE SNO = ‘S1’ : { CITY := ‘Oslo’ } ;
+Now what happens is this:
+1. The existing tuple for supplier S1 is deleted from relvar LS and (thanks to the cascade delete rule from LS to S) from relvar S also.
+2. An attempt is made to insert another tuple for supplier S1, with CITY value Oslo, into relvar LS. This attempt fails, however, because it violates the constraint on that relvar that the CITY value must always be
+www.it-ebooks.info
+Chapter 9 / SQL and Views 209
+                210 Chapter 9 / SQL and Views
+London. So the update fails overall; the first step (viz., deleting the original tuple for supplier S1 from LS
+and S) is undone, and the net effect is that the database remains unchanged.
+The foregoing examples notwithstanding, sometimes an UPDATE compensatory action will have to be specified explicitly. In the case of our usual suppliers and shipments relvars, for example, there might be a cascade delete rule from S to SP but (for obvious reasons) no corresponding cascade insert rule, and so we might want to specify an explicit update rule along the following lines:
+ON UPDATE s { SNO := sno } IN S :
+UPDATE ( SP MATCHING s ) { SNO := sno } IN SP ;
+Anyway, now I come to my real point: Everything I’ve said in this subsection so far applies pretty much unchanged if some or all of the relvars concerned are views. For example, suppose as we originally did that S is a base relvar and LS and NLS are views:
+VAR S BASE RELATION { ................. } KEY { SNO } ; VARLS VIRTUAL(SWHERECITY=‘London’)KEY{SNO}; VAR NLS VIRTUAL ( S WHERE CITY ≠ ‘London’ ) KEY { SNO } ;
+Now consider a user who sees only views LS and NLS, but wants to be able to behave as if those views were actually base relvars. Of course, that user will be aware of the corresponding relvar predicates, which as we saw earlier are essentially as follows:
+LS: Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY (which is London).
+NLS:Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY (which isn’t London).
+That same user will also be aware of the following constraints (as well as the fact that {SNO} is a key for both relvars):
+CONSTRAINT ... IS_EMPTY ( LS WHERE CITY ≠ ‘London’ ) ; CONSTRAINT ... IS_EMPTY ( NLS WHERE CITY = ‘London’ ) ; CONSTRAINT ... IS_EMPTY ( JOIN { LS { SNO } , NLS { SNO } } ) ;
+However, the user won’t be aware of any of the compensatory actions as such, precisely because that user isn’t aware that LS and NLS are actually views of relvar S; in fact, the user won’t even be aware of the existence of relvar S (which is why the user is also unaware of the constraint that the union of LS and NLS is equal to S). But updates by that user on relvars LS and NLS will all work correctly, just as if LS and NLS really were base relvars.
+What about a user who sees only view LS, say (i.e., not view NLS and not base relvar S), but still wants to behave as if LS were a base relvar? Well, that user will certainly be aware of the pertinent relvar predicate and the following constraint:
+CONSTRAINT ... IS_EMPTY ( LS WHERE CITY ≠ ‘London’ ) ;
+Clearly, this user mustn’t be allowed to insert tuples into this relvar, nor to update supplier numbers within this relvar, because such operations have the potential to violate constraints of which this user is unaware (and must be unaware). Again, however, there are parallels with base relvars as such: With base relvars in general, it’ll be the
+www.it-ebooks.info
+                case that certain users will be prohibited from performing certain updates on the relvar in question (e.g., consider a user who sees only base relvar SP and not base relvar S). So this state of affairs doesn’t in and of itself constitute a violation of The Principle of Interchangeability, either.
+One last point: Please understand that I’m not suggesting that the DBA should have to specify, explicitly, all of the various constraints and compensatory actions that apply in connection with any given view. Au contraire: In many cases if not all, I believe the DBMS should be able to determine those constraints and actions for itself, automatically, from the pertinent view definitions. Again, see the paper “How to Update Views” for further explanation.
+WHAT ARE VIEWS FOR?
+So far in this chapter, I’ve been tacitly assuming you already know what views are for─but now I’d like to say something about that topic nonetheless. In fact, views serve two rather different purposes:
+ TheuserwhoactuallydefinesviewVis,obviously,awareofthecorrespondingdefiningexpressionexp. Thus, that user can use the name V wherever the expression exp is intended; however, such uses are basically just shorthand, and are explicitly understood to be just shorthand by the user in question. (What’s more, the user in question is unlikely to request any updates on V─though if such updates are requested, they must perform as expected, of course.)
+ Bycontrast,auserwho’smerelyinformedthatVexistsandisavailableforuseissupposed(atleastideally) not to be aware of the expression exp; to that user, in fact, V is supposed to look and feel just like a base relvar, as I’ve already explained at length. And it’s this second use of views that’s the really important one, and the one I’ve been concentrating on, tacitly, throughout this chapter prior to this point.
+Logical Data Independence
+The second of the foregoing purposes is intimately related to the question of logical data independence. Recall from Chapter 1 that physical data independence means we can change the way the data is physically stored and accessed without having to make corresponding changes in the way the data is perceived by the user. Reasonably enough, then, logical data independence means we can change the way the data is logically stored and accessed without having to make corresponding changes in the way the data is perceived by the user. And it’s views that are supposed to provide that logical data independence.
+By way of example, suppose that for some reason (the precise reason isn’t important for present purposes) we wish to replace base relvar S by base relvars LS and NLS, as follows:
+VAR LS BASE RELATION /* London suppliers */
+{ SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } KEY { SNO } ;
+VAR NLS BASE RELATION /* non London suppliers */
+{ SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } KEY { SNO } ;
+As we saw earlier, the old relvar S is the disjoint union of the two new relvars LS and NLS (and LS and NLS are both restrictions of that old relvar S). So we can define a view that’s exactly that union, and name it S:
+VAR S VIRTUAL ( LS D_UNION NLS ) KEY { SNO } ;
+www.it-ebooks.info
+Chapter 9 / SQL and Views 211
+                212 Chapter 9 / SQL and Views
+(Note that now I’ve specified D_UNION instead of UNION, for explicitness.) Any expression that previously referred to base relvar S will now refer to view S instead. Assuming the system supports operations on views correctly─unfortunately a rather large assumption, given the state of today’s products─users will be immune to this particular change in the logical structure of the database.
+I note in passing that replacing the original suppliers relvar S by its two restrictions LS and NLS isn’t a totally trivial matter. In particular, something might have to be done about the shipments relvar SP, since that relvar has a foreign key that references the original suppliers relvar S. See Exercise 9.8 at the end of the chapter.
+VIEWS AND SNAPSHOTS
+Throughout this chapter, I’ve been using the term view in its original sense─the sense, that is, in which (in the relational context, at least) it was originally defined. Unfortunately, however, some terminological confusion has arisen in recent years: certainly in the academic world, and to some extent in the commercial world also. Recall that a view can be thought of as a derived relvar. Well, there’s another kind of derived relvar too, called a snapshot. As the name might tend to suggest, a snapshot, although it’s derived, is real, not virtual─meaning it’s represented not just by its definition in terms of other relvars, but also (at least conceptually) by its own separate copy of the data. For example (to invent some syntax on the fly):
+VAR LSS SNAPSHOT ( S WHERE CITY = ‘London’ ) KEY { SNO }
+REFRESH EVERY DAY ;
+Defining a snapshot is just like executing a query, except that:
+ Theresultofthequeryissavedinthedatabaseunderthespecifiedname(LSSintheexample)asa“read- only relvar” (read-only, that is, apart from the periodic refresh─see the bullet item immediately following).
+ Periodically(EVERYDAYintheexample)thesnapshotisrefreshed,meaningitscurrentvalueisdiscarded, the query is executed again, and the result of that new execution becomes the new snapshot value. (Of course, other REFRESH options are possible: for example, EVERY MONDAY, EVERY 5 MINUTES, EVERY MONTH, and so on.)
+In the example, therefore, snapshot LSS represents the data as it was at most 24 hours ago.
+Snapshots are important in data warehouses, distributed systems, and many other contexts. In all such cases, the rationale is that applications can often tolerate─in some cases even require─data “as of” some particular point in
+time. Reporting and accounting applications are a case in point; such applications typically require the data to be frozen at an appropriate moment (for example, at the end of an accounting period), and snapshots allow such freezing to occur without locking out other applications.
+So far, so good. The problem is, snapshots have come to be known (at least in some circles) not as snapshots at all but as materialized views. But they aren’t views! Views aren’t supposed to be materialized at all;10 as we’ve seen, operations on views are supposed to be implemented by mapping them into suitable operations on the underlying relvars. Thus, “materialized view” is simply a contradiction in terms. Worse yet, the unqualified term view is now often taken to mean a “materialized view” specifically─again, at least in some circles─and so we’re in danger of no longer having a good term to mean a view in the original sense. In this book I do use the term view in
+10 Despite the fact that, as we saw earlier, there’s at least one product on the market that does materialize them at least some of the time.
+ www.it-ebooks.info
+                its original sense, but be warned that it doesn’t always have that meaning elsewhere. Recommendations: Never use the term view, unqualified, to mean a snapshot; never use the term materialized view; and watch out for violations of these recommendations on the part of others!
+EXERCISES
+9.1 Define a view consisting of supplier-number / part-number pairs for suppliers and parts that aren’t colocated. Give both Tutorial D and SQL definitions.
+9.2 Let view LSSP be defined as follows (SQL):
+CREATE VIEW LSSP AS ( SELECT SNO , SNAME , STATUS , PNO , QTY FROM S NATURAL JOIN SP
+WHERE CITY = ‘London’ ) ;
+Here’s a query on this view:
+SELECT DISTINCT STATUS , QTY FROM LSSP
+WHERE PNO IN ( SELECT PNO FROM P WHERE CITY <> ‘London’ )
+What might the query that’s actually executed on the underlying base tables look like?
+9.3 What key(s) does view LSSP from Exercise 9.2 have? What’s the predicate for that view?
+9.4 Given the following Tutorial D view definition─
+VAR HP VIRTUAL ( P WHERE WEIGHT > 14.0 ) KEY { PNO } ;
+─show the converted form after the substitution procedure has been applied for each of the following expressions and statements:
+a. HP WHERE COLOR = ‘Green’
+b. (EXTENDHP:{W:=WEIGHT+5.3}){PNO,W}
+c. INSERT HP RELATION { TUPLE { PNO ‘P9’ , PNAME ‘Screw’ , WEIGHT 15.0 , COLOR ‘Purple’ , CITY ‘Rome’ } } ;
+d. DELETE HP WHERE WEIGHT < 9.0 ;
+e. UPDATE HP WHERE WEIGHT = 18.0 : { COLOR := ‘White’ } ;
+9.5 Give SQL solutions to Exercise 9.4.
+9.6 Give as many reasons as you can think of for wanting to be able to declare keys for a view.
+www.it-ebooks.info
+Chapter 9 / SQL and Views 213
+                214 Chapter 9 / SQL and Views
+9.7 Using either the suppliers-and-parts database or any other database you happen to be familiar with, give some further examples (over and above the London vs. non London suppliers example, that is) to illustrate the point that which relvars are base and which virtual is largely arbitrary.
+9.8 In the body of the chapter, in the discussion of logical data independence, I discussed the possibility of restructuring─i.e., changing the logical structure of─the suppliers-and-parts database by replacing base relvar S by two of its restrictions (LS and NLS). However, I also observed that such a replacement wasn’t a completely trivial matter. Why not?
+9.9 Investigate any SQL product available to you:
+a. Are there any apparently legitimate queries on views that fail in that product? If so, state as precisely as you can which ones they are. What justification does the vendor offer for failing to provide full support?
+b. What updates on what views does that product support? Be as precise as you can in your answer. Are the view updating rules in that product identical to those in the SQL standard?
+c. More generally, in what ways─there will be some!─does that product violate The Principle of Interchangeability?
+9.10 Distinguish between views and snapshots. Does SQL support snapshots? Does any product that you’re aware of?
+9.11 What’s a “materialized view”? Why is the term deprecated?
+9.12 Consider the suppliers-and-parts database, but ignore the parts relvar for simplicity. Here in outline are two
+possible designs for suppliers and shipments:
+a. S {SNO,SNAME,STATUS,CITY} SP { SNO , PNO , QTY }
+b. SSP{SNO,SNAME,STATUS,CITY,PNO,QTY} XSS { SNO , SNAME , STATUS , CITY }
+Design a. is as usual. In Design b., by contrast, relvar SSP contains a tuple for every shipment, giving the applicable part number and quantity and full supplier details, and relvar XSS contains supplier details for suppliers who supply no parts at all. (Are these designs information equivalent?) Write view definitions to express Design b. as views over Design a. and vice versa. Also, show the applicable constraints for each design. Does either design have any obvious advantages over the other? If so, what are they?
+9.13 Following on from the previous exercise: In the body of the chapter, I said two database designs were information equivalent if they represented the same information (meaning that for every query on one, there’s a logically equivalent query on the other). But can you pin down this notion more precisely?
+9.14 Views are supposed to provide logical data independence. But didn’t I say in Chapter 6 that a hypothetical mechanism called “public tables” was supposed to perform that task? How do you account for the discrepancy?
+www.it-ebooks.info

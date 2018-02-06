@@ -1,0 +1,270 @@
+Appendix G: Suggestions for Further Reading
+
+As the title says, this appendix gives some suggestions for further reading. Let me immediately apologize for the fact that so many of the publications listed are ones for which I’m either the author or a coauthor ... The publications are listed in alphabetical order by author and chronological order within author. Note: This book isn’t concerned with specific SQL products, and I therefore don’t mention any specific product publications in this appendix. But many such publications exist, and you’ll probably want to refer to one or more of them as well if you want to apply the ideas discussed in the present book to some individual project or product.
+
+1. Surajit Chaudhuri and Gerhard Weikum: “Rethinking Database System Architecture: Towards a Self-Tuning RISC-style Database System,” Proc. 26th Int. Conf. on Very Large Data Bases, Cairo, Egypt (September 2000).
+
+Among other things, this paper strongly endorses one of the messages of the present book: viz., that (as I put it in the preface) “SQL is complicated, confusing, and error prone (much more so, I venture to suggest, than its apologists would have you believe).” Here’s an extract from the introduction to the paper:
+
+SQL is painful. A big headache that comes with a database system is the SQL language. It is the union of all conceivable features (many of which are rarely used or should be discouraged to use anyway) and is way too complex for the typical application developer. Its core, say selection-projection-join queries and aggregation, is extremely useful, but we doubt that there is wide and wise use of all the bells and whistles. Understanding semantics of SQL (not even of SQL-92), covering all combinations of nested (and correlated) subqueries, null values, triggers, etc. is a nightmare. Teaching SQL typically focuses on the core, and leaves the featurism as a “learning-on-the-job” life experience.
+
+2. Donald D. Chamberlin and Raymond F. Boyce: “SEQUEL: A Structured English Query Language,” Proc. 1974 ACM SIGMOD Workshop on Data Description, Access, and Control, Ann Arbor, Mich. (May 1974).
+
+This is the paper that first introduced the SQL language (or SEQUEL ─ Structured English QUEry Language ─ as it was originally called; the name was subsequently changed for legal reasons). There are some interesting differences between SEQUEL as described in this paper and SQL as generally understood today. Here are some of them:
+
+- There were no nulls.
+
+- Although the SELECT clause was supported, the “SELECT *” form didn’t exist. Thus, for example, to obtain all suppliers in London, you just wrote S WHERE CITY = ‘London’ ─ and to obtain all suppliers, you just wrote S.
+
+- Duplicates were eliminated by default (though not in “set functions”).
+
+- The FROM clause always contained exactly one table name. In other words, what I called in Chapter 6 “the only [form of join] supported in SQL as originally defined” wasn’t supported at all in SEQUEL as originally defined!
+
+- The right comparand in a comparison in a WHERE clause was allowed to be a subquery (though the term subquery didn’t exist ─ the construct was called a mapping instead), in which case the comparison was in fact an ANY or ALL comparison. ANY was the default, and could only be specified implicitly. IN syntax as such was not supported; “=” (meaning, by default, “=ANY”) was used instead.
+
+- Set comparison operators (inclusion, etc.) were supported.
+
+- There was no GROUP BY clause as such; instead, GROUP BY could be specified as an option on the FROM
+clause.
+
+- There was no HAVING clause; “set functions” could be invoked in the WHERE clause instead.
+
+- There were no correlation names. Instead, “blocks” (apparently another term for mappings in the sense explained above) could be labeled, and block labels could be used as dot qualifiers.
+
+- Expressions such as QTY / AVG(QTY) ─ i.e., expressions involving “set function” invocations, as well as simple column references and the like ─ were legal in the SELECT clause, and presumably in the WHERE clause also.
+
+- “Mappings” could be combined by means of intersection, union, and difference (and these operators were denoted by conventional mathematical symbols instead of English keywords).
+
+The paper also discusses several perceived differences between SEQUEL and the relational calculus, claiming in every case an advantage for SEQUEL over the calculus. However, the differences and claims in question don’t really stand up to careful analysis.
+
+3. E. F. Codd: “Derivability, Redundancy, and Consistency of Relations Stored in Large Data Banks,” IBM Research Report RJ599 (August 19th, 1969); “A Relational Model of Data for Large Shared Data Banks,” CACM 13, No. 6 (June 1970). Note: The first of these papers was reprinted in ACM SIGMOD Record 38, No. 1 (March 2009); the second was reprinted in Milestones of Research ─ Selected Papers 1958–1982 (CACM 25th Anniversary Issue), CACM 26, No. 1 (January 1983) and elsewhere.
+
+The 1969 paper was Codd’s very first paper on the relational model; essentially, it’s a preliminary version of the 1970 paper, with a few interesting differences (the main one being that the 1969 paper permitted relation valued attributes while the 1970 one didn’t). That 1970 paper was the first widely available paper on the subject. It’s usually credited with being the seminal paper in the field, though that characterization is a little unfair to its 1969 predecessor. I would like to suggest, politely, that every database professional should read one or both of these papers every year.
+
+4. E. F. Codd: “Relational Completeness of Data Base Sublanguages,” in Randall J. Rustin (ed.), Data Base Systems, Courant Computer Science Symposia Series 6. Englewood Cliffs, N.J.: Prentice Hall (1972).
+
+This is the paper in which Codd first formally defined the original relational algebra and relational calculus. Not an easy read, but it repays careful study.
+
+5. E. F. Codd and C. J. Date: “Much Ado about Nothing,” in C. J. Date, Relational Database Writings 1991–1994. Reading, Mass.: Addison-Wesley (1995).
+
+Codd was perhaps the foremost advocate of nulls and three-valued logic as a basis for dealing with missing information (a curious state of affairs, you might think, given that nulls violate Codd’s own Information Principle). This article contains the text of a debate between Codd and myself on the subject. It includes the following delightful remark: “Database management would be easier if missing values didn’t exist” (Codd). Note: I include this particular reference, out of a huge number of available publications on the topic, because it does at least touch on most of the arguments on both sides of the issue.
+
+6. Hugh Darwen: “The Role of Functional Dependence in Query Decomposition,” in C. J. Date and Hugh Darwen, Relational Database Writings 1989–1991. Reading, Mass.: Addison-Wesley (1992).
+
+This paper gives a set of inference rules by which functional dependencies (FDs) satisfied by the relation r denoted by an arbitrary relational expression can be inferred from those holding for the relvar(s) referenced in the expression in question. The set of FDs thus inferred can then be inspected to determine the key constraints satisfied by r, thus providing a basis for the key inference rules mentioned in passing in Chapter 4 of the present book.
+
+7. Hugh Darwen: “What a Database Really Is: Predicates and Propositions,” in C. J. Date, Relational Database Writings 1994–1997. Reading, Mass.: Addison-Wesley (1998).
+
+A very readable tutorial on relvar predicates and related matters.
+
+8. Hugh Darwen: “The Decomposition Approach,” in reference [39]. Note: This paper is based on an earlier presentation titled “How to Handle Missing Information Without Using Nulls,” the slides for which can be found at www.thethirdmanifesto.com (May 9th, 2003; revised May 16th, 2005).
+
+Appendix B of the present book is based on this paper.
+
+9. C. J. Date: “Fifty Ways to Quote Your Query,” www.dbpd.com (July 1998).
+
+A discussion of redundancy in the SQL language.
+
+10. C. J. Date: “Composite Keys,” in C. J. Date and Hugh Darwen, Relational Database Writings 1989-1991. Reading, Mass.: Addison-Wesley (1992).
+
+Among other things, this paper includes a discussion of the pros and cons of surrogate keys.
+
+11. C. J. Date: An Introduction to Database Systems (8th edition). Boston, Mass.: Addison-Wesley (2004).
+
+A college level text on all aspects of database management. SQL discussions are at the SQL:1999 level, with a few comments on SQL:2003; in particular, they include a detailed discussion of SQL’s “object/relational” features (REF types, reference values, and so on), explaining why they violate relational principles. Note: Other textbooks covering similar territory are references [42], [52], and [53].
+
+12. C. J. Date: The Relational Database Dictionary, Extended Edition. Berkeley, Calif.: Apress (2008). 
+
+Many of the definitions given in the body of the present book are based on ones in this reference.
+
+13. C. J. Date: “Double Trouble, Double Trouble,” in reference [20].
+
+An extensive and detailed treatment of the problems caused by duplicates. The discussion of duplicates in Chapter 4 of the present book is based in large part on an example from this paper.
+
+14. C. J. Date: “What First Normal Form Really Means,” in reference [20].
+
+First normal form has been the subject of much misunderstanding over the years. This paper is an attempt to set the record straight ─ even to be definitive, as far as possible. The crux of the argument, as indicated in Chapter 2 of the present book, is that the concept of atomicity (in terms of which first normal form was originally defined) has no absolute meaning.
+
+15. C. J. Date: “A Sweet Disorder,” in reference [20].
+
+Relations don’t have a left to right ordering to their attributes, but SQL tables do have such an ordering to their columns. This paper explores some of the consequences of this state of affairs, which turn out to be much less trivial than many seem to think. (Many of the recommendations in the present book have to do with techniques for behaving as if the state of affairs in question didn’t exist after all.)
+
+16. C. J. Date: “On the Notion of Logical Difference,” “On the Logical Difference Between Model and Implementation,” and “On the Logical Differences Between Types, Values, and Variables,” all in reference [20].
+
+The titles say it all.
+
+17. C. J. Date: “Two Remarks on SQL’s UNION,” in reference [20].
+
+This short paper describes some of the weirdnesses that arise in connection with SQL’s UNION operator (and by implication its INTERSECT and EXCEPT operators as well) from (a) coercions and (b) duplicate rows.
+
+18. C. J. Date: “A Cure for Madness,” in reference [20].
+
+A detailed examination of the fact that, very counterintuitively, the SQL expressions 
+
+SELECT sic FROM ( SELECT * FROM t WHERE p ) WHERE q
+
+and
+
+SELECT sic FROM t WHERE p AND q
+
+aren’t always logically equivalent ─ even though they ought to be, and even though at least one current SQL product does sometimes transform the former into the latter. Note: For simplicity I choose to ignore the fact that the standard would actually require the subquery in the FROM clause in the first of the foregoing expressions to be accompanied by an AS specification.
+
+19. C. J. Date: “Why Three- and Four-Valued Logic Don’t Work,” in reference [20].
+
+As noted in the body of the present book, SQL’s null support is based on three-valued logic. Actually its implementation of that logic is seriously flawed ─ but even if it weren’t, it would still be advisable not to use it, and this paper explains why.
+
+20. C. J. Date: Date on Database: Writings 2000–2006. Berkeley, Calif.: Apress (2006).
+
+21. C. J. Date: “The Logic of View Updating,” in reference [24].
+
+This paper offers evidence in support of the claim that views are always logically updatable, modulo possible violations of either The Assignment Principle or The Golden Rule. See also the annotation to reference [25].
+
+22. C. J. Date: “The Closed World Assumption,” in reference [24].
+
+The Closed World Assumption is seldom articulated, and yet it forms the basis of almost everything we do when we use a database. This paper examines that assumption in detail; in particular, it shows why it’s preferred to its rival, The Open World Assumption (on which the “semantic web” is based, incidentally ─ or so it has been claimed).
+
+23. C. J. Date: “The Theory of Bags: An Investigative Tutorial,” in reference [24].
+
+Among other things, this paper discusses what happens to operators like union when their operands are bags instead of sets.
+
+24. C. J. Date: Logic and Databases: The Roots of Relational Theory. Victoria, BC: Trafford Publishing (2007). See www.trafford.com/07-0690.
+
+25. C. J. Date: “How to Update Views,” in reference [39].
+
+The problem of (a) updating base relvars appropriately in order to support updates on views is, abstractly, the same problem as (b) the problem of updating stored data appropriately in order to support updates on base relvars. They just show up at different points in the overall system architecture, that’s all. It follows that we must solve this problem, for otherwise we have to give up on the goal of data independence. (Note, therefore, that logical and physical data independence are really the same problem, too; they differ only in that they too show up at different points in the overall architecture.) This paper elaborates on the idea, briefly discussed in Chapter 9, that a fruitful way to think about view updating in general is to consider what would happen if the view in question were defined as a base relvar instead, living alongside (as it were) the base relvar(s) in terms of which it’s defined, with constraints interrelating the two.
+
+Note: Unfortunately, certain details of the foregoing paper are slightly incorrect, though not seriously so. My most recent thoughts on the topic can be found in a slide presentation with the title “The View Updating Problem: Notes toward a Proposed Solution.” I plan to publish a paper based on this presentation as soon as possible.
+
+26. C. J. Date: “Inclusion Dependencies and Foreign Keys,” in reference [39].
+
+An alternative title for this paper might be “Rethinking Foreign Keys”; it demonstrates among other things that the foreign key notion encompasses far more than it’s usually given credit for. It also includes a detailed discussion of the logical differences between foreign keys and pointers. (As noted in passing in Chapter 2 of the present book, some writers have claimed that foreign keys are nothing more than traditional pointers in sheep’s clothing, but such is not the case.)
+
+27. C. J. Date: “Image Relations,” in reference [39].
+
+28. C. J. Date: “N-adic vs. Dyadic Operators: An Investigation,” in reference [39].
+
+Tutorial D supports n-adic versions of several relational operators ─ union, join, and so on ─ that are more usually considered to be dyadic operators merely. This paper examines the twin questions of (a) what makes it possible to define an n-adic version of some dyadic operator and (b) how such n-adic versions can sensibly be defined.
+
+29. C. J. Date: “A Remark on Prenex Normal Form,” in reference [39].
+
+30. C. J. Date: “Is SQL’s Three-Valued Logic Truth Functionally Complete?”, in reference [39].
+
+Among other things, this paper includes a comprehensive description of SQL’s support for nulls and three-valued logic.
+
+31. C. J. Date: Normal Forms and All That Jazz: A Database Professional’s Guide to Database Design Theory (to appear).
+
+Design theory is the scientific foundation for database design, just as the relational model is the scientific foundation for database technology in general. This book, a companion to the present book, is a tutorial on database design theory (normalization, orthogonality, and related matters) for database professionals.
+
+32. C. J. Date: Go Faster! The TransRelational Approach to DBMS Implementation (to appear).
+
+A detailed description of The TransRelational Model, a novel implementation technology mentioned briefly in Appendix A of the present book. Note: A short (and very incomplete) introduction to that technology can also be found in Appendix A of reference [11].
+
+33. C. J. Date and Hugh Darwen: A Guide to the SQL Standard (4th edition). Reading, Mass.: Addison-Wesley (1997).
+
+This book provides thorough coverage of the SQL standard as of early 1997. Numerous features have been added to the standard since that time (including the so called object/relational features (see reference [11]), but they’re mostly irrelevant so far as the goal of using SQL relationally is concerned. In my not unbiased opinion, therefore, the book is a good source for more detail on just about every aspect of SQL ─ at least in its standard incarnation ─ touched on in the body of the present book.
+
+34. C. J. Date and Hugh Darwen: Databases, Types, and the Relational Model: The Third Manifesto (3rd edition). Boston, Mass.: Addison-Wesley (2006).
+
+This book introduces and explains The Third Manifesto, a detailed proposal for the future of data and database management systems. It includes a precise though somewhat formal definition of the relational model; it also includes a detailed proposal for the necessary supporting type theory (including a comprehensive model of type inheritance).
+
+35. C. J. Date and Hugh Darwen: “Multiple Assignment,” in reference [20].
+
+36. C. J. Date and Hugh Darwen: “The Third Manifesto,” in reference [39].
+
+This paper (Chapter 1 of reference [39]) presents the very latest version of The Third Manifesto. It consists for the most part of a revised version of the pertinent chapter from reference [34].
+
+37. C. J. Date and Hugh Darwen: “Tutorial D,” in reference [39].
+
+This paper provides a comprehensive description of the most recent version of Tutorial D (which is the version used in examples in the present book). Note: The website www.thethirdmanifesto.com gives information regarding a variety of existing Tutorial D implementations, as well as other projects related to proposals of The Third Manifesto.
+
+38. C. J. Date and Hugh Darwen: “Toward an Industrial Strength Dialect of Tutorial D,” in reference [39].
+
+A proposal for upgrading Tutorial D to make it more suitable for commercial implementation. Certain of the ideas from this proposal (including in particular image relations and foreign key support) have been assumed in the body of this book.
+
+39. C. J. Date and Hugh Darwen: Database Explorations: Essays on The Third Manifesto and Related Matters. Bloomington, Ind.: Trafford Publishing (2010). See www.trafford.com/Bookstore/.
+
+40. C. J. Date, Hugh Darwen, and Nikos A. Lorentzos: Temporal Data and the Relational Model. San Francisco, Calif.: Morgan Kaufmann (2003).
+
+Some indication of what this book covers can be found in Appendix A of the present book.
+
+41. C. J. Date and David McGoveran: “Why Relational DBMS Logic Must Not Be Many-Valued,” in reference [24].
+
+This paper presents a series of logical arguments in support of the position that database languages should be based (like the relational model, but unlike SQL) on two-valued logic.
+
+42. Ramez Elmasri and Shamkant Navathe: Fundamentals of Database Systems (4th edition). Boston, Mass.: Addison-Wesley (2004).
+
+43. Stéphane Faroult with Peter Robson: The Art of SQL. Sebastopol, Calif.: O’Reilly Media Inc. (2006). 
+
+A practitioner’s guide on how to use SQL to get good performance in currently available products. The following lightly edited list of subtitles from the book’s twelve chapters gives some idea of the scope:
+
+1. Designing Databases for Performance
+
+2. Accessing Databases Efficiently
+
+3. Indexing
+
+4. Understanding SQL Statements
+
+5. Understanding Physical Implementation
+
+6. Classic SQL Patterns
+
+7. Dealing with Hierarchic Data
+
+8. Difficult Cases
+
+9. Concurrency
+
+10. Large Data Volumes
+
+11. Response Times
+
+12. Monitoring Performance
+
+The book doesn’t deviate much from relational principles in its suggestions and recommendations ─ in fact, it explicitly advocates adherence to those principles, for the most part. But it also recognizes that today’s optimizers are less than perfect; thus, it gives guidance on how to choose the specific SQL formulation for a given problem, out of many logically equivalent formulations, that’s likely to perform best (and it explains why). It also describes a few coding tricks that can help performance, such as using MIN to determine that all entries in a yes/no column are yes (instead of doing an explicit existence test for no). On the question of hints to the optimizer (which many products do support), it includes the following wise words: “The trouble with hints is that they are more imperative than their name suggests, and every hint is a gamble on the future ─ a bet that circumstances, volumes, database algorithms, hardware and the rest will evolve in such a way that [the] forced execution path will forever remain, if not absolutely the best, at least acceptable ... Remember that you should heavily document anything that forces the hand of the DBMS.”
+
+44. Patrick Hall, Peter Hitchcock, and Stephen Todd: “An Algebra of Relations for Machine Computation,” Conf. Record of the 2nd ACM Symposium on Principles of Programming Languages, Palo Alto, Calif. (January 1975).
+
+This paper is perhaps a little “difficult,” but I think it’s important. Tutorial D and the version of the relational algebra I’ve described in this book both have their roots in this paper.
+
+45. G. D. Held, M. R. Stonebraker, and E. Wong: “INGRES ─ A Relational Data Base System,” Proc. NCC 44, Anaheim, Calif. Montvale, N.J.: AFIPS Press (May 1975).
+
+There were two major relational prototypes under development in the mid to late 1970s ─ System R at IBM, and Ingres (originally INGRES, all uppercase) at the University of California at Berkeley. Unlike System R, Ingres was not originally an SQL system; instead, it supported a language called QUEL (“Query Language”), which was based on relational calculus and in many ways was technically superior to SQL. This paper, which was the first to describe the Ingres prototype, includes a preliminary definition of QUEL.
+
+46. Jim Gray and Andreas Reuter: Transaction Processing: Concepts and Techniques. San Mateo, Calif.: Morgan Kaufmann (1993).
+
+The standard text on transaction management.
+
+47. Lex de Haan and Toon Koppelaars: Applied Mathematics for Database Professionals. Berkeley, Calif.: Apress (2007).
+
+Among other things, this book includes an extensive set of identities (here called rewrite rules) that can be used as in Chapter 11 of the present book to help with the formulation of complex SQL expressions. It also shows how to implement integrity constraints by means of procedural code (if necessary! ─ see Chapter 8 of the present book). Recommended.
+
+48. Wilfrid Hodges: Logic. London, England: Penguin Books (1977). A gentle introduction to logic for the uninitiated.
+
+49. International Organization for Standardization (ISO): Database Language SQL, Document ISO/IEC 9075:2008 (2008).
+
+The official SQL standard (2008 version). Note that it is indeed an international standard, not just (as so many seem to think) an American or “ANSI” standard. Note too that although SQL:2008 is the current version of the standard, almost all of the SQL features discussed in the present book were already included in SQL:2003 or SQL:1999; in fact, most of them were included in SQL:1992 or even earlier versions.
+
+50. David McGoveran: “Nothing from Nothing” (in four parts), in C. J. Date, Hugh Darwen, and David McGoveran, Relational Database Writings 1994-1997. Reading, Mass.: Addison-Wesley (1998).
+
+This paper is referenced in Appendix B of the present book.
+
+51. Jim Melton and Alan R. Simon: SQL:1999 ─ Understanding Relational Components; Jim Melton: Advanced SQL:1999 ─ Understanding Object-Relational and Other Advanced Features. San Francisco, Calif.: Morgan Kaufmann (2002 and 2003, respectively).
+
+As mentioned in Chapter 1, the SQL standard has been through several versions over the years ─ the current version is SQL:2008 [49], the previous version was SQL:2003, the one before that was SQL:1999, and the one before that was SQL:1992. So far as I know, these two books are the only ones available that cover, between them, any version later than SQL:1992. Melton was the editor of the SQL standard for many years.
+
+52. Raghu Ramakrishnan and Johannes Gehrke: Database Management Systems (3rd edition). New York, N.Y.: McGraw-Hill (2003).
+
+53. Avi Silberschatz, Henry F. Korth, and S. Sudarshan: Database System Concepts (5th edition). New York, N.Y.: McGraw-Hill (2005).
+
+54. Robert R. Stoll: Sets, Logic, and Axiomatic Theories. San Francisco, Calif.: W. H. Freeman and Company (1961).
+
+The relational model is solidly founded on logic and set theory. This book provides a fairly formal but not too difficult introduction to these topics. Note: For a less formal introduction, see the book by Hodges [48].
+
+55. Dave V oorhis: Rel. http://db@builder.sourceforge.net/rel.html.
+
+Downloadable code for Rel, a prototype implementation of (a dialect of) Tutorial D.
+
+56. Moshé M. Zloof: “Query-By-Example,” Proc. NCC 44, Anaheim, Calif. (May 1975). Montvale, N.J.: AFIPS Press (1977).
+
+Query-By-Example (QBE) is a nice illustration of the fact that it’s entirely possible to produce a very “user friendly” language based on relational calculus instead of relational algebra. (In the interest of accuracy, however, I should note that QBE is really based more on the domain calculus than it is on the tuple calculus, which is the version of the calculus discussed in the body of this book.) Zloof was the original inventor and designer of QBE, and this paper was the first of many by Zloof on the subject.

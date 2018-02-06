@@ -1,0 +1,627 @@
+Chapter 1: Setting the Scene
+
+My soul, sit thou a patient looker-on;
+Judge not the play before the play is done;
+Her plot hath many changes; every day
+Speaks a new scene; the last act crowns the play.
+─ Francis Quarles: Emblems (1635)
+
+A relational approach to SQL: That’s the theme, or one of the themes, of this book. Of course, to treat such a topic adequately, I need to cover relational issues as well as issues of SQL per se ─ and while this remark obviously applies to the book as a whole, it applies to this first chapter with special force. As a consequence, this chapter has comparatively little to say about SQL as such. What I want to do is review material that for the most part, at any rate, I hope you already know. My intent is to establish a point of departure, as it were: in other words, to lay some groundwork on which the rest of the book can build. But even though I hope you’re familiar with most of what I have to say in this chapter, I’d like to suggest, respectfully, that you not skip it. You need to know what you need to know (if you see what I mean); in particular, you need to be sure you have the prerequisites needed to understand the material to come in later chapters. In fact I’d like to recommend, politely, that throughout the book you not skip the discussion of some topic just because you think you’re familiar with that topic already. For example, are you absolutely sure you know what a key is, in relational terms? Or a join [1]?
+
+THE RELATIONAL MODEL IS MUCH MISUNDERSTOOD
+
+Professionals in any discipline need to know the foundations of their field. So if you’re a database professional, you need to know the relational model, because the relational model is the foundation (or a large part of the foundation, at any rate) of the database field in particular. Now, every course in database management, be it academic or commercial, does at least pay lip service to the idea of teaching the relational model ─ but most of that teaching seems to be done very badly, if results are anything to go by. Certainly the model isn’t well understood in the database community at large. Here are some possible reasons for this state of affairs:
+
+- The model is taught in a vacuum. That is, for beginners at least, it’s hard to see the relevance of the material, or it’s hard to understand the problems it’s meant to solve, or both.
+
+- The instructors themselves don’t fully understand or appreciate the significance of the material.
+
+- Perhaps most likely in practice, the model as such isn’t taught at all ─ the SQL language, or some specific dialect of that language, such as the Oracle dialect, is taught instead.
+
+So this book is aimed at database practitioners in general, and SQL practitioners in particular, who have had some exposure to the relational model but don’t know as much about it as they ought to, or would like to. It’s definitely not meant for beginners; however, it isn’t just a refresher course, either. To be more specific, I’m sure you know something about SQL; but ─ and I apologize for the possibly offensive tone here ─ if your knowledge of the relational model derives only from your knowledge of SQL, then I’m afraid you won’t know the relational model as well as you should, and you’ll probably know “some things that ain’t so.” I can’t say it too strongly: SQL and the relational model aren’t the same thing. Here by way of illustration are some relational issues that SQL isn’t too clear on (to put it mildly):
+
+- What databases, relations, and tuples really are
+
+- The difference between relation values and relation variables 
+
+- The relevance of predicates and propositions
+
+- The importance of attribute names
+
+- The crucial role of integrity constraints
+
+- The Information Principle and its significance
+
+and so on (this isn’t an exhaustive list). All of these issues, and many others, are addressed in this book.
+
+I say again: If your knowledge of the relational model derives only from your knowledge of SQL, then you might know “some things that ain’t so.” One consequence is that you might find, in reading this book, that you have to do some unlearning ─ and unlearning, unfortunately, is very hard to do.
+
+SOME REMARKS ON TERMINOLOGY
+
+You probably noticed right away, in that bullet list of relational issues in the previous section, that I used the formal terms relation, tuple (usually pronounced to rhyme with couple), and attribute. SQL doesn’t use these terms, of course ─ it uses the more “user friendly” terms table, row, and column instead. And I’m generally sympathetic to the idea of using more user friendly terms, if they can help make the ideas more palatable. In the case at hand, however, it seems to me that, regrettably, they don’t make the ideas more palatable; instead, they distort them, and in fact do the cause of genuine understanding a grave disservice. The truth is, a relation is not a table, a tuple is not a row, and an attribute is not a column. And while it might be acceptable to pretend otherwise in informal contexts ─ indeed, I often do so myself ─ I would argue that it’s acceptable only if we all understand that the more user friendly terms are just an approximation to the truth and fail overall to capture the essence of what’s really going on. To put it another way: If you do understand the true state of affairs, then judicious use of the user friendly terms can be a good idea; but in order to learn and appreciate that true state of affairs in the first place, you really do need to come to grips with the formal terms. In this book, therefore, I’ll tend to use those formal terms (at least when I’m talking about the relational model as opposed to SQL), and I’ll give precise definitions for them at the relevant juncture. In SQL contexts, by contrast, I’ll use SQL’s own terms.
+
+And another point on terminology: Having said that SQL tries to simplify one set of terms, I must say too that it does its best to complicate another. I refer to its use of the terms operator, function, procedure, routine, and method, all of which denote essentially the same thing (with, perhaps, very minor differences). In this book I’ll use the term operator throughout; thus, for example, I’ll refer to “=” (equality comparison), “:=” (assignment), “+” (addition), DISTINCT, JOIN, SUM, GROUP BY (etc., etc.) all as operators specifically.
+
+Talking of SQL, incidentally, let me remind you that (as stated in the preface) I use that term to mean the standard version of the language exclusively, except in a few places where the context demands otherwise [2]. However:
+
+- The standard’s use of terminology is sometimes not very apt. In such situations, I generally prefer to use terminology of my own. For example, I use the term table expression in place of the standard term query expression, for the following reasons among others: First, the value such expressions denote is indeed a table and not a query; second, queries aren’t the only context in which such expressions are used anyway. (As a matter of fact the standard does use the term table expression, but again it does so quite inappropriately; to be specific, it uses it to refer to what comes after the SELECT clause in a SELECT expression.)
+
+- Following on from the previous point, I should add that not all table expressions ─ in either my sense or the standard’s ─ are legal in SQL in all contexts where they might be expected to be. In particular, an explicit JOIN invocation, although it certainly does denote a table, can’t appear as a “stand alone” table expression (i.e., at the outermost level of nesting), nor can it appear as the table expression in parentheses that constitutes a subquery (see Chapter 12) [3]. Please note that these remarks apply to many of the individual discussions in the body of the book; it would be very tedious to keep on repeating them, however, and I won’t. (They’re reflected in the BNF grammar in Chapter 12, however.)
+
+- I ignore aspects of the standard that might be regarded as a trifle esoteric ─ especially if they aren’t part of what the standard calls Core SQL or don’t have much to do with relational processing as such. Examples here include the so called analytic or window (OLAP) functions; dynamic SQL; temporary tables; and details of user defined types.
+
+- For reasons that aren’t important here, I use a style for comments that differs from that of the standard. To be specific, I show comments as text strings in italics, bracketed by “/*” and “*/” delimiters.
+
+Be aware, however, that all SQL products include features that aren’t part of the standard per se. Row IDs provide a common example. My general advice regarding such features is: By all means use them if you want to ─ but not if they violate relational principles (after all, what I’m advocating is supposed to be a relational approach to SQL). For example, row IDs in particular are likely to violate either The Principle of Interchangeability (see Chapter 9) or The Information Principle (see Appendix A) or both; and if they do, then I certainly wouldn’t use them. But, here and everywhere, the overriding rule is: You can do what you like, so long as you know what you’re doing.
+
+PRINCIPLES NOT PRODUCTS
+
+It’s worth taking a few moments to examine the question of why, as I claimed earlier, you as a database professional need to know the relational model. The reason is that the relational model isn’t product specific; instead, it’s concerned with principles. What do I mean by principles? Well, here’s a definition (from Chambers Twentieth Century Dictionary):
+
+principle: a source, root, origin: that which is fundamental: essential nature: theoretical basis: a fundamental truth on which others are founded or from which they spring
+
+The point about principles is: They endure. By contrast, products and technologies (and the SQL language, come to that) change all the time ─ but principles don’t. For example, suppose you know Oracle; in fact, suppose you’re an expert on Oracle. But if Oracle is all you know, then your knowledge is not necessarily transferable to, say, a DB2 or SQL Server environment (it might even make it harder to make progress in that new environment). But if you know the underlying principles ─ in other words, if you know the relational model ─ then you have knowledge and skills that will be transferable: knowledge and skills that you’ll be able to apply in every environment and will never be obsolete.
+
+In this book, therefore, we’ll be concerned with principles, not products, and foundations, not fashion or fads. But I do realize you sometimes have to make compromises and tradeoffs in the real world. For one example, sometimes you might have good pragmatic reasons for not designing the database in the theoretically optimal way. For another, consider SQL once again. Although it’s certainly possible to use SQL relationally (for the most part, at any rate), sometimes you’ll find ─ because existing implementations are so far from perfect ─ that there are severe performance penalties for doing so ... in which case you might be more or less forced into doing something not “truly relational” (like writing a query in some unnatural way to force the implementation to use an index). However, I believe very firmly that you should always make such compromises and tradeoffs from a position of conceptual strength. That is:
+
+- You should understand what you’re doing when you do decide to make such a compromise
+
+- You should know what the theoretically correct situation is, and you should have strong reasons for departing from it
+
+- You should document those reasons, too, so that if they cease to be valid at some future time (for example, because a new release of the product you’re using does a better job in some respect), then it might be possible to back off from the original compromise
+
+The following quote ─ which is due to Leonardo da Vinci (1452-1519) and is thus some 500 years old ─ sums up the situation admirably:
+
+Those who are enamored of practice without theory are like a pilot who goes into a ship without rudder or compass and never has any certainty where he is going. Practice should always be based on a sound knowledge of theory.
+
+(OK, I added the italics.)
+
+A REVIEW OF THE ORIGINAL MODEL
+
+The purpose of this section is to serve as a kickoff point for subsequent discussions; it reviews some of the most basic aspects of the relational model as originally defined. Note that qualifier ─ “as originally defined”! One widespread misconception about the relational model is that it’s a totally static thing. It’s not. It’s like mathematics in that respect: Mathematics too is not a static thing but changes over time. In fact, the relational model can itself be seen as a small branch of mathematics; as such, it evolves over time as new theorems are proved and new results discovered. What’s more, those new contributions can be made by anyone who’s competent to do so; like other branches of mathematics, the relational model, though originally invented by one man, has become a community effort and now belongs to the world.
+
+By the way, in case you don’t know, that one man was E. F. Codd, at the time a researcher at IBM (E for Edgar and F for Frank ─ but he always signed with his initials; to his friends, among whom I was proud to count myself, he was Ted). It was late in 1968 that Codd, a mathematician by training, first realized that the discipline of mathematics could be used to inject some solid principles and rigor into a field, database management, that prior to that time was all too deficient in any such qualities. His original definition of the relational model appeared in an IBM Research Report in 1969, and I’ll have a little more to say about that paper in Appendix G.
+
+Structural Features
+
+The original model had three major components ─ structure, integrity, and manipulation ─ and I’ll briefly describe each in turn. Please note right away, however, that all of the “definitions” I’ll be giving here are very loose; I’ll make them more precise as and when appropriate in later chapters.
+
+First of all, then, structure. The principal structural feature is, of course, the relation itself, and as everybody knows it’s usual to picture relations on paper as tables (see Fig. 1.1 below for a self-explanatory example). Relations are defined over types (also known as domains); a type is basically a conceptual pool of values from which actual attributes in actual relations take their actual values. With reference to the simple departments-and- employees database of Fig. 1.1, for example, there might be a type called DNO (“department numbers”), which is the set of all valid department numbers, and then the attribute called DNO in the DEPT relation and the attribute called DNO in the EMP relation would both contain values from that conceptual pool. (By the way, it isn’t necessary ─ though it’s often a good idea ─ for attributes to have the same name as the corresponding type, and frequently they won’t. We’ll see plenty of counterexamples later.)
+
+
+DEPT
+
+DNO DNAME       BUDGET
+--- ----------- ------
+D1  Marketing   10M
+D2  Development 12M
+D3  Research     5M
+
+
+EMP
+
+ENO ENAME DNO SALARY
+--- ----- --- ------
+E1  Lopez D1  40K
+E2  Cheng D1  42K
+E3  Finzi D2  30K
+E4  Saito D2  35K
+
+DEPT.DNO referenced by EMP.DNO
+
+Fig. 1.1: The departments-and-employees database ─ sample values
+
+As I’ve said, tables like those in Fig. 1.1 depict relations: n-ary relations, to be precise. An n-ary relation can be pictured as a table with n columns; the columns in that picture represent attributes of the relation and the rows represent tuples. The value n can be any nonnegative integer. A 1-ary relation is said to be unary; a 2-ary relation, binary; a 3-ary relation, ternary; and so on.
+
+The relational model also supports various kinds of keys. To begin with ─ and this point is crucial! ─ every relation has at least one candidate key [4]. A candidate key is just a unique identifier; in other words, it’s a combination of attributes ─ often but not always a “combination” consisting of just a single attribute ─ such that every tuple in the relation has a unique value for the combination in question. In Fig. 1.1, for example, every department has a unique department number and every employee has a unique employee number, so we can say that {DNO} is a candidate key for DEPT and {ENO} is a candidate key for EMP. Note the braces, by the way; to repeat, candidate keys are always combinations, or sets, of attributes (even when the set in question contains just one attribute), and the conventional representation of a set on paper is as a commalist of elements enclosed in braces.
+
+Aside: This is the first time I’ve mentioned the useful term commalist, but I’ll be using it a lot in the pages ahead. It can be defined as follows: Let xyz be some syntactic construct (for example, “attribute name”). Then the term xyz commalist denotes a sequence of zero or more xyz values in which each pair of adjacent xyz values is separated by a comma (as well as, optionally, one or more spaces either before or after the comma or both). For example, if A, B, and C are attribute names, then the following are all attribute name commalists:
+
+A, B, C 
+C, A, B 
+B
+A, C
+
+So too is the empty sequence of attribute names.
+
+Moreover, when some commalist is enclosed in braces and thereby denotes a set, then (a) the order in which the elements appear within that commalist is immaterial (because sets have no ordering to their elements), and (b) if an element appears more than once, it’s treated as if it appeared just once (because sets don’t contain duplicate elements). End of aside.
+
+Next, a primary key is a candidate key that’s been singled out for special treatment in some way. Now, if the relation in question has just one candidate key, then it doesn’t make any real difference if we decide to call that key “primary.” But if that relation has two or more candidate keys, then it’s usual to choose one of them as primary, meaning it’s somehow “more equal than the others.” Suppose, for example, that every employee always has both a unique employee number and a unique employee name ─ not a very realistic example, perhaps, but good enough for present purposes ─ so that {ENO} and {ENAME} are both candidate keys for EMP. Then we might choose {ENO}, say, to be the primary key.
+
+Observe that I said it’s usual to choose a primary key. Indeed it is usual ─ but it’s not 100 percent necessary. If there’s just one candidate key, then there’s no choice and no problem; but if there are two or more, then having to choose one and make it primary smacks a little bit of arbitrariness (at least to me). Certainly there are situations where there don’t seem to be any good reasons for making such a choice. In this book, therefore, I usually will follow the primary key discipline ─ and in pictures like Fig. 1.1 I’ll indicate primary key attributes by double underlining [5] ─ but I want to stress the fact that it’s really candidate keys, not primary keys, that are significant from a relational point of view. Partly for that reason, from this point forward I’ll use the term key, unqualified, to mean any candidate key, regardless of whether the candidate key in question has additionally been designated as “primary.” (In case you were wondering, the “special treatment” enjoyed by primary keys over other candidate keys is mainly syntactic in nature, anyway; it isn’t fundamental, and it isn’t very important.)
+
+Finally, a foreign key is a combination, or set, of attributes FK in some relation r2 such that each FK value is required to be equal to some value of some key K in some relation r1 (r1and r2 not necessarily distinct) [6]. With reference to Fig. 1.1, for example, {DNO} is a foreign key in EMP whose values are required to match values of the key {DNO} in DEPT (as I’ve tried to suggest by means of a suitably labeled arrow in the figure). By required to match here, I mean that if, for example, EMP contains a tuple in which the DNO attribute has the value D2, then DEPT must also contain a tuple in which the DNO attribute has the value D2 ─ for otherwise EMP would show some employee as being in a nonexistent department, and the database wouldn’t be “a faithful model of reality.”
+
+Integrity Features
+
+An integrity constraint (constraint for short) is basically just a boolean expression that must evaluate to TRUE. In the case of departments and employees, for example, we might have a constraint to the effect that SALARY values must be greater than zero. Now, any given database will be subject to numerous constraints; however, all of those constraints will necessarily be specific to that database and will thus be expressed in terms of the relations in that database. By contrast, the relational model as originally formulated includes two generic constraints ─ generic, in the sense that they apply to every database, loosely speaking. One has to do with primary keys and the other with foreign keys. Here they are:
+
+- The entity integrity rule: Primary key attributes don’t permit nulls.
+
+- The referential integrity rule: There mustn’t be any unmatched foreign key values.
+
+I’ll explain the second rule first. By the term unmatched foreign key value, I mean a foreign key value for which there doesn’t exist an equal value of the pertinent candidate key (the “target key”); thus, for example, the departments-and-employees database would be in violation of the referential integrity rule if it included an EMP tuple with a DNO value of D2, say, but no DEPT tuple with that same DNO value. So the referential integrity rule simply spells out the semantics of foreign keys; the name “referential integrity” derives from the fact that a foreign key value can be regarded as a reference to the tuple with that same value for the corresponding target key. In effect, therefore, the rule just says: If B references A, then A must exist.
+
+As for the entity integrity rule, well, here I have a problem. The fact is, I reject the concept of “nulls” entirely; that is, it’s my very strong opinion that nulls have no place in the relational model. (Codd thought otherwise, obviously, but I have strong reasons for taking the position I do.) In order to explain the entity integrity rule, therefore, I need to suspend disbelief, as it were (at least for a few moments). Which I’ll now proceed to do ... but please understand that I’ll be revisiting the whole issue of nulls in Chapters 3 and 4.
+
+In essence, then, a null is a “marker” that means value unknown. Crucially, it’s not itself a value; it is, to repeat, a marker, or flag. For example, suppose we don’t know employee E2’s salary. Then, instead of entering some real SALARY value in the tuple for employee E2 in relation EMP ─ we can’t enter a real value, by definition, precisely because we don’t know what that value should be ─ we mark the SALARY position within that tuple as null, as indicated here:
+
+ENO ENAME DNO SALARY
+--- ----- --- ------
+E2  Cheng D1  ░░░░░░
+
+Now, it’s important to understand that this tuple contains nothing at all in the SALARY position. But it’s very hard to draw pictures of nothing at all! I’ve tried to show the SALARY position is empty in the picture above by shading it, but it would be more accurate not to show that position at all. Be that as it may, I’ll use this same convention of representing empty positions by shading elsewhere in this book ─ but that shading does not, to repeat, represent any kind of value at all. You can think of it (the shading, that is) as constituting the null “marker,” or flag, if you like.
+
+To get back to the entity integrity rule: In terms of relation EMP, then, that rule says, loosely, that a given employee tuple might have an unknown name, or an unknown department number, or an unknown salary ─ but it can’t have an unknown employee number. The justification, such as it is, for this state of affairs is that if the employee number were unknown, we wouldn’t even know which “entity” (i.e., which employee) we were talking about.
+
+That’s all I want to say about nulls for now. Please forget about them until further notice.
+
+Manipulative Features
+
+The manipulative part of the model in turn divides into two parts:
+
+- The relational algebra, which is a collection of operators (e.g., difference, or MINUS) that can be applied to relations
+
+- A relational assignment operator, which allows the value of some relational expression(e.g., r1MINUSr2, where r1 and r2 are relations) to be assigned to some relation
+
+The relational assignment operator is fundamentally how updates are done in the relational model, and I’ll have more to say about it later, in the section “Relations vs. Relvars.” Note: I follow the usual convention throughout this book in using the generic term update to refer to the INSERT, DELETE, and UPDATE (and assignment) operators considered collectively. When I want to refer to the UPDATE operator specifically, I’ll set it in all caps as just shown.
+
+As for the relational algebra, it consists of a set of operators that ─ speaking very loosely ─ allow us to derive “new” relations from “old” ones. Each such operator takes one or more relations as input and produces another relation as output; for example, difference (MINUS) takes two relations as input and “subtracts” one from the other, to derive another relation as output. And it’s very important that the output is another relation: That’s the well known closure property of the relational algebra. The closure property is what lets us write nested relational expressions; since the output from every operation is the same kind of thing as the input, the output from one operation can become the input to another. For example, we can take the difference r1 MINUS r2, feed the result as input to a union with some relation r3, feed that result as input to an intersection with some relation r4, and so on.
+
+Now, any number of operators can be defined that fit the simple definition of “one or more relations in, exactly one relation out.” Here I’ll briefly describe what are usually thought of as the original operators (essentially the ones that Codd defined in his earliest papers) [7]; I’ll give more details in Chapter 6, and in Chapter 7 I’ll describe a number of additional operators as well. Fig. 1.2 is a pictorial representation of those original operators.
+
+Note: If you’re unfamiliar with these operators and find the descriptions a little hard to follow, don’t worry about it; as I’ve already said, I’ll be going into much more detail, with lots of examples, in later chapters.
+
+restrict
+
+project
+
+product
+
+a
+b
+c
+
+x
+y
+
+a x 
+a y 
+b x 
+b y
+c x
+c y
+
+intersect
+
+union
+
+difference
+
+
+(natural) join
+
+a1 b1 
+a2 b1 
+a3 b2
+
+b1 c1 
+b2 c2 
+b3 c3
+
+a1 b1 c1 
+a2 b1 c1 
+a3 b2 c2
+
+Fig. 1.2: The original relational algebra
+
+Restrict
+
+Returns a relation containing all tuples from a specified relation that satisfy a specified condition. For example, we might restrict relation EMP to just those tuples where the DNO value is D2.
+
+Project
+
+Returns a relation containing all (sub)tuples that remain in a specified relation after specified attributes have been removed. For example, we might project relation EMP on just the ENO and SALARY attributes (thereby removing the ENAME and DNO attributes).
+
+Product
+
+Returns a relation containing all possible tuples that are a combination of two tuples, one from each of two specified relations. Note: This operator is also known variously as cartesian product (sometimes extended or expanded cartesian product), cross product, cross join, and cartesian join; in fact, it’s really just a special case of join, as we’ll see in Chapter 6.
+
+Intersect
+
+Returns a relation containing all tuples that appear in both of two specified relations. (Actually intersect, like product, is also a special case of join, as we’ll see in Chapter 6.)
+
+Union
+
+Returns a relation containing all tuples that appear in either or both of two specified relations.
+
+Difference
+
+Returns a relation containing all tuples that appear in the first and not the second of two specified relations.
+
+Join
+
+Returns a relation containing all possible tuples that are a combination of two tuples, one from each of two specified relations, such that the two tuples contributing to any given result tuple have a common value for the common attributes of the two relations (and that common value appears just once, not twice, in that result tuple). Note: This kind of join was originally called the natural join, to distinguish it from various other kinds to be discussed later in this book. Since natural join is far and away the most important kind, however, it’s become standard practice to take the unqualified term join to mean the natural join specifically, and I’ll follow that practice in this book.
+
+One last point to close this subsection: As you probably know, there’s also something called the relational calculus. The relational calculus can be regarded as an alternative to the relational algebra; that is, instead of saying the manipulative part of the relational model consists of the relational algebra (plus relational assignment), we can equally well say it consists of the relational calculus (plus relational assignment). The two are equivalent and interchangeable, in the sense that for every algebraic expression there’s a logically equivalent expression of the calculus and vice versa. I’ll have more to say about the calculus later, mostly in Chapters 10 and 11.
+
+The Running Example
+
+I’ll finish up this brief review by introducing the example I’ll be using as a basis for most if not all of the discussions in the rest of the book: the familiar ─ not to say hackneyed ─ suppliers-and-parts database. (I apologize for dragging out this old warhorse yet one more time, but I believe that using the same example in a variety of books and other publications can help, not hinder, learning.) Sample values are shown in Fig. 1.3. To elaborate:
+
+S 
+
+SNO SNAME STATUS CITY
+S1  Smith 20     London
+S2  Jones 10     Paris
+S3  Blake 30     Paris
+S4  Clark 20     London
+S5  Adams 30     Athens
+
+SP
+
+SNO PNO QTY 
+S1  P1  300
+S1  P2  200
+S1  P3  400
+S1  P4  200
+S1  P5  100
+S1  P6  100
+S2  P1  300
+S2  P2  400
+S3  P2  200
+S4  P2  200
+S4  P4  300
+S4  P5  400
+
+P
+
+PNO PNAME COLOR WEIGHT CITY
+P1  Nut   Red   12.0   London
+P2  Bolt  Green 17.0   Paris
+P3  Screw Blue  17.0   Oslo
+P4  Screw Red   14.0   London
+P5  Cam   Blue  12.0   Paris
+P6  Cog   Red   19.0   London
+
+Fig. 1.3: The suppliers-and-parts database ─ sample values 
+
+Suppliers
+
+Relation S denotes suppliers (more accurately, suppliers under contract). Each supplier has one supplier number (SNO), unique to that supplier (as you can see from the figure, I’ve made {SNO} the primary key); one name (SNAME), not necessarily unique (though the SNAME values in Fig. 1.3 do happen to be unique); one status value (STATUS), representing some kind of ranking or preference level among available suppliers; and one location (CITY).
+
+Parts
+
+Relation P denotes parts (more accurately, kinds of parts). Each kind of part has one part number (PNO), which is unique ({PNO} is the primary key); one name (PNAME); one color (COLOR); one weight (WEIGHT); and one location where parts of that kind are stored (CITY).
+
+Shipments
+
+Relation SP denotes shipments (it shows which parts are supplied, or shipped, by which suppliers). Each shipment has one supplier number (SNO), one part number (PNO), and one quantity (QTY). For the sake of the example, I assume there’s at most one shipment at any given time for a given supplier and a given part ({SNO,PNO} is the primary key; also, {SNO} and {PNO} are both foreign keys, corresponding to the primary keys of S and P, respectively). Notice that the database of Fig. 1.3 includes one supplier, supplier S5, with no shipments at all.
+
+MODEL vs. IMPLEMENTATION
+
+Before going any further, there’s an important point I need to explain, because it underpins everything else to be discussed in this book. The relational model is, of course, a data model. Unfortunately, however, this latter term has two quite distinct meanings in the database world. The first and more fundamental one is this:
+
+Definition: A data model (first sense) is an abstract, self-contained, logical definition of the data structures, data operators, and so forth, that together make up the abstract machine with which users interact.
+
+This is the meaning we have in mind when we talk about the relational model in particular. And, armed with this definition, we can usefully, and importantly, go on to distinguish a data model in this first sense from its implementation, which can be defined as follows:
+
+Definition: An implementation of a given data model is a physical realization on a real machine of the components of the abstract machine that together constitute that model.
+
+Let me illustrate these definitions in terms of the relational model specifically. First of all, consider the concept relation itself. That concept is part of the model: Users have to know what relations are, they have to know they’re made up of tuples and attributes, they have to know how to interpret them, and so on. All that’s part of the model. But they don’t have to know how relations are physically stored on the disk, or how individual data values are physically encoded, or what indexes or other access paths exist; all that’s part of the implementation, not part of the model.
+
+Or consider the concept join: Users have to know what a join is, they have to know how to invoke a join, they have to know what the result of a join looks like, and so on. Again, all that’s part of the model. But they don’t have to know how joins are physically implemented, or what expression transformations take place under the covers, or what indexes or other access paths are used, or what physical I/O operations occur; all that’s part of the implementation, not part of the model.
+
+And one more example: Candidate keys (keys for short) are, again, part of the model, and users definitely have to know what keys are; in particular, they have to know that such keys have the property of uniqueness. Now, key uniqueness is typically enforced in today’s systems by means of what’s called a “unique index”; but indexes in general, and unique indexes in particular, aren’t part of the model, they’re part of the implementation. Thus, a unique index mustn’t be confused with a key in the relational sense, even though the former might be used to implement the latter (more precisely, to implement some key constraint ─ see Chapter 8).
+
+In a nutshell, then:
+
+- The model (first meaning) is what the user has to know
+
+- The implementation is what the user doesn’t have to know
+
+Please understand that I’m not saying here that users aren’t allowed to know about the implementation; I’m just saying they don’t have to. In other words, everything to do with implementation should be, at least potentially, hidden from the user.
+
+Here are some important consequences of the foregoing definitions. First of all, observe that everything to do with performance is fundamentally an implementation issue, not a model issue. This point is widely misunderstood! For example, we often hear remarks to the effect that “joins are slow.” But such remarks simply make no sense. Join is part of the model, and the model as such can’t be said to be either fast or slow; only implementations can be said to possess any such quality. Thus, we might reasonably say that some specific product X has a faster or slower implementation of some specific join, on some specific data, than some other specific product Y does ─ but that’s about all.
+
+Now, I don’t want to give the wrong impression here. It’s true that performance is fundamentally an implementation issue; however, that doesn’t mean a good implementation will perform well if you use the model badly. Indeed, that’s precisely one of the reasons why you need to know the model: so you won’t use it badly. If you write an expression such as S JOIN SP, you’re within your rights to expect the system to implement it efficiently; but if you insist on, in effect, hand coding the join yourself, perhaps like this (pseudocode):
+
+do for all tuples in S ;
+   fetch S tuple into TS , TN , TT , TC ; 
+   do for all tuples in SP with SNO = TS ;
+      fetch SP tuple into TS , TP , TQ ;
+      emit TS , TN , TT , TC , TP , TQ ; 
+   end ;
+end ;
+
+then there’s no way you’re going to get good performance. Recommendation: Don’t do this. Relational systems shouldn’t be used like simple access methods [8].
+
+By the way, these remarks about performance apply to SQL too. Like the relational operators (join and the rest), SQL as such can’t be said to be fast or slow ─ only implementations can sensibly be described in such terms ─ but it’s also possible to use SQL in such a way as to guarantee bad performance. Although I’ll generally have little to say about performance in this book, therefore, I will occasionally point out certain performance implications of what I’m recommending.
+
+Aside: I’d like to elaborate for a moment on this matter of performance. By and large, my recommendations in this book are never based on performance as a prime motivator; after all, it has always been an objective of the relational model to take performance concerns out of the hands of the user and put them into the hands of the system instead. However, it goes without saying that this objective hasn’t yet been fully achieved, and so (as I’ve already said) the goal of using SQL relationally must sometimes be compromised in the interest of achieving satisfactory performance. That’s another reason why, as I said earlier in this chapter, the overriding rule has to be: You can do what you like, so long as you know what you’re doing. End of aside.
+
+Back to model vs. implementation, and points arising from that distinction: The second point is that, as you probably realize, it’s precisely the separation of model and implementation that allows us to achieve physical data independence. Physical data independence ─ not a great term, by the way, but we seem to be stuck with it ─ means we have the freedom to make changes in the way the data is physically stored and accessed without having to make corresponding changes in the way the data is perceived by the user. Now, the reason we might want to change those storage and access details is, typically, performance; and the fact that we can make such changes without having to change the way the data looks to the user means that existing programs, queries, and the like can all still work after the change. Very importantly, therefore, physical data independence means protecting investment in user training and applications (investment in logical database design also, I might add).
+
+It follows from all of the above that, as previously indicated, indexes, and indeed physical access paths of any kind, are properly part of the implementation, not the model; they belong under the covers and should be hidden from the user. (Note that access paths as such are nowhere mentioned in the relational model.) For the same reasons, they should be rigorously excluded from SQL also. Recommendation: Avoid the use of any SQL construct that violates this precept. (Actually there’s nothing in the standard that does, so far as I’m aware, but I know the same isn’t true of certain SQL products.)
+
+Anyway, as you can see from the foregoing definitions, the distinction between model and implementation is really just a special case ─ a very important special case ─ of the familiar distinction between logical and physical considerations in general. Sadly, however, most of today’s SQL systems don’t make those distinctions as clearly as they should. As a direct consequence, they deliver far less physical data independence than they should, and far less than, in principle, relational systems are capable of. I’ll come back to this issue in the next section.
+
+Now I turn to the second meaning of the term data model, which I dare say you’re very familiar with. It can be defined thus:
+
+Definition: A data model (second sense) is a model of the data ─ especially the persistent data ─ of some particular enterprise.
+
+In other words, a data model in the second sense is just a (logical, and possibly somewhat abstract) database design. For example, we might speak of the data model for some bank, or some hospital, or some government department.
+
+Having explained these two different meanings, I’d like to draw your attention to an analogy that I think nicely illuminates the relationship between them:
+
+- A data model in the first sense is like a programming language, whose constructs can be used to solve many specific problems but in and of themselves have no direct connection with any such specific problem
+
+- A data model in the second sense is like a specific program written in that language ─ it uses the facilities provided by the model, in the first sense of that term, to solve some specific problem
+
+By the way, it follows from all of the above that if we’re talking about data models in the second sense, then we might reasonably speak of “relational models” in the plural, or “a” relational model (with an indefinite article). But if we’re talking about data models in the first sense, then there’s only one relational model, and it’s the relational model (with the definite article). I’ll have more to say on this latter point in Appendix A.
+
+For the remainder of this book I’ll use the term data model, or more usually just model for short, exclusively in its first sense.
+
+PROPERTIES OF RELATIONS
+
+Now let’s get back to our examination of basic relational concepts. In this section, I want to focus on some specific properties of relations themselves. First of all, every relation has a heading and a body: The heading is a set of attributes (where by the term attribute I mean, very specifically, an attribute-name/type-name pair, and no two attributes in the same heading have the same attribute name), and the body is a set of tuples that conform to that heading. In the case of the suppliers relation in Fig. 1.3, for example, there are four attributes in the heading and five tuples in the body. Note, therefore, that a relation doesn’t really contain tuples ─ it contains a body, and that body in turn contains the tuples ─ but we do usually talk as if relations contained tuples directly, for simplicity.
+
+By the way, although it’s strictly correct to say the heading consists of attribute-name/type-name pairs, it’s usual to omit the type names in pictures like Fig. 1.3 and hence to pretend the heading is just a set of attribute names. For example, the STATUS attribute does have a type ─ INTEGER, let’s say ─ but I didn’t show it in Fig. 1.3. But you should never forget it’s there!
+
+Next, the number of attributes in the heading is the degree (sometimes the arity), and the number of tuples in the body is the cardinality. For example, relation S in Fig. 1.3 has degree 4 and cardinality 5; likewise, relation P in that figure has degree 5 and cardinality 6, and relation SP in that figure has degree 3 and cardinality 12. Note: The term degree is used in connection with tuples also [9]. For example, the tuples in relation S are (like relation S itself) all of degree 4.
+
+Next, relations never contain duplicate tuples. This property follows because a body is defined to be a set of tuples, and sets in mathematics don’t contain duplicate elements. Now, SQL fails here, as I’m sure you know: SQL tables are allowed to contain duplicate rows and thus aren’t relations, in general. Please understand, therefore, that throughout this book I always use the term “relation” to mean a relation ─ without duplicate tuples, by definition ─ and not an SQL table. Please understand too that relational operations always produce a result without duplicate tuples, again by definition. For example, projecting the suppliers relation of Fig. 1.3 on CITY produces the result shown here on the left and not the one on the right:
+
+CITY
+------
+London
+Paris
+Athens
+
+CITY
+------
+London
+Paris
+Paris
+London
+Athens
+
+(The result on the left can be obtained via the SQL query SELECT DISTINCT CITY FROM S. Omitting that DISTINCT leads to the non-relational result on the right. Note in particular that the table on the right has no double underlining; that’s because it has no key, and hence no primary key a fortiori.)
+
+Next, the tuples of a relation are unordered, top to bottom. This property follows because, again, a body is defined to be a set, and sets in mathematics have no ordering to their elements (thus, for example, {a,b,c} and {c, a, b} are the same set in mathematics, and a similar remark naturally applies to the relational model). Of course, when we draw a relation as a table on paper, we do have to show the rows in some top to bottom order, but that ordering doesn’t correspond to anything relational. In the case of the suppliers relation as depicted in Fig. 1.3, for example, I could have shown the rows in any order ─ say supplier S3, then S1, then S5, then S4, then S2 ─ and the picture would still represent the same relation. Note: The fact that relations have no ordering to their tuples doesn’t mean queries can’t include an ORDER BY specification, but it does mean such queries produce a result that’s not a relation. ORDER BY is useful for displaying results, but it isn’t a relational operator as such.
+
+In similar fashion, the attributes of a relation are also unordered, left to right, because a heading too is a mathematical set. Again, when we draw a relation as a table on paper, we have to show the columns in some left to right order, but that ordering doesn’t correspond to anything relational. In the case of the suppliers relation as depicted in Fig. 1.3, for example, I could have shown the columns in any left to right order ─ say STATUS, SNAME, CITY, SNO ─ and the picture would still represent the same relation in the relational model. Incidentally, SQL fails here too: SQL tables do have a left to right ordering to their columns (another reason why SQL tables aren’t relations, in general). For example, these two pictures represent the same relation but different SQL tables:
+
+SNO CITY
+--- ------
+S1  London
+S2  Paris 
+S3  Paris
+S4  London
+S5  Athens
+
+CITY   SNO
+------ ---
+London S1
+Paris  S2
+Paris  S3
+London S4
+Athens S5
+
+(The corresponding SQL queries are SELECT SNO, CITY FROM S and SELECT CITY, SNO FROM S, respectively. Now, you might be thinking that the differences between these two queries, and between these two tables, are hardly very significant; in fact, however, they have some serious consequences, some of which I’ll be touching on in later chapters. See, for example, the discussion of SQL’s explicit JOIN operator in Chapter 6.)
+
+Finally, relations are always normalized (equivalently, they’re in first normal form, 1NF) [10]. Informally, what this means is that, in terms of the tabular picture of a relation, at every row and column intersection we always see just a single value. More formally, it means that every tuple in every relation contains just a single value, of the appropriate type, in every attribute position. Note: I’ll have quite a lot more to say on this particular issue in the next chapter.
+
+Before I finish with this section, I’d like to emphasize something I’ve touched on several times already: namely, the fact that there’s a logical difference between a relation as such, on the one hand, and a picture of a relation as shown in, for example, Figs. 1.1 and 1.3, on the other. To say it one more time, the constructs in Figs. 1.1 and 1.3 aren’t relations at all but, rather, pictures of relations ─ which I generally refer to as tables, despite the fact that table is a loaded word in SQL contexts. Of course, relations and tables do have certain points of resemblance, and in informal contexts it’s usual, and usually acceptable, to say they’re the same thing. But when we’re trying to be precise ─ and right now I am trying to be a little bit precise ─ then we do have to recognize that the two concepts are not identical.
+
+As an aside, I observe that, more generally, there’s a logical difference between a thing of any kind and a picture of that thing. There’s a famous painting by Magritte that beautifully illustrates the point I’m trying to make here. The painting is of an ordinary tobacco pipe, but underneath Magritte has written Ceçi n’est pas une pipe... the point being, of course, that obviously the painting isn’t a pipe ─ instead, it’s a picture of a pipe.
+
+All of that being said, I should now say too that it’s actually a major advantage of the relational model that its basic abstract object, the relation, does have such a simple representation on paper; it’s that simple representation on paper that makes relational systems easy to use and easy to understand, and makes it easy to reason about the way such systems behave. However, it’s unfortunately also the case that that simple representation does suggest some things that aren’t true (e.g., that there’s a top to bottom tuple ordering).
+
+And one further point: I’ve said there’s a logical difference between a relation and a picture of a relation. The concept of logical difference derives from a dictum of Wittgenstein’s:
+
+All logical differences are big differences.
+
+This notion is an extraordinarily useful one; as a “mind tool,” it’s a great aid to clear and precise thinking, and it can be very helpful in pinpointing and analyzing some of the confusions that are, unfortunately, all too common in the database world. I’ll be appealing to it many times in the pages ahead. Meanwhile, let me point out that we’ve encountered quite a few important logical differences already. Here are some of them:
+
+- SQL vs. the relational model
+
+- Model vs. implementation
+
+- Data model (first sense) vs. data model (second sense)
+
+And we’ll be meeting many more in the pages ahead.
+
+Some Crucial Points
+
+At this juncture I’d like to mention some crucial points that I’ll be elaborating on in later chapters (especially Chapter 3). The points in question are these:
+
+- Every subset of a tuple is a tuple: For example, consider the tuple for supplier S1 in Fig. 1.3. That tuple has four components, corresponding to the four attributes SNO, SNAME, STATUS, and CITY. And if we remove (say) the SNAME component, what’s left is indeed still a tuple: viz., a tuple with three components (a tuple of degree three).
+
+- Every subset of a heading is a heading: For example, consider the heading of the suppliers relation in Fig. 1.3. That heading has four attributes: SNO, SNAME, STATUS, and CITY. And if we remove (say) the SNAME and STATUS attributes, what’s left is still a heading, a heading of degree two.
+
+- Every subset of a body is a body: For example, consider the body of the suppliers relation in Fig. 1.3. That body has five tuples, corresponding to the five suppliers S1, S2, S3, S4, and S5. And if we remove (say) the S1 and S3 tuples, what’s left is still a body, a body of cardinality three.
+
+Note: Perhaps I should state for the record here that throughout this book ─ in accordance with normal practice ─ I take expressions of the form “B is a subset of A” to include the possibility that A and B might be equal. Thus, for example, every tuple is a subset of itself (and so is every heading, and so is every body). When I want to exclude such a possibility, I’ll talk explicitly in terms of proper subsets. For example, our usual tuple for supplier S1 is certainly a subset of itself, but it isn’t a proper subset of itself. What’s more, the foregoing remarks apply equally to supersets, mutatis mutandis; for example, the tuple for supplier S1 is a superset of itself, but not a proper superset of itself [11].
+
+I’d also like to say something about the crucial notion of equality ─ especially as that notion applies to tuples and relations specifically. In general, two values are equal if and only if they’re the very same value. For example, the integer 3 is equal to the integer 3, and not to anything else ─ in particular, not to any other integer. In exactly the same way, two tuples are equal if and only if they’re the very same tuple. With reference to Fig. 1.1, for example, the tuple for supplier S1 is equal to the tuple for supplier S1, and not to anything else ─ in particular, not to any other tuple. In other words, two tuples are equal if and only if (a) they involve exactly the same attributes and (b) corresponding attribute values are equal in turn.
+
+Moreover (this might seem obvious, but it needs to be said), two tuples are duplicates of each other if and only if they’re equal.
+
+Turning now to relations: In exactly the same way, two relations are equal if and only if they’re the very same relation. With reference to Fig. 1.1, for example, the suppliers relation is equal to the suppliers relation and not to anything else ─ in particular, not to any other relation. In other words, two relations are equal if and only if, in turn, their headings are equal and their bodies are equal.
+
+As I’ve already said, I’ll be returning to these matters in Chapter 3. Here let me just add that the notion of tuple equality in particular is absolutely fundamental ─ just about everything in the relational model is crucially dependent on it, as we’ll see.
+
+BASE vs. DERIVED RELATIONS
+
+As I explained earlier, the operators of the relational algebra allow us to start with some given relations, such as the ones depicted in Fig. 1.3, and obtain further relations from those given ones (for example, by doing queries). The given relations are referred to as base relations, the others are derived relations. In order to get us started, therefore, a relational system has to provide a means for defining those base relations in the first place. In SQL, this task is performed by the CREATE TABLE statement (the SQL counterpart to a base relation being, of course, a base table, which is what CREATE TABLE creates). And base relations obviously need to be named ─ for example:
+
+CREATE TABLE S ... ;
+
+But certain derived relations, including in particular what are called views, are named too. A view (also known as a virtual relation) is a named relation whose value at any given time t is the result of evaluating a certain relational expression at that time t. Here’s an SQL example:
+
+CREATE VIEW SST_PARIS AS
+     ( SELECT SNO , STATUS
+       FROM S
+       WHERE CITY = ‘Paris’ ) ;
+
+In principle, you can operate on views just as if they were base relations [12], but they aren’t base relations. Instead, you can think of a view as being “materialized” ─ in effect, you can think of a base relation being constructed whose value is obtained by evaluating the specified relational expression ─ at the time the view in question is referenced. But I must emphasize that thinking of views being materialized in this way when they’re referenced is purely conceptual; it’s just a way of thinking; it’s not what’s really supposed to happen; and it wouldn’t work for update operations in any case. How views are really supposed to work is explained in Chapter 9.
+
+By the way, there’s an important point I need to make here. You’ll often hear the difference between base relations and views described like this (warning! untruths coming up!):
+
+- Base relations really exist ─ that is, they’re physically stored in the database
+
+- Views, by contrast, don’t “really exist” ─ they merely provide different ways of looking at the base relations
+
+But the relational model has nothing to say as to what’s physically stored! ─ in fact, it has nothing to say about physical storage matters at all. In particular, it categorically does not say that base relations are physically stored. The only requirement is that there must be some mapping between whatever is physically stored and those base relations, so that those base relations can somehow be obtained when they’re needed (conceptually, at any rate). If the base relations can be obtained from whatever’s physically stored, then everything else can be, too. For example, we might physically store the join of suppliers and shipments, instead of storing them separately; then base relations S and SP could be obtained, conceptually, by taking appropriate projections of that join. In other words: Base relations are no more (and no less!) “physical” than views are, so far as the relational model is concerned.
+
+The fact that the relational model says nothing about physical storage is deliberate, of course. The idea was to give implementers the freedom to implement the model in whatever way they chose ─ in particular, in whatever way seemed likely to yield good performance ─ without compromising on physical data independence. The sad fact is, however, most SQL product vendors seem not to have understood this point (or not to have risen to the challenge, at any rate); instead, they map base tables fairly directly to physical storage [13], and (as noted previously) their products therefore provide far less physical data independence than relational systems are or should be capable of. Indeed, this state of affairs is reflected in the SQL standard itself (as well as in most other SQL documentation), which typically ─ quite ubiquitously, in fact ─ talks in terms of “tables and views.” Clearly, anyone who talks this way is under the impression that tables and views are different things, and probably also that “tables” always means base tables specifically, and probably also that base tables are physically stored and views aren’t. But the whole point about a view is that it is a table (or, as I would prefer to say, a relation); that is, we can perform the same kinds of operations on views as we can on regular relations (at least in the relational model), because views are “regular relations.” Throughout this book, therefore, I’ll use the term relation to mean a relation (possibly a base relation, possibly a view, possibly a query result, and so on); and if I want to mean a base relation specifically, then I’ll say “base relation.” Recommendation: I suggest strongly that you adopt the same discipline for yourself. Don’t fall into the common trap of thinking the term relation means a base relation specifically ─ or, in SQL terms, thinking the term table means a base table specifically. Likewise, don’t fall into the common trap of thinking base relations (or base tables, in SQL) have to be physically stored.
+
+RELATIONS vs. RELVARS
+
+Now, it’s entirely possible that you already knew everything I’ve been telling you in this chapter so far; in fact, I rather hope you did, though I also hope that didn’t mean you found the material boring. Anyway, now I come to something you might not know already. The fact is, historically there’s been a lot of confusion over yet another logical difference: namely, that between relations as such, on the one hand, and relation variables on the other.
+
+Forget about databases for a moment; consider instead the following simple programming language example. Suppose I say in some programming language:
+
+DECLARE N INTEGER ... ;
+
+Then N here is not an integer. Rather, it’s a variable, whose values are integers as such ─ different integers at different times. We all understand that. Well, in exactly the same way, if I say in SQL:
+
+CREATE TABLE T ... ;
+
+then T is not a table: It’s a variable, a table variable or (as I would prefer to say, ignoring various SQL quirks such as duplicate rows and left to right column ordering) a relation variable, whose values are relations as such (different relations at different times).
+
+Take another look at Fig. 1.3, the suppliers-and-parts database. That figure shows three relation values ─ namely, the relation values that happen to exist in the database at some particular time. But if we were to look at the database at some different time, we would probably see three different relation values appearing in their place. In other words, S, P, and SP in that database are really variables: relation variables, to be precise. For example, suppose the relation variable S currently has the value ─ the relation value, that is ─ shown in Fig. 1.3, and suppose we delete the set of tuples (actually there’s only one) for suppliers in Athens:
+
+DELETE S WHERE CITY = ‘Athens’ ;
+
+Here’s the result:
+
+SNO SNAME STATUS CITY
+S1  Smith 20     London
+S2  Jones 10     Paris 
+S3  Blake 30     Paris 
+S4  Clark 20     London
+
+Conceptually, what’s happened here is that the old value of S has been replaced in its entirety by a new value. Of course, the old value (with five tuples) and the new one (with four) are very similar, in a sense, but they certainly are different values. In fact, the DELETE just shown is logically equivalent to, and indeed shorthand for, the following relational assignment:
+
+S := S MINUS ( S WHERE CITY = ‘Athens’ ) ;
+
+As with all assignments, the effect here is that (a) the source expression on the right side is evaluated and then (b) the value that’s the result of that evaluation is then assigned to the target variable on the left side, with the overall result already explained.
+
+Aside: I can’t show the foregoing assignment in SQL because SQL doesn’t directly support relational assignment. Instead, I’ve shown it (as well as the original DELETE) in a more or less self-explanatory language called Tutorial D. Tutorial D is the language Hugh Darwen and I use to illustrate relational ideas in our book Databases, Types, and the Relational Model: The Third Manifesto (see Appendix G) ─ and I’ll use it in the present book too, when I’m explaining relational concepts [14]. But since my intended audience is SQL practitioners, I’ll show SQL analogs as well, most of the time. Note: A BNF grammar for Tutorial D can be found in Appendix D. End of aside.
+
+To repeat, DELETE is shorthand for a certain relational assignment ─ and, of course, an analogous remark applies to INSERT and UPDATE also: They too are basically just shorthand for certain relational assignments. Thus, as I mentioned in the section “A Review of the Original Model,” relational assignment is the fundamental update operator in the relational model; indeed it’s the only update operator we really need, logically speaking.
+
+So there’s a logical difference between relation values and relation variables. The trouble is, the database literature has historically used the same term, relation, to stand for both, and that practice has certainly led to confusion [15]. In this book, therefore, I’ll distinguish very carefully between the two from this point forward ─ I’ll talk in terms of relation values when I mean relation values and relation variables when I mean relation variables. However, I’ll also abbreviate relation value, most of the time, to just relation (exactly as we abbreviate integer value most of the time to just integer). And I’ll abbreviate relation variable most of the time to relvar; for example, I’ll say the suppliers-and-parts database contains three relvars (more precisely, three base relvars).
+
+As an exercise, you might like to go back over the text of this chapter so far and see exactly where I used the term relation when I really ought to have been using the term relvar instead (or as well).
+
+VALUES vs. VARIABLES
+
+The logical difference between relations and relvars is actually a special case of the logical difference between values and variables in general, and I’d like to take a few moments to look at the more general case. (It’s a bit of a digression, but I think it’s worth taking the time here because clear thinking in this area can be such a great help, in so many ways.) Here then are some definitions:
+
+Definition: A value is what the logicians call an “individual constant,” such as the integer 3. A value has no location in time or space. However, values can be represented in memory by means of some encoding, and those representations or encodings do have location in time and space. Indeed, distinct representations of the same value can appear at any number of distinct locations in time and space ─ meaning, loosely, that any number of different variables (see the next definition) can have the same value, at the same time or different times. Observe in particular that, by definition, a value can’t be updated; for if it could, then after such an update it wouldn’t be that value any longer.
+
+Definition: A variable is a holder for a representation of a value. A variable does have location in time and space. Also, variables, unlike values, can be updated; that is, the current value of the variable can be replaced by another value. (After all, that’s what “variable” means ─ to be a variable is to be updatable and to be updatable is to be a variable; equivalently, to be a variable is to be assignable to, to be assignable to is to be a variable.)
+
+Please note very carefully that it isn’t just simple things like the integer 3 that are legitimate values. On the contrary, values can be arbitrarily complex ─ for example, a value might be a geometric point; or a polygon; or an X ray; or an XML document; or a fingerprint; or an array; or a stack; or a list; or a relation (and on and on). Analogous remarks apply to variables too, of course. I’ll have more to say about such matters in the next chapter.
+
+Now, you might think it’s hard to imagine people getting confused over a distinction as obvious and fundamental as the one between values and variables. In fact, however, it’s all too easy to fall into traps in this area. By way of illustration, consider the following extract from a tutorial on object databases (the italicized portions in brackets are comments by myself):
+
+We distinguish the declared type of a variable from... the type of the object that is the current value of the variable [so an object is a value]... We distinguish objects from values [so an object isn’t a value after all] ... A mutator [is an operator such that it’s] possible to observe its effect on some object [so in fact an object is a variable].
+
+CONCLUDING REMARKS
+
+
+This brings us to the end of this preliminary chapter. For the most part, my aim has just been to tell you what I rather hope you knew already (and you might have felt the chapter was a little light on technical substance, therefore). Anyway, just to review briefly:
+
+- I explained why we’d be concerned with principles, not products, and why I’d be using formal terminology such as relation, tuple, and attribute (at least in relational contexts) in place of their more “user friendly” SQL counterparts
+
+- I gave an overview of the original model, touching in particular on the following concepts: type(or domain), n-ary relation, tuple, attribute, candidate key (key for short), primary key, foreign key, entity integrity, referential integrity, relational assignment, and the relational algebra. (I also briefly mentioned the relational calculus.) With regard to the algebra, I mentioned the closure property and very briefly described the operators restrict, project, product, intersection, union, difference, and join
+
+- I discussed various properties of relations, introducing the terms heading, body, cardinality, and degree. Relations have no duplicate tuples, no top to bottom tuple ordering, and no left to right attribute ordering. I also discussed the difference between base relations (or base relvars, rather) and views. And I explained that every subset of a tuple is a tuple, every subset of a heading is a heading, and every subset of a body is a body
+
+- I discussed the logical differences between model and implementation, values and variables in general, and relations and relvars in particular. The model vs. implementation discussion in particular led to a discussion of physical data independence
+
+- I claimed that SQL and the relational model aren’t the same thing. We’ve seen a few differences already ─ for example, the fact that SQL permits duplicate rows, the fact that SQL tables have a left to right column ordering, and the fact that SQL doesn’t clearly distinguish between table values and table variables ─ and we’ll see many more in the pages to come
+
+One last point (I didn’t mention this explicitly before, but I hope it’s clear from everything I did say): Overall, the relational model is declarative, not procedural, in nature; that is, it always favors declarative solutions over procedural ones, wherever such solutions are feasible. The reason is obvious: Declarative means the system does the work, procedural means the user does the work (so we’re talking about productivity, among other things). That’s why the relational model supports declarative queries, declarative updates, declarative view definitions, declarative integrity constraints, and on and on.
+
+Note: After I first wrote the foregoing paragraph, I was informed that at least one well known SQL product apparently uses the term “declarative” to mean the system doesn’t do the work! That is, it allows the user to state certain things declaratively (for example, the fact that a certain view has a certain key), but it doesn’t enforce the constraint implied by that declaration ─ it simply assumes the user is going to enforce it instead. Such terminological abuses do little to help the cause of genuine understanding. Caveat lector.
+
+EXERCISES
+
+1.1 (Repeated from the body of the chapter, but slightly reworded here.) If you haven’t done so already, go through the chapter again and identify all of the places where I used the term relation when I should by rights have used the term relvar instead.
+
+1.2 Who was E. F. Codd?
+
+1.3 What’s a domain?
+
+1.4 What do you understand by the term referential integrity?
+
+1.5 The terms heading, body, attribute, tuple, cardinality, and degree, defined in the body of the chapter for
+relation values, can all be interpreted in the obvious way to apply to relvars as well. Make sure you understand this remark.
+
+1.6 Distinguish between the two meanings of the term data model.
+
+1.7 Explain in your own words (a) physical data independence, (b) the difference between model and
+implementation.
+
+1.8 In the body of the chapter, I said that tables like those in Figs. 1.1 and 1.3 weren’t relations as such but, rather, pictures of relations. What are some of the specific points of difference between such pictures and the corresponding relations?
+
+1.9 (Try this exercise without looking back at the body of the chapter.) What relvars does the suppliers-and-parts database contain? What attributes do they involve? What keys and foreign keys do they have? (The point of this exercise is that it’s worth making yourself as familiar as possible with the structure, at least in general terms, of the running example. It’s not so important to remember the actual data values in detail ─ though it wouldn’t hurt if you did.)
+
+1.10 “There’s only one relational model.” Explain this remark.
+
+1.11 The following is an excerpt from a certain database textbook: “[It] is important to make a distinction between stored relations, which are tables, and virtual relations, which are views ... [We] shall use relation only where a table or a view could be used. When we want to emphasize that a relation is stored, rather than a view, we shall sometimes use the term base relation or base table.” This text betrays several confusions or misconceptions regarding the relational model. Identify as many as you can.
+
+1.12 The following is an excerpt from another database textbook: “[The relational] model ... defines simple tables for each relation and many to many relationships. Cross-reference keys link the tables together, representing the relationships between entities. Primary and secondary indexes provide rapid access to data based upon qualifications.” This text is intended as a definition (!) of the relational model ... What’s wrong with it?
+
+1.13 Write CREATE TABLE statements for an SQL version of the suppliers-and-parts database.
+
+1.14 The following is a typical SQL INSERT statement against the suppliers-and-parts database:
+
+INSERT INTO SP ( SNO , PNO , QTY ) VALUES ( ‘S5’ , ‘P6’ , 250 ) ;
+
+Show an equivalent relational assignment operation. Note: I realize I haven’t yet explained the syntax of relational assignment in detail, so don’t worry too much about giving a syntactically correct answer ─ just do the best you can.
+
+1.15 (Harder.) The following is a typical SQL UPDATE statement against the suppliers-and-parts database: 
+
+UPDATE S SET STATUS = 25 WHERE CITY = ‘Paris’ ;
+
+Show an equivalent relational assignment operation. (The purpose of this exercise is to get you thinking about what’s involved. I haven’t told you enough in this chapter to allow you to answer it fully. See the discussion of “what if” queries in Chapter 7 for a detailed explanation.)
+
+1.16 In the body of the chapter, I said that SQL doesn’t directly support relational assignment. Does it support it indirectly? If so, how? A related question: Can all relational assignments be expressed in terms of INSERT and/or DELETE and/or UPDATE? If not, why not? What are the implications?
+
+1.17 From a practical standpoint, why do you think duplicate tuples, top to bottom tuple ordering, and left to right attribute ordering are all very bad ideas? (These questions deliberately weren’t answered in the body of the chapter, and this exercise might best serve as a basis for group discussion. We’ll be taking a closer look at such matters later in the book.)
+
+[1] There’s at least one pundit who doesn’t. The following is a direct quote from a document purporting (like this book!) to offer advice to SQL users: “Don’t use joins... Oracle and SQL Server have fundamentally different approaches to the concept... You can end up with unexpected result sets... You should understand the basic types of join clauses... Equijoins are formed by retrieving all the data from two separate sources and combining it into one, large table... Inner joins are joined on the inner columns of two tables. Outer joins are joined on the outer columns of two tables. Left joins are joined on the left columns of two tables. Right joins are joined on the right columns of two tables.”
+
+[2] The standard has been through several versions, or editions, over the years. The version current at the time of writing is SQL:2008 (a formal reference for which can be found in Appendix G); the previous version was SQL:2003, the one before that was SQL:1999, and the one before that was SQL:1992. Most of the SQL features discussed in this book were present in SQL:1992, and often in even earlier versions.
+
+[3] These particular limitations were added in SQL:2003; they didn’t apply to SQL:1992, which is where explicit JOIN invocations were first introduced, nor to SQL:1999.
+
+[4] Strictly speaking, this sentence should read “Every relvar has at least one candidate key” (see the section “Relations vs. Relvars,” later). Note: Actually, a similar remark applies elsewhere in this chapter as well. Exercise 1.1 at the end of the chapter addresses this issue.
+
+[5] See Exercise 5.27 in Chapter 5 for further explanation of this convention.
+
+[6] This definition is deliberately somewhat simplified. A better definition can be found in Chapter 5.
+
+[7] Except that Codd additionally defined an operator called divide. I’ll explain in Chapter 7 why I omit that operator here.
+
+[8] More than one reviewer observed that this sentence didn’t make sense (how can a system be used as a method?). Well, if you’re too young to be familiar with the term access method, then I envy you; but the fact is, that term, inappropriate though it certainly was (and is), was widely used for many years to mean a simple record level I/O facility, of one kind or another.
+
+[9] It’s also used in connection with keys (see Chapter 5).
+
+[10] “First” normal form because, as I’m sure you know, it’s possible to define a series of “higher” normal forms ─ second normal form, third normal form, and so on ─ that are relevant to the discipline of database design.
+
+[11] What I’ve described in this paragraph is the standard mathematical convention; however, you might have encountered a different convention in less formal contexts. To be specific, some people use “B is a subset of A” to mean what I mean when I say B is a proper subset of A, and use “B is a subset of or equal to A” to mean what I mean when I say B is a subset of A. Similarly for supersets, of course, mutatis mutandis.
+
+[12] You might be thinking this claim can’t be 100 percent true for update operations. If so, you might be right as far as today’s SQL products are concerned; nevertheless, I still claim it’s true in principle. See the section “Update Operations” in Chapter 9 for further discussion.
+
+[13] I say this knowing full well that the majority of today’s SQL products do provide a variety of options for hashing, partitioning, indexing, clustering, and otherwise organizing the data as stored on the disk. Despite this state of affairs, I still consider the mapping from base tables to physical storage in those products to be fairly direct.
+
+[14] Several reviewers complained about this fact ─ that is, they felt I should be using SQL itself, not some nonstandard language like Tutorial D, in order to illustrate relational ideas. (One even suggested the book be renamed “Tutorial D and Relational Theory”!) But SQL as such was never intended to be a vehicle for illustrating relational ideas, while Tutorial D explicitly was; and in any case, SQL simply isn’t adequate to the task. Indeed, if it were, a book like this one wouldn’t be necessary in the first place.
+
+[15] SQL makes the same mistake, of course, because it too has just one term, table, that has to be understood as sometimes meaning a table value and sometimes a table variable.

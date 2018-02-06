@@ -1,0 +1,374 @@
+
+                Chapter 12 Miscellaneous SQL Topics
+I explained that we are calling the White Paper “Open Government” because you always dispose of the difficult bit in the title.
+It does less harm there than on the statute books.
+─Sir Humphrey Appleby, in Open Government (first episode of the BBC TV series Yes Minister, by Antony Jay and Jonathan Lynn, 1981)
+This last chapter is something of a potpourri; it discusses a few SQL features that, for one reason or another, don’t fit very neatly into any of the previous chapters. It also gives a simplified BNF grammar for SQL table expressions and SQL boolean expressions, for purposes of reference.
+Also, this is as good a place as any to define two terms that you need to watch out for. The terms in question are implementation defined and implementation dependent, and they’re both used heavily in the SQL standard. Here are the definitions:
+Definition: An implementation defined feature is one whose semantics can vary from one implementation to another, but do at least have to be specified for any individual implementation. In other words, the implementation is free to decide how it will implement the feature in question, but the result of that decision must be documented. An example is the maximum length of a character string.
+Definition: An implementation dependent feature, by contrast, is one whose semantics can vary from one implementation to another and don’t even have to be specified for any individual implementation. In other words, the term effectively means undefined; the implementation is free to decide how it will implement the feature in question, and the result of that decision doesn’t need to be documented (it might vary from release to release, or even more frequently). An example is the full effect of an ORDER BY clause if the specifications in that clause fail to specify a total ordering, as in, e.g, SELECT SNO FROM S ORDER BY CITY .
+SELECT *
+Use of the “SELECT *” form of the SQL SELECT clause is acceptable in situations where the specific columns involved, and their left to right ordering, are both irrelevant─for example, in an EXISTS invocation. It can be dangerous in other situations, however, because the meaning of that “*” can change if (e.g.) new columns are added to an existing table. Recommendation: Be on the lookout for such situations and try to avoid them. In particular, don’t use “SELECT *” at the outermost level in a cursor definition─instead, always name the pertinent columns explicitly. A similar remark applies to view definitions also. (However, if you adopt the strategy suggested under the discussion of column naming in Chapter 3 of always accessing the database via views─the “operate via views” strategy─then it might be safe to use “SELECT *” anywhere you like other than in the definitions of those views themselves.)
+www.it-ebooks.info
+                274 Chapter 12 / Miscellaneous Topics EXPLICIT TABLES
+An explicit table in SQL is an expression of the form TABLE T, where T is the name of a base table or view or an “introduced name” (see the discussion of WITH in Chapter 6). It’s logically equivalent to the following:
+( SELECT * FROM T )
+Here’s a fairly complicated example that makes use of explicit tables (“Get all parts─but if the city is London, show it as Oslo and show the weight as double”):
+WITH T1 AS (
+T2 AS (
+T3 AS (
+SELECT PNO , PNAME , COLOR , WEIGHT , CITY FROM P
+WHERE CITY = ‘London’ ) ,
+SELECT PNO , PNAME , COLOR , WEIGHT , CITY ,
+2 * WEIGHT AS NEW_WEIGHT , ‘Oslo’ AS NEW_CITY FROM T1 ) ,
+SELECT PNO , PNAME , COLOR ,
+NEW_WEIGHT AS WEIGHT , NEW_CITY AS CITY
+FROM T2 ) ,
+TABLE P EXCEPT CORRESPONDING TABLE T1 )
+T4 AS (
+TABLE T4 UNION CORRESPONDING TABLE T3
+NAME QUALIFICATION
+Column names in SQL can usually be dot qualified by the name of the applicable range variable (see the next section). However, SQL allows that qualifier to be omitted in many situations, in which case an implicit qualifier is assumed by default. But:
+ The SQL rules regarding implicit qualification aren’t always easy to understand. As a result, it isn’t always obvious what a particular unqualified name refers to.
+ What’sunambiguoustodaymightbeambiguoustomorrow(e.g.,ifnewcolumnsareaddedtoanexisting table).
+ InChapter3Irecommended,strongly,thatcolumnsthatrepresentthesamekindofinformationbegiventhe same name whenever possible. If that recommendation is followed, then unqualified names will often be ambiguous anyway, and dot qualification will therefore be required.
+So a good general rule is: When in doubt, qualify. Unfortunately, however, there are certain contexts in which qualification isn’t allowed. The contexts in question are, loosely, ones in which the name serves as a reference to the column per se, rather than to the data contained in that column. Here’s a partial list of such contexts (note the last two in particular):
+ Acolumndefinitionwithinabasetabledefinition  Akeyorforeignkeyspecification
+www.it-ebooks.info
+                Miscellaneous Topics / Chapter 12 275
+ Thecolumnnamecommalist,ifspecified(butitshouldn’tbe─seeChapter8),inCREATEVIEW
+ Thecolumnnamecommalist,ifspecified(butitusuallyshouldn’tbe─seethenextsection),followingthe definition of a range variable
+ ThecolumnnamecommalistinJOIN...USING
+ Thecolumnnamecommalist,ifspecified(anditshouldbe─seeChapter5),onINSERT
+ The left side of a SET assignment on UPDATE
+It might help to note that most of the contexts listed above are ones in which no range variable, as such, is available for dot qualification use anyway. The point is, however, that an unsuspecting user might expect to be able to use table names as qualifiers in these contexts, on the grounds─I suppose─that SQL often uses table names as if they were range variable names anyway, as explained in the next section.
+RANGE VARIABLES
+As we saw in Chapter 10, a range variable in the relational model is a variable─a variable in the sense of logic, that is, not the usual programming language sense─that ranges over the set of tuples in some relation (or the set of rows in some table, in SQL terms). In SQL, such variables are defined by means of AS specifications in the context of either FROM or explicit JOIN. Here’s a simple example of the FROM case:
+SELECT SX.SNO
+FROM S AS SX
+WHERE SX.STATUS > 15
+SX here is a range variable that ranges over table S; in other words, its permitted values are rows of table S. You can think of the SELECT expression overall as being evaluated as follows. First, the range variable takes on one of its permitted values, say the row for supplier S1. Is the status value in that row greater than 15? If it is, then supplier number S1 appears in the result. Next, the range variable moves on to another row of table S, say the row for supplier S2; again, if the status value in that row is greater than 15, then the relevant supplier number appears in the result. And so on, exhaustively, until variable SX has taken on all of its permitted values.
+Note: SQL calls a name such as SX in the example a correlation name. However, it doesn’t seem to have a term for the thing that such a name names; certainly there’s no such thing in SQL as a “correlation.” (Note in particular that the term doesn’t necessarily have anything to do with correlated subqueries, which are discussed in the next section.) I prefer the term range variable.
+Incidentally, it’s worth noting that SQL requires SELECT expressions always to be formulated in terms of range variables; if no such variables are specified explicitly, it assumes the existence of implicit ones with the same names as the corresponding tables. For example, the SELECT expression
+SELECT SNO
+FROM S
+WHERE STATUS > 15
+─arguably a more “natural” SQL formulation of the example discussed above─is treated as shorthand for this expression (note the text in bold):
+www.it-ebooks.info
+                276 Chapter 12 / Miscellaneous Topics
+SELECT S.SNO
+FROM S AS S
+WHERE S.STATUS > 15
+In this latter formulation, the “S” dot qualifiers and the “S” in the specification “AS S” do not denote table S; rather, they denote a range variable called S that ranges over the table with the same name.1
+Now, the BNF grammar defined later in this chapter refers to the items in the commalist in a FROM clause─i.e., the items following the keyword FROM itself─as table specifications.2 The operand expressions in an explicit JOIN are also table specifications. Let ts be such a table specification. Then, if the table expression portion of ts is a table subquery (see the next section), then ts must also include an AS clause─even if the range variable introduced by that AS clause is never explicitly mentioned anywhere else in the overall expression. Here’s a JOIN example:
+( SELECT SNO , CITY FROM S ) AS TEMP1 NATURAL JOIN
+( SELECT PNO , CITY FROM P ) AS TEMP2
+Here’s another example (repeated from Chapter 7):
+SELECT FROM (
+WHERE
+PNO , GMWT
+SELECT PNO , WEIGHT * 454 AS GMWT FROM P ) AS TEMP
+GMWT > 7000.0
+For interest, here’s the same example with all implicit qualifiers made explicit:
+SELECT FROM (
+WHERE
+TEMP.PNO , TEMP.GMWT
+SELECT P.PNO , P.WEIGHT * 454 AS GMWT FROM P ) AS TEMP
+TEMP.GMWT > 7000.0
+Note: A range variable definition in SQL can always optionally include a column name commalist that defines column names for the table the range variable ranges over, as in this example (see the last two lines):
+SELECT
+FROM ( (
+TEMP.SNO , TEMP.SNAME , TEMP.STATUS, TEMP.SCITY ,
+TEMP.PNO , TEMP.PNAME , TEMP.COLOR , TEMP.WEIGHT , TEMP.PCITY SELECT * FROM S JOIN P ON S.CITY > P.CITY ) AS TEMP
+SNO , SNAME , STATUS , SCITY ,
+PNO , PNAME , COLOR , WEIGHT , PCITY )
+The introduced column names here (SNO, SNAME, STATUS, SCITY, PNO, PNAME, COLOR, WEIGHT, and PCITY) effectively rename columns SNO, SNAME, STATUS, S.CITY, PNO, PNAME, COLOR, WEIGHT,
+1 Here I might admit if pressed to a sneaking sympathy with a remark an old friend once made to me in connection with this very point: “You mathematicians are all alike─you spend hours agonizing over things that are perfectly obvious to everybody else.”
+2 The standard term is table reference, but that term is hardly very apt. In most languages, a variable reference is a special case of an expression; syntactically, it’s just a variable name, used to denote the value of the variable in question. But an SQL “table reference” isn’t a special case of a table expression─not in the sense in which the latter term is used in this book, and (perhaps more to the point) not in the sense in which it’s used in SQL, either.
+ www.it-ebooks.info
+                and P.CITY, respectively (see the explanation of JOIN ... ON in Chapter 6).3 However, it shouldn’t be necessary to introduce column names in this way very often if other recommendations in this book are followed.
+Recommendation: Favor the use of explicit range variables, especially in “complex” expressions─they can aid clarity, and sometimes they can save keystrokes.4 Be aware, however, that SQL’s name scoping rules for such variables can be quite hard to understand (but this is true regardless of whether the variables in question are explicit or implicit).
+Caveat: Many SQL texts refer to range variable names (or correlation names) as aliases, and describe them as if they were just alternative names for the tables they range over. But such a characterization seriously misrepresents the true state of affairs─indeed, it betrays a serious lack of understanding of what’s really going on─and is strongly deprecated on that account. Be on your guard against this sloppy manner of speaking.
+SUBQUERIES
+A subquery in SQL is a table expression, tx say, enclosed in parentheses; if the table denoted by tx is t, the table denoted by the subquery is t also. Note, however, that (as mentioned in Chapters 1 and 6) the expression tx can’t be an explicit JOIN expression. Thus, for example,
+( A NATURAL JOIN B )
+isn’t a legal subquery.5 By contrast, the following expression is a legal subquery: ( SELECT * FROM A NATURAL JOIN B )
+Subqueries fall into three categories (though the syntax is the same in every case). The details, partly repeated from earlier chapters, are as follows:
+ Atablesubqueryisasubquerythat’sneitherarowsubquerynorascalarsubquery.
+ A row subquery is a subquery appearing in a position where a row expression is expected. Let rsq be such a subquery; then rsq must denote a table with just one row. Let the table in question be t, and let the single row in t be r; then rsq behaves as if it denoted that row r (in other words, t is coerced to r). Note: If rsq doesn’t denote a table with just one row, then (a) if it denotes a table with n rows (n > 1), an error is raised; (b) if it denotes a table with no rows at all, then that table is treated as if it contained just one row, where the row in question contains a null in every column position.
+ A scalar subquery is a subquery appearing in a position where a scalar expression is expected. Let ssq be such a subquery; then ssq must denote a table with just one row and just one column. Let the table in question be t, let the single row in t be r, and let the single value in r be v; then ssq behaves as if it denoted that value v (in other words, t is coerced to r, and then r is coerced to v). Note: If ssq doesn’t denote a table with just one row and just one column, then (a) if it denotes a table with m columns (m > 1), an error is raised
+3 As the example suggests, the column name commalist in a range variable definition is required, somewhat annoyingly, to be exhaustive─there’s no way to rename just some of the columns concerned and not others. Also, note the need here to be fully cognizant of SQL’s rules regarding left to right column ordering in the result of the explicit JOIN!
+4 I’ll omit them from most of my own examples in the remainder of this chapter, however, because (a) using explicit range variables might distract from the main point I’m trying to make with those examples and (b) those examples are all fairly simple, anyway.
+5 It was legal in SQL:1992 but became illegal in SQL:2003.
+Miscellaneous Topics / Chapter 12 277
+ www.it-ebooks.info
+                278
+Chapter 12 / Miscellaneous Topics
+(probably at compile time); (b) if it denotes a table with one column and n rows (n > 1), an error is raised (probably at run time); (c) if it denotes a table with one column and no rows at all, then that table is treated as if it contained just one row, where the row in question contains a single null.
+The following examples involve, in order, a table subquery, a row subquery, and a scalar subquery:
+SELECT SNO FROM S
+WHERE CITY IN
+( SELECT CITY FROM P
+WHERE COLOR = ‘Red’ )
+UPDATE S
+SET (STATUS,CITY)=
+( SELECT STATUS , CITY FROM S
+/* table subquery */
+/* row subquery */
+/* scalar subquery */
+       WHERE
+WHERE  CITY =
+SELECT SNO
+FROM   S
+WHERE  CITY =
+SNO = ‘S1’ ) ‘Paris’ ;
+CITY
+WHERE PNO = ‘P1’ )
+( SELECT
+  FROM   P
+Next, a correlated subquery is a special kind of (table, row, or scalar) subquery; to be specific, it’s a subquery that includes a reference to some “outer” table. In the following example, the parenthesized expression following the keyword IN is a correlated subquery, because it includes a reference to the outer table S (the query is “Get names of suppliers who supply part P1”):
+SELECT DISTINCT S.SNAME FROM S
+WHERE ‘P1’ IN
+( SELECT PNO
+FROM SP
+WHERE SP.SNO = S.SNO )
+/* correlated subquery */
+As noted in Chapter 11, correlated subqueries are often contraindicated from a performance point of view, because─conceptually, at any rate─they have to be evaluated once for each row in the outer table instead of just once and for all. (In the example, if the overall expression is evaluated as stated, the subquery will be evaluated n times, where n is the number of rows in table S.) For that reason, it’s a good idea to avoid correlated subqueries if possible. In the case at hand, it’s very easy to reformulate the query to achieve this goal:
+SELECT DISTINCT S.SNAME FROM S
+WHERE SNO IN
+( SELECT SNO /* noncorrelated subquery */ FROM SP
+WHERE PNO = ‘P1’ )
+Finally, a “lateral” subquery is a special kind of correlated subquery. To be specific, it’s a correlated subquery that (a) appears in a FROM clause and (b) includes a reference to an “outer” table that’s defined by a table
+www.it-ebooks.info
+                specification appearing earlier in that same FROM clause. For example, consider the query “For each supplier, get the supplier number and the number of parts supplied by that supplier.” Here’s one possible formulation of that query in SQL:
+SELECT S.SNO , TEMP.PCT
+FROM S , LATERAL ( SELECT COUNT ( PNO ) AS PCT
+FROM SP
+WHERE SP.SNO = S.SNO ) AS TEMP
+The purpose of the keyword LATERAL is to tell the system that the subquery to which it’s prefixed is correlated with something previously mentioned in the very same FROM clause (in the example, that “lateral” subquery yields exactly one value─namely, the applicable count─for each SNO value in table S). Given the sample values in Fig. 1.1 in Chapter 1, the result looks like this:
+┌─────┬─────┐ │ SNO │ PCT │ ├═════┼─────┤ │S1│ 6│ │S2 │ 2│ │S3 │ 1│ │S4│ 3│ │S5 │ 0│ └─────┴─────┘
+Now, there’s something going on here that you might be forgiven for finding a bit confusing. The items in a FROM clause are table specifications, and so they denote tables. In the example, though, the particular table specification that begins with the keyword LATERAL─more precisely, what remains of that table specification if the keyword LATERAL is removed─looks more like what might be called a scalar specification, or more precisely a scalar subquery; certainly it could used as such, should the context demand such an interpretation (e.g., in a SELECT clause). In fact, however, it’s a table subquery. The table it denotes, for a given value of S.SNO, is called TEMP; that table has just one column, called PCT, and just one row, and hence in fact contains a single scalar value. Then the expression TEMP.PCT in the SELECT clause causes that scalar value to become the contribution of table TEMP to the applicable result row (just as the expression S.SNO in that same SELECT clause causes the applicable SNO value to become the contribution of table S to that result row).
+Following on from the foregoing rather complicated explanation, I feel bound to add that it’s not exactly clear why “lateral” subqueries are needed anyway. Certainly the foregoing example can easily be reformulated in such a way as to avoid the “need” (?) for any such thing:
+SELECT S.SNO , ( SELECT COUNT ( PNO ) FROM SP
+FROM S
+WHERE SP.SNO = S.SNO ) AS PCT
+The subquery has moved from the FROM clause to the SELECT clause; it still refers to something else in the same clause (S.SNO, to be specific), but now the keyword LATERAL is no longer needed (?). However, do note what’s happened to the specification AS PCT, which appeared inside the subquery in the LATERAL formulation but has now moved outside (this point is discussed in more detail in an aside in the section “Summarization” in Chapter 7).
+Finally: I’ve defined the term subquery; perhaps it’s time to define the term query, too!─even though I’ve used that term ubiquitously throughout previous chapters. So here goes: A query is a retrieval request; in the SQL context, in other words, it’s either a table expression─though such expressions can also be used in contexts other
+www.it-ebooks.info
+Miscellaneous Topics / Chapter 12 279
+                280 Chapter 12 / Miscellaneous Topics
+than queries per se─or a statement, such as a SELECT statement in “direct” (i.e., interactive) SQL, that asks for such an expression to be evaluated. Note: The term is sometimes used (though not in this book!) to refer to an update request also. It’s also used to refer to the natural language version of some retrieval or update request.
+“POSSIBLY NONDETERMINISTIC” EXPRESSIONS
+As we saw in Chapter 2, an SQL table expression is “possibly nondeterministic” if it might give different results on different evaluations, even if the database hasn’t changed in the interim. Here’s the standard’s own definition:
+A <query expression> or <query specification> is possibly nondeterministic if an implementation might, at two different times where the state of the SQL-data is the same, produce results that differ by more than the order of the rows due to General Rules that specify implementation dependent behavior.
+Actually this definition is a trifle odd, inasmuch as tables─which is what <query expressions>s and <query specifications>s are supposed to produce─aren’t supposed to have a row ordering anyway. But let’s overlook this detail; the important point is that “possibly nondeterministic” expressions aren’t allowed in integrity constraints,6 a state of affairs that could have serious practical implications if true.
+The standard’s rules for labeling a given table expression “possibly nondeterministic” are quite complex, and full details are beyond the scope of the present discussion. However, a table expression tx is certainly considered to be “possibly nondeterministic” if any of the following is true:7
+ txisaunion,intersection,ordifference,andtheoperandtablesincludeacolumnoftypecharacterstring.
+ tx is a SELECT expression, the SELECT item commalist in that SELECT expression includes an item (C
+say) of type character string, and at least one of the following is true:
+a. The SELECT item commalist is preceded by the keyword DISTINCT.
+b. C involves a MAX or MIN invocation.
+c. tx directly includes a GROUP BY clause and C is one of the grouping columns.
+ tx is a SELECT expression that directly includes a HAVING clause and the boolean expression in that HAVING clause includes either (a) a reference to a grouping column of type character string or (b) a MAX or MIN invocation in which the argument is of type character string.
+ txisaJOINexpressionandeitherorbothoftheoperandexpressionsispossiblynondeterministic.
+Note, however, that these rules are certainly stronger than they need be. For example, suppose NO PAD
+applies to the collation in effect and that collation is one in which there are no characters that are “equal but
+6 Nor in view definitions, if the CHECK option is specified.
+7 What follows represents my own understanding and paraphrasing of the pertinent text from SQL:1992 (except that I’ve taken into account certain minor revisions made in subsequent versions of the standard). More important, I follow SQL:1992 here in talking about character string types only. The rules have since been extended to include as possibly nondeterministic (a) expressions involving data of certain user defined types and (b) expressions involving invocations of certain user defined operators (routines, to use the standard’s term). Further details are beyond the scope of this book.
+ www.it-ebooks.info
+                Miscellaneous Topics / Chapter 12 281 distinguishable”; then, e.g., SELECT MAX(C) FROM T, where column C of table T is of the character string type in
+question, is surely well defined.
+EMPTY SETS
+The empty set is the set containing no elements. This concept is both ubiquitous and extremely important in the relational world, but SQL commits a number of errors in connection with it. Unfortunately there isn’t much you can do about most of those errors, but you should at least be aware of them. Here they are (this is probably not a complete list):
+ A VALUES expression isn’t allowed to contain an empty row expression commalist.
+ TheSQL“setfunctions”allreturnnulliftheirargumentisempty(exceptforCOUNT(*)andCOUNT,
+which correctly return zero in such a situation).
+ Ifascalarsubqueryevaluatestoanemptytable,thatemptytableiscoercedtoanull.
+ Ifarowsubqueryevaluatestoanemptytable,thatemptytableiscoercedtoarowofallnulls.
+ If the set of grouping columns and the table being grouped are both empty, GROUP BY produces a result containing just one (necessarily empty) group, whereas it should produce a result containing no groups at all.
+ Akeycan’tbeanemptysetofcolumns(norcanaforeignkey,afortiori).
+ Atablecan’thaveanemptyheading.
+ A SELECT item commalist can’t be empty.
+ AFROMitemcommalistcan’tbeempty.
+ ThesetofcommoncolumnsinUNIONCORRESPONDING,INTERSECTCORRESPONDING,and EXCEPT CORRESPONDING can’t be empty (though it can be for JOIN).
+ Arowcan’thaveanemptysetofcomponents. A SIMPLIFIED BNF GRAMMAR
+For purposes of reference, it seems appropriate to close this chapter, and the main part of this book, with a simplified BNF grammar for SQL table expressions and SQL boolean expressions.8 The grammar is deliberately somewhat conservative, in that it fails to define as valid certain expressions that are so, according to the SQL standard. (However, I don’t believe it defines as valid any expressions that aren’t so according to that standard.) To be more specific, constructs that I’ve previously advised you not to use─including in particular everything to do with nulls and 3VL─are deliberately omitted; so too are certain somewhat esoteric features (e.g., recursive queries). Also, for
+8 Appendix D gives a BNF grammar for relational expressions (and assignments) in Tutorial D.
+ www.it-ebooks.info
+                282 Chapter 12 / Miscellaneous Topics
+reasons explained in Chapter 1, almost all of the syntactic categories in what follows have names that differ from
+their counterparts in the standard. The following simplifying abbreviations are used:
+exp for expression spec for specification
+All syntactic categories of the form <... name> are assumed to be <identifier>s and are defined no further here. The category <scalar exp> is also left undefined─though it might help to recall in particular that:
+ Ascalarsubqueryisalegalscalarexpression.
+ Most“rowexpressions”thatoccurinpracticeareactuallyscalarexpressions.  Booleanexpressionsarescalarexpressionstoo.
+Table Expressions
+As you can see, the grammar in this subsection begins with a production for <with exp>, a construct not mentioned (as such) in the body of the book. I introduce this syntactic category partly in order to capture the fact that join expressions can’t appear without being nested inside some other table expression─but it does mean that the construct referred to throughout earlier parts of the book as a table expression doesn’t directly correspond to anything defined in the grammar! (I mean, there’s no production for a syntactic category called <table exp>.) I apologize if you find this state of affairs confusing, but it’s the kind of thing that always happens when you try to define a grammar for a language that violates orthogonality.
+<with exp>
+::= [ <with spec> ] <nonjoin exp>
+<with spec>
+::= WITH <name intro commalist>
+<name intro>
+::= <table name> AS <nonjoin exp>
+<nonjoin exp>
+::= <nonjoin term>
+| <nonjoin exp> UNION [ DISTINCT ]
+[ CORRESPONDING ] <nonjoin term>
+| <nonjoin exp> EXCEPT [ DISTINCT ]
+[ CORRESPONDING ] <nonjoin term>
+<nonjoin term>
+::= <nonjoin primary>
+| <nonjoin term> INTERSECT [ DISTINCT ]
+[ CORRESPONDING ] <nonjoin primary>
+<nonjoin primary>
+::= TABLE <table name>
+| <table selector> | <select exp>
+| ( <nonjoin exp> )
+www.it-ebooks.info
+                <table selector>
+::=
+<row exp>
+::=
+|
+|
+VALUES <row exp commalist>
+<scalar exp> <row selector> <row subquery>
+<row selector>
+::= ( <scalar exp commalist> )
+<row subquery>
+::= <subquery>
+<subquery>
+::=
+<select
+::=
+<select
+::=
+( <nonjoin exp> )
+exp>
+SELECT [ DISTINCT ] [ * | <select item commalist> ]
+FROM <table spec commalist> [ WHERE <boolean exp> ]
+[ GROUP BY <column name commalist> ] [ HAVING <boolean exp> ]
+item>
+<scalar exp> [ AS <column name> ]
+| <range variable name>.*
+<table spec>
+::= <table name> [ AS <range variable name> ]
+| [ LATERAL ] <table subquery> AS <range variable name>
+| <join exp>
+| ( <join exp>
+<table subquery>
+::= <subquery>
+<join exp>
+::= <table spec>
+| <table spec> | <table spec> | <table spec>
+Boolean Expressions
+)
+CROSS JOIN <table spec>
+NATURAL JOIN <table spec>
+JOIN <table spec> ON <boolean exp> JOIN <table spec>
+USING ( <column name commalist> )
+Note that the grammar in this subsection agrees with the SQL standard in giving AND higher precedence than OR; thus, the boolean expression (e.g.) p AND q OR r is understood as (p AND q) OR r, not as p AND (q OR r). But it’s probably better always to specify parentheses explicitly in such expressions.
+<boolean exp>
+::= <boolean term>
+| <boolean exp> OR <boolean term>
+www.it-ebooks.info
+Miscellaneous Topics / Chapter 12 283
+                284
+Chapter 12 / Miscellaneous Topics
+<boolean term>
+::= <boolean factor>
+| <boolean term> AND <boolean factor> <boolean factor>
+::= [ NOT ] <boolean primary>
+<boolean primary>
+::= <boolean literal>
+| <boolean variable name> | <boolean column name>
+| <condition>
+| ( <boolean exp> )
+<boolean literal>
+::= TRUE | FALSE
+<condition>
+::=
+<simple
+::=
+<simple
+::=
+<simple comparison exp> | <between exp>
+| <like exp>
+| <in exp>
+| <match exp>
+| <all or any exp>
+| <exists exp>
+| <unique exp>
+comparison exp>
+<row exp> <simple comp op> <row exp>
+comp op>
+=|<|<=|>|>=|<>
+<between exp>
+::= <row exp> [ NOT ] BETWEEN <row exp> AND <row exp>
+<like exp>
+::= <scalar exp> [ NOT ] LIKE <scalar exp> [ ESCAPE <scalar exp> ]
+The <scalar exp>s must denote character strings. For ESCAPE, that string must be of length one.
+<in exp>
+::= <row exp> [ NOT ] IN <table subquery>
+| <scalar exp> [ NOT ] IN ( <scalar exp commalist> ) <match exp>
+::=
+<all or
+::=
+::=
+<exists
+::=
+<row exp> MATCH [ UNIQUE ] <table subquery> any exp>
+<row exp> <scalar comp op> <all or any> <table subquery> <all or any>
+ALL | ANY | SOME
+exp>
+EXISTS <table subquery>
+www.it-ebooks.info
+                <unique exp>
+::= UNIQUE <table subquery>
+EXERCISES
+12.1 According to the BNF grammar given in the body of the chapter, which of the following are legal as “stand alone” expressions (i.e., expressions not nested inside other expressions) and which not, syntactically speaking? (A and B are table names, and you can assume the tables they denote satisfy the requirements for the operator in question in each case.)
+A NATURAL JOIN B A INTERSECT B
+SELECT * FROM
+SELECT * FROM
+SELECT * FROM
+SELECT * FROM
+SELECT * FROM
+SELECT * FROM
+SELECT * FROM
+TABLE A NATURAL JOIN TABLE B
+TABLE A INTERSECT TABLE B
+SELECT * FROM A INTERSECT SELECT * FROM B
+( SELECT * FROM A ) INTERSECT ( SELECT * FROM B )
+( SELECT * FROM A ) AS AA INTERSECT ( SELECT * FROM B ) AS BB
+A NATURAL JOIN B
+A INTERSECT B
+( A NATURAL JOIN B )
+( A INTERSECT B )
+( SELECT * FROM A INTERSECT SELECT * FROM B ) ( A NATURAL JOIN B ) AS C
+( A INTERSECT B ) AS C
+What do you conclude from this exercise? Perhaps I should remind you that, relationally speaking, intersection is a special case of natural join.
+12.2 Take another look at the expressions in Exercise 12.1. In which of those expressions would it be syntactically legal to replace A or B or both by “table literals” (i.e., appropriate VALUES invocations)?
+12.3 Let X and Y both be of the same character string type and be subject to the same collation; let PAD SPACE apply to that collation (not recommended, of course); and let X and Y have the values ‘42’ and ’42 ’, respectively
+www.it-ebooks.info
+Miscellaneous Topics / Chapter 12 285
+                286 Chapter 12 / Miscellaneous Topics
+(note the trailing space in the second of these). Then we know from Chapter 2 that although X and Y are clearly
+distinct, the expression X = Y gives TRUE. But what about the expression X LIKE Y?
+12.4 Given our usual sample values, what do the following expressions return?
+SELECT DISTINCT STATUS
+FROM S
+WHERE STATUS BETWEEN 10 AND 30
+SELECT DISTINCT CITY FROM S
+WHERE CITY LIKE ‘L%’
+SELECT DISTINCT CITY
+FROM S
+WHERE CITY BETWEEN ‘Paris’ AND ‘Athens’
+12.5 The following is intended to be an SQL expression of type BOOLEAN. Is it legal?
+( SELECT CITY FROM S WHERE STATUS < 20 ) =
+( SELECT CITY FROM P WHERE WEIGHT = 14.0 )
+12.6 In the body of the chapter I recommended circumspection in the use of asterisk notation in the SELECT
+clause. For brevity, however, I didn’t always follow my own advice in this respect in earlier chapters. Take a look through those chapters and see if you think any of my uses of the asterisk notation were unsafe.
+12.7 Consider any SQL product available to you. Does that product support (a) the UNIQUE operator, (b) explicit tables, (c) lateral subqueries, (d) “possibly nondeterministic” expressions?
+12.8 With regard to possibly nondeterministic expressions, recall that SQL prohibits the use of such expressions in integrity constraints. Take another look at the examples in Chapter 8 and/or the answers to the exercises from that chapter in Appendix F. Do any of those examples or answers involve any possibly nondeterministic expressions? If so, what can be done about it?
+12.9 Throughout this book I’ve taken the term SQL to refer to the official standard version of that language specifically (though my treatment of the standard has deliberately been a very long way from exhaustive). But every product on the market departs from the standard in various ways, either by omitting some standard features or by introducing proprietary features of its own or (almost certainly in practice) both. Again, consider any SQL product available to you. Identify as many departures from the standard in that product as you can.
+www.it-ebooks.info

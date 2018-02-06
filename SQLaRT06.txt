@@ -1,0 +1,520 @@
+
+                Chapter 6
+SQL and Relational Algebra I:
+The Original Operators
+Join the union!
+This is the first of two chapters on the operators of the relational algebra; it discusses the original operators (i.e., the ones briefly described in Chapter 1) in depth, and it also examines certain ancillary but important issues─e.g., the significance of proper attribute (or column) naming once again. It also explains the implications of such matters for our overall goal of using SQL relationally.
+SOME PRELIMINARIES
+Let me begin by reviewing a few points from Chapter 1. First, recall that each algebraic operator takes at least one relation as input and produces another relation as output. Second, recall too that the fact that the output is the same kind of thing as the input(s)─they’re all relations─constitutes the closure property of the algebra, and it’s that property that lets us write nested relational expressions. Third, I gave outline descriptions in Chapter 1 of what I called “the original operators” (restrict, project, product, intersect, union, difference, and join); now I’m in a position to define those operators, and others, much more carefully. Before I can do that, however, I need to make a few more general points:
+ The operators of the algebra are generic: They apply, in effect, to all possible relations. For example, we don’t need one specific join operator to join departments and employees and another, different, join operator to join suppliers and shipments. (Incidentally, do you think an analogous remark applies to object systems?).
+ The operators are also read-only: They “read” their operands and they return a result, but they don’t update anything. In other words, they operate on relations, not relvars.
+ Of course, the previous point doesn’t mean that relational expressions can’t refer to relvars. For example, if R1 and R2 are relvar names, then R1 UNION R2 is certainly a valid relational expression in Tutorial D (so long as the relvars denoted by those names are of the same type, that is). In that expression, however, R1 and R2 don’t denote those relvars as such; rather, they denote the relations that happen to be the current values of those relvars at that time. In other words, we can certainly use a relvar name to denote a relation
+www.it-ebooks.info
+─Susan B. Anthony (1869)
+                106
+Chapter 6 / SQL and Relational Algebra I
+
+operand─and such a relvar reference in itself thus constitutes a valid relational expression1─but in principle we could equally well denote the very same operand by means of an appropriate relation literal instead.2
+An analogy might help clarify this latter point. Suppose N is a variable of type INTEGER, and at time t it has the value 3. Then N + 2 is certainly a valid expression, but at time t it means exactly the same thing as 3 + 2, no more and no less.
+Finally,giventhattheoperatorsofthealgebraareindeedallread-only,itfollowsthatINSERT,DELETE, and UPDATE (and relational assignment), though they’re certainly relational operators, aren’t relational algebra operators as such─though, regrettably, you’ll often come across statements to the contrary in the literature.
+I also need to say something here about the design of Tutorial D, because its support for the algebra in particular is significantly different from that of SQL. The overriding point is that, in operations like UNION or JOIN that need some correspondence to be established between operand attributes, Tutorial D does so by requiring the attributes in question to be, formally, the very same attribute (i.e., to have the same name and same type). For example, here’s a Tutorial D expression for the join of parts and suppliers on cities:
+P JOIN S
+The join operation here is performed, by definition, on the basis of part and supplier cities, CITY being the sole attribute that P and S have in common (i.e., the sole common attribute).
+To repeat, Tutorial D establishes the correspondence between operand attributes, when such a correspondence is required, by insisting that the attributes in question in fact be the very same attribute. And it applies this same technique uniformly and consistently across the board, in all pertinent contexts. By contrast, SQL uses different techniques in different contexts. Sometimes it uses ordinal position (we’ve already seen an example of this case in connection with foreign keys, as discussed in the previous chapter). Sometimes it uses explicit specification. Sometimes it requires the attributes in question (or columns, rather) to have the same name─and then the correspondence is sometimes established explicitly, sometimes implicitly. And regardless of whether it requires the columns in question to have the same name, sometimes it requires those columns to be of the same type, and sometimes it doesn’t. In order to illustrate some but not all of these possibilities, let’s consider the P JOIN S example again. Here’s one possible formulation of that join in SQL:
+SELECT P.PNO , P.PNAME , P.COLOR , P.WEIGHT , P.CITY
+S.SNO , S.SNAME , S.STATUS FROM P,S
+WHERE P.CITY = S.CITY
+/* or S.CITY */ ,
+In this formulation, the required column correspondence is specified explicitly in the WHERE clause. As you probably know, however, examples like this one can in fact be formulated in several different ways in SQL. Here are three more formulations for the case at hand (as you can see, the second and third are a little closer to the spirit of Tutorial D):3
+1 This is true in the algebra but not necessarily true in SQL. For example, if T1 and T2 are SQL table names, we typically can’t write things like T1 UNION T2─we have to write something like SELECT * FROM T1 UNION SELECT * FROM T2 instead.
+2 Again, this is true in the algebra but not necessarily true in SQL. See the BNF grammar for SQL table expressions in Chapter 12. 3 Here’s a test of your SQL knowledge: For which of these formulations do corresponding columns have to be of the same type?
+ www.it-ebooks.info
+                SELECT P.PNO , P.PNAME
+S.SNO , S.SNAME FROM PJOINS
+ON P.CITY = S.CITY
+SELECT P.PNO , P.PNAME S.SNO , S.SNAME
+FROM PJOINS USING ( CITY )
+SELECT P.PNO , P.PNAME S.SNO , S.SNAME
+FROM P NATURAL JOIN S
+Observe now that:
+, P.COLOR , P.WEIGHT , P.CITY
+, S.STATUS
+/* or S.CITY */ ,
+SQL and Relational Algebra I / Chapter 6 107
+, P.COLOR , P.WEIGHT , CITY , , S.STATUS
+, P.COLOR , P.WEIGHT , CITY , , S.STATUS
+ Inthefirstofthesethreeformulations,thecolumncorrespondenceisagainspecifiedexplicitly,butthistime by means of an ON clause instead of a WHERE clause.
+ Inthesecondformulation,thecorrespondenceisbasedoncommoncolumnnames,butit’sstillspecified explicitly, by means of the USING clause.
+ Inthethirdformulation,thecorrespondenceisagainbasedoncommoncolumnnames,butthistimeit’s implicit.
+Now I’d like to go back to the SQL formulation I gave first of all, partly because it was the only one supported in SQL as originally defined and partly, and more importantly, because it allows me to make a number of additional points concerning differences between SQL and Tutorial D:
+ SQL permits, and sometimes requires, dot qualified names. Tutorial D doesn’t. Note: I’ll have more to say about SQL’s dot qualified names in Chapter 12.
+ TutorialDsometimesneedstorenameattributesinordertoavoidwhatwouldotherwisebenamingclashes or mismatches. SQL usually doesn’t (though it does support an analog of the RENAME operator that Tutorial D uses for the purpose, as we’ll see in the next section).
+ Partlyasaconsequenceofthepreviouspoint,TutorialDhasnoneedforSQL’s“correlationname”concept; in effect, it replaces that concept by the idea that attributes sometimes need to be renamed, as previously explained. Note: I’ll be discussing SQL’s correlation names in detail in Chapter 12.
+ Aswellaseitherexplicitlyorimplicitlysupportingcertainfeaturesoftherelationalalgebra,SQLalso explicitly supports certain features of the relational calculus (correlation names are a case in point, and EXISTS is another). Tutorial D doesn’t. One consequence of this difference is that SQL is a highly redundant language, in that it typically provides numerous different ways of formulating the same query, a fact that can have serious negative implications for both the user and the optimizer. (I once wrote a paper on thistopiccalled“FiftyWaystoQuoteYourQuery”─seeAppendixG─inwhichIshowedthatevena query
+www.it-ebooks.info
+                108
+Chapter 6 / SQL and Relational Algebra I
+
+as simple as “Get names of suppliers who supply part P2” can be expressed in well over 50 different ways in SQL.)
+SQLrequiresmostqueriestoconformtoitsSELECT-FROM-WHEREtemplate. TutorialDhasno analogous requirement. Note: I’ll have more to say on this particular issue in the next chapter.
+In what follows, I’ll show examples in both Tutorial D and SQL. MORE ON CLOSURE
+To say it again, the result of every relational operation is a relation. Conversely, any operator that produces a result that isn’t a relation is, by definition, not a relational operator.4 For example, any operator that produces an ordered result isn’t a relational operator (see the discussion of ORDER BY in the next chapter). And in SQL in particular, the same is true of any operator that produces a result with duplicate rows, or left to right column ordering, or nulls, or anonymous columns, or duplicate column names. Closure is crucial! As I’ve already said, closure is what makes it possible to write nested expressions in the relational model, and (as we’ll see later) it’s also important in expression transformation, and hence in optimization. Strong recommendation: Don’t use any operation that violates closure if you want the result to be amenable to further relational processing.
+Now, when I say the result of every algebraic operation is another relation, I hope it’s clear that I’m talking from a conceptual point of view; I don’t mean the system always has to materialize those results in their entirety. For example, consider the following expression (a restriction of a join─Tutorial D on the left and SQL on the right as usual, and I’ve deliberately shown all name qualifications explicitly in the SQL version):5
+( P JOIN S ) │ SELECT P.* , S.SNO , S.SNAME , S.STATUS WHERE PNAME > SNAME │FROMP,S
+│ WHERE P.CITY = S.CITY │ AND P.PNAME > S.SNAME
+Clearly, as soon as any given tuple of the join is formed, the system can test that tuple right away against the restriction condition PNAME > SNAME (P.PNAME > S.SNAME in the SQL version) to see if it belongs in the final output, discarding it if not. Thus, the intermediate result that’s the output from the join might never have to exist as a fully materialized relation in its own right at all. In practice, in fact, the system tries very hard not to materialize intermediate results in their entirety, for obvious performance reasons. (As an aside, I remark that the process by which tuples of an intermediate result are produced and passed on to another operation one at a time instead of en bloc is sometimes referred to as pipelining.)
+The foregoing example raises another point, however. Consider the boolean expression PNAME > SNAME in the Tutorial D version. That expression applies, conceptually, to the result of P JOIN S, and the attribute names PNAME and SNAME in that expression therefore refer to attributes of that result─not to the attributes of the same names in relvars P and S. But how do we know that result has any such attributes? What is the heading of that result? More generally, how do we know what the heading is for the result of any algebraic operation? Clearly,
+4 With one slight exception: Some writers regard relational inclusion (“⊆”) as a relational operation─more specifically, as part of the relational algebra─even though it produces a result that’s a truth value, not a relation. The point isn’t very important, however; certainly it’s not worth fighting over here.
+5 I assume for the sake of the example that the comparison PNAME > SNAME is a sensible one─though if it is, then attributes PNAME and SNAME must presumably represent “the same kind of information,” and in accordance with my own recommendations in Chapter 3 I ought perhaps to have given them the same name.
+ www.it-ebooks.info
+                20│London│ 10│Paris │ 30│Paris │ 20│London│ 30│Athens│
+Note: I won’t usually bother to show results explicitly in this chapter unless I think the particular operator I’m talking about might be unfamiliar to you, as in the case at hand.
+SQL and Relational Algebra I / Chapter 6 109
+whatweneedisasetofrules─tobespecific,relationtypeinferencerules─suchthatifweknowtheheadings (and therefore the types) of the input relations for an operation, we can infer the heading (and therefore the type) of the output relation from that operation. And the relational model does include such a set of rules. In the case of join, for example, those rules say the output from P JOIN S is of this type:
+RELATION { PNO CHAR , PNAME CHAR , COLOR CHAR , WEIGHT RATIONAL , CITY CHAR , SNO CHAR , SNAME CHAR , STATUS INTEGER }
+In fact, for join, the heading of the output is the union of the headings of the inputs (where by union I mean the regular set theory union, not the special relational union I’ll be discussing later in this chapter). In other words, the output has all of the attributes of the inputs, except that common attributes─just CITY in the example─appear once, not twice, in that output. Of course, those attributes don’t have any left to right order, so I could equally well say the type of the result of P JOIN S is (for example):
+RELATION { SNO CHAR , PNO CHAR , SNAME CHAR , WEIGHT RATIONAL , CITY CHAR , STATUS INTEGER , PNAME CHAR , COLOR CHAR }
+Note that type inference rules of some kind are definitely needed in order to support the closure property fully─closure says every result is a relation, and relations have a heading as well as a body; thus, every result must have a proper relational heading as well as a proper relational body.
+Now, the RENAME operator mentioned in the previous section is needed in large part because of the foregoing type inference rules; it allows us to perform, e.g., a join, even when the relations involved don’t meet the attribute naming requirements for that operation (speaking a trifle loosely). Here’s the definition:
+Definition: Let r be a relation and let A be an attribute of r. Then the (attribute) renaming r RENAME {A AS B} is a relation with (a) heading identical to that of r except that attribute A in that heading is renamed B and (b) body identical to that of r (except that references to A in that body are replaced by references to B, a nicety that can be ignored for present purposes). Note: I assume for simplicity that relation r doesn’t already have an attribute named B.
+For example:
+S RENAME { CITY AS SCITY } │ SELECT SNO , SNAME , STATUS , │ S.CITY AS SCITY
+│ FROM S
+Given our usual sample values, the result looks like this (it’s identical to our usual suppliers relation, except
+that the city attribute is called SCITY):
+┌─────┬───────┬────────┬────────┐ │SNO│SNAME│STATUS│SCITY │ ├═════┼───────┼────────┼────────┤
+│S1 │Smith│
+│S2 │Jones│
+│S3 │Blake│
+│S4 │Clark│
+│S5 │Adams│ └─────┴───────┴────────┴────────┘
+www.it-ebooks.info
+                110 Chapter 6 / SQL and Relational Algebra I
+Important: The foregoing example does not change relvar S in the database! RENAME isn’t like SQL’s ALTER TABLE; the RENAME invocation is only an expression (just as, for example, P JOIN S or N + 2 are only expressions), and like any expression it simply denotes a value. What’s more, since it is an expression, not a statement or “command,” it can be nested inside other expressions. We’ll see plenty of examples of such nesting later.
+So how does SQL handle this business of result type inference? The answer is: Not very well. First of all, as we saw in Chapter 3, it doesn’t really have a notion of “relation type” (or table type, rather) anyway. Second, it can produce results with columns that effectively have no name at all (for example, consider SELECT PNO, 2 * WEIGHT FROM P). Third, it can also produce results with duplicate column names (for example, consider SELECT DISTINCT P.CITY, S.CITY FROM P, S). Strong recommendation: Follow the column naming discipline from Chapter 3 wherever necessary to ensure that SQL conforms as far as possible to the relational rules described in this chapter. Just to remind you, that discipline involved using AS specifications to give proper column names to columns that otherwise (a) wouldn’t have a name at all or (b) would have a name that wasn’t unique. My SQL examples in this chapter and the next (indeed, throughout the rest of this book) will all abide by this discipline.
+I haven’t finished with the example from the beginning of this section. Here it is again:
+( P JOIN S ) │ WHERE PNAME > SNAME │
+As you can see, the counterpart in the SQL version to Tutorial D’s PNAME > SNAME is P.PNAME > S.SNAME (note the “P.” and “S.” qualifiers)─which is curious when you come to think about it, because that expression is supposed to apply to the result of the FROM clause (see the section “Evaluating SQL Expressions,” later), and tables P and S certainly aren’t part of that result! Indeed, it’s quite difficult to explain how references to the names P and S in the WHERE and SELECT clauses (and possibly elsewhere in the overall expression) can make any sense at all in terms of the result of the FROM clause. The SQL standard does explain it, but the machinations it has to go through in order to do so are much more complicated than Tutorial D’s type inference rules─so much so that I won’t even try to explain them here, but will simply rely on the fact that they can be explained if necessary. I justify this omission by appealing to the fact that you’re supposed to be familiar with SQL already. It’s tempting to ask, though, whether you had ever thought about this issue before ... but I won’t.
+Now I can go on to describe some other algebraic operators. Please note that I’m not trying to be exhaustive in this chapter (or the next); I won’t be covering “all known operators,” and I won’t even describe all of the operators I do cover in full generality. In most cases, in fact, I’ll just give a careful but somewhat informal definition and show some simple examples.
+RESTRICTION
+Definition: Let r be a relation and let bx be a boolean expression in which every attribute reference identifies some attribute of r and there aren’t any relvar references. Then bx is a restriction condition, and the restriction of r according to bx, r WHERE bx, is a relation with (a) heading the same as that of r and (b) body consisting of all tuples of r for which bx evaluates to TRUE.
+For example:
+P WHERE WEIGHT < 17.5 │ SELECT * │ FROM P
+│ WHERE WEIGHT < 17.5
+SELECT P.* , S.SNO , S.SNAME , S.STATUS
+FROM P , S
+│ WHERE P.CITY = S.CITY
+│ AND P.PNAME > S.SNAME
+www.it-ebooks.info
+                SQL and Relational Algebra I / Chapter 6 111
+Let r be a relation. Then the restriction r WHERE TRUE (or, more generally, any expression of the form r WHERE bx where bx is a boolean expression such as 1 = 1 that’s identically TRUE)6 just returns r. Such a restriction is known as an identity restriction.
+Note: Tutorial D does support expressions of the form r WHERE bx, of course, but those expressions aren’t limited to being simple restrictions as defined above, because the boolean expression bx isn’t limited to being a restriction condition but can be more general. Similar remarks apply to SQL also. Examples are given in later chapters.
+As an aside, I remark that restrict is sometimes called select; I prefer not to use this term, however, because of the potential confusion with SQL’s SELECT operator. SQL’s SELECT operator─meaning, more precisely, the SELECT clause portion of a SELECT expression─isn’t restriction at all but is, rather, a kind of loose combination of UNGROUP, EXTEND, RENAME, and “project” (“project” in quotes because it doesn’t eliminate duplicates unless explicitly asked to do so). Note: UNGROUP and EXTEND are described in the next chapter.
+PROJECTION
+Definition: Let r be a relation and let A, B, ..., C be attributes of r. Then the projection of r on (or over) those attributes, r{A,B,...,C}, is a relation with (a) heading {A,B,...,C} and (b) body the set of all tuples x such that there exists some tuple t in r with A value equal to the A value in x, B value equal to the B value in x, ..., and C value equal to the C value in x.
+For example:
+P { COLOR , CITY } │ SELECT DISTINCT COLOR , CITY
+│ FROM P
+To repeat, the result is a relation; thus, “duplicates are eliminated,” to use the common phrase, and that DISTINCT in the SQL formulation is really needed, therefore.7 The result heading has attributes (or columns) COLOR and CITY─in that left to right order, in SQL.
+Let r be a relation. Then:
+ The projection r{H}, where {H} is all of the attributes─in other words, the heading─of r, just returns r. Such
+a projection is known as an identity projection.
+ Theprojectionr{}─inotherwords,theprojectionofronnoattributesatall─returnsTABLE_DEEifris nonempty, TABLE_DUM otherwise. Such a projection is sometimes called a nullary projection; however, the term nullary is best avoided because of the potential confusion with SQL-style nulls. (Just to remind you, TABLE_DEE is the unique relation with no attributes and just one tuple─the 0-tuple, of course─and TABLE_DUM is the unique relation with no attributes and no tuples at all. The fact that projecting r on no attributes always yields one of these two relations is a direct consequence of the fact that every tuple has the same value for the empty set of attributes: namely, the 0-tuple. See the answer to Exercise 3.16 in Appendix F if you need to refresh your memory regarding this point.)
+6 In other words, any restriction in which bx is a tautology (see Exercise 4.12 in Chapter 4).
+7 I remark in passing out that the phrase “duplicate elimination,” which is used almost universally (not just in SQL contexts), would more accurately be duplication elimination.
+ www.it-ebooks.info
+                112 Chapter 6 / SQL and Relational Algebra I
+Tutorial D also allows a projection to be expressed in terms of the attributes to be removed instead of the
+ones to be kept. Thus, for example, the Tutorial D expressions
+P{COLOR,CITY} and P{ALLBUTPNO,PNAME,WEIGHT}
+are equivalent. This feature can save a lot of writing (think of projecting a relation of degree 100 on 99 of its attributes).8 Analogous remarks apply, where they make sense, to all of the operators in Tutorial D.
+In concrete syntax, it turns out to be convenient to assign high precedence to the projection operator. In Tutorial D, for example, we take the expression
+P JOIN S { CITY }
+to mean
+P JOIN ( S { CITY } )
+and not
+Exercise: Show the difference between these two interpretations, given our usual sample data. JOIN
+Before I get to the join operator as such, it’s helpful to introduce the concept of “joinability.” Relations r1 and r2 are joinable if and only if attributes with the same name are of the same type (meaning they are in fact the very same attribute)─equivalently, if and only if the set theory union of the headings of r1 and r2 is itself a legal heading. Note that this concept applies not just to join as such but to various other operations as well, as we’ll see in the next chapter. Anyway, armed with this notion, I can now define the join operation (note how the definition appeals to the fact that tuples are sets and hence can be operated upon by set theory operators such as union):
+Definition: Let relations r1 and r2 be joinable. Then their natural join (or just join for short), r1 JOIN r2, is a relation with (a) heading the set theory union of the headings of r1 and r2 and (b) body the set of all tuples t such that t is the set theory union of a tuple from r1 and a tuple from r2.
+The following example is repeated from the section “Some Preliminaries,” except that now I’ve dropped the explicit name qualifiers in the SQL version where they aren’t needed:
+P JOIN S │ SELECT PNO , PNAME , COLOR , WEIGHT , │ P.CITY /* or S.CITY */ ,
+│ SNO , SNAME , STATUS │ FROMP,S
+│ WHERE P.CITY = S.CITY
+8 A relvar, as opposed to a relation, of such a high degree is unlikely, since it would almost certainly be in violation of the principles of normalization. But such violations aren’t exactly unknown in practice.
+( P JOIN S ) { CITY }
+ www.it-ebooks.info
+                Here’s an example:
+(PRENAME{CITYASPCITY}) TIMES /* or JOIN */
+( S RENAME { CITY AS SCITY } )
+│ SELECTPNO,PNAME,COLOR,
+│ WEIGHT , P.CITY AS PCITY , │ SNO , SNAME , STATUS ,
+│ S.CITY AS SCITY
+│ FROM P,S
+Note the need to rename at least one of the two CITY attributes in this example. The result heading has attributes or columns PNO, PNAME, COLOR, WEIGHT, PCITY, SNO, SNAME, STATUS, and SCITY (in that order, in SQL).
+SQL and Relational Algebra I / Chapter 6 113
+I remind you, however, that SQL also allows this join to be expressed in an alternative style that’s a little closer to that of Tutorial D (and this time I deliberately replace that long commalist of column references in the SELECT clause by a simple “*”):
+SELECT *
+FROM P NATURAL JOIN S
+The result heading, given this latter formulation, has attributes─or columns, rather─CITY, PNO, PNAME, COLOR, WEIGHT, SNO, SNAME, and STATUS (in that order in SQL, though not of course in the Tutorial D analog).
+There are several more points to be made in connection with the natural join operation. First of all, observe that intersection is a special case (i.e., r1 INTERSECT r2 is a special case of r1 JOIN r2, in Tutorial D terms). To be specific, it’s the special case in which relations r1 and r2 aren’t merely joinable but are actually of the same type (i.e., have the same heading). For example, the following expressions are logically equivalent:
+P { CITY } INTERSECT S { CITY }
+P { CITY } JOIN S { CITY }
+However, I’ll have more to say about INTERSECT as such later in this chapter.
+Next, product is a special case, too (i.e., r1 TIMES r2 is a special case of r1 JOIN r2, in Tutorial D terms).
+To be specific, it’s the special case in which relations r1 and r2 have no attribute names in common. Why? Because, in this case, (a) the set of common attributes is empty; (b) as noted earlier, every possible tuple has the same value for the empty set of attributes (namely, the 0-tuple); thus, (c) every tuple in r1 joins to every tuple in r2, and so we get the product as stated. For example, the following expressions are logically equivalent:
+P { ALL BUT CITY } TIMES S { ALL BUT CITY }
+P { ALL BUT CITY } JOIN S { ALL BUT CITY }
+For completeness, however, I’ll give the definition anyway:
+Definition: The cartesian product (or just product for short) of relations r1 and r2, r1 TIMES r2, where r1 and r2 have no common attribute names, is a relation with (a) heading the set theory union of the headings of r1 and r2 and (b) body the set of all tuples t such that t is the set theory union of a tuple from r1 and a tuple from r2.
+www.it-ebooks.info
+                114 Chapter 6 / SQL and Relational Algebra I
+Last, join is usually thought of as a dyadic operator specifically; however, it’s possible, and useful, to define
+an n-adic version of the operator (and Tutorial D does), according to which we can write expressions of the form JOIN { r1 , r2 , ... , rn }
+to join any number of relations r1, r2, ..., rn.9 For example, the join of parts and suppliers could alternatively be expressed as follows:
+JOIN { P , S }
+What’s more, we can use this syntax to ask for “joins” of just a single relation, or even of no relations at all! The join of a single relation r, JOIN {r}, is just r itself; this case is perhaps not of much practical importance (?). Perhaps surprisingly, however, the join of no relations at all, JOIN {}, is very important indeed!─and the result is TABLE_DEE. (Recall once again that TABLE_DEE is the unique relation with no attributes and just one tuple.) Why is the result TABLE_DEE? Well, consider the following:
+ In ordinary arithmetic, 0 is what’s called the identity (or identity value) with respect to “+”; that is, for all numbers x, the expressions x + 0 and 0 + x are both identically equal to x. As a consequence, the sum of no numbers is 0.10 (To see this claim is reasonable, consider a piece of code that computes the sum of n numbers by initializing the sum to 0 and then iterating over those n numbers. What happens if n = 0?)
+ Inlikemanner,1istheidentitywithrespectto“*”;thatis,forallnumbersx,theexpressionsx*1and1*x are both identically equal to x. As a consequence, the product of no numbers is 1.
+ Intherelationalalgebra,TABLE_DEEistheidentitywithrespecttoJOIN;thatis,forallrelationsr,the expressions r JOIN TABLE_DEE and TABLE_DEE JOIN r are both identically equal to r (see the paragraph immediately following). As a consequence, the join of no relations is TABLE_DEE.
+If you’re having difficulty with this idea, don’t worry about it too much for now. But if you come back to reread this section later, I do suggest you try to convince yourself that r JOIN TABLE_DEE and TABLE_DEE JOIN r are indeed both identically equal to r. It might help to point out that the joins in question are actually cartesian products (right?).
+Explicit JOINs in SQL
+In SQL, the keyword JOIN can be used to express various kinds of join operations (although those operations can always be expressed without it, too). Simplifying slightly, the possibilities─I’ve numbered them for purposes of subsequent reference─are as follows (t1 and t2 are tables, denoted by table expressions tx1 and tx2, say; bx is a boolean expression; and C1, C2, ..., Cn are columns appearing in both t1 and t2):
+1. t1 NATURAL JOIN t2
+2. t1 JOIN t2 ON bx
+9 For usability reasons, Tutorial D also supports n-adic versions of INTERSECT and TIMES. I’ll skip the details here.
+10 As noted in Chapter 4, the SQL “set function” SUM yields null, not zero, if it’s invoked on a set of no numbers. But this is just a logical
+mistake on the part of SQL─it has no bearing on the present discussion.
+ www.it-ebooks.info
+                SQL and Relational Algebra I / Chapter 6 115
+3. t1JOINt2USING(C1,C2,...,Cn)
+4. t1 CROSS JOIN t2
+I’ll elaborate on the four cases briefly, since the differences between them are a little subtle and can be hard
+to remember:
+1. Case 1 has effectively already been explained. Note: Actually, Case 1 is logically identical to a Case 3 expression─see below─in which the specified columns C1, C2, ..., Cn are all of the common columns (i.e., all of the columns that appear in both t1 and t2), in the order in which they appear in t1.
+2. Case 2 is logically equivalent to the following:
+( SELECT * FROM t1 , t2 WHERE bx )
+3. Case 3 is logically equivalent to a Case 2 expression in which bx takes the form t1.C1 = t2.C1 AND t1.C2 = t2.C2 AND ... AND t1.Cn = t2.Cn
+─except that columns C1, C2, ..., Cn appear once, not twice, in the result, and the column ordering in the heading of the result is (in general) different: Columns C1, C2, ..., Cn appear first, in that order; then the other columns of t1 appear, in the order in which they appear in t1; then the other columns of t2 appear, in the order in which they appear in t2. (Do you begin to see what a pain this left to right ordering business is?)
+4. Finally, Case 4 is logically equivalent to the following:
+( SELECT * FROM t1 , t2 ) Recommendations:
+1. Use Case 1 (NATURAL JOIN) in preference to other methods of formulating a join (but make sure columns with the same name are of the same type). Note that the NATURAL JOIN formulation will often be the most succinct if other recommendations in this book are followed.11
+2. Avoid Case 2 (JOIN ON), because it’s guaranteed to produce a result with duplicate column names (unless tables t1 and t2 have no common column names in the first place). But if you really do want to use Case 2─which you just might, if you want to formulate a greater-than join, say12─then make sure columns with the same name are of the same type, and make sure you do some appropriate renaming as well. For example:
+11 Perhaps I should inject a small note of caution here. In practice, it’s very common for SQL tables to have some kind of “comments” column; thus, there’s a risk that NATURAL JOIN might produce unexpected results, unless some appropriate naming discipline is followed (or some appropriate renaming is done) in connection with such columns.
+12 Greater-than join is a special case of what’s called q-join, which I’ll be discussing later in this chapter.
+ www.it-ebooks.info
+                116
+Chapter 6 / SQL and Relational Algebra I
+3. 4.
+In Case 3, make sure columns with the same name are of the same type.
+In Case 4, make sure there aren’t any common column names.
+SELECT
+FROM (
+     (
+TEMP.*
+SELECT * FROM S JOIN P ON S.CITY > P.CITY ) AS TEMP SNO , SNAME , STATUS , SCITY ,
+PNO , PNAME , COLOR , WEIGHT , PCITY )
+It’s not really clear why you’d ever want to use such a formulation, however, given that it’s logically equivalent to the following slightly less cumbersome one:
+SELECT
+FROM WHERE
+SNO , SNAME , STATUS , S.CITY AS SCITY ,
+PNO , PNAME , COLOR , WEIGHT , P.CITY AS PCITY S,P
+S.CITY > P.CITY
+Recall finally that as noted in Chapter 1 an explicit JOIN invocation isn’t allowed in SQL as a “stand alone” table expression (i.e., one at the outermost level of nesting). Nor is it allowed as the table expression in parentheses that constitutes a subquery (see Chapter 12).
+UNION, INTERSECTION, AND DIFFERENCE
+Union, intersection, and difference (UNION, INTERSECT, and MINUS in Tutorial D; UNION, INTERSECT, and
+EXCEPT in SQL) all follow the same general pattern. I’ll start with union.
+Union
+For example (I’ll assume for the sake of all of the examples in this section that parts have an extra attribute called STATUS, of type INTEGER):
+Definition: Let relations r1 and r2 be of the same type; then their union, r1 UNION r2, is a relation of the same type, with body consisting of all tuples t such that t appears in r1 or r2 or both.
+P { STATUS , CITY } UNION │ S { CITY , STATUS } │
+As with projection, it’s worth noting explicitly in connection with union that “duplicates are eliminated.” Note that we don’t need to specify DISTINCT in the SQL version in order to achieve this effect; although UNION provides the same options as SELECT does (DISTINCT vs. ALL), the default for UNION is DISTINCT, not ALL (for SELECT it’s the other way around, as you’ll recall from Chapter 4). The result heading has attributes or columns STATUS and CITY─in that order, in SQL. As for the CORRESPONDING specification in the SQL formulation, that specification allows us to ignore the possibility that those columns might appear at different ordinal positions within the operand tables. Recommendations:
+SELECT STATUS , CITY
+FROM P
+│ UNION CORRESPONDING
+│ SELECT CITY , STATUS
+│ FROM S
+www.it-ebooks.info
+                SQL and Relational Algebra I / Chapter 6 117
+ Make sure every column of the first operand table has the same name and type as some column of the second
+operand table and vice versa.13
+ Always specify CORRESPONDING if possible.14 If it isn’t─in particular, if the SQL product you’re using doesn’t support it─then make sure columns line up properly, as in this revised version of the example:
+SELECT STATUS , CITY FROM P
+UNION
+SELECT STATUS , CITY FROM S /* note the reordering */
+ Don’t include the “BY (column name commalist)” option in the CORRESPONDING specification, unless it makes no difference anyway (e.g., specifying BY (STATUS,CITY) would make no difference in the example).15 Note: This recommendation is perhaps a little debatable. At least the BY option might sometimes save keystrokes (though not always─see the example below). But it’s misleading, because it means the union operands aren’t the specified tables as such but certain projections of those tables; it’s also unnecessary, because those projections could always be specified explicitly anyway. For example, the SQL expression
+SELECT * FROM P
+UNION CORRESPONDING BY ( CITY ) SELECT * FROM S
+is logically equivalent to this (shorter!) one:
+SELECT CITY FROM P UNION
+SELECT CITY FROM S
+ Never specify ALL. Note: The usual reason for specifying ALL on UNION isn’t that users want to see duplicate rows in the output; rather, it’s that they know there aren’t any duplicate rows in the input─i.e., the union is disjoint (see below)─and so they’re trying to prevent the system from having to do the extra work of trying to eliminate duplicates that they know aren’t there in the first place. In other words, it’s a performance reason. See the discussion of such matters in Chapter 4, in the section “Avoiding Duplicates in SQL.”
+Tutorial D also supports “disjoint union” (D_UNION), which is a version of union that requires its operands to have no tuples in common. For example:
+S { CITY } D_UNION P { CITY }
+Given our usual sample data, this expression will produce a run time error, because supplier cities and part cities aren’t disjoint. SQL has no direct counterpart to D_UNION.
+Tutorial D also supports n-adic forms of both UNION and D_UNION. The syntax consists─with one small exception, explained below─of the operator name (i.e., UNION or D_UNION), followed by a commalist in braces
+13 Another SQL question for you: Does SQL in fact allow those corresponding columns to be of different types?
+14 I omitted CORRESPONDING from examples in earlier chapters because at the time it would only have been distracting.
+15 In the interest of completeness, I note that omitting the BY option is actually equivalent to specifying BY (A,B,...,C), where A, B, ..., C are all of the common columns, in the left to right order in which they appear in the first operand table.
+ www.it-ebooks.info
+                118 Chapter 6 / SQL and Relational Algebra I
+of relational expressions r1, r2, ..., rn. The relations denoted by r1, r2, ..., rn must all be of the same type. For
+example, the foregoing D_UNION example could alternatively be expressed as follows:
+D_UNION { S { CITY } , P { CITY } }
+Note: The union or disjoint union of a single relation r is just r. The union or disjoint union of no relations at all is the empty relation of the pertinent type─but that type needs to be specified explicitly, since there aren’t any relational expressions from which the type can be inferred. Thus, for example, the expression
+UNION { SNO CHAR , STATUS INTEGER } { }
+denotes the empty relation of type RELATION {SNO CHAR, STATUS INTEGER}. Compare the answer to Exercise 3.15 in Chapter 3 (see Appendix F).
+Intersection
+Definition: Let relations r1 and r2 be of the same type; then their intersection, r1 INTERSECT r2, is a relation of the same type, with body consisting of all tuples t such that t appears in both r1 and r2.
+For example:
+P { STATUS , CITY } INTERSECT │
+SELECT
+STATUS , CITY P CORRESPONDING CITY , STATUS S
+S { CITY , STATUS } │
+│ INTERSECT
+For example:
+P { STATUS , CITY } MINUS │
+S { CITY , STATUS }
+SELECT STATUS , CITY
+│
+│ EXCEPT CORRESPONDING
+│ SELECT CITY , STATUS
+│ FROM S
+FROM
+│ SELECT
+│ FROM
+All comments and recommendations noted under “Union” apply here also, mutatis mutandis. Note: As we’ve already seen, intersect is really just a special case of join. Tutorial D and SQL both support it, however, if only for psychological reasons. As mentioned in a footnote earlier, Tutorial D also supports an n-adic form, but I’ll skip the details here.
+Difference
+Definition: Let relations r1 and r2 be of the same type; then their difference, r1 MINUS r2 (in that order), is a relation of the same type, with body consisting of all tuples t such that t appears in r1 and not r2.
+All comments and recommendations noted under “Union” apply here also, mutatis mutandis. Note, however, that minus is strictly dyadic─Tutorial D doesn’t support any kind of “n-adic minus” operation (see Exercise 6.17 at the end of the chapter). But it does support “included minus” (I_MINUS), which is a version of minus that requires the second operand to be included in the first (i.e., the second operand mustn’t have any tuples that aren’t also in the first operand). For example:
+www.it-ebooks.info
+FROM P
+                SQL and Relational Algebra I / Chapter 6 119
+S { CITY } I_MINUS P { CITY }
+Given our usual sample data, this expression will produce a run time error, because there’s at least one part city that isn’t also a supplier city. SQL has no direct counterpart to I_MINUS.
+WHICH OPERATORS ARE PRIMITIVE?
+I’ve now covered all of the operators I want to cover in this chapter. As I’ve more or less said already, however, not all of those operators are primitive─some of them can be defined in terms of others. One possible primitive set is the set {restrict, project, join, union, difference}; another can be obtained by replacing join in this set by product. Note: You might be surprised to see no mention here of rename. In fact, however, rename isn’t primitive, though I haven’t covered enough groundwork yet to show why not (see Exercise 7.3 in Chapter 7). What this discussion does show, however, is that there’s a difference between being primitive and being useful! I certainly wouldn’t want to be without our useful rename operator, even if it isn’t primitive.
+FORMULATING EXPRESSIONS ONE STEP AT A TIME
+Consider the following Tutorial D expression (the query is “Get pairs of supplier numbers such that the suppliers
+concerned are colocated─i.e., are in the same city”):
+( ( ( S RENAME { SNO AS SA } ) { SA , CITY } JOIN ( S RENAME { SNO AS SB } ) { SB , CITY } )
+WHERE SA < SB ) { SA , SB }
+The result has two attributes, called SA and SB (it would have been sufficient to do just one attribute renaming; I did two for symmetry). The purpose of the condition SA < SB is twofold:16
+ Iteliminatespairsofsuppliernumbersoftheform(a,a).
+ Itguaranteesthatthepairs(a,b)and(b,a)won’tbothappear.
+Be that as it may, I now show another formulation of the query in order to show how Tutorial D’s WITH construct can be used to simplify the business of formulating what might otherwise be rather complicated expressions:
+WITH ( R1 := ( S RENAME { SNO AS SA } ) { SA , CITY } , R2 := ( S RENAME { SNO AS SB } ) { SB , CITY } , R3 := R1 JOIN R2 ,
+R4 := R3 WHERE SA < SB ) :
+R4 { SA, SB }
+As the example suggests, a WITH clause in Tutorial D consists of the keyword WITH followed by a parenthesized commalist of specifications of the form name := expression, the whole commalist then being followed
+16 Note, incidentally, that the condition SA < SB wouldn’t be legal if supplier numbers were of some user defined type (SNO, say) and the operator “<” hadn’t been defined in connection with that type.
+ www.it-ebooks.info
+                120 Chapter 6 / SQL and Relational Algebra I
+by a colon. For each of those “name := expression” specifications, the expression is evaluated and the result effectively assigned to a temporary variable with the specified name. Also, those “name := expression” specifications are evaluated in sequence as written; as a consequence, any given specification in the commalist is allowed to refer to names introduced in specifications earlier in that same commalist.
+Tutorial D allows WITH clauses on statements as well as expressions. For example:
+WITH ( X := RELATION { TUPLE { SNO ‘S5’ , PNO ‘P6’ , QTY 250 } } ) :
+SP := SP UNION X ;
+SQL too supports a WITH construct, with these differences:
+ SQLusesthekeywordASinplaceofTutorialD’sassignmentsymbol(“:=”).
+ SQLdoesn’tusetheenclosingparenthesesorcolonseparator.
+ WITH in Tutorial D can be used at any level of nesting. By contrast, WITH in SQL can be used only at the outermost level.
+ WITH in Tutorial D can be used in connection with expressions of any kind.17 By contrast, WITH in SQL can be used only in connection with table expressions specifically.
+ As already noted, Tutorial D allows WITH clauses on statements as well as expressions. SQL doesn’t.
+Also, in SQL, the name portion of a “name AS expression” specification can optionally be followed by a parenthesized column name commalist (much as in a range variable definition─see Chapter 12). However, it shouldn’t be necessary to exercise this option very often if other recommendations in this book are followed.
+Here’s an SQL version of the example:
+WITH T1 AS ( T2 AS ( T3 AS ( T4 AS (
+SELECT SA , SB FROM T4
+In closing this section, I should make it clear that WITH isn’t really an operator of the relational algebra as such─it’s just a syntactic device to help with the formulation of complicated expressions (especially ones involving common subexpressions). I’ll be making extensive use of it in the pages ahead.
+17 Except that the expression in question mustn’t be such that it relies on (syntactic) context for its evaluation; in other words, it must be what’s called a closed expression. For example, “S WHERE STATUS = 20” is closed, but “STATUS = 20” isn’t. Of course, a similar rule applies in SQL also.
+SELECT
+FROM
+SELECT
+FROM
+SELECT
+FROM
+SELECT
+FROM T3
+WHERE SA<SB)
+SNO AS SA , CITY S),
+SNO AS SB , CITY S),
+*
+T1 NATURAL JOIN T2 ) , *
+ www.it-ebooks.info
+                SQL and Relational Algebra I / Chapter 6 121
+WHAT DO RELATIONAL EXPRESSIONS MEAN?
+Recall now from Chapter 5 that every relvar has a certain relvar predicate, which is, loosely, what the relvar means. For example, the predicate for the suppliers relvar S is:
+Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY.
+What I didn’t mention in Chapter 5, however, is that the foregoing notion extends in a natural way to apply to arbitrary relational expressions. For example, consider the projection of suppliers on all attributes but CITY:
+S { SNO , SNAME , STATUS }
+This expression denotes a relation containing all tuples of the form
+TUPLE { SNO s , SNAME n , STATUS t } such that a tuple of the form
+TUPLE { SNO s , SNAME n , STATUS t , CITY c }
+currently appears in relvar S for some CITY value c. In other words, the result represents the current extension of a predicate that looks like this (see Chapter 5 if you need to refresh your memory regarding the notion of a predicate’s extension):
+There exists some city CITY such that supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY.
+This predicate thus represents the meaning of the relational expression S{SNO,SNAME,STATUS}. Observe that it has just three parameters and the corresponding relation has just three attributes─CITY isn’t a parameter to that predicate but what logicians call a “bound variable” instead, owing to the fact that it’s “quantified” by the phrase There exists some city (see Chapter 10 for further explanation of bound variables and quantifiers).18 Note: A possibly clearer way of making the same point─viz., that the predicate has just three parameters, not four─is to observe that the predicate in question is logically equivalent to this one:
+Supplier SNO is under contract, is named SNAME, has status STATUS, and is located somewhere [in other words, in some city, but we don’t know which].
+Remarks analogous to the foregoing apply to every possible relational expression. To be specific: Every relational expression rx always has an associated meaning, or predicate; moreover, the predicate for rx can always be determined from the predicates for the relvars involved in that expression, together with the semantics of the relational operations involved. As an exercise, you might like to revisit some of the relational (or SQL) expressions
+18 One reviewer asked why CITY is mentioned in the predicate at all, since it isn’t part of the result of the projection. This is an important question! A short answer is: Because that result is obtained by projecting away the CITY attribute specifically, nothing more and nothing less. A much longer answer can be found in my book Logic and Databases: The Roots of Relational Theory (Trafford, 2007), pages 387-391 (see Appendix G). Further relevant discussion can be found in the book Normal Forms and All That Jazz: A Database Professional’s Guide to Database Design Theory (again, see Appendix G).
+ www.it-ebooks.info
+                122 Chapter 6 / SQL and Relational Algebra I
+shown earlier in this chapter, with a view to determining what the corresponding predicate might look like in each
+case.
+EVALUATING SQL TABLE EXPRESSIONS
+In addition to natural join, Codd originally defined an operator he called q-join, where q denoted any of the usual scalar comparison operators (“=”, “≠”, “<”, and so on). Now, q-join isn’t primitive; in fact, it’s defined to be a restriction of a product. Here by way of example is the “not equals” join of suppliers and parts on cities (so q here is “≠”):
+((SRENAME{CITYASSCITY}) TIMES
+│ SELECTSNO,SNAME,STATUS,
+│ (PRENAME{CITYASPCITY})) │
+S.CITY AS SCITY , PNO , PNAME,COLOR,WEIGHT, P.CITY AS PCITY
+Now let’s focus on the SQL formulation specifically. You can think of the expression constituting that formulation as being evaluated in three steps, as follows:
+1. The FROM clause is evaluated and yields the product of tables S and P. Note: If we were doing this relationally, we would have to rename at least one of the CITY attributes before that product could be computed. SQL gets away with renaming them afterward because its tables have a left to right ordering to their columns, meaning it can distinguish the two CITY columns by their ordinal position. For simplicity, let’s ignore this detail.
+2. Next, the WHERE clause is evaluated and yields a restriction of that product by eliminating rows in which the two city values are equal. Note: If q had been “=” instead of “≠” (or “<>”, rather, in SQL), this step would have been: Restrict the product by retaining just the rows in which the two city values are equal─in which case we would now have formed what’s called the equijoin of suppliers and parts on cities. In other words, an equijoin is a q-join for which q is “=”. Exercise: What’s the difference between an equijoin and a natural join?
+3. Finally, the SELECT clause is evaluated and yields a “projection” of that restriction on the columns specified in the SELECT clause─“projection” in quotes, because it won’t actually eliminate duplicates, as true projection does, unless DISTINCT is specified. (Actually it’s doing some renaming as well, in this particular example, and I mentioned earlier in this chapter that SELECT provides other functionality too, in general─but for now I want to ignore these details as well, for simplicity.)
+At least to a first approximation, then, the FROM clause corresponds to a product, the WHERE clause to a
+restriction, and the SELECT clause to a projection; thus, the overall SELECT - FROM - WHERE expression denotes a projection of a restriction of a product. It follows that I’ve just given a loose, but reasonably formal, definition of the semantics of SQL’s SELECT - FROM - WHERE expressions; equivalently, I’ve given a conceptual algorithm for evaluating such expressions. Now, there’s no implication that the implementation has to use exactly that algorithm in order to evaluate such expressions; au contraire, it can use any algorithm it likes, just so long as whatever algorithm it does use is guaranteed to give the same result as the conceptual one. And there are often good reasons─usually performance reasons─for using a different algorithm, thereby (for example) evaluating the clauses in a different order or otherwise rewriting the original query. However, the implementation is free to do
+WHERE SCITY ≠ PCITY
+│
+│FROM S,P
+│ WHERE S.CITY <> P.CITY
+www.it-ebooks.info
+                SQL and Relational Algebra I / Chapter 6 123
+such things only if it can be proved that the algorithm it does use is logically equivalent to the conceptual one. Indeed, one way to characterize the job of the optimizer is to find an algorithm that’s guaranteed to be equivalent to the conceptual one but performs better ... which brings us to the next section.
+EXPRESSION TRANSFORMATION
+In this section, I want to take a slightly closer look at what the optimizer does. More specifically, I want to consider what’s involved in transforming some relational expression into another, logically equivalent, expression. Note: I mentioned this notion under the discussion of duplicates in Chapter 4, where I explained that such transformations are one of the things the optimizer does; in fact, such transformations constitute one of the two great ideas at the heart of relational optimization (the other, beyond the scope of this book, is the use of “database statistics” to do what’s called cost based optimizing).19
+I’ll start with a trivial example. Consider the following Tutorial D expression (the query is “Get suppliers who supply part P2, together with the corresponding quantities,” and I’ll ignore the SQL analog for simplicity):
+( ( S JOIN SP ) WHERE PNO = ‘P2’ ) { ALL BUT PNO }
+Suppose there are 1,000 suppliers and 1,000,000 shipments, of which 500 are for part P2. If the expression were simply evaluated by brute force (as it were), without any optimization at all, the sequence of events would be:
+1. Join S and SP: This step involves reading the 1,000 supplier tuples; reading the 1,000,000 shipment tuples 1,000 times each, once for each of the 1,000 suppliers; constructing an intermediate result consisting of 1,000,000 tuples; and writing those 1,000,000 tuples back out to the disk. (I’m assuming for simplicity that tuples are physically stored as such, and I’m also assuming I can take “number of tuple reads and writes” as a reasonable measure of performance. Neither of these assumptions is very realistic, but this fact doesn’t materially affect my argument.)
+2. Restrict the result of Step 1: This step involves reading 1,000,000 tuples but produces a result containing only 500 tuples, which I’ll assume can be kept in main memory. (By contrast, I was assuming for the sake of the example in Step 1, realistically or otherwise, that the 1,000,000 intermediate result tuples couldn’t be kept in main memory.)
+3. Project the result of Step 2: This step involves no tuple reads or writes at all, so we can ignore it.
+The following procedure is equivalent to the one just described, in the sense that it produces the same final
+result, but is obviously much more efficient:
+1. Restrict SP to just the tuples for part P2: This step involves reading 1,000,000 shipment tuples but produces a result containing only 500 tuples, which can be kept in main memory.
+19 Cost based optimizing is beyond the scope of this book because it has to do with how the data is physically stored, which isn’t a relational issue by definition. But I should at least note that such optimizing is possible in the first place only because (as we saw in Chapter 1) the relational model insists on a sharp and rigid distinction between the logical and physical levels of the system, which has the effect among other things of keeping access strategies out of applications.
+ www.it-ebooks.info
+                124
+Chapter 6 / SQL and Relational Algebra I
+2.
+3.
+Join S and the result of Step 1: This step involves reading 1,000 supplier tuples (once only, not once per P2 shipment, because all the P2 shipments are in memory). The result contains 500 tuples (still in main memory).
+Project the result of Step 2: Again we can ignore this step.
+The first of these two procedures involves a total of 1,002,001,000 tuple reads and writes, whereas the second involves only 1,001,000; thus, it’s clear the second procedure is likely to be over 1,000 times faster than the first.
+It’s also clear we’d like the implementation to use the second rather than the first! If it does, then what it’s doing (in effect) is transforming the original expression
+( S JOIN SP ) WHERE PNO = ‘P2’
+─I’m ignoring the final projection now, since it isn’t really relevant to the argument─into the expression
+S JOIN ( SP WHERE PNO = ‘P2’ )
+These two expressions are logically equivalent, but they have very different performance characteristics, as we’ve seen. If the system is presented with the first expression, therefore, we’d like it to transform it into the second before evaluating it─and of course it can. The point is, the relational algebra, being a high level formalism, is subject to various formal transformation laws; for example, there’s a law that says, loosely, that a join followed by a restriction can always be transformed into a restriction followed by a join (this was the law I was using in the example). And a good optimizer will know those laws, and will apply them─because the performance of a query ideally shouldn’t depend on the specific syntax used to express that query in the first place. Note: Actually it’s an immediate consequence of the fact that not all of the algebraic operators are primitive that certain expressions can be transformed into others (for example, an expression involving intersect can be transformed into one involving join instead), but there’s much more to the issue than that, as I hope is obvious from the example.
+Now, there are many possible transformation laws, and this isn’t the place for an exhaustive discussion. All I want to do is highlight a few important cases and key points. First, the law mentioned in the previous paragraph is actually a special case of a more general law, called the distributive law. In general, the monadic operator f distributes over the dyadic operator g if and only if f(g(a,b)) = g(f(a),f(b)) for all a and b. In ordinary arithmetic, for example, SQRT (nonnegative square root) distributes over multiplication, because
+SQRT ( a * b ) = SQRT ( a ) * SQRT ( b )
+for all a and b (take f as SQRT and g as “*”); thus, a numeric expression optimizer can always replace either of these expressions by the other when doing numeric expression transformation. As a counterexample, SQRT does not distribute over addition, because the square root of a + b is not equal to the sum of the square roots of a and b, in general.
+In relational algebra, restriction distributes over intersect, union, and difference. It also distributes over join, provided the restriction condition consists, at its most complex, of the AND of two separate restriction conditions, one for each of the two join operands. In the case of the example discussed above, this requirement was satisfied─in fact, the restriction condition was very simple and applied to just one of the operands─and so we were able to use the distributive law to replace the expression by a more efficient equivalent. The net effect was that we were able to “do the restriction early.” Doing restrictions early is almost always a good idea, because it serves, typically, (a) to reduce the number of tuples to be scanned in the next operation in sequence and (b) to reduce the number of tuples in the output from that operation as well.
+www.it-ebooks.info
+                SQL and Relational Algebra I / Chapter 6 125
+Here are some other specific cases of the distributive law, this time involving projection. First, projection distributes over union, though not over intersection and difference. Second, it also distributes over join, so long as all of the joining attributes are included in the projection. These laws can be used to “do projections early,” which again is usually a good idea, for reasons similar to those given above for restrictions.
+Two more important general laws are the laws of commutativity and associativity:
+ The dyadic operator g is commutative if and only if g(a,b) = g(b,a) for all a and b. In ordinary arithmetic, for example, addition and multiplication are commutative, but subtraction and division aren’t. In relational algebra, intersect, union, and join are all commutative,20 but difference isn’t. So, for example, if a query involves a join of two relations r1 and r2, the commutative law tells us it doesn’t matter which of r1 and r2 is taken as the “outer” relation and which the “inner.” The system is therefore free to choose (say) the smaller relation as the outer one in computing the join.
+ The dyadic operator g is associative if and only if g(a,g(b,c)) = g(g(a,b),c) for all a, b, c. In arithmetic, addition and multiplication are associative, but subtraction and division aren’t. In relational algebra, intersect, union, and join are all associative, but difference isn’t. So, for example, if a query involves a join of three relations r1, r2, and r3, the associative and commutative laws taken together tell us we can join the relations pairwise in any order we like. The system is thus free to decide which of the various possible sequences is most efficient.
+Note, incidentally, that all of these transformations can be performed without any regard for either actual data values or physical access paths (indexes and the like) in the database as physically stored. In other words, such transformations represent optimizations that are virtually guaranteed to be good, regardless of what the database looks like physically. Perhaps I should add, however, that while many such transformations are available for sets, not so many are available for bags (as indeed we saw in Chapter 4); and fewer still are available if column ordinal position has to be taken into account; and far fewer still are available if nulls and 3VL have to be taken into account as well. What do you conclude?
+THE RELIANCE ON ATTRIBUTE NAMES
+There’s one question that might have been bothering you but hasn’t been addressed in this chapter so far. The operators of the relational algebra, at least as described in this book, all rely heavily on attribute naming. For example, the Tutorial D expression R1 JOIN R2─where I’ll suppose, just to be definite, that R1 and R2 are base relvars─is defined to do the join on the basis of those attributes of R1 and R2 that have the same names. But the question often arises: Isn’t this approach rather fragile? For example, what happens if we later add a new attribute to relvar R2, say, that has the same name as one already existing in relvar R1?
+Well, first let me clarify one point. It’s true that the operators do rely, considerably, on proper attribute naming. However, they also require attributes of the same name to be of the same type (and hence in fact to be the very same attribute, formally speaking); equivalently, they require attributes of different types to have different names. Thus, for example, an error would occur─at compile time, too, I would hope─if, in the expression R1 JOIN
+20 Strictly speaking, the SQL analogs of these operators aren’t commutative, because─among other things─the left to right column order of the result depends on which operand is specified first. Indeed, the disciplines recommended in this book in connection with these operators are designed, in part, precisely to avoid such problems. More generally, the possibility of such problems occurring is one reason out of many why you’re recommended never to write SQL code that relies on column positioning.
+ www.it-ebooks.info
+                126 Chapter 6 / SQL and Relational Algebra I
+R2, R1 and R2 both had an attribute called A but the two A’s were of different types.21 Note that this requirement (that attributes of different types have different names) imposes no serious limitation on functionality, thanks to the availability of the attribute RENAME operator.
+Now to the substance of the question. In fact, there’s a popular misconception here, and I’m very glad to have this opportunity to dispel it. In today’s SQL systems, application program access to the database is provided either through a call level interface or through an embedded, but conceptually distinct, data sublanguage (“embedded SQL”). But embedded SQL is really just a call level interface with a superficial dusting of syntactic sugar, so the two approaches come to the same thing from the DBMS’s point of view, and indeed from the host language’s point of view as well. In other words, SQL and the host language are typically only loosely coupled in most systems today. As a result, much of the advantage of using a well designed, well structured programming language is lost in today’s database environment. Here’s a quote:22 “Most programming errors in database applications would show up as type errors [if the database definition were] part of the type structure of the program.”
+Now, the fact that the database definition is not “part of the type structure of the program” in today’s systems can be traced back to a fundamental misunderstanding that was prevalent in the database community in the early 1960s or so. The perception at that time was that, in order to achieve data independence (more specifically, logical data independence─see Chapter 9), it was necessary to move the database definition out of the program so that, in principle, that definition could be changed later without changing the program. But that perception was at least partly incorrect. What was, and is, really needed is two separate definitions, one inside the program and one outside; the one inside would represent the programmer’s perception of the database (and would provide the necessary compile time checking on queries, etc.), the one outside would represent the database “as it really is.” Then, if it subsequently becomes necessary to change the definition of the database “as it really is,” logical data independence is preserved by changing the mapping between the two definitions.
+Here’s how the mechanism I’ve just described might look in SQL. First let me introduce the notion of a public table, which represents the application’s perception of some portion of the database. For example:
+CREATE PUBLIC TABLE X
+( SNO VARCHAR(5) NOT NULL ,
+SNAME VARCHAR(25) NOT NULL , CITY VARCHAR(20) NOT NULL , UNIQUE ( SNO ) ) ;
+CREATE PUBLIC TABLE Y
+( SNO VARCHAR(5) NOT NULL ,
+/* hypothetical syntax! */
+/* hypothetical syntax! */
+PNO VARCHAR(6) NOT NULL ,
+UNIQUE ( SNO , PNO ) ) ,
+FOREIGN KEY ( SNO ) REFERENCES X ( SNO ) ) ;
+These definitions effectively assert that “the application believes” there are tables in the suppliers-and-parts database called X and Y, with columns and keys as specified. Such is not the case, of course─but there are database tables called S and SP (with columns and keys as specified for X and Y, respectively, but with one additional column in each case), and we can define mappings as follows:
+21 Actually such an error might not occur in SQL, because SQL permits coercions; but Tutorial D doesn’t, and the observation is certainly true of Tutorial D.
+22 From Atsushi Ohori, Peter Buneman, and Val Breazu-Tannen: “Database Programming in Machiavelli─A Polymorphic Language with Static Type Inference,” Proc. ACM SIGMOD International Conference on Management of Data, Portland, Ore. (June 1989).
+ www.it-ebooks.info
+                SQL and Relational Algebra I / Chapter 6 127
+X ≝ SELECT SNO , SNAME , CITY FROM S ; /* hypothetical syntax! */ Y ≝ SELECT SNO , PNO FROM SP ; /* hypothetical syntax! */
+These mappings are defined outside the application (the symbol “≝” means “is defined as”).
+Now consider the SQL expression X NATURAL JOIN Y. Clearly, the join here is being done on the basis of the common column SNO. And if, say, a column SNAME is added to the database table SP, all we have to do is change the mapping─actually no change is required at all, in this particular example!─and everything will continue to work as before; in other words, logical data independence will be preserved.
+Unfortunately, today’s SQL products don’t work this way. Thus, for example, the SQL expression S NATURAL JOIN SP is, sadly, subject to exactly the “fragility” problem mentioned in the original question (but then so too is the simpler expression SELECT * FROM S, come to that). However, you can reduce that problem to more manageable proportions by adopting the strategy suggested under the discussion of column naming in Chapter 3.
+For convenience, I repeat that strategy here:
+ Foreverybasetable,defineaviewidenticaltothatbasetableexceptpossiblyforsomecolumnrenaming.
+ Makesurethesetofviewssodefinedabidesbythenamingdisciplinedescribedinthatsamediscussion(i.e.,
+of column naming) in Chapter 3.
+ Operateintermsofthoseviewsinsteadoftheunderlyingbasetables.
+Now, if the base tables change subsequently, all you’ll have to do is change the view definitions accordingly.
+EXERCISES
+6.1 What if anything is wrong with the following SQL expressions (from a relational perspective or otherwise)?
+a. SELECT*FROMS,SP
+b. SELECT SNO , CITY FROM S
+c. SELECTSNO,PNO,2*QTYFROMSP
+d. SELECT S.SNO FROM S , SP
+e. SELECT S.SNO , S.CITY FROM S NATURAL JOIN P
+f. SELECT CITY FROM S UNION SELECT CITY FROM P
+g. SELECT S.* FROM S NATURAL JOIN SP
+h. SELECT * FROM S JOIN SP ON S.SNO = SP.SNO
+i. SELECT * FROM ( S NATURAL JOIN P ) AS TEMP
+www.it-ebooks.info
+                128
+Chapter 6 / SQL and Relational Algebra I
+j.
+SELECT * FROM S CROSS JOIN SP CROSS JOIN P
+6.2
+ordinary arithmetic. In arithmetic, however, there’s one situation where the closure property breaks down, in a sense─namely, division by zero. Is there any analogous situation in the relational algebra?
+t2 if t1 6.9
+a. b. c. d. e.
+and t2 both contain duplicate rows?
+Write Tutorial D and/or SQL expressions for the following queries on the suppliers-and-parts database: Get all shipments.
+Get supplier numbers for suppliers who supply part P1.
+Get suppliers with status in the range 15 to 25 inclusive.
+Get part numbers for parts supplied by a supplier in London.
+Get part numbers for parts not supplied by any supplier in London.
+Closure is important in the relational model for the same kind of reason that numeric closure is important in
+6.3 Given the usual suppliers-and-parts database, what’s the value of the Tutorial D expression JOIN {S,SP,P}? What’s the corresponding predicate? And how would you express this join in SQL?
+6.4 Why do you think the project operator is so called?
+6.5 For each of the following Tutorial D expressions on the suppliers-and-parts database, give both (a) an SQL
+analog and (b) an informal interpretation of the expression (i.e., a corresponding predicate) in natural language. Also show the result of evaluating the expressions, given our usual sample values for relvars S, P, and SP.
+a. (SJOIN(SPWHEREPNO=‘P2’)){CITY}
+b. (P{PNO}MINUS(SPWHERESNO=‘S2’){PNO})JOINP
+c. S{CITY}MINUSP{CITY}
+d. (S{SNO,CITY}JOINP{PNO,CITY}){SNO,PNO}
+e. JOIN{(SRENAME{CITYASSC}){SC}, ( P RENAME { CITY AS PC } ) { PC } }
+6.6 Union, intersection, product, and join are all both commutative and associative. Verify these claims. Are they valid in SQL?
+6.7 Which of the operators described in this chapter (if any) have a definition that doesn’t rely on tuple equality?
+6.8 The SQL FROM clause FROM t1, t2, ..., tn (where each ti denotes a table) returns the product of its
+arguments. But what if n = 1?─what’s the product of just one table? And by the way, what’s the product of t1 and
+www.it-ebooks.info
+                SQL and Relational Algebra I / Chapter 6 129
+f. Get all pairs of part numbers such that some supplier supplies both of the indicated parts.
+g. Get supplier numbers for suppliers with a status lower than that of supplier S1.
+h. Get part numbers for parts supplied by all suppliers in London.
+i. Get (SNO,PNO) pairs such that the indicated supplier does not supply the indicated part.
+j. Get suppliers who supply at least all parts supplied by supplier S2.
+6.10 Prove the following statements (making them more precise where necessary):
+a. A sequence of restrictions of a given relation can be transformed into a single restriction.
+b. A sequence of projections of a given relation can be transformed into a single projection.
+c. A restriction of a projection can be transformed into a projection of a restriction.
+6.11 Union is said to be idempotent, because r UNION r is identically equal to r for all r. (Is this true in SQL?) As you might expect, idempotence can be useful in expression transformation. Which other relational operators, if any, are idempotent?
+6.12 Let r be a relation. What does the Tutorial D expression r{} mean (i.e., what’s the corresponding predicate)? What does it return? Also, what does the Tutorial D expression r{ALL BUT} mean, and what does it return?
+6.13 The boolean expression x > y AND y > 3 (which might be part of a query) is equivalent to─and can therefore be transformed into─the boolean expression x > y AND y > 3 AND x > 3. (The equivalence is based on the fact that the comparison operator “>” is transitive; i.e., a > b and b > c together imply a > c.) Note that the transformation is certainly worth making if x and y are from different relations, because it enables the system to perform an additional restriction (using x > 3) before doing the greater-than join implied by x > y. As we saw in the body of the chapter, doing restrictions early is generally a good idea; having the system infer additional “early” restrictions, as here, is also a good idea. Do you know of any SQL products that actually perform this kind of optimization?
+6.14 Consider the following Tutorial D expression:
+WITH ( PP := P WHERE COLOR = ‘Purple’ , T :=SPRENAME{SNOASX}):
+SWHERE(TWHEREX=SNO){PNO} ⊇ PP{PNO}
+What does this expression mean? Given our usual sample data values, show the result returned. Does that result
+accord with your intuitive understanding of what the expression means? Justify your answer.
+6.15 SQL has no direct counterpart to either D_UNION or I_MINUS. How best might the D_UNION and I_MINUS examples from the body of the chapter─i.e., S{CITY} D_UNION P{CITY} and S{CITY} I_MINUS P{CITY}─be simulated in SQL?
+www.it-ebooks.info
+                130 Chapter 6 / SQL and Relational Algebra I
+6.16 What do you understand by the term joinable? How could the definition of the term be extended to cover the
+case of n relations for arbitrary n (instead of just n = 2, which was the case discussed in the body of the chapter)? 6.17 What exactly is it that makes it possible to define n-adic versions of JOIN and UNION (and D_UNION)?
+Does SQL have anything analogous? Why doesn’t an n-adic version of MINUS (or I_MINUS) make sense? 6.18 I claimed earlier in the book that TABLE_DEE meant TRUE and TABLE_DUM meant FALSE.
+Substantiate and/or elaborate on these claims.
+6.19 What exactly does the following SQL expression return?
+SELECT DISTINCT S.* FROM S,P
+Warning: There’s a trap here.
+www.it-ebooks.info

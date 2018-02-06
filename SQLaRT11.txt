@@ -1,0 +1,644 @@
+
+                Chapter 11
+Using Logic
+to Formulate SQL Expressions
+There is science, logic, reason; there is thought verified by experience. And then there is California.1
+─Edward Abbey: A Voice Crying in the Wilderness (1989)
+In Chapter 6, I described the process of expression transformation as it applied to expressions of the relational algebra; to be specific, I showed how one such expression could be transformed into another logically equivalent one, using various transformation laws. The laws I considered included such things as:
+a. Restriction distributes over union, intersection, and difference
+b. Projection distributes over union but not over intersection or difference
+and several others. (As you might expect, analogous laws apply to expressions of the relational calculus also, though I didn’t say much about such laws in Chapter 10.)
+Now, the purpose of such transformations, as I discussed them earlier, was essentially optimization; the aim was to come up with an expression with the same semantics as the original one but better performance characteristics. However, the concept of expression transformation─or query rewrite, as it’s sometimes (not very appropriately) known─has application in other areas, too. In particular, and very importantly, it can be used to transform precise logical expressions representing queries and the like into SQL equivalents. And that’s what this chapter is all about: It shows how to take the logical or relational calculus formulation of some query or constraint (for example) and map it systematically into an SQL equivalent. And while the SQL formulation so obtained can sometimes be hard to understand, we know it’s correct, because of the systematic manner in which it’s been obtained. Hence the subtitle of this book: How to Write Accurate SQL Code.
+SOME TRANSFORMATION LAWS
+Laws of transformation like the ones mentioned above are also known variously as:
+ Equivalences,becausetheytakethegeneralformexp1≡exp2(recallfromChapter10andelsewherethatthe symbol “≡” means “is equivalent to”).
+1 I remark, for what it’s worth, that both the relational model and SQL are essentially products of California.
+ www.it-ebooks.info
+                248
+ 
+Chapter 11 / Using Logic to Formulate SQL Expressions Identities,becausealawoftheformexp1≡exp2canbereadassayingthatexp1andexp2are“identically
+equal,” meaning they have identical semantics Rewriterules,becausealawoftheformexp1≡exp2impliesthatanexpressioncontaininganoccurrenceof
+exp1 can be rewritten as one containing an occurrence of exp2 instead without changing the meaning
+I’d like to expand on this last point, because it’s crucial to what we’re going to be doing in the present chapter. Let X1 be an expression containing an occurrence of x1 as a subexpression; let x2 be equivalent to x1; and let X2 be the expression obtained from X1 by substituting an occurrence of x2 for the occurrence of x1 in question. Then X1 and X2 are logically and semantically equivalent; hence, X1 can be rewritten as X2. By way of a simple example, consider the following SQL expression:
+SELECT SNO
+FROM S
+WHERE ( STATUS > 10 AND CITY = ‘London’ ) OR ( STATUS > 10 AND CITY = ‘Athens’ )
+The boolean expression in the WHERE clause here is clearly equivalent (thanks to the distributivity of AND over OR─see later) to the following:
+STATUS > 10 AND ( CITY = ‘London’ OR CITY = ‘Athens’ )
+Hence the overall expression can be rewritten as:
+SELECT SNO
+FROM
+WHERE
+AND
+S
+STATUS > 10
+( CITY = ‘London’ OR CITY = ‘Athens’ )
+Here then are some of the transformation laws we’ll be using in this chapter:
+ Theimplicationlaw:
+IFpTHENq ≡ (NOTp)ORq
+I did state this law in Chapter 10, but I didn’t have much to say about its use there. Take a moment (if you need to) to check the truth tables and convince yourself the law is valid. Note: The symbols p and q stand for arbitrary boolean expressions or predicates. In this chapter, I’ll favor the term boolean expression over predicate, since the emphasis throughout is on such expressions─i.e., on pieces of program text, in effect─rather than on logic per se. Logic in general, and predicates in particular, are more abstract than pieces of program text (or an argument can be made to that effect, at least). You can think of a boolean expression as a concrete representation of some predicate, if you like.
+ Thedoublenegationlaw(alsoknownastheinvolutionlaw): NOT(NOTp) ≡ p
+This law is obvious (but it’s important).
+www.it-ebooks.info
+                Using Logic to Formulate SQL Expressions / Chapter 11 249
+ DeMorgan’slaws:
+NOT(pANDq) ≡ (NOTp)OR (NOTq) NOT(pORq ) ≡ (NOTp)AND(NOTq)
+I didn’t discuss these laws in the previous chapter, but they make good intuitive sense. For example, the first one says, loosely, that if it’s not the case that p and q are both true, then it must be the case that either p isn’t true or q isn’t true (or both). Be that as it may, the validity of both laws follows immediately from the truth tables. Here, for example, is the truth table corresponding to the first law:
+p q │ p AND q │ NOT (p AND q) │ (NOT p) OR (NOT q) ─────┼─────────┼───────────────┼───────────────────
+TT│T│F│F TF│F│T│T FT│F│T│T FF│F│T│T
+Since the columns for NOT (p AND q) and (NOT p) OR (NOT q) are identical, the validity of the first law follows. Proof of the validity of the second is analogous (exercise for the reader).
+ Thedistributivelaws:
+pAND(qOR r) ≡ (pANDq)OR (pANDr) pOR (qANDr) ≡ (pOR q)AND(pOR r)
+I’ll leave the proof of these two to you. Note, however, that (as in fact I did mention in passing) I was using the first of these laws in the SQL example near the beginning of this section. You might also note that these distributive laws are a little more general, in a sense, than the ones we saw in Chapter 6. In that chapter we saw examples of a monadic operator, such as restriction, distributing over a dyadic operator, such as union; here, by contrast, we see dyadic operators (AND and OR) each distributing over the other.
+ Thequantificationlaw:
+FORALLx(p(x)) ≡ NOTEXISTSx(NOTp(x))
+I discussed this one in the previous chapter. In fact, I hope you can see it’s really just an application of De Morgan’s laws to EXISTS and FORALL expressions specifically (recall from the previous chapter that EXISTS and FORALL are basically just iterated OR and iterated AND, respectively).
+One further remark on these laws: Because De Morgan’s laws in particular will often be applied to the result of a prior application of the implication law, it’s convenient to restate the first of them, at least, in the following form (in which q is replaced by NOT q and the double negation law has been tacitly applied):
+NOT(pANDNOTq) ≡ (NOTp)ORq Or rather (but it’s the same thing, logically):
+www.it-ebooks.info
+                250 Chapter 11 / Using Logic to Formulate SQL Expressions
+(NOTp)ORq ≡ NOT(pANDNOTq) Equivalently:
+IFpTHENq ≡ NOT(pANDNOTq)
+Most of the references to one of De Morgan’s laws in what follows will be to this restated formulation.
+The remainder of this chapter offers practical guidelines on the use of these laws to help in the formulation of “complex” SQL expressions. I’ll start with some very simple examples and build up gradually to ones that are quite
+complicated.
+EXAMPLE 1: LOGICAL IMPLICATION
+Consider again the constraint from the previous chapter to the effect that all red parts must be stored in London. For a given part, this constraint corresponds to a business rule that might be stated more or less formally like this:
+IF COLOR = ‘Red’ THEN CITY = ‘London’
+In other words, it’s a logical implication. Now, SQL doesn’t support logical implication as such, but the implication law tells us that the foregoing expression can be transformed into this one:
+( NOT ( COLOR = ‘Red’ ) ) OR ( CITY = ‘London’ )
+(I’ve added some parentheses for clarity.) And this expression involves only operators that SQL does support, so it
+can be formulated directly as a base table constraint:
+CONSTRAINT BTCX1 CHECK ( NOT ( COLOR = ‘Red’ ) OR ( CITY = ‘London’ ) )
+Or perhaps a little more naturally, making use of the fact that NOT (a = b) can be transformed into a ≠ b─in SQL, a <> b─and dropping unnecessary parentheses (in other words, applying some further simple transformations):
+CONSTRAINT BTCX1 CHECK ( COLOR <> ‘Red’ OR CITY = ‘London’ )
+Note: I’ve said that SQL doesn’t support logical implication (IF ... THEN ...) as such. That’s true. But it does support CASE expressions, and so this first example might alternatively be formulated in SQL as follows:
+CONSTRAINT BTCX1 CHECK ( CASE
+WHEN COLOR = ‘Red’ THEN CITY = ‘London’
+                                 ELSE TRUE
+                              END ) ;
+www.it-ebooks.info
+                Using Logic to Formulate SQL Expressions / Chapter 11 251
+In general, the logical implication IF p THEN q can be mapped into the SQL CASE expression CASE WHEN p′ THEN q′ ELSE TRUE END, where p′ and q′ are SQL analogs of p and q, respectively.2 For simplicity, however, I’ll ignore this possibility in future examples.
+EXAMPLE 2: UNIVERSAL QUANTIFICATION
+Now, I was practicing a tiny deception in Example 1, inasmuch as I was pretending that the specific part to which the constraint applied was understood. But that’s effectively just what happens with base table constraints in SQL; they’re tacitly understood to apply to each and every row of the base table whose definition they’re part of. However, suppose we wanted to be more explicit─i.e., suppose we wanted to state explicitly that the constraint applies to every part that happens to be represented in table P. In other words, for all such parts PX, if the color of part PX is red, then the city for part PX is London:
+FORALL PX ( IF PX.COLOR = ‘Red’ THEN PX.CITY = ‘London’ )
+Note: The name PX and others like it in this chapter are deliberately chosen to be reminiscent of the range variables used in examples in the previous chapter. In fact, I’m going to assume from this point forward that names of the form PX, PY, etc., denote variables that range over the current value of table P; names of the form SX, SY, etc., denote variables that range over the current value of table S; and so on.3 Details of how such variables are defined─in logic, I mean, not in SQL─aren’t important for present purposes and are therefore omitted. In SQL, they’re defined by means of AS clauses, which I’ll show when we get to the SQL formulations as such.
+Now, SQL doesn’t support FORALL, but the quantification law tells us that the foregoing expression can be transformed into this one:
+NOT EXISTS PX ( NOT ( IF PX.COLOR = ‘Red’ THEN PX.CITY = ‘London’ ) )
+(Again I’ve added some parentheses for clarity. From this point forward, in fact, I’ll feel free to introduce or drop parentheses as and when I feel it’s desirable to do so, without further comment.) Now applying the implication law:
+NOT EXISTS PX ( NOT ( NOT ( PX.COLOR = ‘Red’ ) OR PX.CITY = ‘London’ ) )
+This expression could now be mapped directly into SQL, but it’s probably worth tidying it up a little first. Applying De Morgan:
+NOT EXISTS PX ( NOT ( NOT ( ( PX.COLOR = ‘Red’ )
+AND NOT ( PX.CITY = ‘London’ ) ) ) )
+Applying the double negation law and dropping some parentheses:
+NOT EXISTS PX ( PX.COLOR = ‘Red’ AND NOT ( PX.CITY = ‘London’ ) )
+2 What would happen if we omitted that ELSE TRUE?
+3 I’m being sloppy here. The phrase “range over table P” ought really to be “range over the table value that’s the current value of the table variable called P” (and similarly for “range over table S,” of course). But SQL has no explicit notion of table values vs. table variables.
+ www.it-ebooks.info
+                252 Chapter 11 / Using Logic to Formulate SQL Expressions
+Finally:
+NOT EXISTS PX ( PX.COLOR = ‘Red’ AND PX.CITY ≠ ‘London’ )
+Now, the transformations so far have all been very simple; you might even have found them rather tedious. But mapping this final logical expression into SQL isn’t quite so straightforward. Here are the details of that mapping:
+ Firstofall,NOTmapstoNOT(unsurprisingly).
+ Second, “EXISTS PX (bx)” maps to “EXISTS (SELECT * FROM P AS PX WHERE (bx′)),” where bx′ is the SQL analog of the boolean expression bx. Note: Of course, mapping bx to bx′ might require further (recursive) application of these rules.
+ Third,theparenthesessurroundingsbxcanbedropped,thoughtheydon’thavetobe.
+ Last,theentireexpressionneedstobewrappedupinsidesomesuitableCREATEASSERTIONsyntax. So here’s the final version:
+CREATE ASSERTION ... CHECK
+( NOT EXISTS ( SELECT *
+FROM P AS PX
+WHERE PX.COLOR = ‘Red’
+AND PX.CITY <> ‘London’ ) ) ;
+EXAMPLE 3: IMPLICATION AND UNIVERSAL QUANTIFICATION
+A query example this time─“Get part names for parts whose weight is different from that of every part in Paris.” Here’s a straightforward logical (i.e., relational calculus) formulation:
+{ PX.PNAME } WHERE FORALL PY ( IF PY.CITY = ‘Paris’
+THEN PY.WEIGHT ≠ PX.WEIGHT )
+This expression can be interpreted as follows: “Get PNAME values from parts PX such that, for all parts PY, if PY is in Paris, then PY and PX have different weights.” Note that I use the terms where and such that interchangeably─whichever seems to read best in the case at hand─when I’m giving natural language interpretations like the one under discussion.
+As a first transformation, let’s apply the quantification law:
+{ PX.PNAME } WHERE NOT EXISTS PY ( NOT ( IF PY.CITY = ‘Paris’
+THEN PY.WEIGHT ≠ PX.WEIGHT ) )
+Next, apply the implication law:
+{ PX.PNAME } WHERE
+NOT EXISTS PY ( NOT ( NOT ( PY.CITY = ‘Paris’ )
+Apply De Morgan:
+www.it-ebooks.info
+OR ( PY.WEIGHT ≠ PX.WEIGHT ) ) )
+                Map to SQL:
+SELECT FROM
+WHERE
+DISTINCT PX.PNAME P AS PX
+NOT EXISTS
+( SELECT *
+FROM P AS PY
+WHERE PY.CITY = ‘Paris’
+AND PY.WEIGHT = PX.WEIGHT )
+Using Logic to Formulate SQL Expressions / Chapter 11 253
+{ PX.PNAME } WHERE
+NOT EXISTS PY ( NOT ( NOT ( ( PY.CITY = ‘Paris’ )
+AND NOT ( PY.WEIGHT ≠ PX.WEIGHT ) ) ) )
+Tidy up, using the double negation law, plus the fact that NOT (a ≠ b) is equivalent to a = b: { PX.PNAME } WHERE NOT EXISTS PY ( PY.CITY = ‘Paris’ AND
+Incidentally, that DISTINCT is really needed in the opening SELECT clause here! Here’s the result:4
+┌───────┐ │ PNAME │ ├═══════┤ │ Screw │ │Cog │ └───────┘
+Unfortunately, there’s a fly in the ointment in this example. Suppose there’s at least one part in Paris, but all such parts have a null weight. Then we simply don’t know─we can’t possibly say─whether there are any parts whose weight is different from that of every part in Paris; the query is unanswerable. But SQL gives us an answer anyway ... To be specific, the subquery following the keyword EXISTS evaluates to an empty table for every part PX represented in P; the NOT EXISTS therefore evaluates to TRUE for every such part PX; and the expression overall therefore incorrectly returns all part names in table P.
+Aside: As explained in Chapter 4, this is the biggest practical problem with nulls─they lead to wrong answers. What’s more, of course, we don’t know in general which answers are right and which wrong! For further elaboration of such matters, refer to the paper “Why Three- and Four-Valued Logic Don’t Work” (see Appendix G). End of aside.
+What’s more, not only is the foregoing SQL result incorrect, but any definite result would represent, in effect, a lie on the part of the system. To say it again, the only logically correct result is “I don’t know”─or, to be more precise and a little more honest about the matter, “The system doesn’t have enough information to give a definitive response to this query.”
+What makes matters even worse is that under the same conditions as before (i.e., if there’s at least one part in Paris and those parts all have a null weight), the SQL expression
+4 All query results shown in this chapter are based on the usual sample data values, of course. Note: According to reviewers, at least two SQL products gave the same result here regardless of whether or not DISTINCT was specified. If so, then the products in question would seem to have a bug in this area.
+PY.WEIGHT = PX.WEIGHT )
+ www.it-ebooks.info
+                254
+Chapter 11 / Using Logic to Formulate SQL Expressions
+SELECT FROM
+WHERE (
+DISTINCT PX.PNAME
+PASPX
+PX.WEIGHT NOT IN
+SELECT PY.WEIGHT
+FROM P AS PY
+WHERE PY.CITY = ‘Paris’ )
+─which looks as if it ought to be logically equivalent to the one shown previously (and indeed is so, in the absence of nulls)─will return an empty result: a different, though equally incorrect, result.
+The moral is obvious: Avoid nulls!─and then the transformations all work properly.
+EXAMPLE 4: CORRELATED SUBQUERIES
+Consider the query “Get names of suppliers who supply both part P1 and part P2.” Here’s a logical formulation:
+{ SX.SNAME } WHERE EXISTS SPX ( SPX.SNO AND EXISTS SPX ( SPX.SNO
+= SX.SNO AND SPX.PNO = ‘P1’ ) = SX.SNO AND SPX.PNO = ‘P2’ )
+An equivalent SQL formulation is straightforward:
+SELECT DISTINCT FROM SASSX WHERE EXISTS (
+AND EXISTS (
+Here’s the result:
+┌───────┐ │ SNAME │ ├═══════┤ │ Smith │ │ Jones │ └───────┘
+SX.SNAME
+SELECT *
+FROM SP AS SPX WHERE SPX.SNO = AND SPX.PNO = SELECT *
+FROM SP AS SPX WHERE SPX.SNO = AND SPX.PNO =
+SX.SNO ‘P1’ )
+SX.SNO ‘P2’ )
+As you can see, however, this SQL expression involves two correlated subqueries. (In fact, Example 3 involved a correlated subquery also. See Chapter 12 for further discussion.) But correlated subqueries are often contraindicated from a performance point of view, because─conceptually, at any rate─they have to be evaluated repeatedly, once for each row in the outer table, instead of just once and for all. The possibility of eliminating them thus seems worth investigating. Now, in the case at hand (where the correlated subqueries appear within EXISTS invocations), there’s a simple transformation that can be used to achieve precisely that effect. The resulting expression is:
+SELECT DISTINCT SX.SNAME FROM S AS SX
+www.it-ebooks.info
+                WHERE SX.SNO IN ( AND SX.SNO IN (
+SELECT
+FROM
+WHERE
+SELECT
+FROM
+WHERE
+SPX.SNO
+SP AS SPX
+SPX.PNO =
+SPX.SNO
+SP AS SPX
+SPX.PNO =
+‘P1’ ) ‘P2’ )
+More generally, the SQL expression
+Using Logic to Formulate SQL Expressions / Chapter 11 255
+SELECT sic /* “SELECT item commalist” */
+FROM T1
+WHERE [ NOT ] EXISTS (
+can be transformed into
+SELECT *
+FROM T2
+WHERE T2.C = T1.C AND bx)
+SELECT sic
+FROM T1
+WHERE T1.C [ NOT ] IN ( SELECT T2.C
+FROM T2 WHERE bx )
+In practice, this transformation is probably worth applying whenever it can be. (Of course, it would be better if the optimizer could perform the transformation automatically; unfortunately, however, we can’t always count on the optimizer to do what’s best.) But there are many situations where the transformation simply doesn’t apply. As Example 3 showed, nulls can be one reason it doesn’t apply─by the way, are nulls a consideration in Example 4?─but there are cases where it doesn’t apply even if nulls are avoided. As an exercise, you might like to try deciding which of the remaining examples in this chapter it does apply to.
+EXAMPLE 5: NAMING SUBEXPRESSIONS
+Another query: “Get full supplier details for suppliers who supply all purple parts.” Note: This query, or one very like it, is often used to demonstrate a flaw in the relational divide operator as originally defined. See the further remarks on this topic at the end of the present section.
+Here first is a logical formulation:
+{ SX } WHERE FORALL PX ( IF PX.COLOR = ‘Purple’ THEN
+EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+(“names of suppliers SX such that, for all parts PX, if PX is purple, there exists a shipment SPX with SNO equal to the supplier number for supplier SX and PNO equal to the part number for part PX”). First we apply the implication law:
+{ SX } WHERE FORALL PX ( NOT ( PX.COLOR = ‘Purple’ ) OR
+EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+Next De Morgan:
+www.it-ebooks.info
+                256 Chapter 11 / Using Logic to Formulate SQL Expressions
+{ SX } WHERE
+FORALL PX ( NOT ( ( PX.COLOR = ‘Purple’ ) AND
+NOT EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) ) )
+Apply the quantification law:
+{ SX } WHERE
+NOT EXISTS PX ( NOT ( NOT ( ( PX.COLOR = ‘Purple’ ) AND
+NOT EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) ) ) )
+Double negation:
+{ SX } WHERE
+NOT EXISTS PX ( ( PX.COLOR = ‘Purple’ ) AND
+NOT EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+Drop some parentheses and map to SQL:
+SELECT *
+FROM SASSX WHERE NOT EXISTS
+( SELECT *
+FROM P AS PX
+WHERE PX.COLOR = ‘Purple’ AND NOT EXISTS
+( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO
+AND SPX.PNO = PX.PNO ) )
+Recall now from Chapter 7 that if there aren’t any purple parts, every supplier supplies all of them─even supplier S5, who supplies no parts at all (see the discussion of empty ranges in Chapter 10 for further explanation). So the result is the entire suppliers relation:
+┌─────┬───────┬────────┬────────┐ │SNO│SNAME│STATUS│CITY │ ├═════┼───────┼────────┼────────┤
+│S1 │Smith│
+│S2 │Jones│
+│S3 │Blake│
+│S4 │Clark│
+│S5 │Adams│ └─────┴───────┴────────┴────────┘
+20│London│ 10│Paris │ 30│Paris │ 20│London│ 30│Athens│
+Now, you might have had some difficulty in following the transformations in the foregoing example, and you might also be having some difficulty in understanding the final SQL formulation. Well, a useful technique, when the expressions start getting a little complicated as in this example, is to abstract a little by introducing symbolic names for subexpressions (I did briefly mention this point in the previous chapter, but now I want to get more specific). Let’s use exp1 to denote the subexpression
+PX.COLOR = ‘Purple’
+and exp2 to denote the subexpression
+www.it-ebooks.info
+                Using Logic to Formulate SQL Expressions / Chapter 11 257
+EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO )
+(note that both of these subexpressions can be directly represented, more or less, in SQL). Then the original relational calculus expression becomes:
+{ SX } WHERE FORALL PX ( IF exp1 THEN exp2 )
+As I said in the previous chapter, now we can see the forest as well as the trees (as it were), and we can start to apply our usual transformations─though now it seems to make more sense to apply them in a different sequence, precisely because we do now have a better grasp of the big picture. First, then, the quantification law:
+{ SX }
+Implication law:
+{ SX }
+De Morgan:
+{ SX }
+Double negation:
+WHERE NOT EXISTS PX ( NOT ( IF exp1 THEN exp2 ) )
+WHERE NOT EXISTS PX ( NOT ( NOT ( exp1 ) OR exp2 ) )
+WHERE NOT EXISTS PX ( NOT ( NOT ( exp1 AND NOT ( exp2 ) ) ) )
+{ SX } WHERE NOT EXISTS PX ( exp1 AND NOT ( exp2 ) ) Finally, expand exp1 and exp2 and map to SQL:
+SELECT *
+FROM SASSX WHERE NOT EXISTS
+( SELECT *
+FROM P AS PX
+WHERE PX.COLOR = ‘Purple’ AND NOT EXISTS
+( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO
+AND SPX.PNO = PX.PNO ) )
+As I think this example demonstrates, SQL expressions obtained by the techniques under discussion are often quite hard to understand directly; as I said earlier, however, we know they’re correct, because of the systematic manner in which they’ve been derived.5
+As an aside, I can’t resist showing a Tutorial D version of the example by way of comparison:
+5 It’s worth pointing out in passing that the tactic of introducing names for subexpressions is reminiscent, somewhat, of the use of WITH in simplifying complex expressions as discussed in Chapter 6. But there’s a difference: For WITH, the subexpressions in question are required to be closed, whereas no such requirement applies in the present context. Indeed, all we’re doing in the present context is, in effect, simple text substitution, which is not what happens with WITH.
+ www.it-ebooks.info
+                258 Chapter 11 / Using Logic to Formulate SQL Expressions
+SWHERE( !!SP){PNO} ⊇ (PWHERECOLOR=‘Purple’){PNO}
+Now let me explain the remark I made at the beginning of this section, regarding divide. Let’s denote the restriction P WHERE COLOR = ‘Purple’ by the symbol PP. Also, let’s simplify the query at hand─“Get full supplier details for suppliers who supply all purple parts”─such that it asks for supplier numbers only, instead of full supplier details. Then it might be thought that the query could be represented by the following algebraic expression:
+SP { SNO , PNO } DIVIDEBY PP { PNO }
+Note: DIVIDEBY here represents the divide operator as originally defined. See Chapter 7 if you need an explanation of this point.
+With our usual sample data values, however, relation PP, and hence the projection of relation PP on {PNO}, are both empty (because there aren’t any purple parts), and the foregoing expression therefore returns the supplier numbers S1, S2, S3, and S4. But if there aren’t any purple parts, then every supplier supplies all of them (see the discussion of empty ranges in the previous chapter)─even supplier S5, who supplies no parts at all. And the foregoing division can’t possibly return supplier number S5, because it extracts supplier numbers from SP instead of S, and supplier S5 isn’t currently represented in SP. So the informal characterization of that division as “Get supplier numbers for suppliers who supply all purple parts” is incorrect; it should be, rather, “Get supplier numbers for suppliers who supply at least one part and also supply all purple parts.” As this example demonstrates, therefore (and to repeat something I said in Chapter 7), the divide operator doesn’t really solve the problem it was originally, and explicitly, intended to solve.
+EXAMPLE 6: MORE ON NAMING SUBEXPRESSIONS
+I’ll give another example to illustrate the usefulness of introducing symbolic names for subexpressions. The query is “Get suppliers such that every part they supply is in the same city as that supplier.” Here’s a logical formulation:
+{ SX } WHERE FORALL PX
+( IF EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO )
+THEN PX.CITY = SX.CITY )
+(“suppliers SX such that, for all parts PX, if there’s a shipment of PX by SX, then PX.CITY = SX.CITY”).
+This time I’ll just show the transformations without naming the transformation laws involved at each step
+(I’ll leave that as an exercise for you):
+{ SX } WHERE FORALL PX ( IF exp1 THEN exp2 )
+{ SX } WHERE NOT EXISTS PX ( NOT ( IF exp1 THEN exp2 ) )
+{ SX } WHERE NOT EXISTS PX ( NOT ( NOT ( exp1 ) OR exp2 ) )
+{ SX } WHERE NOT EXISTS PX ( NOT ( NOT ( exp1 AND NOT ( exp2 ) ) ) ) { SX } WHERE NOT EXISTS PX ( exp1 AND NOT ( exp2 ) )
+Now expand exp1 and exp2 and map to SQL:
+www.it-ebooks.info
+                Using Logic to Formulate SQL Expressions / Chapter 11 259
+SELECT *
+FROM S AS SX WHERE NOT EXISTS
+( SELECT *
+FROM P AS PX
+WHERE PX.CITY <> SX.CITY AND EXISTS
+( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO
+AND SPX.PNO = PX.PNO ) )
+Result:
+┌─────┬───────┬────────┬────────┐ │SNO│SNAME│STATUS│CITY │ ├═════┼───────┼────────┼────────┤ │S3 │Blake│ 30│Paris │ │S5 │Adams│ 30│Athens│ └─────┴───────┴────────┴────────┘
+By the way, if you find this result a little surprising, note that supplier S3 supplies just one part, part P2, and supplier S5 supplies no parts at all; logically speaking, therefore, both of these suppliers do indeed satisfy the condition that “every part they supply” is in the same city.
+Here for interest is a Tutorial D version of the same example: SWHERERELATION{TUPLE{CITYCITY}}=(( !!SP)JOINP){CITY}
+EXAMPLE 7: DEALING WITH AMBIGUITY
+As we saw in Chapter 10, natural language is often ambiguous. For example, consider the following query: “Get suppliers such that every part they supply is in the same city.” First of all, notice the subtle (?) difference between this example and the previous one. Second, and more important, note that this natural language formulation is indeed ambiguous! For the sake of definiteness, I’m going to assume it means the following:
+Get suppliers SX such that for all parts PX and PY, if SX supplies both of them, then PX.CITY = PY.CITY.
+Observe that a supplier who supplies just one part will qualify under this interpretation. (So will a supplier who supplies no parts at all, incidentally.) Alternatively, the query might mean:
+Get suppliers SX such that (a) SX supplies at least two distinct parts and (b) for all pairs of distinct parts PX and PY, if SX supplies both of them, then PX.CITY = PY.CITY.
+Now a supplier who supplies just one part or no parts at all won’t qualify.
+As I’ve said, I’m going to assume the first interpretation, just to be definite. But note that ambiguities of this kind are quite common with complex queries and complex business rules, and another advantage of logic in the context at hand is precisely that it can pinpoint and help resolve such ambiguities.
+Here then is a logical formulation for the first interpretation:
+www.it-ebooks.info
+                260
+Chapter 11 / Using Logic to Formulate SQL Expressions
+{ SX } WHERE FORALL PX ( FORALL PY
+( IF EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO )
+AND EXISTS SPY ( SPY.SNO = SX.SNO AND SPY.PNO = PY.PNO ) THEN PX.CITY = PY.CITY ) )
+And here are the transformations (again I’ll leave it to you to decide just which law is being applied at each stage):
+     { SX }
+     { SX }
+     { SX }
+     { SX }
+     { SX }
+     { SX }
+     { SX }
+SQL equivalent:
+SELECT *
+FROM SASSX WHERE NOT EXISTS
+( SELECT *
+FROM P AS PX WHERE EXISTS
+( SELECT *
+FROM PASPY WHERE EXISTS
+( SELECT *
+FROM SP AS SPX WHERE SPX.SNO = AND SPX.PNO =
+                   AND    EXISTS
+                        ( SELECT *
+WHERE FORALL PX ( FORALL PY
+( IF exp1 AND exp2 THEN exp3 ) )
+WHERE NOT EXISTS PX ( NOT FORALL PY ( IF exp1 AND exp2 THEN exp3 ) )
+WHERE NOT EXISTS PX ( NOT ( NOT EXISTS ( IF exp1 AND exp2 THEN exp3 ) ) )
+WHERE NOT EXISTS PX ( EXISTS PY ( NOT ( IF exp1 AND exp2 THEN exp3 ) ) )
+WHERE NOT EXISTS PX ( EXISTS PY ( NOT ( NOT ( exp1 AND exp2 ) OR exp3 )
+WHERE NOT EXISTS PX ( EXISTS PY ( NOT ( NOT ( exp1 ) OR NOT ( exp2 ) OR
+PY ( NOT )
+) )
+exp3 ) ) ) ( exp1 AND exp2 AND NOT ( exp3 ) ) ) )
+WHERE NOT EXISTS PX ( EXISTS PY (
+FROM SP AS SPY
+WHERE SPY.SNO =
+AND SPY.PNO = PY.PNO )
+SX.SNO AND PX.CITY <> PY.CITY ) )
+By the way, I used two distinct range variables SPX and SPY, both ranging over SP, in this example purely for reasons of clarity; I could perfectly well have used the same one (say SPX) twice over─it would have made no logical difference at all. Anyway, here’s the result:
+www.it-ebooks.info
+SX.SNO
+PX.PNO )
+                Using Logic to Formulate SQL Expressions / Chapter 11 261
+┌─────┬───────┬────────┬────────┐ │SNO│SNAME│STATUS│CITY │ ├═════┼───────┼────────┼────────┤ │S3 │Blake│ 30│Paris │ │S5 │Adams│ 30│Athens│ └─────┴───────┴────────┴────────┘
+At this point, I’d like to remind you of another transformation law that’s sometimes useful: the contrapositive law (I mentioned this one in the previous chapter). Consider the implication IF NOT q THEN NOT p. By definition, this expression is equivalent to NOT (NOT q) OR NOT p─which is the same as q OR NOT p─which is thesameasNOTpORq─whichisthesameasIFpTHENq. Sowehave:
+IFpTHENq ≡ IFNOTqTHENNOTp
+Note that this law does make intuitive sense: If the truth of p implies the truth of q, then the falsity of q must imply the falsity of p. For example, if “It’s raining” implies “The streets are wet,” then “The streets aren’t wet” must imply “It isn’t raining.”
+In the example at hand, then, another possible way of stating the interpretation previously assumed (“Get suppliers SX such that for all parts PX and PY, if SX supplies both of them, then PX.CITY = PY.CITY”) is:
+Get suppliers SX such that for all parts PX and PY, if PX.CITY ≠ PY.CITY, then SX doesn’t supply both of them.6
+This perception of the query will very likely lead to a different (though logically equivalent) SQL formulation. I’ll leave the details as an exercise.
+EXAMPLE 8: USING COUNT
+Now, there’s still a little more to be said about the previous example. Let me state the query again: “Get suppliers such that every part they supply is in the same city.” Here’s yet another possible natural language interpretation of this query:
+Get suppliers SX such that the number of cities for parts supplied by SX is less than or equal to one.
+Note that “less than or equal to,” by the way─“equal to” alone would correspond to a different interpretation of the query (right?). Logical formulation:
+{ SX } WHERE COUNT ( PX.CITY WHERE EXISTS SPX
+( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) ) £ 1
+This is the first example in this chapter to make use of an aggregate operator. As I think you can see, however, the mapping is quite straightforward. An equivalent SQL formulation is:
+6 Is it obvious that this version is equivalent to the previous one?
+ www.it-ebooks.info
+                262
+Chapter 11 / Using Logic to Formulate SQL Expressions
+SELECT *
+FROM   S
+WHERE  (
+AS SX
+SELECT COUNT ( DISTINCT PX.CITY ) FROM P AS PX
+WHERE EXISTS ( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO
+AND SPX.PNO = PX.PNO ) ) <= 1
+The result is as shown under Example 7. However, I remind you from the previous chapter that as a general rule it’s wise, for performance reasons, to be careful over the use of COUNT; in particular, don’t use it where EXISTS would be more logically correct.
+Here are some questions for you: First, given the foregoing SQL formulation of the query, is that DISTINCT in the COUNT invocation really necessary? Second, try to formulate the query in terms of GROUP BY and HAVING. If you succeed, what were the logical steps you went through to construct that formulation? (See Example 12 for further discussion of GROUP BY and HAVING.)
+EXAMPLE 9: JOIN QUERIES
+This time, for practice, I’ll just present the query and the SQL formulation and leave you to give the logical formulation and the derivation process. The query is “Get suppliers such that every part they supply is in the same city (as in Examples 7 and 8), together with the city in question.” Here’s the SQL formulation:
+SELECT FROM
+WHERE
+DISTINCT SX.* , PX.CITY SASSX,PASPX EXISTS
+Result:
+( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO AND NOT EXISTS
+( SELECT *
+FROM SP AS SPY
+WHERE SPY.SNO = SPX.SNO AND EXISTS
+( SELECT *
+FROM P AS PY
+WHERE PY.PNO = SPY.PNO
+AND PY.CITY <> PX.CITY ) ) )
+┌─────┬───────┬────────┬────────┐ │SNO│SNAME│STATUS│CITY │ ├═════┼───────┼────────┼────────┤ │S3 │Blake│ 30│Paris │ └─────┴───────┴────────┴────────┘
+Exercise: Is the DISTINCT necessary in this example? And why is this section called “Join Queries”?
+www.it-ebooks.info
+                Using Logic to Formulate SQL Expressions / Chapter 11 263 EXAMPLE 10: UNIQUE QUANTIFICATION
+Recall this example from Chapter 10 (a logical formulation of the constraint that there’s exactly one supplier for each shipment):
+CONSTRAINT CX6 FORALL SPX ( UNIQUE SX ( SX.SNO = SPX.SNO ) ) ;
+Recall too that the logic expression
+EXISTS SX ( bx ) maps to the SQL expression
+EXISTS ( SELECT * FROM S AS SX WHERE ( sbx ) )
+where sbx is the SQL analog of the boolean expression bx. However, the logic expression
+UNIQUE SX ( bx ) does not map to the SQL expression
+UNIQUE ( SELECT * FROM S AS SX WHERE ( sbx ) ) (There’s an obvious trap for the unwary here.) Instead, it maps to:
+UNIQUE ( SELECT k FROM S AS SX WHERE ( sbx ) ) AND
+EXISTS ( SELECT * FROM S AS SX WHERE ( sbx ) )
+where k denotes an arbitrary constant value.7 (The UNIQUE invocation says there’s at most one, the EXISTS invocation says there’s at least one─where by “one” I mean one row in table S for which the boolean expression sbx evaluates to TRUE.) So constraint CX6 might map to:
+CREATE ASSERTION CX6 CHECK ( NOT EXISTS
+( SELECT *
+FROM WHERE
+(
+OR
+(
+SP AS SPX
+NOT UNIQUE
+SELECT SX.SNO
+FROM S AS SX
+WHERE SX.SNO = SPX.SNO )
+NOT EXISTS
+SELECT SX.SNO
+FROM S AS SX
+WHERE SX.SNO = SPX.SNO ) ) ) ;
+ 7 Actually we could employ the same trick in mapping EXISTS─i.e., we could define EXISTS SX (bx) as mapping to EXISTS (SELECT k FROM S AS SX WHERE (sbx)), instead of EXISTS (SELECT * ... WHERE (sbx)). For symmetry I’ve done exactly this in the formulation of constraint CX6 that follows.
+www.it-ebooks.info
+                264 Chapter 11 / Using Logic to Formulate SQL Expressions
+Note: As in one of the examples in Chapter 10, the UNIQUE invocation here─even though it might not look like it─is in fact of the form UNIQUE (SELECT constant FROM ...), thanks to the boolean expression in the inner WHERE clause.8
+Incidentally, I think this example illustrates very well my claim that the SQL formulations produced by the techniques I’m describing in this chapter can be hard to understand. The foregoing constraint might be transcribed into stilted natural language like this:
+There exists no shipment such that either there’s not at most one corresponding supplier or there’s not at least one corresponding supplier.
+Well, I don’t know about you, but I think it’s far from immediately obvious that this extremely tortuous sentence is logically equivalent to the following one:
+Every shipment has exactly one corresponding supplier.
+By the way, there’s another equivalence we might appeal to here─the logic expression UNIQUE SX (bx) is clearly equivalent (as we saw in Chapter 10) to:
+COUNT ( SX WHERE ( bx ) ) = 1
+As a result we can simplify the foregoing SQL CREATE ASSERTION to:
+CREATE ASSERTION CX6 CHECK ( NOT EXISTS
+( SELECT *
+FROM SP AS SPX
+WHERE ( SELECT COUNT ( * )
+FROM S AS SX
+WHERE SX.SNO=SPX.SNO)<>1));
+Here for interest is yet another SQL formulation, one that uses neither UNIQUE nor COUNT. Try to convince yourself it’s correct.
+CREATE ASSERTION CX6 CHECK ( NOT EXISTS
+( SELECT *
+FROM SP AS SPX WHERE NOT EXISTS
+( SELECT *
+FROM S AS SX
+WHERE SX.SNO = SPX.SNO AND NOT EXISTS
+( SELECT *
+FROM S AS SY
+WHERE SY.SNO = SX.SNO
+8 Given that {SNO} is a key for S, it would be possible to omit that portion of constraint CX6 that requires there to be at most one matching supplier. Of course, this fact doesn’t affect the overall message of the present section.
+ www.it-ebooks.info
+                Using Logic to Formulate SQL Expressions / Chapter 11 265
+AND ( SY.SNAME <> SX.SNAME OR SY.STATUS <> SX.STATUS OR
+SY.CITY <> SX.CITY ) ) ) ) ) ;
+Note carefully, however, that this formulation relies on the fact that duplicate rows are prohibited (in table S in particular); it doesn’t work otherwise. Avoid duplicate rows!
+EXAMPLE 11: ALL OR ANY COMPARISONS
+You probably know that SQL supports what are called generically ALL or ANY comparisons (or, more formally, quantified comparisons, but I prefer to avoid this term because of possible confusion with SQL’s EXISTS and UNIQUE operators). An ALL or ANY comparison is an expression of the form rx q tsq, where:
+ rxisarowexpression.
+ tsqisatablesubquery.(SubqueriesofallkindsarediscussedfurtherinChapter12.)
+ qisanyoftheusualscalarcomparisonoperatorssupportedinSQL(“=”,“<>”,“<”,“<=”,“>”,“>=”) followed by one of the keywords ALL, ANY, or SOME. (As mentioned in Chapter 7, in a footnote, SOME is just an alternative spelling for ANY in this context.)
+The semantics are as follows:
+ An ALL comparison returns TRUE if and only if the corresponding comparison without the ALL returns TRUE for all of the rows in the table represented by tsq. If that table is empty, the ALL comparison returns TRUE.9
+ AnANYcomparisonreturnsTRUEifandonlyifthecorrespondingcomparisonwithouttheANYreturns TRUE for at least one of the rows in the table represented by tsq. If that table is empty, the ANY comparison returns FALSE.
+Here’s an example (“Get part names for parts whose weight is greater than that of every blue part”):
+SELECT DISTINCT PX.PNAME
+FROM P AS PX
+WHERE PX.WEIGHT >ALL ( SELECT PY.WEIGHT
+FROM P AS PY
+WHERE PY.COLOR = ‘Blue’ )
+Result:
+9 And that TRUE is logically correct! This behavior is certainly a little surprising, given that SQL’s EVERY “set function” incorrectly returns null, not TRUE, if its argument is empty. (EVERY is, of course, the “set function” analog of ALL in the context under discussion.) The reason for the inconsistency is that─as perhaps you’ve guessed─SQL’s ALL or ANY comparisons were defined before nulls were added to the language. (Is there a moral here?) Analogous remarks apply to ANY comparisons also.
+ www.it-ebooks.info
+                266
+Chapter 11 / Using Logic to Formulate SQL Expressions
+┌───────┐ │ PNAME │ ├═══════┤ │ Bolt │ │ Screw │ │Cog │ └───────┘
+As this example suggests, the “row expression” rx in the ALL or ANY comparison rx q tsq is often─almost always, in fact─just a simple scalar expression, in which case the scalar value denoted by that expression is effectively coerced to a row that contains just that scalar value. (Incidentally, note that even if rx doesn’t consist of a simple scalar expression but actually does denote a row of degree greater than one, q can still be something other than “=” or “<>”, though the practice isn’t recommended. See Chapter 3 for further discussion of this point.)
+Recommendation: Don’t use ALL or ANY comparisons─they’re error prone, and in any case their effect can always be achieved by other methods. As an illustration of the first point, consider the fact that a natural language formulation of the foregoing query might very well use any in place of every─“Get part names for parts whose weight is greater than that of any blue part”─which could lead to the incorrect use of >ANY in place of >ALL. As another example, illustrating both points, consider the following SQL expression:
+SELECT DISTINCT SNAME
+FROM S
+WHERE CITY <>ANY ( SELECT CITY FROM P )
+This expression could easily be read as “Get names of suppliers whose city isn’t equal to any part city”─but that’s not what it means. Instead, it’s logically equivalent10 to the following (“Get names of suppliers where there’s at least one part in a different city”):
+SELECT DISTINCT FROM S
+WHERE EXISTS (
+Result:
+┌───────┐ │ SNAME │ ├═══════┤ │ Smith │ │ Jones │ │ Jones │ │ Clark │ │ Adams │ └───────┘
+SNAME
+SELECT *
+FROM P
+WHERE P.CITY <> S.CITY )
+In fact, ALL or ANY comparisons can always be transformed into equivalent expressions involving EXISTS, as the foregoing example suggests. They can also usually be transformed into expressions involving MAX or MIN─because certainly (e.g.) a value is greater than all of the values in some set if and only if it’s greater than the maximum value in that set─and expressions involving MAX and MIN are often easier to understand, intuitively speaking, than ALL or ANY comparisons. The table overleaf summarizes the possibilities in this regard. Note in
+10 Or is it? What if supplier or part cities could be null?
+ www.it-ebooks.info
+                Using Logic to Formulate SQL Expressions / Chapter 11 267
+particular from the table that =ANY and <>ALL are equivalent to IN and NOT IN, respectively, and so these two are important exceptions to the overall recommendation to avoid ALL and ANY comparisons in general─i.e., you can use =ANY and IN interchangeably, and you can use <>ALL and NOT IN interchangeably too. (Personally, I think IN and NOT IN are much clearer than their alternatives, but it’s your choice.) By contrast, =ALL and <>ANY have no analogous equivalents; however, expressions involving those operators can always be replaced by expressions involving EXISTS instead, as already noted.
+┌────┬───────┬────────┐ │ │ ANY │ ALL │ ├────┼───────┼────────┤ │=│IN│ │ ├────┼───────┼────────┤ │ <> │ │ NOT IN │ ├────┼───────┼────────┤ │< │<MAX│<MIN │ ├────┼───────┼────────┤ │<=│<=MAX│<=MIN │ ├────┼───────┼────────┤ │> │>MIN│>MAX │ ├────┼───────┼────────┤ │>=│>=MIN│>=MAX │ └────┴───────┴────────┘
+Caveat: Unfortunately, the transformations involving MAX and MIN aren’t guaranteed to work if the MAX or MIN argument happens to be an empty set. The reason is that SQL defines the MAX and MIN of an empty set to be null. For example, here again is the formulation shown earlier for the query “Get part names for parts whose weight is greater than that of every blue part”:
+SELECT DISTINCT PX.PNAME
+FROM P AS PX
+WHERE PX.WEIGHT >ALL ( SELECT PY.WEIGHT
+FROM P AS PY
+WHERE PY.COLOR = ‘Blue’ )
+And here’s a transformed “equivalent”:
+SELECT DISTINCT PX.PNAME
+FROM P AS PX
+WHERE PX.WEIGHT > ( SELECT MAX ( PY.WEIGHT )
+FROM P AS PY
+WHERE PY.COLOR = ‘Blue’ )
+Now suppose there are no blue parts. Then the first of the foregoing expressions will return all part names in table P, but the second will return an empty result.11
+Anyway, to make the transformation in the example valid after all, use COALESCE─e.g., as follows:
+11 Note that both expressions involve some coercion. As a slightly nontrivial exercise, you might like to try figuring out exactly what coercions are involved in each case.
+ www.it-ebooks.info
+                268
+Chapter 11 / Using Logic to Formulate SQL Expressions
+SELECT DISTINCT PX.PNAME
+FROM P AS PX
+WHERE PX.WEIGHT > ( SELECT COALESCE ( MAX ( PY.WEIGHT ) , 0.0 )
+FROM P AS PY
+WHERE PY.COLOR = ‘Blue’ )
+By way of another example, consider the query “Get part names for parts whose weight is less than that of some part in Paris.” Here’s a logical formulation:
+{ PX.PNAME } WHERE EXISTS PY ( PY.CITY = ‘Paris’ AND PX.WEIGHT < PY.WEIGHT )
+Here’s a corresponding SQL formulation:
+SELECT
+FROM
+WHERE
+DISTINCT
+P AS PX
+EXISTS (
+PX.PNAME
+SELECT *
+FROM P AS PY
+WHERE PY.CITY = ‘Paris’
+AND PX.WEIGHT < PY.WEIGHT )
+But this query too could have been expressed in terms of an ALL or ANY comparison, thus:
+SELECT
+FROM
+WHERE
+Result:
+┌───────┐ │ PNAME │ ├═══════┤ │Nut │ │ Screw │ │Cam │ └───────┘
+DISTINCT PX.PNAME
+P AS PX
+PX.WEIGHT <ANY ( SELECT PY.WEIGHT
+FROM P AS PY
+WHERE PY.CITY = ‘Paris’ )
+As this example suggests (and indeed as already stated), expressions involving ALL and ANY comparisons can always be transformed into equivalent expressions involving EXISTS instead. Some questions for you:
+ Are you sure “<ANY” is the correct comparison operator in this example? (Was “less than any” the phrase used in the natural language version? Should it have been? Recall too that “less than any” maps to “<ALL”─right?)
+ Whichofthevariousformulationsdoyouthinkisthemost“natural”?
+ Are the various formulations equivalent if the database permits nulls? Or duplicates?
+www.it-ebooks.info
+                Using Logic to Formulate SQL Expressions / Chapter 11 269 EXAMPLE 12: GROUP BY AND HAVING
+As promised earlier, there’s a little more I want to say about the GROUP BY and HAVING clauses. Consider this query: “For each part supplied by no more than two suppliers, get the part number and city and the total quantity supplied of that part.” Here’s a possible logical (relational calculus) formulation:
+{ PX.PNO , PX.CITY ,
+TPQ := SUM ( SPX.QTY WHERE SPX.PNO = PX.PNO , QTY ) } WHERE COUNT ( SPY WHERE SPY.PNO = PX.PNO ) £ 2
+SQL formulation:
+SELECT PX.PNO , (
+FROM P AS PX WHERE ( SELECT
+FROM WHERE
+Result:
+┌─────┬────────┬─────┐ │PNO│CITY │TPQ│ ├═════┼────────┼─────┤ │P1 │London│600│ │P3 │Oslo │400│ │P4 │London│500│ │P5 │Paris │500│ │P6 │London│100│ └─────┴────────┴─────┘
+PX.CITY ,
+SELECT COALESCE ( SUM ( SPX.QTY ) , 0 ) FROM SP AS SPX
+WHERE SPX.PNO = PX.PNO ) AS TPQ
+COUNT ( *
+SP AS SPY
+SPY.PNO =
+)
+PX.PNO ) <= 2
+As the opening to this section suggests, however, the interesting thing about this example is that it’s one that might appear to be more easily─certainly more succinctly─expressed using GROUP BY and HAVING, thus:
+SELECT PX.PNO , PX.CITY , COALESCE ( SUM ( SPX.QTY ) , 0 ) AS TPQ FROM PASPX,SPASSPX
+WHERE PX.PNO = SPX.PNO
+GROUP BY PX.PNO
+HAVING COUNT ( * ) <= 2
+But:
+ In that GROUP BY / HAVING formulation, is the appearance of PX.CITY in the SELECT item commalist legal? Answer: Yes, it is─at least according to the standard─though it used not to be. (I did mention this point in Chapter 7, but I’ll repeat it here for convenience.) Let S be a SELECT expression with a GROUP BY clause, and let column C be referenced in the SELECT clause of S. In earlier versions of SQL, then, C had to be one of the grouping columns (or be referenced inside a “set function” invocation, but let’s agree to ignore that possibility for simplicity). In the current version, by contrast, it’s required only that C─or {C}, rather─be functionally dependent on the grouping columns.
+www.it-ebooks.info
+                270 Chapter 11 / Using Logic to Formulate SQL Expressions
+ Do you think the GROUP BY / HAVING formulation is easier to understand? (Debatable.)
+ DoestheGROUPBY/HAVINGformulationworkcorrectlyforpartsthataren’tsuppliedbyanysuppliers at all? (No, it doesn’t.)
+ Are the formulations equivalent if the database permits nulls? Or duplicates?
+As a further exercise, give SQL formulations (a) using GROUP BY and HAVING, (b) not using GROUP BY
+and HAVING, for the following queries:
+ GetsuppliernumbersforsupplierswhosupplyNdifferentpartsforsomeN>3.  GetsuppliernumbersforsupplierswhosupplyNdifferentpartsforsomeN<4.
+What do you conclude from this exercise?
+EXERCISES
+11.1 If you haven’t already done so, complete the exercises included inline in the body of the chapter.
+11.2 Take another look at the various SQL expressions in the body of the chapter. From those SQL formulations
+alone (i.e., without looking at the problem statements), see if you can come up with a natural language interpretation of what the SQL expressions mean. Then compare your interpretations with the problem statements as given in the chapter.
+11.3 Try applying the techniques described in this chapter to some genuine SQL problems from your own work environment. Note: This exercise is important. The techniques described in this chapter can seem a little daunting or hard to follow at first; in order to become familiar and comfortable with them, therefore, there’s really no substitute for “getting your hands dirty” and applying them for yourself.
+11.4 Let relvar EMP have attributes ENO and HEIGHT and predicate Employee ENO has height HEIGHT. Here’s a relational calculus formulation of the quota query (see Exercise 7.14) “Get the employee number for the three shortest employees”:
+{ EX.ENO } WHERE COUNT ( EY WHERE EY.HEIGHT < EX.HEIGHT ) < 3
+And here’s a fairly direct transliteration of this expression into SQL:
+SELECT EX.ENO
+FROM EMP AS EX
+WHERE ( SELECT COUNT ( * )
+FROM EMP AS EY
+WHERE EY.HEIGHT < EX.HEIGHT ) < 3
+Here by contrast are three GROUP BY / HAVING expressions:
+www.it-ebooks.info
+                SELECT
+FROM
+WHERE
+GROUP
+HAVING
+SELECT
+FROM
+WHERE
+GROUP
+HAVING
+SELECT
+FROM
+WHERE
+OR
+GROUP
+HAVING
+EX.ENO EMPASEX,EMPASEY EX.HEIGHT >= EY.HEIGHT BY EX.ENO
+3 <= COUNT ( * )
+EX.ENO EMPASEX,EMPASEY EX.HEIGHT > EY.HEIGHT BY EX.ENO
+3 > COUNT ( * )
+EX.ENO EMPASEX,EMPASEY EX.HEIGHT > EY.HEIGHT EX.ENO = EY.ENO
+BY EX.ENO
+3 >= COUNT ( * )
+Using Logic to Formulate SQL Expressions / Chapter 11 271
+Do you think these expressions are easier to understand than the relational calculus expression? More to the point, do they accurately represent the desired query? Also, what happens in each case if there aren’t exactly three shortest employees?
+11.5 Some of the examples discussed in the present chapter─or others very much like them─were also discussed in earlier chapters, but the SQL formulations I gave in those chapters were often more “algebra like” than “calculus like.” Can you come up with any transformation laws that would allow the calculus formulations to be mapped into algebraic ones or vice versa?
+11.6 In this chapter, I’ve discussed techniques for mapping relational calculus expressions into SQL equivalents. However, the mapping process was always carried out “by hand,” as it were. Do you think it could be mechanized?
+www.it-ebooks.info
+                www.it-ebooks.info

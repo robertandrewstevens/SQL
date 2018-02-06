@@ -1,0 +1,627 @@
+
+                Chapter 10 SQL and Logic
+Logic takes care of itself;
+all we have to do is look and see how it does it.
+─Ludwig Wittgenstein: Tractatus Logico-Philosophicus (1922)
+As I mentioned in Chapter 1, there’s an alternative to the relational algebra called the relational calculus. What this means is that queries, constraints, view definitions, and so forth can all be formulated in calculus terms as well as algebraic ones; sometimes, in fact, it’s easier to come up with a calculus formulation than an algebraic one, though the opposite can also be true.
+What is the relational calculus? Essentially, it’s an applied form of predicate calculus (also known as predicate logic), tailored to the needs of relational databases. So the aims of this chapter are to introduce the relevant features of predicate logic (hereinafter abbreviated to just logic); to show how those features are realized in concrete form in the relational calculus; and, of course, to consider the relevant features of SQL as we go.
+Incidentally, it follows from the above that a relational language can be based on either the algebra or the calculus. For example, Tutorial D is explicitly based on the algebra (which is why there aren’t many references to Tutorial D in this chapter), and both QUEL and Query-By-Example (see Appendix G) are explicitly based on the calculus. So which is SQL based on? The answer, regrettably, is partly both and partly neither ... When it was first designed, SQL was specifically intended to be different from both the algebra and the calculus (the latter explicitly, the former perhaps a little less so); indeed, such a goal was the prime motivation for the introduction of the SQL “IN subquery” construct. (The name SQL originally stood for Structured Query Language; the idea behind that name was precisely that SQL queries typically involved one SELECT - FROM - WHERE expression nested inside the WHERE clause of another such expression, and so on, recursively.) As time went on, however, it turned out that certain features of both the algebra and the calculus were needed after all, and the language grew to accommodate them. The consequence today is that some aspects of SQL are “algebra like,” some are “calculus like,” and some are neither─with the further consequence that, as I mentioned in passing in Chapter 6, most queries, constraints, and so on that can be expressed in SQL at all can in fact be expressed in numerous different ways.
+Aside: The goal mentioned in the previous paragraph─the goal, that is, of making SQL different from both the algebra and the calculus─was based on what I regard as a fundamental misconception: namely, the idea that the algebra and calculus were both somewhat “user hostile.” But that perception was, I believe, founded on a confusion over syntax vs. semantics. Certainly the syntax in Codd’s early papers was a little daunting, based as it was on formal mathematical notation. But semantics is another matter; the algebra and the calculus both have (I would argue) very simple semantics, and it’s fairly easy, as many writers have demonstrated, to wrap that semantics up in syntax that’s very user friendly indeed. End of aside.
+www.it-ebooks.info
+                216 Chapter 10 / SQL and Logic WHY DO WE NEED LOGIC?
+Logic is useful because (among other things) it’s a great aid to clear and precise thinking. By contrast, everyone would surely agree that natural language is often vague and ambiguous. The following piece by Robert Graves and Alan Hodge illustrates the point delightfully:1
+From the Minutes of a Borough Council Meeting:
+Councillor Trafford took exception to the proposed notice at the entrance of South Park: “No dogs must be brought to this Park except on a lead.” He pointed out that this order would not prevent an owner from releasing his pets, or pet, from a lead when once safely inside the Park.
+The Chairman (Colonel Vine): What alternative wording would you propose, Councillor?
+Councillor Trafford: “Dogs are not allowed in this Park without leads.”
+Councillor Hogg: Mr. Chairman, I object. The order should be addressed to the owners, not to the dogs.
+Councillor Trafford: That is a nice point. Very well then: “Owners of dogs are not allowed in this Park unless they keep them on leads.”
+Councillor Hogg: Mr. Chairman, I object. Strictly speaking, this would keep me as a dog-owner from leaving my dog in the back-garden at home and walking with Mrs. Hogg across the Park.
+Councillor Trafford: Mr. Chairman, I suggest that our legalistic friend be asked to redraft the notice himself. Councillor Hogg: Mr. Chairman, since Councillor Trafford finds it so difficult to improve on my original wording, I
+accept. “Nobody without his dog on a lead is allowed in this Park.”
+Councillor Trafford: Mr. Chairman, I object. Strictly speaking, this notice would prevent me, as a citizen, who owns no dog, from walking in the Park without first acquiring one.
+Councillor Hogg (with some warmth): Very simply, then: “Dogs must be led in this Park.”
+Councillor Trafford: Mr. Chairman, I object: This reads as if it were a general injunction to the Borough to lead their
+dogs into the Park.
+Councillor Hogg interposed a remark for which he was called to order; upon his withdrawing it, it was directed to be expunged from the Minutes.
+The Chairman: Councillor Trafford, Councillor Hogg has had three tries; you have had only two ... Councillor Trafford: “All dogs must be kept on leads in this Park.”
+1 Thanks to Lauri Pietarinen of Relational Consulting Oy, Helsinki, Finland, for drawing this splendid example to my attention. The example is included and analyzed in detail in Ernest Nagel: “Symbolic Notation, Haddocks’ Eyes, and the Dog-Walking Ordinance,” in James Newman (ed.), The World of Mathematics, Vol. 3. Mineola, N.Y.: Dover Publications (2000).
+ www.it-ebooks.info
+                SQL and Logic / Chapter 10 217 The Chairman: I see Councillor Hogg rising quite rightly to raise another objection. May I anticipate him with another
+amendment: “All dogs in this Park must be kept on the lead.”
+This draft was put to the vote and carried unanimously, with two abstentions.
+Note: I can’t resist pointing out that the final draft is still ambiguous─it could logically be interpreted to mean that all dogs in the park must be kept on the same lead. But enough of dogs ... Let’s move on.
+SIMPLE AND COMPOUND PROPOSITIONS
+Recall from Chapter 5 that, in logic, a proposition is something that evaluates unequivocally to either TRUE or FALSE. Here are some examples:
+1. 2+3=5
+2. 2+3>7
+3. Jupiter is a star
+4. Mars has two moons
+5. Venus is between Earth and Mercury
+Of these, Nos. 1, 4, and 5 are true and Nos. 2 and 3 are false─though we do need to be rather careful in the
+case of No. 5 over what exactly we mean by “between”! (To be a little more precise about the matter, what I mean by it is this: If we denote the distances of Mercury, Venus, and Earth from the sun by m, v, and e, respectively, then m < v < e.) Be that as it may, a good informal test for whether something, p say, is a valid proposition is to ask whether “Is it true that p?” is a sensible question. For example, “Is it true that 2 + 3 > 7?” is certainly a sensible question, even though the answer is no. To check your understanding of this point, which of the following do you think are legal propositions? (You might want to check the answers in Appendix F before continuing with this chapter.)
+ Bachisthegreatestmusicianwhoeverlived.  What’sthetime?
+ SupplierS2islocatedinsomecity,x.
+ Somecountrieshaveafemalepresident.
+ Allpoliticiansarecorrupt.
+ SupplierS1islocatedinParis.
+ Webothhavethesamefavoriteauthor,x.
+www.it-ebooks.info
+                218 Chapter 10 / SQL and Logic
+ Nothingisheavierthanlead.
+ Itwillraintomorrow.
+ SupplierS6’scityisunknown.
+By the way, there’s a very fine point here (which I’m mostly going to ignore; I mention it only to head off at the pass, as it were, certain criticisms that persons trained in formal logic might be tempted to level at this chapter): A proposition isn’t really a declarative sentence as such; rather, it’s the assertion made by that sentence. For example, “It’s hot” and “Il fait chaud” are distinct sentences, but they both assert the same proposition. That said, I’ll continue to assume from this point forward for simplicity that a proposition is indeed just a declarative sentence. Analogous remarks apply to predicates also (see later).
+Connectives
+Given some set of propositions, we can combine propositions from that set to form further propositions, using various connectives. The connectives most commonly encountered in practice are NOT, AND, OR, IF ... THEN ... (also known as IMPLIES or “⇒”), and IF AND ONLY IF (also known as IFF, or BI-IMPLIES, or IS EQUIVALENT TO, or “⇔”, or “≡”). Here are a few examples of propositions that can be formed from Nos. 3, 4,
+and 5 from the foregoing list:
+6. (Jupiterisastar)OR(Marshastwomoons)
+7. (Jupiterisastar)AND(Jupiterisastar)
+8. ( Venus is between Earth and Mercury AND NOT ( Jupiter is a star )
+9. IF ( Mars has two moons ) THEN ( Venus is between Earth and Mercury )
+10. IF(Jupiterisastar)THEN(Marshastwomoons)
+Note: I’ve used parentheses to make the scope of the connectives clear in these examples; in practice, we
+adopt certain precedence rules that allow us to omit many of the parentheses that might otherwise be required. Of course, it’s never wrong to include them, even when they’re logically unnecessary, and sometimes they can improve clarity.
+In general, the connectives can be regarded as logical operators─they take one or more propositions as their input and return another proposition as their output. NOT is a monadic operator, the other four are dyadic. A proposition that involves no connectives is called a simple proposition; a proposition that isn’t simple is called compound, or composite. And the truth value of a compound proposition can be determined from the truth values of its constituent simple propositions in accordance with the following truth tables (in which, for space reasons, I’ve abbreviated TRUE and FALSE to just T and F, respectively):
+p │ NOT p p q │ p AND q │ p OR q │ IF p THEN q │ p IFF q ───┼─────── ─────┼─────────┼────────┼─────────────┼─────────
+T│F TT│T│T│ T │T F│T TF│F│T│ F │F FT│F│T│ T │F FF│F│F│ T │T
+www.it-ebooks.info
+                SQL and Logic / Chapter 10 219 By the way, truth tables can also be drawn in the following slightly different style (and here I’ve abbreviated
+IF ... THEN ... to just IF, again for space reasons):
+NOT│ AND│TF OR│TF IF│TF IFF│TF ───┼─── ───┼───── ───┼───── ───┼───── ────┼─────
+T│F T│TF T│TT T│TF T │TF F│T F│FF F│TF F│TT F │FT
+Neither style is more correct than the other; it’s just that sometimes one is more convenient, sometimes the other is. Anyway, let’s take a closer look at one of the foregoing compound propositions (number 9, to be specific). Here it is again:
+9. IF ( Mars has two moons ) THEN ( Venus is between Earth and Mercury )
+This proposition is of the form IF p THEN q (equivalently, p IMPLIES q), where p is the antecedent and q is the consequent. Since the antecedent and the consequent both evaluate to TRUE, the overall proposition evaluates to TRUE also, as you can see from the truth table. But whether Venus is between Earth and Mercury obviously has nothing to do with whether Mars has two moons! So what exactly is going on here?
+The foregoing example highlights a problem that people with no training in formal logic often experience: namely, that implication is notoriously difficult to come to grips with. So I’d like to offer the following argument, or rationale, in an attempt to clarify the matter:
+ Firstofall,observethatthereareexactly16dyadicconnectivesaltogether,correspondingtothe16possible dyadic truth tables (just four of which are shown above). Note: Exercise 10.1 asks you to draw all of those truth tables, and it might be worth having a go at that exercise right now.
+ Of those 16 dyadic connectives, some but not all are given common names such as AND and OR. But those names are really nothing more than a mnemonic device; they don’t have any intrinsic meaning, they’re chosen simply because the connectives so named have behavior that’s similar (not necessarily identical) to that of their natural language counterparts. Indeed, it’s easy to see that even AND doesn’t mean quite the same thing as “and” in natural language. In logic, p AND q and q AND p are equivalent─but their natural language counterparts might not be. Here’s an illustration: The natural language statements
+“I was seriously disappointed and I voted for a change in leadership” and
+“I voted for a change in leadership and I was seriously disappointed”
+are most certainly not equivalent! In other words, AND is a kind of logical distillate of “and” in natural language; very importantly─and unlike “and” in natural language─its meaning is context independent. Similar remarks apply to all of the other connectives.
+Aside: The foregoing example (concerning AND) is perhaps a little misleading, in that it could be argued that “I was seriously disappointed” means different things in the two statements quoted. In the first, it means “I was seriously disappointed in the status quo”; in the second, it means “I was seriously disappointed in the outcome of the vote.” If this analysis is correct, it would be strictly incorrect to symbolize the two statements as p AND q and q AND p, respectively; although the two q’s are the same, the two p’s aren’t. But the
+www.it-ebooks.info
+                220
+Chapter 10 / SQL and Logic
+
+
+example does at least show─not for the first time, perhaps─that we have to be rather careful in mapping natural language utterances to their symbolic logic counterparts. End of aside.
+Ofthe16availabledyadicconnectives,theonecalledIMPLIEShasbehaviorthatmostcloselyresembles that of implication as understood in natural language. For example, “if Mars has two moons, then it certainly has at least one moon” is a valid implication, both in logic and in natural language. But nobody would or should claim that logical implication and natural language implication are the same thing. In fact, logical implication, like all of the connectives, is (of necessity) formally defined─i.e., it’s defined purely in terms of the truth values, not the meanings, of its operands─whereas the same obviously can’t be said of its natural language counterpart.
+Let’slookatanotherexample(number10fromtheforegoinglist):
+IF ( Jupiter is a star ) THEN ( Mars has two moons )
+Perhaps even more counterintuitively, this one evaluates to TRUE also (check the truth table), because the antecedent is false; yet whether Mars has two moons, again obviously, has nothing to do with whether Jupiter is a star. Again, part of the justification─for the fact that the implication evaluates to TRUE, that is─is just that IMPLIES is formally defined. In this case, however, there’s another argument (a database example, in fact) that you might find a little more satisfying. Suppose the suppliers-and-parts database is subject to the constraint that red parts must be stored in London (I deliberately state that constraint here in somewhat simplified form):
+IF ( COLOR = ‘Red’ ) THEN ( CITY = ‘London’ )
+Clearly we don’t want this constraint to be violated by a part that isn’t red. It follows, therefore, that we want the proposition overall (which is a logical implication) to evaluate to TRUE if the antecedent evaluates to FALSE.
+It follows from all of the above that the proposition p IMPLIES q (equivalently, IF p THEN q) is logically equivalent to the proposition (NOT p) OR q─it evaluates to FALSE if and only if p evaluates to TRUE and q to FALSE, as you can see from the truth table. And, just incidentally, this equivalence serves to illustrate the point that the connectives NOT, AND, OR, IMPLIES, and IF AND ONLY IF aren’t all primitive; some of them can be expressed in terms of others. As a matter of fact, all possible monadic and dyadic connectives can be expressed in terms of suitable combinations of NOT and either AND or OR.2 (Exercise: Check this claim.) Perhaps even more remarkably, all such connectives can in fact be expressed in terms of just one primitive. Can you find it?
+A Remark on Commutativity
+The connectives AND and OR are commutative; that is, the compound propositions p AND q and q AND p are logically equivalent, and so are the compound propositions p OR q and q OR p. As a consequence, you should never write code involving such propositions that assumes that p will be evaluated before q or the other way around.
+2 Conventional logic (i.e., so called two valued logic, 2VL) is thus truth functionally complete. In general, a logic is truth functionally complete if and only if every possible connective can be defined in terms of the given ones. Truth functional completeness is an extremely important property; a logic that didn’t satisfy it would be like an arithmetic that was missing certain operations (the operation of addition, say) and would thus be of extremely limited utility.
+ www.it-ebooks.info
+                SQL and Logic / Chapter 10 221 For example, let the function SQRT (“nonnegative square root”) be defined in such a way that an exception is raised
+if its argument is negative, and consider the following SQL expression:
+SELECT ...
+FROM ...
+WHERE X>=0ANDSQRT(X)<=100...
+This expression isn’t guaranteed to avoid raising the exception, because the SQRT function might be invoked before the test to ensure X is nonnegative is done.
+Another Example
+Consider again the database constraint discussed above in connection with logical implication:
+IF ( COLOR = ‘Red’ ) THEN ( CITY = ‘London’ )
+Let me now point out that this expression is logically equivalent to the following one:
+IF NOT ( CITY = ‘London’ ) THEN NOT ( COLOR = ‘Red’ )
+This latter expression is the contrapositive of the original one. In general, in fact, we have the following equivalence:
+IFpTHENq ≡ IFNOTqTHENNOTp
+So here’s a question for you: How many of the following expressions are logically distinct?
+ IF(WEIGHT>17.0)THEN(CITY≠‘Paris’)
+ IF(CITY=‘Paris’)THEN(WEIGHT £ 17.0)
+ (WEIGHT £ 17.0)OR(CITY≠‘Paris’)
+ NOT((CITY=‘Paris’)AND(WEIGHT>17.0))
+Well, I hope you can see that all four of these expressions in fact say the same thing. However, I think you’ll agree also that this fact isn’t immediately obvious! Let’s take a closer look. Let’s use p and q to denote the subexpressions (WEIGHT > 17.0) and (CITY ≠ ‘Paris’), respectively. The four expressions become:
+ IFpTHENq
+ IFNOTqTHENNOTp
+ NOTpORq
+ NOT((NOTq)ANDp)
+www.it-ebooks.info
+                222 Chapter 10 / SQL and Logic
+Now I think it’s easier to see that the four are all equivalent to one another.3 So the example demonstrates two things: First (to repeat), the equivalences aren’t always obvious; second, introducing symbols like p and q allows us to manipulate the expressions in a purely formal manner and makes it easier to see what’s really going on (easier to see the forest as well as the trees, one might say). I’ll have more to say about such matters in the next chapter.
+SIMPLE AND COMPOUND PREDICATES
+Consider the following statements:4
+11. xisastar
+12. x has two moons
+13. x has m moons
+14. x is between Earth and y
+15. xisbetweenyandz
+Here x, y, z, and m are parameters or placeholders. As a consequence, the statements aren’t propositions
+(i.e., they aren’t unequivocally either true or false), precisely because they do involve such parameters. For example, the statement “x is a star” involves the parameter x, and we can’t say whether it’s true or false unless and until we’re told what that x stands for─at which point we’re no longer dealing with the given statement anyway but a different one instead, as the paragraph immediately following makes clear.
+Now, we can substitute arguments for the parameters and thereby obtain propositions from those parameterized statements. For example, if we substitute the argument the sun for the parameter x in “x is a star,” we obtain “the sun is a star.” And this statement is indeed a proposition, because it’s unequivocally either true or false (in fact, of course, it’s true). But the original statement as such (“x is a star”) is, to say it again, not itself a proposition. Rather, it’s a predicate, which─as you’ll recall from Chapter 5─is a truth valued function; that is to say, it’s a function that, when invoked, returns a truth value. Like all functions, a predicate has a set of parameters; when it’s invoked, arguments are substituted for the parameters; substituting arguments for the parameters effectively converts the predicate into a proposition; and we say the arguments satisfy the predicate if and only if that proposition is true. For example, the argument the sun satisfies the predicate “x is a star,” while the argument the moon does not.
+As an aside, I remind you from Chapter 5 that logicians speak not of invoking a predicate but rather of instantiating it (in fact, for reasons that needn’t concern us here, their concept of instantiation is slightly more general than that of the familiar notion of function invocation). However, I’ll favor the terminology of invocation in
+3 Easier, yes, but it’s still necessary to appeal to certain transformation laws that I haven’t yet defined (though they’re intuitively obvious). See Chapter 11 for further discussion.
+4 Recall from Chapter 5 that statements in logic aren’t the same as statements in a programming language; in some respects, in fact, a statement in logic is more like a programming language expression, at least inasmuch as it denotes a value (a truth value, of course). In logic contexts, therefore, I’ll use the terms statement and expression (both in this chapter and the next) more or less interchangeably─and I apologize if this usage on my part leads to any confusion.
+ www.it-ebooks.info
+                this chapter. Also, Exercise 5.18 in Chapter 5 showed that a proposition can be regarded as a degenerate predicate; to be precise, it’s a predicate for which the set of parameters is empty (and the truth valued function that is that predicate thus always returns the same result, either TRUE or FALSE, every time it’s invoked). In other words, all propositions are predicates, but most predicates aren’t propositions.
+Now consider the predicate “x has m moons,” which involves two parameters, x and m. (For example, substituting the arguments Mars for x and 2 for m yields a true proposition; substituting the arguments Earth for x and 2 for m yields a false one.) In general, in fact, predicates can conveniently be classified according to the cardinality of their set of parameters. Thus we speak of an n-place predicate, meaning a predicate with exactly n parameters; for example, “x is between y and z” is a 3-place predicate, while “x has m moons” is a 2-place predicate. A proposition is a 0-place predicate. Note: An n-place predicate is also called an n-adic predicate. If n = 1, the predicate is monadic; if n = 2, it’s dyadic. And a proposition is a niladic predicate.
+Next, given a set of predicates, we can combine predicates from that set to form further predicates using the logical connectives already discussed (NOT, AND, OR, and so forth); in other words, the connectives are logical operators that operate on predicates in general, not just on the special predicates that happen to be propositions. A predicate that involves no connectives is called simple; a predicate that isn’t simple is called compound, or composite. Here’s an example of a compound predicate:
+16. (xisastar)OR(xisbetweenEarthandy)
+This predicate is dyadic─not because it involves two simple predicates, but because it involves two
+parameters, x and y (one of which is referenced twice and the other once only).
+Rules of Inference
+It’s a bit of a digression from my main purpose in this chapter, but as an aside I can now give a (somewhat loose) definition of predicate logic. Logic in general can be defined as the science or scientific study of the methods and principles used in valid reasoning. Predicate logic in particular can be defined as a formal system involving predicates and connectives and the inferences that can be made using such predicates and connectives. Observe, therefore, that predicate logic involves certain rules of inference─i.e., rules by which additional truths can be proved from established truths. The additional truths are called theorems, and the established truths are either axioms or theorems that have previously been proved.
+One important inference rule is called modus ponens. This rule states that if we know that p is true, and if we also know that IF p THEN q is true, then we can infer that q is true. For example, given the truth of both “I have no money” and “If I have no money, then I will have to wash dishes,” we can infer the truth of “I will have to wash dishes.”
+Another important inference rule is modus tollens, which says that if we know that IF p THEN q is true, but we also know that q is false, then we can infer that p is false. This rule is relevant to the process of database integrity checking. Conceptually, what happens is this: When an update is requested, the proposed new database value is checked against known integrity constraints; if the proposition expressed by some constraint─see Chapter 8─now evaluates to FALSE, that proposed new value must also represent falsehood, and so the update must be rejected.
+QUANTIFICATION
+I showed in the previous section that one way to get a proposition from a predicate is to invoke it with an appropriate set of arguments. But there’s another way, too, and that’s by means of quantification. Let p(x) be a monadic predicate (I show the single parameter x explicitly for clarity). Then:
+www.it-ebooks.info
+SQL and Logic / Chapter 10 223
+                224 Chapter 10 / SQL and Logic
+ Theexpression
+EXISTS x ( p ( x ) )
+is a proposition, and it means: “There exists at least one possible argument value a that can be substituted for the parameter x such that p(a) evaluates to TRUE” (in other words, the argument value a satisfies predicate p). For example, if p is the predicate “x is a logician,” then
+EXISTS x ( x is a logician )
+is a proposition─one that evaluates to TRUE, as it happens (for example, take a to be Bertrand Russell).  Theexpression
+FORALL x ( p ( x ) )
+is a proposition, and it means: “All possible argument values a that can be substituted for the parameter x are such that p(a) evaluates to TRUE” (in other words, all such argument values a satisfy predicate p). For example, if again p is the predicate “x is a logician,” then
+FORALL x ( x is a logician )
+is a proposition─one that evaluates to FALSE, as it happens (for example, take a to be George W. Bush).
+Observe that it’s sufficient to produce a single example to show the truth of the EXISTS proposition and a single counterexample to show the falsity of the FORALL proposition. Observe too in both cases that the parameter must be constrained to “range over” some set of permissible values (the set of all persons, in the example). I’ll come back to this latter point in the section “Relational Calculus,” later.
+The term used in logic for constructs like EXISTS x and FORALL x is quantifiers (the term derives from the verb to quantify, which simply means to express as a quantity─that is, to say how much of something there is or how many somethings there are). Quantifiers of the form EXISTS ... are said to be existential; quantifiers of the form FORALL ... are said to be universal. And in logic texts, EXISTS is usually represented by a backward E (“∃”) and FORALL by an upside down A (“∀”). I use the keywords EXISTS and FORALL here for readability.
+Aside: At this point, one reviewer asked whether a quantifier is just another connective. No, it isn’t. Let p(x) and q(x) be predicates, each with a single parameter x. Then p(x) and q(x) can be combined in various ways by means of connectives (as in, e.g., p(x) AND q(x)), but the result is always just another predicate with that same single parameter x. By contrast, quantifying over x─that is, forming an expression such as EXISTS x (p(x)) or FORALL x (q(x))─has the effect of converting the predicate concerned into a proposition. Thus, there’s a clear logical difference between the two concepts. (Though I should add that in the database context, at least, the quantifiers can be defined in terms of certain connectives. I’ll explain this point later, in the section “More on Quantification.”) End of aside.
+By way of another example, consider the dyadic predicate “x is taller than y.” If we quantify existentially over x, we obtain:
+www.it-ebooks.info
+                EXISTS x ( x is taller than y )
+This statement isn’t a proposition, because it isn’t unequivocally either true or false; in fact, it’s a monadic
+predicate─it has a single parameter, y. Suppose we invoke this predicate with argument Steve. We obtain:
+EXISTS x ( x is taller than Steve )
+This statement is a proposition (and if there exists at least one person─Arnold, say─who’s taller than Steve, then it evaluates to TRUE). But another way to obtain a proposition from the original predicate is to quantify over both parameters. For example:
+EXISTS x ( EXISTS y ( x is taller than y ) )
+This statement is indeed a proposition; it evaluates to FALSE only if nobody is taller than anybody and to TRUE otherwise (think about it!).
+There are several lessons to be learned from this example:
+ Toobtainapropositionfromann-adicpredicatebyquantificationalone,it’snecessarytoquantifyoverevery parameter. More generally, if we quantify over m parameters (m £ n), we obtain a k-adic predicate, where k = n-m.
+ Let’s focus on existential quantification only for the moment. Then there are apparently two different propositions we can obtain in the example by “quantifying over everything”:
+EXISTS x ( EXISTS y ( x is taller than y ) ) EXISTS y ( EXISTS x ( x is taller than y ) )
+It should be clear, however, that these two propositions both say the same thing: “There exist persons x and y such that x is taller than y.” More generally, in fact, it’s easy to see that a series of like quantifiers (all existential or all universal) can be written in any sequence we choose without changing the overall meaning. By contrast, with unlike quantifiers, the sequence matters (see the point immediately following).
+ When we “quantify over everything,” each individual quantifier can be either existential or universal. In the example, therefore, there are six distinct propositions that can be obtained by fully quantifying, and I’ve listed them below. (Actually there are eight, but two of them can be ignored by virtue of the previous point.) I’ve also shown a precise natural language interpretation in each case. Note that those interpretations are all logically different!─in particular, some of them evaluate to TRUE and some to FALSE. Please note, however, that I’ve had to assume in connection with certain of those evaluations that there does exist at least one person “in the universe,” as it were. I’ll come back to this assumption in the section “More on Quantification,” later.
+EXISTS x ( EXISTS y ( x is taller than y ) )
+Meaning: Somebody is taller than somebody; TRUE, unless everybody is the same height. EXISTS x ( FORALL y ( x is taller than y ) )
+www.it-ebooks.info
+SQL and Logic / Chapter 10 225
+                226
+Chapter 10 / SQL and Logic
+Meaning: Somebody is taller than everybody (that particular somebody included!); clearly FALSE. FORALL x ( EXISTS y ( x is taller than y ) )
+Meaning: Everybody is taller than somebody; clearly FALSE.
+EXISTS y ( FORALL x ( x is taller than y ) )
+Meaning: Somebody is shorter than everybody (that particular somebody included); clearly FALSE. Note: Actually I’m cheating a little bit here, because I haven’t said what I mean by “shorter.” But I could have done─i.e., I could have stated explicitly, somehow, that the predicates “x is taller than y” and “y is shorter than x” are logically equivalent─and I’ll assume for the rest of this section that I’ve done so.
+FORALL y ( EXISTS x ( x is taller than y ) )
+Meaning: Everybody is shorter than somebody; clearly FALSE. FORALL x ( FORALL y ( x is taller than y ) ) Meaning: Everybody is taller than everybody; clearly FALSE.
+Last (I apologize for the repetition, but the point is important): Even though five out of six of the foregoing propositions do all evaluate to the same truth value, FALSE, it doesn’t follow that they all mean the same thing, and indeed they don’t; in fact, no two of them do.
+Free and Bound Variables
+What I’ve so far been calling parameters are more usually known in logic as free variables─and quantifying over a free variable, using either EXISTS or FORALL, converts that free variable into what’s called a bound variable. For example, consider again the 2-place predicate from the previous section:
+x is taller than y
+Here x and y are free variables. If we now quantify existentially over x,5 we obtain:
+EXISTS x ( x is taller than y )
+Now y is free (still) but x is bound. And if we now quantify existentially over y as well, we obtain:
+EXISTS x EXISTS y ( x is taller than y )
+Now x and y are both bound, and there are no free variables at all (the predicate has degenerated to a proposition). Now, we already know that free variables correspond to parameters, in conventional programming terms.
+Bound variables, by contrast, don’t have an exact counterpart in conventional programming terms; instead, they’re just a kind of dummy─they serve only to link the predicate inside the parentheses to the quantifier outside. For example, consider the simple predicate (actually a proposition):
+5 Existentially just to be definite. Quantifying universally instead would make no difference to the point I’m making here.
+ www.it-ebooks.info
+                EXISTS x ( x > 3 )
+This proposition merely asserts that there exists some integer greater than three. (I’m assuming here that x is constrained to “range over” the set of integers. Again, I’ll come back to this question of “ranges” later.) Note, therefore, that the meaning of the proposition would remain totally unchanged if the two x’s were both replaced by some other variable y. In other words, the proposition
+EXISTS y ( y > 3 )
+is semantically identical to the one just shown.
+Now consider the predicate:
+EXISTS x ( x > 3 ) AND x < 0
+Here there are three x’s─but they don’t all mean the same thing. The first two are bound, and can be replaced by (say) y without changing the overall meaning; but the third is free and can’t be replaced with impunity. Thus, of the following two predicates, the first is equivalent to the one just shown and the second isn’t:
+EXISTS y ( y > 3 ) AND x < 0
+EXISTS y ( y > 3 ) AND y < 0
+As this example demonstrates, the terminology of free vs. bound “variables” doesn’t really refer to variables per se, but rather to variable occurrences─occurrences of references to variables within some predicate, to be precise. In the predicate EXISTS y (y > 3) AND y < 0, for example, it’s the first two occurrences of the reference to y that are bound, and the third such occurrence that’s free. Despite this state of affairs, it’s usual (perhaps regrettably) to talk about free and bound variables as such,6 even though such talk is really quite sloppy. Be on your guard for confusion in this area!
+To close this section, I remark that we can now (re)define a proposition to be a predicate in which all of the variables are bound: equivalently, one that involves no free variables.
+RELATIONAL CALCULUS
+Essentially everything I’ve discussed in this chapter so far maps very directly into the relational calculus. Let’s look at a simple example─a relational calculus representation of the query “Get supplier number and status for suppliers in Paris who supply part P2.” Here first for comparison purposes is an algebraic formulation:
+( S WHERE CITY = ‘Paris’ ) { SNO , STATUS }
+MATCHING ( SP WHERE PNO = ‘P2’ )
+And here’s a relational calculus equivalent:
+6 Even, sometimes, in logic textbooks, where the practice really ought to be deprecated.
+SQL and Logic / Chapter 10 227
+ www.it-ebooks.info
+                228
+Chapter 10 / SQL and Logic
+
+
+RANGEVAR SX RANGES OVER S ; RANGEVAR SPX RANGES OVER SP ;
+{ SX.SNO , SX.STATUS }
+WHERE SX.CITY = ‘Paris’ AND
+EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = ‘P2’ )
+Explanation:
+Thefirsttwolinesaredefinitions,definingSXandSPXtoberangevariablesthatrangeoverSandSP, respectively. What those definitions mean is that, at any given time, permitted values of SX are tuples in the relation that’s the value of relvar S at that time; likewise, permitted values of SPX are tuples in the relation that’s the value of relvar SP at that time.
+The remaining lines are the actual query. Observe that they take the following generic form:
+proto tuple WHERE predicate
+This expression overall is the relational calculus version of a relational expression (i.e., an expression that denotes a relation), and it evaluates to a relation containing every possible value of the proto tuple for which the predicate evaluates to TRUE, and no other tuples. (The term proto tuple, standing for “prototype tuple,” is apt but nonstandard; in fact, a standard term for the concept doesn’t seem to exist.) In the example, therefore, the result is a relation of degree two, containing every (SNO,STATUS) pair from relvar S such that (a) the corresponding city is Paris and (b) there exists a shipment in relvar SP with the same supplier number as the one in that (SNO,STATUS) pair and with part number P2.
+Note the use of dot qualified names in this example (in both the proto tuple and the predicate); I won’t go into details, because dot qualified names will be familiar to you from SQL. Indeed, SQL has a formulation of the query under discussion that’s very similar in general terms to the foregoing relational calculus formulation:
+SELECT
+FROM
+WHERE
+AND    EXISTS
+SX.SNO , SX.STATUS SASSX
+SX.CITY = ‘Paris’
+( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO AND SPX.PNO = ‘P2’ )
+As this example indicates:
+ First, SQL does support range variables (though it doesn’t usually use that term): The specifications S AS SX and SP AS SPX serve to define such variables, and those variables are then explicitly referenced elsewhere in the overall expression by means of dot qualified names such as SX.SNO, SPX.SO, and so on. Note: In practice, such AS specifications and such explicit range variable references are often omitted, at least in simple queries. I’ll explain exactly how such omissions are possible in Chapter 12, when I discuss range variables in SQL in more detail.
+ Second, and perhaps more important, SQL also supports EXISTS. However, that support is somewhat indirect. To be specific, let sq be a subquery; then EXISTS sq is a boolean expression (and so represents a
+www.it-ebooks.info
+                predicate), and it evaluates to FALSE if the table denoted by sq is empty and TRUE otherwise.7 Note: The table expression tx in parentheses that constitutes sq will usually, though not invariably, be of the form SELECT * FROM ... WHERE ..., and the WHERE clause will usually, though not invariably, include some reference to some “outer” table, meaning sq will typically be a correlated subquery specifically. In the foregoing example, S is that outer table, and it’s referenced by means of the range variable SX. Again, see Chapter 12 for further explanation.
+Aside: There’s a certain irony here, though. As we saw in Chapter 4, SQL, because it supports nulls, is based on what’s called three-valued logic, 3VL (instead of the conventional two-valued logic I’m discussing in this chapter, which is what the relational model is based on). In 3VL, the existential quantifier can return three different results: TRUE, FALSE, and UNKNOWN (where UNKNOWN is “the third truth value”; again, see Chapter 4). But SQL’s EXISTS operator always returns TRUE or FALSE, never UNKNOWN. For example, EXISTS(tx) will return TRUE, not UNKNOWN, if tx evaluates to a table containing nothing but nulls (I’m speaking a trifle loosely here); yet UNKNOWN is the logically correct result.8 As a consequence, (a) SQL’s EXISTS isn’t a faithful implementation of the existential quantifier of 3VL, and (b) once again, therefore, SQL queries sometimes return the wrong answer. Example 3 in the next chapter is a case in point. End of aside.
+Let’s look at another example─the query “Get supplier names for suppliers who supply all parts.” I’ll assume we have the same range variables SX and SPX as before, but I’ll also define another one (PX) ranging over P:
+RANGEVAR PX RANGES OVER P ;
+{ SX.SNAME } WHERE FORALL PX ( EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+In somewhat stilted natural language: “Get names of suppliers such that, for all parts, there exists a shipment with the same supplier number as the supplier and the same part number as the part.” Note: As you probably know, SQL has no direct support for FORALL. For that reason, I won’t show an SQL analog of this example here─I’ll come back to it later, in the section “More on Quantification.” I will point out, however, that there’s a logical difference between the foregoing calculus expression and this one, where the quantifiers have been switched:
+{ SX.SNAME } WHERE EXISTS SPX ( FORALL PX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+Exercise: What does this latter expression mean? And do you think the query is a “sensible” one? One more example (“Get supplier names for suppliers who supply at least one red part”):
+{ SX.SNAME } WHERE EXISTS PX ( PX.COLOR = ‘Red’ AND EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+7 It might help to point out that SQL’s EXISTS is rather similar to Tutorial D’s IS_NOT_EMPTY (see Chapter 3). See the section “Some Equivalences,” later.
+8 To be a little more precise about the matter: Suppose tx denotes a nonempty restriction of some table T and the restriction condition evaluates to UNKNOWN for every row in T; then EXISTS(tx) ought logically to return UNKNOWN but will actually return TRUE, in SQL.
+SQL and Logic / Chapter 10 229
+ www.it-ebooks.info
+                230 Chapter 10 / SQL and Logic
+I’m assuming here that we have the same range variables available to us as we had in the earlier examples; in fact, I’ll continue to make that same assumption for the rest of this chapter.
+By the way, here’s another possible formulation of the foregoing query:
+{ SX.SNAME } WHERE EXISTS PX ( EXISTS SPX ( PX.COLOR = ‘Red’ AND SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+In this latter formulation, the predicate in the WHERE clause is in what’s called “prenex normal form,” meaning, loosely, that the quantifiers all appear at the beginning. Here’s a precise definition of this concept:
+Definition: A predicate is in prenex normal form (PNF) if and only if (a) it’s quantifier free (i.e., it contains no quantifiers at all) or (b) it’s of the form EXISTS x (p) or FORALL x (p), where p is in PNF in turn. In other words, a PNF predicate takes the form
+Q1 x1 ( Q2 x2 ( ... ( Qn xn ( q ) ) ... ) )
+where (a) n ≥ 0; (b) each Qi (i = 1, 2, ..., n) is either EXISTS or FORALL; and (c) the predicate q─which is
+sometimes called the matrix─is quantifier free.
+Prenex normal form isn’t more or less correct than any other form, but with a little practice it does tend to
+become the most natural formulation, and the easiest to write, in many cases (not all).
+More on Range Variables
+From what I’ve said in this section so far, it should be clear that range variables in the relational calculus serve as the free and bound variables that are required by formal logic. As I mentioned earlier, those variables always have to range over some set of permissible values; in the relational calculus context specifically, that set is always the body of some relation (usually but not necessarily the relation that’s the current value of some relvar). Note: It follows that a given range variable always denotes some tuple. For that reason, the relational calculus is sometimes known more specifically as the tuple calculus, and the variables themselves as tuple variables. This latter usage can be confusing, however, since the term tuple variable already has a somewhat different (and more conventional) meaning─see Chapter 2─and I won’t adopt it in this book.9
+Now I can say a little more about the syntax of relational calculus expressions:
+ Firstofall,aprototupleisacommalistofitemsenclosedinbraces,inwhicheachitemiseitherarange attribute reference─possibly with an associated AS clause to introduce a new attribute name─or a range variable reference. (There are other possibilities too, but I’ll limit my attention to just these cases until further notice. See Example 5 below.) Note: It’s usual to omit the braces if the commalist contains just a single item, but I’ll generally show them even when they’re not actually required, for clarity.
+ ArangeattributereferenceisanexpressionoftheformR.A,whereAisanattributeoftherelationthatrange variable R ranges over; SX.SNO is an example. And a range variable reference is just a range variable
+9 In practice, the term tuple calculus is used mainly to distinguish the version of the relational calculus discussed in the present chapter from the domain calculus, which is a version of the relational calculus in which the variables range over domains─i.e., types─instead of relations. But there’s no need to discuss the domain calculus in this book; if you want to know more, you can find a detailed explanation in my book An Introduction to Database Systems (see Appendix G).
+ www.it-ebooks.info
+                SQL and Logic / Chapter 10 231 name, like SX, and it’s shorthand for a commalist of range attribute references, one for each attribute of the
+relation the range variable ranges over.
+ LetsomerangeattributereferenceinvolvingrangevariableRappear,explicitlyorimplicitly,withinsome proto tuple. Then the predicate in the corresponding WHERE clause can, and usually will, contain at least one free range attribute reference involving R─where by “free range attribute reference involving R” I mean a range attribute reference of the form R.A that’s not within the scope of any quantifier in which R is the bound variable.
+ TheWHEREclauseisoptional;omittingitisequivalenttospecifyingWHERETRUE.
+More Sample Queries
+I’ll give a few more examples of relational calculus queries, in order to illustrate a few more points; however, I’m not trying to be exhaustive in my treatment. For simplicity, I’ll omit the RANGEVAR definitions that would be needed in practice and will just assume that SX, SY, etc., have been defined as range variables over S; PX, PY, etc., have been defined as range variables over P; and SPX, SPY, etc., have been defined as range variables over SP. Please note that the formulations shown aren’t the only ones possible, in general. I’ll leave it as an exercise for you to show equivalent SQL formulations in each case.
+Example 1: Get all pairs of supplier numbers such that the suppliers concerned are colocated. { SA := SX.SNO , SB := SY.SNO } WHERE SX.CITY = SY.CITY
+AND SX.SNO < SY.SNO
+Note the introduction of result attribute names SA and SB in this example. Incidentally, this example provides a good illustration of the point that some queries are more easily formulated in the calculus than they are in the algebra (an algebraic formulation for this query─rather more complicated than the calculus formulation just shown─was given if you recall in the section “Formulating Expressions One Step at a Time” in Chapter 6).
+Example 2: Get supplier names for suppliers who supply at least one Paris part.
+{ SX.SNAME } WHERE EXISTS SPX ( EXISTS PX ( SX.SNO = SPX.SNO AND SPX.PNO = PX.PNO AND
+PX.CITY = ‘Paris’ ) )
+Example 3: Get supplier names for suppliers who supply at least one part supplied by supplier S2.
+{ SX.SNAME } WHERE EXISTS SPX ( EXISTS SPY ( SX.SNO = SPX.SNO AND SPX.PNO = SPY.PNO AND
+SPY.SNO = ‘S2’ ) )
+Example 4: Get supplier names for suppliers who don’t supply part P2.
+{ SX.SNAME } WHERE NOT ( EXISTS SPX ( SPX.SNO = SX.SNO AND
+SPX.PNO = ‘P2’ ) )
+The outer parentheses in this example (i.e., the ones enclosing the expression following NOT) might not be needed in practice; indeed, I’ll often omit such parentheses in later examples.
+www.it-ebooks.info
+                232 Chapter 10 / SQL and Logic
+Incidentally, the predicate in the foregoing formulation isn’t in prenex normal form. It would be possible to
+replace it by one that is, like this─
+{ SX.SNAME } WHERE FORALL SPX ( SPX.SNO ≠ SX.SNO OR SPX.PNO ≠ ‘P2’ )
+─but I don’t think this alternative formulation is as “natural” as the non PNF version; that is, I think this example illustrates the point that a PNF formulation isn’t always the one that comes most readily to mind.
+Example 5: For each shipment, get full shipment details, including total shipment weight.
+{ SPX , SHIPWT := PX.WEIGHT * SPX.QTY } WHERE PX.PNO = SPX.PNO
+Note the use of a computational expression in the proto tuple here. An algebraic version of this example would involve EXTEND, and probably image relations also.
+Example 6: For each part, get the part number and the total shipment quantity.
+{ PX.PNO , TOTQ := SUM ( SPX WHERE SPX.PNO = PX.PNO , QTY ) }
+This example illustrates the use of an aggregate operator invocation within the proto tuple (it’s also the first example to omit the WHERE clause). Incidentally, note that the following expression, though syntactically legal, would not be a correct formulation of the query (why not?):
+{ PX.PNO , TOTQ := SUM ( SPX.QTY WHERE SPX.PNO = PX.PNO ) }
+Answer: Because duplicate quantities would be eliminated before the sum is computed. Example 7: Get part cities that store more than five red parts.
+{ PX.CITY }
+WHERE COUNT ( PY WHERE PY.CITY = PX.CITY AND PY.COLOR = ‘Red’ ) > 5
+Sample Constraints
+Now I’d like to give some examples of the use of relational calculus to formulate constraints. The first eight are based on, and use the same numbering as, the examples in Chapter 8. I’ll assume the availability of range variables as in the previous subsection. Please note again that the formulations shown aren’t the only ones possible, in general.
+Example 1: Status values must be in the range 1 to 100 inclusive.
+CONSTRAINT CX1 FORALL SX ( SX.STATUS ≥ 1 AND SX.STATUS £ 100 ) ;
+Note: SQL allows a constraint like this one to be simplified by (in effect) eliding both the explicit range variable and, more important, the explicit universal quantification. To be specific, we can specify a base table constraint─see Chapter 8─as part of the definition of base table S that looks like this:
+www.it-ebooks.info
+                CONSTRAINT CX1 CHECK ( STATUS >= 1 AND STATUS <= 100 )
+Similar remarks apply to subsequent examples also. Example 2: Suppliers in London must have status 20.
+CONSTRAINT CX2 FORALL SX ( IF SX.CITY = ‘London’ THEN SX.STATUS = 20 ) ;
+Example 3: No two tuples in relvar S have the same supplier number (i.e., {SNO} is a key, or rather a superkey, for relvar S).
+CONSTRAINT CX3 FORALL SX ( FORALL SY ( IF SX.SNO = SY.SNO THEN SX.SNAME = SY.SNAME AND
+SX.STATUS = SY.STATUS AND SX.CITY = SY.CITY ) ) ;
+This formulation isn’t very elegant, to say the least! I’ll come back to this example and give a better formulation of it in the next section.
+Example 4: Whenever two tuples in relvar S have the same supplier number, they also have the same city (in other words, the functional dependency {SNO} Æ {CITY} holds in relvar S).
+CONSTRAINT CX4 FORALL SX ( FORALL SY ( IF SX.SNO = SY.SNO
+THEN SX.CITY = SY.CITY ) ) ;
+As noted in Chapter 8, this constraint is actually a logical consequence of the fact that {SNO} is a superkey for relvar S. If this latter constraint is stated, therefore, constraint CX4 needn’t be.
+Example 5: No supplier with status less than 20 can supply part P6.
+CONSTRAINT CX5 FORALL SX ( IF SX.STATUS < 20 THEN
+NOT EXISTS SPX ( SPX.SNO = SX.SNO AND
+SPX.PNO = ‘P6’ ) ) ;
+Example 6: Every supplier number in relvar SP must appear in relvar S.
+CONSTRAINT CX6 FORALL SPX ( EXISTS SX ( SX.SNO = SPX.SNO ) ) ;
+As with Example 3, I’ll have more to say about this example in the next section. Example 7: No supplier number appears in both relvar LS and relvar NLS.
+CONSTRAINT CX7 FORALL LX ( FORALL NX ( LX.SNO ≠ NX.SNO ) ) ;
+LX and NX range over LS and NLS, respectively.
+www.it-ebooks.info
+SQL and Logic / Chapter 10 233
+                234 Chapter 10 / SQL and Logic
+Example 8: Supplier S1 and part P1 must never be in different cities.
+CONSTRAINT CX8 NOT EXISTS SX ( EXISTS PX ( SX.SNO = ‘S1’ AND PX.PNO = ‘P1’ AND
+SX.CITY ≠ PX.CITY ) ) ;
+By the way, is this constraint satisfied if there’s no tuple for supplier S1 in relvar S and/or no tuple for part P1 in relvar P? (Answer: Yes, it is.)
+Example 9: There must always be at least one supplier. (There’s no counterpart to this example in Chapter 8.) CONSTRAINT CX9 EXISTS SX ( TRUE ) ;
+The expression EXISTS SX (TRUE) evaluates to FALSE if and only if SX ranges over an empty relation. (By contrast, the expression EXISTS SX (FALSE) always evaluates to FALSE. Conversely, the expression FORALL SX (FALSE) evaluates to TRUE if and only if SX ranges over an empty relation─see the discussion of empty ranges in the next section─while the expression FORALL SX (TRUE) always evaluates to TRUE.)
+MORE ON QUANTIFICATION
+There are a number of further issues I need to discuss regarding quantification in particular.
+We Don’t Need Both Quantifiers
+It’s easy to see that any predicate that can be expressed in terms of EXISTS can be expressed in terms of FORALL instead and vice versa. By way of example, consider the following predicate once again:
+EXISTS x ( x is taller than Steve )
+(“Somebody is taller than Steve”; of course, this predicate is in fact a simple proposition). Another way to say the
+same thing is:
+NOT ( FORALL x ( NOT ( x is taller than Steve ) ) )
+(“It is not the case that nobody is taller than Steve”). More generally, in fact, the predicate
+EXISTS x ( p ( x ) ) is logically equivalent to the predicate
+NOT ( FORALL x ( NOT ( p ( x ) ) ) )
+(where the predicate p might legitimately involve other parameters in addition to x). Likewise, the predicate
+FORALL x ( p ( x ) ) is logically equivalent to the predicate
+www.it-ebooks.info
+                NOT ( EXISTS x ( NOT ( p ( x ) ) ) )
+(where, again, the predicate p might legitimately involve other parameters in addition to x).
+It follows from all of the above that a formal language doesn’t need to support both EXISTS and FORALL
+explicitly. But it’s very desirable to support them both in practice. The reason is that some problems are “more naturally” formulated in terms of EXISTS, while others are “more naturally” formulated in terms of FORALL instead. For example, SQL supports EXISTS but not FORALL, as we know; as a consequence, certain queries are quite awkward to formulate in SQL. Consider again the query “Get suppliers who supply all parts,” which can be expressed in relational calculus quite simply as follows:
+{ SX } WHERE FORALL PX ( EXISTS SPX
+( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+In SQL, by contrast, the query has to look something like this:
+SELECT FROM
+WHERE
+SX.*
+S AS SX
+NOT EXISTS
+( SELECT *
+FROM PASPX WHERE NOT EXISTS
+( SELECT *
+FROM SP AS SPX
+WHERE SX.SNO = SPX.SNO
+AND SPX.PNO = PX.PNO ) )
+(“Get suppliers SX such that there does not exist a part PX such that there does not exist a shipment SPX linking that supplier SX to that part PX”). Well, single negation is bad enough (users often have trouble with it); double negation, as in this example, is much worse.
+Empty Ranges
+Consider again the fact that the predicates
+EXISTS x ( p ( x ) ) and
+NOT ( FORALL x ( NOT ( p ( x ) ) ) )
+are logically equivalent. As we know, the bound variable x in each of these predicates must range over some set of permissible values. Suppose now that the set in question is empty; it might, for example, be the set of persons over fifty feet tall (or in the database context, more realistically, it might be the set of tuples in a relvar that’s currently empty). Then:
+ TheexpressionEXISTSx(p(x))evaluatestoFALSE,because“thereisnox”─i.e.,there’snovalueavailable to be substituted for x in order to make the expression true. Note carefully that these remarks are valid
+www.it-ebooks.info
+SQL and Logic / Chapter 10 235
+                236 Chapter 10 / SQL and Logic
+regardless of what p(x) happens to be. For example, “There exists a person over fifty feet tall who works for
+IBM” evaluates to FALSE (unsurprisingly).
+ ItfollowsthatthenegationNOTEXISTSx(p(x))evaluatestoTRUE─again,regardlessofwhatp(x)happens to be. For example, “There doesn’t exist a person over fifty feet tall who works for IBM”─more colloquially, “No person over fifty feet tall works for IBM”─evaluates to TRUE (again unsurprisingly).
+ ButNOTEXISTSx(p(x))isequivalenttoFORALLx(NOT(p(x))),andsothislatterexpressionalso evaluates to TRUE─once again, regardless of what p(x) happens to be.
+ But if the predicate p(x) is arbitrary, then so is the predicate NOT (p(x)). And so we have the following possibly surprising result: The expression FORALL x (...) evaluates to TRUE if there are no x’s, regardless of what appears inside the parentheses. For example, “All persons over fifty feet tall do work for IBM” also evaluates to TRUE─because, to say it again, there aren’t any persons over fifty feet tall.
+One implication of the foregoing state of affairs is that certain queries produce a result that you might not
+expect (if you don’t know logic, that is). For example, the query discussed earlier─
+{ SX } WHERE FORALL PX ( EXISTS SPX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+(“Get suppliers who supply all parts”)─will return all suppliers if there aren’t any parts.
+Incidentally, the foregoing example serves as a good illustration of the point that while logic is certainly
+necessary as a foundation for database systems, it might not be sufficient. For example, how do you think an only child should respond to the question “Are your siblings all boys?” The logically correct answer is, of course, yes (though I observe that yes is the logically correct answer to the question “Are your siblings all girls?” as well). In practice, however, we would surely expect some more informative response, along the lines of “Well, actually I don’t have any siblings.” In other words─and now reverting to database systems as such─it might be nice if the system, as well as simply giving its responses as such, could also explain those responses if it’s asked to do so.
+Defining EXISTS and FORALL
+As you might have realized, EXISTS and FORALL can be defined as an iterated OR and an iterated AND, respectively. I’ll consider EXISTS first. Let p(x) be a predicate with a parameter x and let x range over the set X = {x1,x2,...,xn}. Then
+EXISTS x ( p ( x ) )
+is a predicate, and it’s defined to be equivalent to (and hence shorthand for) the predicate
+p ( x1 ) OR p ( x2 ) OR ... OR p ( xn ) OR FALSE
+Observe in particular that this expression evaluates to FALSE if X is empty (equivalently, if n = 0), as we already know. By way of example, let p(x) be “x has a moon” and let X be the set {Mercury, Venus, Earth, Mars}. Then the predicate EXISTS x (p(x)) becomes “EXISTS x (x has a moon),” and it’s shorthand for
+( Mercury has a moon ) OR ( Venus has a moon ) OR (Earthhasamoon) OR(Marshasamoon) ORFALSE
+www.it-ebooks.info
+                which evaluates to TRUE because, e.g., “Mars has a moon” is true. Similarly,
+FORALL x ( p ( x ) )
+is a predicate, and it’s defined to be equivalent to (and hence shorthand for) the predicate
+p ( x1 ) AND p ( x2 ) AND ... AND p ( xn ) AND TRUE
+And this expression evaluates to TRUE if X is empty (again, as we already know). By way of example, let p(x) and X be as in the EXISTS example above. Then the predicate FORALL x (p(x)) becomes “FORALL x (x has a moon),” and it’s shorthand for
+( Mercury has a moon ) AND ( Venus has a moon ) AND (Earthhasamoon) AND(Marshasamoon) ANDTRUE
+which evaluates to FALSE because, e.g., “Venus has a moon” is false.
+As an aside, let me remark that, as the examples demonstrate, defining EXISTS and FORALL as iterated OR
+and AND, respectively, means that every predicate that involves quantification is equivalent to one that doesn’t. Thus, you might be wondering, not without some justification, just what this business of quantification is really all about ... Why all the fuss? The answer is as follows: We can define EXISTS and FORALL as iterated OR and AND only because the sets we have to deal with are─thankfully─always finite (because we’re operating in the realm of computers and computers are finite in turn). In pure logic, where there’s no such restriction, those definitions aren’t valid.10
+Perhaps I should add that, even though we’re always dealing with finite sets and EXISTS and FORALL are thus merely shorthand, they’re extremely useful shorthand! For my part, I certainly wouldn’t want to have to formulate queries and the like purely in terms of AND and OR, without being able to use the quantifiers. Much more to the point, the quantifiers allow us to formulate queries without having to know the precise content of the database at any given time (which wouldn’t be the case if we always had to use the explicit iterated OR and AND equivalents).11
+Other Kinds of Quantifiers
+While it’s certainly true that EXISTS and FORALL are the most important quantifiers in practice, they aren’t the only ones possible. There’s no a priori reason, for example, why we shouldn’t allow quantifiers of the form
+there exist at least three x’s such that
+10 To elaborate: Consider by way of example the proposition EXISTS x (p(x)), where p is a predicate with just one parameter, x. If x ranges over an infinite set, then any attempt to use an “iterated OR” algorithm for evaluating the proposition will inevitably be flawed, since the algorithm might never terminate (it might never find the one value of x that satisfies p). Likewise, any attempt to use an “iterated AND” algorithm for FORALL x (p(x)) will also inevitably be flawed, since again the algorithm might never terminate (it might never find the one value of x that fails to satisfy p).
+11 A note on syntax: Recall from Chapter 7 that Tutorial D supports the aggregate operators AND and OR, thereby allowing us to write, e.g., AND(SP, QTY > 0), to express the fact that QTY values in relvar SP must be greater than zero. The discussions of the present section suggest that more “user friendly” names for these operators might well be FORALL and EXISTS, respectively; for example, the expression FORALL(SP, QTY > 0) does read quite well from an intuitive point of view. Likewise, EXISTS(SP, QTY > 250) seems to be an intuitively pleasing way of expressing the fact that at least one QTY value in relvar SP must be greater than 250.
+SQL and Logic / Chapter 10 237
+ www.it-ebooks.info
+                238 Chapter 10 / SQL and Logic or
+a majority of x’s are such that
+or
+an odd number of x’s are such that
+(and so on). One fairly important special case is there exists exactly one x such that. I’ll use the keyword UNIQUE
+for this one. Here are some examples:
+UNIQUE x ( x is taller than Arnold ) Meaning: Exactly one person is taller than Arnold; probably FALSE.
+UNIQUE x ( x has social security number y )
+Meaning: Exactly one person has social security number y (y is a parameter). We can’t assign a truth value to this
+example because it’s a (monadic) predicate and not a proposition.
+FORALL y ( UNIQUE x ( x has social security number y ) )
+Meaning: Everybody has a unique social security number (I’m assuming here that y ranges over the set of all social security numbers actually assigned, not all possible ones). Exercise: Does this predicate─which is in fact a proposition─evaluate to TRUE?
+As another exercise, what does the following predicate mean?
+FORALL x ( UNIQUE y ( x has social security number y ) )
+Here’s how UNIQUE might be used in the formulation of constraints. Recall the formulation I gave earlier
+for constraint CX3 (“every supplier has a unique supplier number”):
+CONSTRAINT CX3 FORALL SX ( FORALL SY ( IF
+A much better formulation would clearly be as follows:
+SX.SNO = SY.SNO THEN SX.SNAME = SY.SNAME AND SX.STATUS = SY.STATUS AND SX.CITY = SY.CITY ) ) ;
+CONSTRAINT CX3 FORALL SX ( UNIQUE SY ( SX.SNO = SY.SNO ) ) ;
+(“For all suppliers SX, there’s exactly one supplier SY with the same supplier number.”) For example, if SX denotes the tuple for supplier S4, say, then SY must also denote the tuple for supplier S4─in other words, SX and SY must denote the very same tuple─in order for the constraint to be satisfied.
+By way of another example, recall the following constraint: “Every supplier number in relvar SP must appear in relvar S.” Here’s the formulation I gave previously:
+www.it-ebooks.info
+                CONSTRAINT CX6 FORALL SPX ( EXISTS SX ( SX.SNO = SPX.SNO ) ) ;
+However, I hope you can see a more accurate formulation is:
+CONSTRAINT CX6 FORALL SPX ( UNIQUE SX ( SX.SNO = SPX.SNO ) ) ;
+In other words, for a given tuple in relvar SP, we want there to be not at least one (EXISTS), but exactly one (UNIQUE), corresponding tuple in relvar S. The previous formulation “works” because there’s an additional constraint in effect: viz., that {SNO} is a key for relvar S. But the revised formulation is closer to what we really want to say.
+Now, SQL does support UNIQUE (sort of), though its support is even more indirect than its support for EXISTS is. To be specific, let sq be a subquery; then UNIQUE sq is a boolean expression, and it evaluates to FALSE if the table denoted by sq contains any duplicate rows and TRUE otherwise. Note that it follows from this definition that the operator certainly returns TRUE if its argument table has either just one row or no rows at all.12 And it further follows that, whereas the logic expression
+UNIQUE x ( p ( x ) )
+means “There exists exactly one argument value a corresponding to the parameter x such that p(a) evaluates to
+TRUE,” the (very approximate!) SQL analog─
+UNIQUE ( SELECT k FROM T AS ... WHERE p ( x ) )
+─where k denotes an arbitrary constant value, say the integer 0─means “Given an argument value a corresponding to the parameter x, there exists at most one row in the pertinent table T such that p(a) evaluates to TRUE.” For example, given our usual sample value for relvar S, the SQL expression
+UNIQUE ( SELECT 0 FROM S AS SX WHERE SX.CITY = ‘Athens’ )
+returns TRUE, while the SQL expression
+UNIQUE ( SELECT 0 FROM S AS SX WHERE SX.CITY = ‘Paris’ )
+returns FALSE.13
+All of that being said, I won’t attempt to give an SQL formulation here for constraint CX6 that uses
+UNIQUE─I’ll leave it to Chapter 11 (see Example 10 in that chapter).
+As you can see, the foregoing examples, in which the only item in the SELECT clause is a simple literal, are
+designed to exploit the fact that SQL retains duplicates in the result of a SELECT expression if DISTINCT isn’t specified. Of course, I’ve suggested elsewhere in this book─in Chapter 4, to be specific─that DISTINCT should “always” be specified. In contexts like the one under discussion, however, DISTINCT must definitely not be specified (right?).
+12 By contrast, the UNIQUE quantifier gives FALSE if its range is empty.
+13 It follows that AT_MOST_ONE (or perhaps NO_DUPS) would be a better name for the SQL operator than UNIQUE, at least in a context like the one under discussion. (Come to that, AT_LEAST_ONE might be a better name than EXISTS, too, both for the existential quantifier as such and for SQL’s analog of that quantifier.)
+SQL and Logic / Chapter 10 239
+ www.it-ebooks.info
+                240 Chapter 10 / SQL and Logic
+Now, I don’t mean to suggest that the argument expression in an SQL UNIQUE invocation must always be of the form “SELECT k FROM ...” where k denotes some constant. By way of a counterexample, here repeated from Chapter 8 is one possible SQL formulation of the constraint that distinct suppliers must have distinct supplier numbers:
+CREATE ASSERTION CX3 CHECK ( UNIQUE ( SELECT SNO FROM S ) ) ;
+Recall now that SQL also uses the keyword UNIQUE in key constraints. For example, the CREATE TABLE for table S includes the following specification:
+UNIQUE ( SNO )
+You can think of this specification as shorthand for the following (which could be part of a more general base table constraint or a CREATE ASSERTION statement):14
+CHECK ( UNIQUE ( SELECT SNO FROM S ) )
+SQL also uses the keyword UNIQUE in MATCH expressions. Here’s an example (“Get suppliers who supply exactly one part”):15
+SELECT FROM
+WHERE (
+SX.*
+SASSX
+SX.SNO MATCH UNIQUE SELECT SPX.SNO
+FROM SP AS SPX )
+But this usage too is basically just shorthand. For example, the example just shown is equivalent to the following:
+SELECT SX.* FROM SASSX WHERE UNIQUE (
+AND EXISTS (
+SELECT
+FROM
+WHERE
+SELECT
+FROM
+WHERE
+SPX.SNO
+SP AS SPX
+SPX.SNO = SX.SNO ) SPX.SNO
+SP AS SPX
+SPX.SNO = SX.SNO )
+/* i.e., there’s AT */ /* MOST one shipment */ /* for supplier SX */ /* ... and there’s */ /* also AT LEAST one */
+Incidentally, note that the UNIQUE invocation here is indeed of the form “UNIQUE (SELECT k FROM ...)” where k denotes a constant value, thanks to the boolean expression in the inner WHERE clause (“SPX.SNO = SX.SNO”)─constant, that is, with respect to “the current row” of table S, and hence with respect to each evaluation
+14 To repeat something I said (in a footnote) in Chapter 8, what the standard actually says in this connection is as follows (more or less): “The constraint UNIQUE (SNO) is not satisfied if and only if EXISTS (SELECT * FROM S WHERE NOT (UNIQUE (SELECT SNO FROM S))) evaluates to TRUE.” Well, it seems to me this definition could surely be simplified, thus: “The constraint UNIQUE (SNO) is satisfied if and only if UNIQUE (SELECT SNO FROM S) evaluates to TRUE.” Now, I dare say there’s a good reason for the standard’s circumlocution here, but whatever it is certainly escapes me. Perhaps it has to do with nulls, in which case I’m not interested.
+15 Note that in this context, by contrast, UNIQUE does mean exactly one.
+ www.it-ebooks.info
+                SQL and Logic / Chapter 10 241 of the outer WHERE clause. Of course, it’s a distinct constant value with respect to distinct evaluations of that
+clause.
+SOME EQUIVALENCES
+I’ll finish up this chapter with a few remarks regarding certain equivalences that might have already occurred to you (indeed, I’ve touched on some of them myself from time to time at earlier points). First of all, recall the IS_EMPTY operator, which I introduced in Chapter 3 and made heavy use of in Chapter 8. If the system supports that operator, then there’s no logical need for it to support the quantifiers, thanks to the following equivalences:
+ EXISTSx(p) ≡ NOT(IS_EMPTY(XWHEREp))
+ FORALLx(p) ≡ IS_EMPTY(XWHERENOT(p))
+(I’m assuming here that the variable x ranges over the set X.)
+In fact, SQL’s support for EXISTS─and FORALL, such as it is─is based on exactly the foregoing
+equivalences. The fact is, SQL’s EXISTS isn’t really a quantifier, as such, at all, because it doesn’t involve any bound variables. Instead, it’s an operator, in the conventional sense of that term: a monadic operator of type BOOLEAN, to be precise. Like any monadic operator invocation, an invocation of the SQL EXISTS operator is evaluated by first evaluating the expression that denotes its sole argument, and then applying the operator per se─in this case EXISTS─to the result of that evaluation. Thus, given the expression EXISTS (tx), where tx is a table expression, the system first evaluates tx to obtain a table t; then it applies EXISTS to t, returning TRUE if t is nonempty and FALSE otherwise. (At least, that’s the conceptual algorithm; numerous optimizations are possible, but they’re irrelevant to the present discussion.)
+And now I can explain why SQL doesn’t support FORALL. The reason is that representing the universal quantifier by means of an operator with syntax of the form FORALL(tx)─where tx is again a table expression─couldn’t possibly make any sense. For example, consider the hypothetical expression FORALL (SELECT * FROM S WHERE CITY = ‘Paris’). What could such an expression possibly mean? It certainly couldn’t mean anything like “All suppliers are in Paris,” because─loosely speaking─the argument to which the hypothetical operator is applied isn’t all suppliers, it’s all suppliers in Paris.
+In fact, however, we don’t need the quantifiers anyway if the system supports the aggregate operator COUNT, thanks to the following equivalences:
+ EXISTSx(p) ≡ COUNT(XWHEREp)>0
+ FORALLx(p) ≡ COUNT(XWHEREp)=COUNT(X)  UNIQUEx(p) ≡ COUNT(XWHEREp)=1
+www.it-ebooks.info
+                242 Chapter 10 / SQL and Logic
+Now, I’m certainly not a fan of the idea of replacing quantified expressions by expressions involving COUNT invocations─though sometimes we have to, if we’re in an algebraic context16─but it would be wrong of me not to mention the possibility.
+Aside: Although this book generally has little to say on performance, I should at least point out that the foregoing equivalences (the ones involving COUNT, I mean) could lead to performance problems. For example, consider the following expression, which is an SQL formulation of the query “Get suppliers who supply at least one part”:
+SELECT *
+FROM S WHERE EXISTS
+( SELECT *
+FROM SP
+WHERE SP.SNO = S.SNO )
+Now, here’s another formulation that’s logically equivalent to the foregoing:
+SELECT *
+FROM S
+WHERE ( SELECT COUNT ( * )
+FROM SP
+WHERE SP.SNO = S.SNO ) > 0
+But we don’t really want the system to perform the complete count that’s apparently being requested here and then check to see whether that count is greater than zero; rather, we want it to stop counting, for any given supplier, as soon as it finds the first shipment for that supplier. In other words, we’d really like some optimization to be done. Writing code that effectively requires a certain optimization to be done is usually not a good idea! Recommendation: Be careful over the use of COUNT, therefore; in particular, don’t use it where EXISTS would be more logically correct. End of aside.
+Relational Completeness
+Every operator of the relational algebra has a precise definition in terms of logic. (I didn’t state this fact explicitly before, but it’s easy to see the definitions I gave in Chapters 6 and 7 for join and the rest can be reformulated in terms of logic as described in the present chapter.) It follows as a direct consequence that, for every expression of the relational algebra, there’s an expression of the relational calculus that’s logically equivalent to─i.e., has the same semantics as─that algebraic expression. In other words, the relational calculus is at least as “powerful” (better: expressive) as the relational algebra: Anything that can be expressed in the algebra can be expressed in the calculus.
+Now, it might not be obvious, but actually the opposite is true too; that is, for every expression of the relational calculus, there’s an expression of the relational algebra that’s logically equivalent to that calculus expression. Thus, the algebra is at least as expressive as the calculus, and so the two formalisms are logically
+16 This might not be true. I have in mind here the fact that COUNT is often used in an algebraic context in formulating constraints to the effect that some functional dependency is in effect; for example, to express the fact that the FD {A} Æ {B} holds in relvar R, we can write COUNT(R{A}) = COUNT(R{A,B}). But─assuming for simplicity that R has no attributes other than A and B─the following will also do the trick: IS_EMPTY ((R JOIN (R RENAME {B AS C})) WHERE B ≠C).
+ www.it-ebooks.info
+                equivalent: Both are what’s called relationally complete.17 Relational completeness is a basic measure of the expressive capability of a language; if a language is relationally complete, it means (among other things, and speaking a trifle loosely) that queries of arbitrary complexity can be formulated without having to resort to iterative loops or branching. In other words, it’s relational completeness that allows end users─at least in principle, though possibly not in practice─to access the database directly, without having to go through the potential bottleneck of the IT department.
+The Importance of Consistency
+I have a small piece of unfinished business to attend to. Recall my claim in Chapter 8 that any proposition whatsoever (even obviously false ones like 1 = 0) can be shown to be “true” in an inconsistent system. Now I can elaborate on that claim.
+I’ll start with a really simple example. Suppose (a) relvar S is currently nonempty; (b) there’s a constraint to the effect that there must always be at least one part; but (c) relvar P is in fact currently empty (there’s the inconsistency). Now consider the relational calculus query:
+{ SX } WHERE EXISTS PX ( TRUE )
+Or if you prefer SQL:
+SELECT *
+FROM S WHERE EXISTS
+( SELECT * FROM P)
+Now, if this expression is evaluated directly, the result will be empty. Alternatively, if the system (or the user) observes that there’s a constraint that says that EXISTS PX (TRUE) must evaluate to TRUE─or, in SQL, that SELECT * FROM P must return a nonempty result─the WHERE clause can be reduced to one saying simply WHERE TRUE, and the result will then be all suppliers. At least one of these results must be wrong! In a sense, in fact, they’re both wrong; given an inconsistent database, there simply isn’t─there can’t be─any well defined notion of correctness, and any answer is as good (or bad) as any other. Indeed, this state of affairs should be self-evident: If I tell you some proposition p is both true and false, and then ask you whether some proposition that relies on p in some way is true, there’s simply no right answer you can give me.
+In case you’re still not convinced, consider the following slightly more realistic SQL example (under the same assumptions as before):
+SELECT DISTINCT
+CASE WHEN EXISTS ( SELECT * FROM P ) THEN x ELSE y END
+FROM S
+This expression will return either x or y─more precisely, it will return a table containing (a row containing) either x or y─depending, in effect, on whether or not the EXISTS invocation is replaced by just TRUE. Now consider that x and y can each be essentially anything at all ... For example, x might be an SQL expression denoting the total weight of all parts, while y might be the literal 0─in which case executing the query could easily lead to the erroneous conclusion that the total part weight is null instead of zero.
+17 Don’t confuse relational completeness with any other kind of completeness: in particular, with truth functional completeness (mentioned in an earlier footnote).
+SQL and Logic / Chapter 10 243
+ www.it-ebooks.info
+                244 Chapter 10 / SQL and Logic
+CONCLUDING REMARKS
+It’s my strong belief that database professionals in general, and SQL practitioners in particular, should have some familiarity with the basic concepts of predicate logic (or relational calculus─it comes to the same thing). I’d like to conclude by trying to justify this position.
+My basic point is simply that a knowledge of logic helps you think precisely (and in our field, the importance of thinking precisely is surely paramount). In particular, it forces you to appreciate the significance of proper quantification. Natural language is so often imprecise; however, careful consideration of what quantifiers are needed allows you to pin down the meaning of what can otherwise be very imprecise natural language statements. By way of example, you might like to meditate on exactly what Abraham Lincoln meant─or might have meant, or thought he might have meant, or might have thought he meant─when he famously said: “You can fool some of the people some of the time, and some of the people all the time, but you cannot fool all the people all of the time.”
+Now, I’m well aware there are many who disagree with me here; that is, there are many who feel ordinary mortals shouldn’t have to grapple with a subject as abstruse as logic seems to be. In effect, they claim that logic is just too difficult for most people to deal with. Now, that claim might be true in general (logic is a big subject). But you don’t need to understand the whole of logic for the purpose at hand; in fact, I doubt whether you need much more than what I’ve covered in this chapter. And the benefits are so huge! I made essentially the same point in another book─Logic and Databases: The Roots of Relational Theory (Trafford, 2007)─and I’d like to quote the concluding remarks from that earlier discussion here:
+Surely it’s worth investing a little effort up front in becoming familiar with [basic logic] in order to avoid the problems associated with ambiguous business rules. Ambiguity in business rules leads to implementation delays at best or implementation errors at worst (possibly both). And such delays and errors certainly have costs associated with them, costs that are likely to outweigh those initial learning costs many times over. In other words, framing business rules properly is a serious matter, and it requires a certain level of technical competence.
+As you can see, these remarks are set in the context of business rules specifically, but I think they’re of wider applicability─as I’ll try to demonstrate in the next chapter.
+EXERCISES
+10.1 As noted in the body of the chapter, there are exactly 16 dyadic connectives. Show the corresponding truth tables. How many monadic connectives are there?
+10.2 Let p and q stand for arbitrary propositions. Prove that NOT(pANDq) ≡ (NOTp)OR(NOTq)
+10.3 Again let p and q denote arbitrary propositions. Prove that ( ( NOT p ) AND ( p OR q ) ) IMPLIES q
+www.it-ebooks.info
+                is a tautology. (I remind you from Chapter 4 that a tautology in logic is an expression that’s guaranteed to evaluate to TRUE, regardless of the values of any variables involved. Likewise, a contradiction is an expression that’s guaranteed to evaluate to FALSE, regardless of the values of any variables involved.)
+10.4 (Repeated from the body of the chapter, but reworded here.) (a) Prove that all of the monadic and dyadic connectives can be expressed in terms of suitable combinations of NOT and either AND or OR; (b) prove also that they can all be expressed in terms of just a single connective.
+10.5 Consider the predicate “x is a star.” (a) First, if the argument the sun is substituted for x, does the predicate become a proposition? If not, why not? And what about the argument the moon? (b) Second, if the argument the sun is substituted for x, is the predicate satisfied? If not, why not? And what about the argument the moon?
+10.6 Consider the predicate “x has two moons.” If the argument Jupiter is substituted for x, is the predicate satisfied? Justify your answer.
+10.7 Here’s constraint CX1 once again from Chapter 8:
+CONSTRAINT CX1 IS_EMPTY ( S WHERE STATUS < 1 OR STATUS > 100 ) ;
+The expression IS_EMPTY (...) here is clearly a predicate. Now, in Chapter 8, I said the relvar name “S” in that predicate was acting as a designator. But isn’t it actually a parameter? If not, what’s the difference?
+10.8 (Repeated from the body of the chapter.) What query does the following expression represent? And do you think that query is a “sensible” one?
+{ SX.SNAME } WHERE EXISTS SPX ( FORALL PX ( SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO ) )
+10.9 (Repeated from the body of the chapter.) Give SQL analogs of the relational calculus expressions in the subsection “More Sample Queries” in the body of the chapter.
+10.10 Prove that AND and OR are associative.
+10.11 Let p(x) and q be predicates in which x does and does not appear, respectively, as a free variable. Which of the following statements are valid?18 I remind you that the symbol “⇒” means implies; the symbol “≡” means is equivalentto. NotetoothatA⇒BandB⇒AaretogetherthesameasA≡B(inotherwords,(A⇒BANDB⇒A) ≡ (A ≡ B) is a tautology).
+a. EXISTSx(q) ≡ q
+b. FORALLx(q) ≡ q
+c. EXISTSx(p(x)ANDq) ≡ EXISTSx(p(x))ANDq d. FORALLx(p(x)ANDq) ≡ FORALLx(p(x))ANDq
+18 The term valid is something of a loaded word in logical contexts. I’m using it here to mean the statement in question is true, regardless of what values are assigned to any variables involved (in other words, the statement in question is a tautology).
+SQL and Logic / Chapter 10 245
+ www.it-ebooks.info
+                246
+Chapter 10 / SQL and Logic
+e. f. g. h. i. j. k.
+10.12
+a.
+b.
+c.
+d.
+e.
+f.
+10.13
+10.14 in the
+FORALLx(p(x)) ⇒ EXISTSx(p(x))
+EXISTS x ( TRUE ) ≡ TRUE
+FORALL x ( FALSE ) ≡ FALSE
+UNIQUEx(p(x)) ⇒ EXISTSx(p(x))
+UNIQUEx(p(x)) ⇒ FORALLx(p(x)) FORALLx(p(x))ANDEXISTSx(p(x)) ⇒ UNIQUEx(p(x)) FORALLx(p(x))ANDUNIQUEx(p(x)) ⇒ EXISTSx(p(x))
+Let p(x,y) be a predicate with free variables x and y. Which of the following statements are valid?
+EXISTS x EXISTS y (
+FORALL x FORALL y (
+FORALL x ( p(x,y) )
+EXISTS x ( p(x,y) )
+EXISTS x FORALL y (
+EXISTS y FORALL x (
+p(x,y) ) ≡ EXISTS y EXISTS x ( p(x,y) ) p(x,y) ) ≡ FORALL y FORALL x ( p(x,y) )
+≡ NOT EXISTS x ( NOT p(x,y) )
+≡ NOT FORALL x ( NOT p(x,y) )
+p(x,y) ) ≡ FORALL y EXISTS x ( p(x,y) ) p(x,y) ) ⇒ FORALL x EXISTS y ( p(x,y) )
+Where possible and reasonable, give relational calculus solutions to exercises from Chapters 6-9.
+Consider this query: “Get cities in which either a supplier or a part is located.” Can this query be expressed
+relational calculus? If not, why not?
+10.15
+relational algebra, there exists a semantically equivalent expression in SQL. Alternatively, to prove it isn’t, you need to show there exists at least one expression of the relational algebra for which no such SQL equivalent exists.
+Is SQL relationally complete? Note: To prove it is, you need to show that for every expression of the
+10.16 Here’s a lightly edited excerpt from Chapter 8: “If the database contains only true propositions, then it’s consistent, but the converse isn’t necessarily so; if the database is inconsistent, then it contains at least one false proposition, but the converse isn’t necessarily so.” Are these two statements logically equivalent? In other words, is there some duplication here?
+10.17 Is prenex normal form always achievable?
+www.it-ebooks.info

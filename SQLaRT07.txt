@@ -1,0 +1,736 @@
+
+                Chapter 7
+SQL and Relational Algebra II:
+Additional Operators
+Algebra is the part of advanced mathematics that is not calculus.
+─John Derbyshire: Unknown Quantity: A Real and Imaginary History of Algebra (2006)
+As I’ve said several times already, an operator of the relational algebra is an operator that takes one or more relations as input and produces another relation as output. As I observed in Chapter 1, however, any number of operators can be defined that conform to this simple characterization. Chapter 6 described the original operators (join, project, etc.); the present chapter describes some of the many additional operators that have been defined since the relational model was first invented. It also considers how those operators might best be realized in SQL.
+Note: By its nature, this chapter is necessarily something of a miscellany. Thus, you might want just to skim it lightly on a first pass, and come back to it later if you need to gain a deeper understanding of any of the topics discussed. Perhaps it would help to say that from a practical point of view, the most important topics are probably these:
+ Semijoin and semidifference (MA TCHING and NOT MA TCHING)
+ EXTEND
+ Imagerelations
+ Aggregateoperators
+But I’ll begin with a brief discussion of exclusive union.
+EXCLUSIVE UNION
+In set theory, union is inclusive; that is, given sets s1 and s2, an element appears in their union if and only if it appears in either or both of s1 or s2. Thus, UNION can be seen as the set theory counterpart to logical OR, which is inclusive in a similar sense. But logic additionally defines an exclusive version of OR (XOR), and so we can define an exclusive union operator analogously: The exclusive union (XUNION) of two sets s1 and s2 is the set of elements appearing in s1 or s2 but not both. And, of course, we can define a relational version of this operator as well:
+www.it-ebooks.info
+                132 Chapter 7 / SQL and Relational Algebra II
+Definition: Let relations r1 and r2 be of the same type; then their exclusive union, r1 XUNION r2, is a
+relation of the same type, with body consisting of all tuples t such that t appears in r1 or r2 but not both.
+For example (assuming as we did in Chapter 6, in the section “Union, Intersection, and Difference,” that parts have an extra attribute called STATUS, of type INTEGER):
+P { STATUS , CITY } XUNION S { CITY , STATUS }
+│ SELECT STATUS , CITY
+│ FROM P
+│ WHERE ( STATUS , CITY ) NOT IN │ ( SELECT STATUS , CITY │ FROM S)
+│ UNION CORRESPONDING
+│ SELECT CITY , STATUS
+│ FROM S
+│ WHERE ( CITY , STATUS ) NOT IN │ ( SELECT CITY , STATUS │ FROM S)
+Tutorial D also supports an n-adic form of XUNION. However, the details are a little tricky; for that reason, I’ll just give a definition here, without further discussion. You can find more details, if you’re interested, in the paper “N-adic vs. Dyadic Operators: An Investigation” (see Appendix G).
+Definition: Let relations r1, r2, ..., rn (n ≥ 0) all be of the same type T. Then the expression XUNION{r1,r2,...,rn} denotes a relation of type T with body the set of all tuples t such that t appears in exactly m of r1, r2, ..., rn, where m is odd (and is possibly different for different tuples t).
+The exclusive union of a single relation r is just r. The exclusive union of no relations at all is the empty relation of the pertinent type─but that type needs to be specified explicitly, since there aren’t any relational expressions from which the type can be inferred. Thus, for example, the expression
+XUNION { SNO CHAR , STATUS INTEGER } { }
+denotes the empty relation of type RELATION {SNO CHAR, STATUS INTEGER}.
+Note: In set theory, exclusive union is more usually known as symmetric difference. Thus, the keyword
+XMINUS might be acceptable as an alternative to XUNION.
+SEMIJOIN AND SEMIDIFFERENCE
+Join is one of the most familiar of all of the relational operators. In practice, however, it turns out that queries that require the join operator at all often really require an extended form of that operator called semijoin (you might not have heard of semijoin before, but in fact it’s quite important). Here’s the definition:
+Definition: The semijoin of relations r1 and r2 (in that order), r1 MATCHING r2, is equivalent to (r1 JOIN r2){H1}, where {H1} is the heading of r1.
+In other words, r1 MATCHING r2 is the join of r1 and r2, projected back on the attributes of r1 (and so the heading of the result is the same as that of r1). Here’s an example (“Get suppliers who currently supply at least one part”):
+www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 133
+S MATCHING SP │ SELECT S.* FROM S │ WHERE SNOIN
+│ ( SELECT SNO FROM SP )
+Note that the expressions r1 MATCHING r2 and r2 MATCHING r1 aren’t equivalent, in general─the first returns some subset of r1, the second returns some subset of r2. Note too that we could replace IN by MATCH in the SQL version; interestingly, however, we can’t replace NOT IN by NOT MATCH in the semidifference analog (see below), because there’s no “NOT MATCH” operator in SQL.
+Turning now to semidifference: If semijoin is in some ways more important than join, a similar remark applies here also, but with even more force─in practice, most queries that require difference at all really require semidifference.1 Here’s the definition:
+Definition: The semidifference between relations r1 and r2 (in that order), r1 NOT MATCHING r2, is equivalent to r1 MINUS (r1 MATCHING r2).
+Here’s an example (“Get suppliers who currently supply no parts at all”):
+S NOT MATCHING SP │ SELECT S.* FROM S │ WHERE SNO NOT IN
+│ ( SELECT SNO FROM SP )
+As with MATCHING, the heading of the result is the same as that of r1. Note: If r1 and r2 are of the same type, r1 NOT MATCHING r2 degenerates to r1 MINUS r2; in other words, difference (MINUS) is a special case of semidifference, relationally speaking. By contrast, join isn’t a special case of semijoin─they’re really different operators, though it’s true that (loosely speaking) some joins are semijoins and some semijoins are joins. See Exercise 7.19 at the end of the chapter.
+EXTEND
+You might have noticed that the algebra as I’ve described it so far in this book doesn’t have any conventional computational capabilities. Now, SQL does; for example, we can write queries in SQL along the lines of SELECT A + B AS C ... (for example). However, as soon as we write that “+” sign, we’ve gone beyond the bounds of the algebra as originally defined. So we need to add something to the algebra in order to provide this kind of functionality, and that’s what EXTEND is for. By way of example, suppose part weights (in relvar P) are given in pounds, and we want to see those weights in grams. There are 454 grams to a pound, and so we can write:
+EXTEND P : │ SELECT P.* , WEIGHT * 454 AS GMWT {GMWT:=WEIGHT*454} │ FROM P
+Given our usual sample values, the result looks like this:
+1 Also known, a trifle inappropriately, as antijoin.
+ www.it-ebooks.info
+                134
+Chapter 7 / SQL and Relational Algebra II
+┌─────┬───────┬───────┬────────┬────────┬────────┐ │PNO│PNAME│COLOR│WEIGHT│CITY │GMWT │ ├═════┼───────┼───────┼────────┼────────┼────────┤ │P1 │Nut │Red │ 12.0│London│5448.0│ │P2 │Bolt │Green│ 17.0│Paris │7718.0│ │P3 │Screw│Blue │ 17.0│Oslo │7718.0│ │P4 │Screw│Red │ 14.0│London│6356.0│ │P5 │Cam │Blue │ 12.0│Paris │5448.0│ │P6 │Cog │Red │ 19.0│London│8626.0│ └─────┴───────┴───────┴────────┴────────┴────────┘
+Important: Relvar P is not changed in the database! EXTEND is not an SQL-style ALTER TABLE; the EXTEND expression is just an expression, and like any expression it simply denotes a value. In particular, therefore, it can be nested inside other expressions. Here’s an example (the query is “Get part number and gram weight for parts with gram weight greater than 7000 grams”):
+((EXTENDP: │ SELECTPNO,
+{GMWT:=WEIGHT*454}) │ WHERE GMWT > 7000.0 ) │ { PNO , GMWT } │
+WEIGHT*454ASGMWT FROM P
+WHERE WEIGHT * 454 > 7000.0
+As you can see, there’s an interesting difference between the Tutorial D and SQL versions of this example. To be specific, the (sub)expression WEIGHT * 454 appears once in the Tutorial D version but twice in the SQL version. In the SQL version, therefore, we have to hope the implementation will be smart enough to recognize that it need evaluate that subexpression just once per tuple (or row, rather) instead of twice.
+The problem this example illustrates is that SQL’s SELECT - FROM - WHERE template is too rigid. What we need to do, as the Tutorial D formulation makes clear, is form a restriction of an extension; in SQL terms, we need to apply the WHERE clause to the result of the SELECT clause, as it were. But the SELECT - FROM - WHERE template forces the WHERE clause to apply to the result of the FROM clause, not the SELECT clause (see the section “Evaluating SQL Table Expressions” in Chapter 6). To put it another way: In many respects, it’s the whole point of the algebra that (thanks to closure) relational operations can be combined and nested in arbitrary ways; but SQL’s SELECT - FROM - WHERE template effectively means that queries must be expressed as a product, followed by a restrict, followed by some combination of project and/or extend and/or rename2─and many queries just don’t fit this pattern.
+Incidentally, you might be wondering why I didn’t formulate the SQL version like this:
+SELECT PNO , WEIGHT * 454 AS GMWT FROM P
+WHERE GMWT > 7000.0
+(The change is in the last line.) The reason is that GMWT is the name of a column of the final result; table P has no such column, the WHERE clause thus makes no sense, and the expression fails at compile time.
+Actually, the SQL standard does allow the query under discussion to be formulated in a style that’s a little closer to that of Tutorial D (and now I’ll make all of the otherwise implicit dot qualifications explicit, for clarity):
+SELECT TEMP.PNO , TEMP.GMWT
+FROM ( SELECT PNO , ( WEIGHT * 454 ) AS GMWT
+FROM P ) AS TEMP WHERE TEMP.GMWT > 7000.0
+2 And/or ungroup (see later in this chapter).
+ www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 135
+But I’m not sure all SQL products allow nested subqueries to appear in the FROM clause in this manner. Note too that this kind of formulation inevitably leads to a need to reference certain variables (TEMP, in the example) before they’re defined─quite possibly a long way before they’re defined, in fact, in real SQL queries.
+Note: I need to say a little more about the FROM clause in the foregoing example. As you can see, it takes the form
+FROM ( ... ) AS TEMP
+Formally speaking, it’s the parenthesized portion of this FROM clause that constitutes the nested subquery (see Chapter 12). And─here comes the point─SQL has a syntax rule to the effect that a nested subquery in the FROM clause must be accompanied by an explicit AS clause that defines a name for the table denoted by that subquery,3 even if that name is never explicitly referenced elsewhere in the overall expression. In fact, in the example at hand, we could omit all of the explicit references to the name TEMP (i.e., all of the explicit “TEMP.” dot qualifications) if we wanted to, thus:
+SELECT FROM (
+WHERE
+PNO , GMWT
+SELECT PNO , ( WEIGHT * 454 ) AS GMWT FROM P ) AS TEMP
+GMWT > 7000.0
+But the TEMP definition (i.e., that AS TEMP specification) is still needed nonetheless. I’ll close this section with a formal definition of the EXTEND operator:
+Definition: Let r be a relation, and let r not have an attribute named X. Then the extension EXTEND r :
+{X := exp} is a relation with (a) heading the heading of r extended with attribute X and (b) body the set of all tuples t such that t is a tuple of r extended with a value for attribute X that’s computed by evaluating exp on that tuple of r. Observe that the result has cardinality equal to that of r and degree equal to that of r plus one. The type of X in that result is the type of exp.
+IMAGE RELATIONS
+An image relation is, loosely, the “image” within some relation of some tuple (usually a tuple within some other relation). For example, given the suppliers-and-parts database and our usual sample values, the following is the image within the shipments relation of the supplier tuple for supplier S4:
+┌─────┬─────┐ │ PNO │ QTY │ ├═════┼─────┤ │P2 │200│ │P4 │300│ │P5 │400│ └─────┴─────┘
+Clearly, this particular image relation can be obtained by means of the following Tutorial D expression:
+3 More accurately, it defines a corresponding range variable. See Chapter 12 for further explanation.
+ www.it-ebooks.info
+                136 Chapter 7 / SQL and Relational Algebra II
+( SP WHERE SNO = ‘S4’ ) { ALL BUT SNO }
+Here’s a formal definition of image relations in general:
+Definition: Let relations r1 and r2 be joinable (i.e., such that attributes with the same name are of the same type); let t1 be a tuple of r1; let t2 be a tuple of r2 that has the same values for those common attributes as tuple t1 does; let relation r3 be that restriction of r2 that contains all and only such tuples t2; and let relation r4 be the projection of r3 on all but those common attributes. Then r4 is the image relation (with respect to r2) corresponding to t1.
+Here’s an example that illustrates the usefulness of image relations: SWHERE( !!SP){PNO}=P{PNO}
+Explanation:
+ Firstofall,therolesofr1andr2fromthedefinitionarebeingplayedbythesuppliersrelationandthe shipments relation, respectively (where by “the suppliers relation” I mean the current value of relvar S, and similarly for “the shipments relation”).
+ Next,observethatthebooleanexpressionintheWHEREclauseinvolvesanequalitycomparisonbetween two relations (actually two projections). We can imagine that boolean expression being evaluated for each tuple t1 in r1 (i.e., each tuple in the suppliers relation) in turn.
+ Consider one such tuple, say that for supplier Sx. For that tuple, then, the expression !!SP─pronounced “bang bang SP” or “double bang SP”─denotes the corresponding image relation r4 within r2; in other words, it denotes the set of (PNO,QTY) pairs within SP for parts supplied by that supplier Sx.4 The expression !!SP is an image relation reference.
+ Theexpression(!!SP){PNO}─i.e.,theprojectionoftheimagerelationon{PNO}─thusdenotesthesetof part numbers for parts supplied by supplier Sx.
+ Theexpressionoverall(i.e.,SWHERE...)thusdenotessuppliersfromSforwhomthatsetofpartnumbers is equal to the set of all part numbers in the projection of P on {PNO}. In other words, it represents the query “Get suppliers who supply all parts” (speaking a little loosely).
+Note: Since the concept of an image relation is defined in terms of some given tuple (t1, in the formal definition), it’s clear that an image relation reference can appear, not in all possible contexts in which relational expressions in general can appear, but only in certain specific contexts: namely, those in which the given tuple t1 is understood. WHERE clauses are one such context, as the foregoing example indicates, and we’ll see another in the section “Image Relations bis,” later in this chapter.
+Aside: SQL has no direct support for image relations as such. Here for interest is an SQL formulation of the query “Get suppliers who supply all parts” (I show it for your consideration, but I’m not going to discuss it in detail, except to note that it can obviously (?) be improved in a variety of ways):
+4 As noted elsewhere in this book, in mathematics the expression “n!” (n factorial) is often pronounced “n bang”; hence my choice of pronunciation for the symbol “!!”.
+ www.it-ebooks.info
+                S {SNO}
+SP { SNO , PNO } PJ {PNO,JNO} J {JNO}
+/* suppliers */ /* supplier supplies part */ /*partisusedinproject*/ /* projects */
+SQL and Relational Algebra II / Chapter 7 137
+SELECT *
+FROM S
+WHERE NOT EXISTS
+( SELECT PNO
+FROM SP
+WHERE SP.SNO = S.SNO EXCEPT CORRESPONDING SELECT PNO
+FROM P)
+AND NOT EXISTS ( SELECT PNO
+FROM P
+EXCEPT CORRESPONDING SELECT PNO
+FROM SP
+WHERE SP.SNO = S.SNO )
+End of aside.
+To get back to image relations as such, it’s worth noting that the “!!” operator can be defined in terms of MATCHING. For example, the example discussed above─
+SWHERE( !!SP){PNO}=P{PNO} ─is logically equivalent to the following:
+S WHERE
+( SP MATCHING RELATION { TUPLE { SNO SNO } } ) { PNO } = P { PNO }
+Explanation: Again consider some tuple of S, say that for supplier Sx. For that tuple, then, the expression TUPLE {SNO SNO}─which is a tuple selector invocation─denotes a tuple containing just the SNO value Sx (the first SNO in that expression is an attribute name, the second denotes the value of the attribute of that name in the tuple for Sx within relvar S). So the expression
+RELATION { TUPLE { SNO SNO } }
+─which is a relation selector invocation─denotes the relation that contains just that tuple. Hence, the expression
+SP MATCHING RELATION { TUPLE { SNO SNO } }
+denotes a certain restriction of SP: namely, that restriction that contains just those shipment tuples that have the same SNO value as the supplier tuple for supplier Sx does. It follows that, in the context under consideration, the expression shown (“SP MATCHING ...”) is logically equivalent to the image relation reference “!!SP”, and the overall result follows.
+By way of another example, suppose we’re given a revised version of the suppliers-and-parts database─one that’s simultaneously both extended and simplified, compared to our usual version─that looks like this (in outline):
+www.it-ebooks.info
+                138 Chapter 7 / SQL and Relational Algebra II
+Relvar J here represents projects (JNO stands for project number), and relvar PJ indicates which parts are used in which projects. Now consider the query “Get all (sno,jno) pairs such that sno is an SNO value currently appearing in relvar S, jno is a JNO value currently appearing in relvar J, and supplier sno supplies all parts used in project jno.” This is a complicated query!─but a formulation using image relations is almost trivial:
+(SJOINJ)WHERE !!PJ ⊆ !!SP
+Exercise: Give an SQL analog of this expression.
+Reverting now to the usual suppliers-and-parts database, here’s another example (“Delete shipments from
+suppliers in London”─and this time I’ll show an SQL analog as well):
+DELETE SP WHERE IS_NOT_EMPTY │ DELETE FROM SP ( !!( S WHERE │ WHERE SNO IN
+CITY=‘London’)); │ (SELECTSNOFROMS
+│ WHERE CITY = ‘London’ ) ;
+For a given shipment, the relation denoted by the specified image relation reference (“!!(S WHERE ...”) is either empty, if the corresponding supplier isn’t in London, or contains exactly one tuple otherwise.
+DIVIDE
+I include the following discussion of divide in this chapter only to show why (contrary to conventional wisdom, perhaps) I don’t think it’s very important; in fact, I think it should be dropped. You can skip this section if you like.
+I have several reasons (three at least) for wanting to drop divide. One is that any query that can be formulated in terms of divide can alternatively, and much more simply, be formulated in terms of image relations instead, as I’ll demonstrate in just a moment. Another is that there are at least seven different divide operators anyway!─that is, there are, unfortunately, at least seven different operators all having some claim to be called “divide,” and I certainly don’t want to explain all of them. Instead, I’ll limit my attention here to the original and simplest one.
+Definition: Let relations r1 and r2 be such that the heading {Y} of r2 is some subset of the heading of r1 and the set {X} is the other attributes of r1. Then the division of r1 by r2, r1 DIVIDEBY r2,5 is shorthand for the following:
+r1 { X } NOT MATCHING ( ( r1 { X } JOIN r2 ) NOT MATCHING r1 ) For example, the expression
+SP { SNO , PNO } DIVIDEBY P { PNO }
+(given our usual sample data values) yields:
+5 Tutorial D doesn’t directly support this operator, and r1 DIVIDEBY r2 is thus not valid Tutorial D syntax.
+ www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 139
+┌─────┐ │ SNO │ ├═════┤ │ S1 │ └─────┘
+The expression can thus be loosely characterized as a representation of the query “Get supplier numbers for suppliers who supply all parts” (I’ll explain the reason for that qualifier “loosely” in a few moments). In practice, however, we’re more likely to want full supplier details (not just supplier numbers) for the suppliers in question, in which case the division will need to be followed by a join:
+( SP { SNO , PNO } DIVIDEBY P { PNO } ) JOIN S
+But we already know how to formulate this query more simply using image relations: SWHERE( !!SP){PNO}=P{PNO}
+This latter formulation is (a) more succinct, (b) easier to understand (at least, it seems so to me), and (c) correct. This last point is the crucial one, of course, and I’ll explain it below. First, however, I want to explain why divide is called divide, anyway. The reason is that if r1 and r2 are relations with no attribute names in common and we form the product r1 TIMES r2, and then divide the result by r2, we get back to r1. (At least, we do so just as long as r2 isn’t empty. What happens if it is?) In other words, product and divide are inverses of each other, in a sense.
+As I’ve said, the expression
+SP { SNO , PNO } DIVIDEBY P { PNO }
+can loosely be characterized as a formulation of the query “Get supplier numbers for suppliers who supply all parts”; indeed, this very example is often used as a basis for explaining, and justifying, the divide operator in the first place. Unfortunately, however, that characterization isn’t quite correct. Rather, the expression is a formulation of the query “Get supplier numbers for suppliers who supply at least one part and in fact supply all parts.”6 In other words,the divideoperatornotonlysuffersfromproblemsofcomplexityandlackofsuccinctness─itdoesn’teven solve the problem it was originally, and explicitly, intended to address.
+AGGREGATE OPERATORS
+In a sense this section is a bit of a digression, because the operators to be discussed aren’t relational but scalar─they return a scalar result.7 But I do need to say something about them before I can get back to the main theme of the chapter.
+6 If you’re wondering what the logical difference is here, consider the slightly different query “Get suppliers who supply all purple parts” (the point being, of course, that there are no purple parts). If there aren’t any purple parts, then every supplier supplies all of them!─even supplier S5, who supplies no parts at all, and is thus not represented in relvar SP, and so can’t be returned by an analogous DIVIDEBY expression. And if you’re still wondering, then see the further discussion of this example in Chapter 11.
+7 Nonscalar aggregate operators can be defined too, as we’ll see in the section “GROUP, UNGROUP, and Relation Valued Attributes.”
+ www.it-ebooks.info
+                140 Chapter 7 / SQL and Relational Algebra II
+An aggregate operator in the relational model is an operator that derives a single value from the “aggregate” (i.e., the bag or set) of values appearing within some attribute within some relation─or, in the case of COUNT, which is slightly special, from the “aggregate” that’s the entire relation. Here are two examples:
+X := COUNT ( S ) ; │ SELECT COUNT ( * ) AS X │ FROM S
+Y:=COUNT(S{STATUS}); │ SELECTCOUNT(DISTINCTSTATUS) │ AS Y
+│ FROM S
+I’ll focus on the Tutorial D statements on the left first. Given our usual sample values, the first assigns the value 5 (the number of tuples in the current value of relvar S) to the variable X; the second assigns the value 3 (the number of tuples in the projection of the current value of relvar S on {STATUS}, which is to say the number of distinct STATUS values in that current value) to the variable Y.
+In general, a Tutorial D aggregate operator invocation looks like this: <agg op name> ( <relation exp> [, <exp> ] )
+Legal <agg op name>s include COUNT, SUM, AVG, MAX, MIN, AND, OR, and XOR.8 Within the <exp>, an <attribute ref> can appear wherever a literal would be allowed. That <exp> must be omitted if the <agg op name> is COUNT; otherwise, it can be omitted only if the <relation exp> denotes a relation of degree one, in which case an <exp> consisting of a reference to the sole attribute of that relation is assumed. Here are some examples:
+1. SUM(SP,QTY)
+This expression denotes the sum of all quantities in relvar SP (given our usual sample values, the result is
+3100).
+2. SUM(SP{QTY})
+This expression is shorthand for SUM(SP{QTY},QTY), and it denotes the sum of all distinct quantities in SP (i.e., 1000).
+3. AVG(SP,3*QTY)
+This expression effectively asks what the average shipment quantity would be if quantities were all triple
+their current value (the answer is 775). More generally, the expression
+agg ( rx , x )
+8 AND, OR, and XOR apply to aggregates of boolean values specifically. AND in particular can be useful in connection with integrity constraints (see Chapter 8 for further discussion). Note: SQL’s counterparts to AND and OR are called EVERY and SOME, respectively (there’s no counterpart to XOR). SOME can alternatively be spelled ANY; likewise, in ALL or ANY comparisons (see Chapter 12), ANY can alternatively be spelled SOME. Oddly enough, however, the SQL set function EVERY can’t alternatively be spelled ALL, and in ALL or ANY comparisons ALL can’t alternatively be spelled EVERY.
+ www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 141 (where x is some expression more complicated than a simple <attribute ref>) is essentially shorthand for the
+following:
+agg ( EXTEND rx : { y := x } , y )
+Now I turn to SQL. For convenience, let me first repeat the examples:
+X := COUNT ( S ) ; │ SELECTCOUNT(*)ASX │ FROM S
+Y:=COUNT(S{STATUS}); │ SELECTCOUNT(DISTINCTSTATUS) │ AS Y
+│ FROM S
+Now, you might be surprised to hear me claim that SQL doesn’t really support aggregate operators at all! I say this knowing full well that most people would consider expressions like those on the right above to be, precisely, SQL aggregate operator invocations.9 But they aren’t. Let me explain. As we know, the counts are 5 and 3, respectively. But those SQL expressions don’t evaluate to those counts as such, as true aggregate operator invocations would; rather, they evaluate to tables that contain those counts. More precisely, each yields a table with one row and one column, and the sole value in that row is the actual count:10
+┌───┐ │X│ ├───┤ │5│ └───┘
+┌───┐ │Y│ ├───┤ │3│ └───┘
+As you can see, therefore, the SELECT expressions really don’t represent aggregate operator invocations as such; at best, they represent only approximations to such invocations. In fact, aggregation is treated in SQL as if it were a special case of summarization. Of course, I haven’t discussed summarization yet; for present purposes, however,youcanregarditaswhat’s representedinSQLbyaSELECTexpressionwithaGROUPBYclause. Now, the foregoing SQL expressions don’t have a GROUP BY clause─but they’re defined to be shorthand for the following, which do (and do therefore represent summarizations as claimed):
+SELECT COUNT ( * ) AS X FROM S
+GROUP BY ( )
+SELECT COUNT ( DISTINCT STATUS ) AS Y FROM S
+GROUP BY ( )
+Note: In case these expressions look strange to you, I should explain that SQL does in fact allow both (a) GROUP BY clauses with an empty operand commalist and (b) GROUP BY clauses with the operand commalist
+9 It might be claimed, somewhat more reasonably, that the COUNT invocations within those expressions are SQL aggregate operator invocations. But the whole point about such invocations is that they can’t appear as “stand alone” expressions in SQL; rather, they can only appear as part of some table expression, because they rely on that expression to identify the table over which the aggregation is to be done. For example, a statement like “SET X = COUNT(*);” would be meaningless in SQL, since it fails to mention the table whose rows are to be counted.
+10 The lack of doubly underlined columns in these tables is not an error.
+ www.it-ebooks.info
+                142 Chapter 7 / SQL and Relational Algebra II
+enclosed in parentheses. What’s more, specifying a GROUP BY clause with an empty operand commalist (with or
+without parentheses) is equivalent to omitting the GROUP BY clause entirely. Here’s why:
+a. Such a GROUP BY clause effectively means “group by no columns.”
+b. Every row has the same value for no columns─namely, the 0-row (despite the fact that SQL doesn’t actually support the 0-row!).
+c. Every row in the table is thus part of the same group; in other words, the entire table is treated as a single group, and that’s effectively what happens when the GROUP BY clause is omitted entirely.
+So SQL does support summarization─but it doesn’t support aggregation as such. Sadly, the two concepts are
+often confused, and perhaps you can begin to see why. What’s more, the picture is confused still further by the fact that, in SQL, it’s common in practice for the table that results from an “aggregation” to be coerced to the single row it contains, or even doubly coerced to the single value that row contains: two separate errors (of judgment, if nothing else) thus compounding to make the SQL-style “aggregation” look more like a true aggregation after all! Such double coercion occurs in particular when the SELECT expression is enclosed in parentheses to form a scalar subquery, as in the following SQL assignments:
+SET X = ( SELECT COUNT ( * ) FROM S ) ;
+SET Y = ( SELECT COUNT ( DISTINCT STATUS ) FROM S ) ;
+But assignment as such is far from being the only context in which such coercions occur (see Chapters 2 and 12).
+Aside: Actually there’s another oddity arising in connection with SQL-style aggregation (I include this observation here because this is where it logically belongs, but it does rely on a detailed understanding of SQL-style summarization, and you can skip it if you like):
+ In general, an expression of the form SELECT - FROM T - WHERE - GROUP BY - HA VING delivers a result containing exactly one row for each group in G, where G is the “grouped table” resulting from applying the WHERE, GROUP BY, and HAVING clauses to table T.
+ Omitting the WHERE and HAVING clauses, as in a “straightforward” SQL-style aggregation, is equivalent to specifying WHERE TRUE and HAVING TRUE, respectively. For present purposes, therefore, we need consider the effect of the GROUP BY clause, only, in determining the grouped table G.
+ Suppose table T has nT rows. Then arranging those rows into groups can produce at most nT groups; in other words, the grouped table G has nG groups for some nG (nG £ nT), and the overall result, obtained by applying the SELECT clause to G, thus has nG rows.
+ Now suppose nT is zero (i.e., table T is empty); then nG must clearly be zero as well (i.e., table G, and hence the result of the SELECT expression overall, must both be empty as well).
+ In particular, therefore, the expression
+www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 143
+SELECT COUNT ( * ) AS X FROM S
+GROUP BY()
+─which is, recall, the expanded form of SELECT COUNT(*) AS X FROM S─ought logically to produce the result shown on the left, not the one shown on the right, if table S happens to be empty:
+┌───┐ ┌───┐ │X│ │X│ ├───┤ ├───┤ └───┘ │0│
+└───┘
+In fact, however, it produces the result on the right. How? Answer: By special casing. Here’s a direct quote from the standard: “If there are no grouping columns, then the result of the <group by clause> is the grouped table consisting of T as its only group.” In other words, while grouping an empty table in SQL does indeed (as argued above) produce an empty set of groups in general, the case where the set of grouping columns is empty is special; in that case, it produces a set containing exactly one group, that group being identical to the empty table T. In the example, therefore, the COUNT operator is applied to an empty group, and thus “correctly” returns the value zero.
+Now, you might be thinking the discrepancy here is hardly earth shattering; you might even be thinking the result on the right above is somehow “better” than the one on the left. But (to state the obvious) there’s a logical difference between the two, and─to quote Wittgenstein again─all logical differences are big differences. Logical mistakes like the one under discussion are simply unacceptable in a system that’s meant to be solidly based on logic, as relational systems are. End of aside.
+Empty Arguments
+The foregoing aside does raise another issue, however. Let agg be an aggregate operator. What should happen if agg is invoked on an empty argument? For example, given our usual sample data values, what value should the following statement assign to X?
+X := SUM ( SP WHERE SNO = ‘S5’ , QTY ) ;
+The answer, of course, is zero; as explained in Chapter 6 under the discussion of n-adic join, zero is the identity value with respect to addition, and the sum of no numbers is therefore zero. More generally, in fact, if:
+a. An aggregate operator is invoked on an empty argument, and
+b. That invocation is essentially just shorthand for repeated invocation of some dyadic operator (e.g., the dyadic operator is “+” in the case of SUM), and
+c. An identity value exists for that dyadic operator, and
+d. The semantics of the aggregate operator in question do not require the result of an invocation to be a value that actually appears in the aggregate in question,
+www.it-ebooks.info
+                144 Chapter 7 / SQL and Relational Algebra II
+then the result of that invocation is that identity value. For the aggregate operators discussed in this section, identity
+values (and hence the result returned if the argument is empty) are as follows:11
+ AND: TRUE.
+ OR and XOR: FALSE.
+ COUNT and SUM: Zero. Note: The type of the result in these cases is INTEGER (for COUNT) and the type of the specified argument expression (for SUM). By way of example, if relvar P is currently empty, COUNT(P) returns 0 and SUM(P,WEIGHT) returns 0.0.
+ AVG: Since asking for the average of an empty set is effectively asking for zero to be divided by zero, the only reasonable response is to raise an exception (and careful coding might sometimes be called for, therefore).
+ MAX and MIN: By definition, asking for the maximum or minimum of some set of values is asking for some specific value from within that set. If the set in question happens to be empty, therefore, the only reasonable response is, again, to raise an exception (and careful coding might again sometimes be called for, therefore).
+Note: For AVG, MAX, and MIN, we’re currently investigating the possibility of providing additional operators called (say) AVGX, MAXX, and MINX, respectively, each of which takes a further argument X in addition to the aggregate argument as such (the idea being that X denotes the value to be returned if the aggregate argument is empty). For the purposes of the present book, I’ll assume this scheme has indeed been implemented. Be aware, however, that the idea is still only a tentative one at this time (in particular, it might be better to provide a means of handling exceptions in general, instead of just a means of handling these special cases in particular).
+IMAGE RELATIONS bis
+In this section, I just want to present a series of examples that show the usefulness of image relations in connection
+with aggregate operators as discussed in the previous section.
+Example 1: Get suppliers for whom the total shipment quantity, taken over all shipments for the supplier in question, is less than 1000.
+SWHERESUM( !!SP,QTY)<1000
+For any given supplier, the expression SUM(!!SP,QTY) denotes, precisely, the total shipment quantity for the
+supplier in question. An equivalent formulation without the image relation is:
+S WHERE SUM ( SP MATCHING RELATION { TUPLE { SNO SNO } } , QTY ) < 1000
+11 By contrast, as noted in Chapter 4, the SQL analogs of these operators all return null if their argument is empty (except for COUNT and COUNT(*), which do correctly return zero).
+ www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 145 Here for interest is an SQL “analog”─“analog” in quotes because actually there’s a trap in this example; the
+SQL expression shown is not quite equivalent to the Tutorial D expressions shown previously (why not?): SELECT S.*
+FROM
+WHERE
+GROUP
+HAVING
+S,SP
+S.SNO = SP.SNO
+BY S.SNO , S.SNAME , S.STATUS , S.CITY SUM ( SP.QTY ) < 1000
+Incidentally, I can’t resist pointing out in passing that (as this example suggests) SQL lets us say “S.*” in the SELECT clause but not in the GROUP BY clause, where it would make just as much sense.
+Example 2: Get suppliers with fewer than three shipments. SWHERECOUNT( !!SP)<3
+Example 3: Get suppliers for whom the minimum shipment quantity is less than half the maximum shipment quantity (taken over all shipments for the supplier in question in both cases).
+SWHEREMINX( !!SP,QTY,0)<0.5*MAXX( !!SP,QTY,0) Example 4: Get shipments such that at least two other shipments involve the same quantity.
+SPWHERECOUNT( !!(SPRENAME{SNOASSN,PNOASPN}))>2
+This example is very contrived, but it illustrates the point that we might occasionally need to do some attribute renaming in connection with image relation references. In the example, the renaming is needed in order to ensure that the image relation we want, in connection with a given shipment tuple, is defined in terms of attribute QTY only. The introduced names SN and PN are arbitrary.
+I remark in passing that the RENAME invocation in this example─
+SP RENAME { SNO AS SN , PNO AS PN }
+─illustrates the “multiple” form of the RENAME operator. The individual renamings in such a RENAME invocation are effectively executed in parallel. Note: As a consequence of this fact, a RENAME of the following form can be used to switch the names of the specified attributes:
+R RENAME { A AS B , B AS A }
+Similar “multiple” forms are defined for various other operators, too, including EXTEND in particular (I’ll give an
+example later).
+Example 5: Update suppliers for whom the total shipment quantity, taken over all shipments for the supplier in question, is less than 1000, reducing their status to half its previous value.
+UPDATESWHERESUM( !!SP,QTY)<1000:{STATUS:=0.5*STATUS};
+www.it-ebooks.info
+                146 Chapter 7 / SQL and Relational Algebra II SUMMARIZATION
+Definition: Let relations r1 and r2 be such that r2 has the same heading as some projection of r1, and let the attributes of r2 be A, B, ..., C. Then the summarization SUMMARIZE r1 PER (r2) : {X := summary} is a relation with (a) heading the heading of r2 extended with attribute X and (b) body the set of all tuples t such that t is a tuple of r2 extended with a value x for attribute X. That value x is computed by evaluating summary over all tuples of r1 that have the same value for attributes A, B, ..., C as tuple t does. Observe that the result has cardinality equal to that of r2 and degree equal to that of r2 plus one. The type of X in that result is the type of summary. Note: I assume for simplicity that relations r1 and r2 don’t already have an attribute named X.
+Here’s an example (which I’ll label SX1─“SUMMARIZE Example 1”─for purposes of subsequent reference):
+SUMMARIZE SP PER ( S { SNO } ) : { PCT := COUNT ( PNO ) }
+Given our usual sample values, the result looks like this:
+┌─────┬─────┐ │ SNO │ PCT │ ├═════┼─────┤ │S1│ 6│ │S2│ 2│ │S3│ 1│ │S4│ 3│ │S5│ 0│ └─────┴─────┘
+In other words, the result contains one tuple for each tuple in the PER relation─i.e., one tuple for each of the five supplier numbers, in the example─extended with the corresponding count.
+Aside: Note carefully that the “summary” COUNT(PNO)─I deliberately call it a “summary” and not an expression, because it isn’t an expression (at least, not in the usual Tutorial D sense)─in the foregoing SUMMARIZE is not an invocation of the COUNT aggregate operator. That aggregate operator takes a relation as its argument. By contrast, the argument to COUNT in the foregoing SUMMARIZE is an attribute: an attribute of some relation, of course, but just which relation is specified only indirectly. In fact, the syntactic construct COUNT(PNO) is really very special─it has no meaning outside the context of an appropriate SUMMARIZE, and it can’t be used outside that context. (Note, therefore, that my earlier criticisms of COUNT and the rest in SQL, to the effect that they can’t appear “stand alone,” apply with just as much force to Tutorial D’s “summaries.”) All of which begins to make it look as if SUMMARIZE might be not quite respectable, in a way, and it might be nice if we could replace it by something better ... See the section “Summarization bis,” later. End of aside.
+As a shorthand, if relation r2 doesn’t merely have the same heading as some projection of relation r1 but actually is such a projection, the PER specification can be replaced by a BY specification, as in this example (“Example SX2”):
+SUMMARIZE SP BY { SNO } : { PCT := COUNT ( PNO ) }
+www.it-ebooks.info
+                FROM S
+WHERE SP.SNO = S.SNO ) AS PCT
+SQL and Relational Algebra II / Chapter 7 147
+Here’s the result:
+┌─────┬─────┐ │ SNO │ PCT │ ├═════┼─────┤ │S1│ 6│ │S2│ 2│ │S3│ 1│ │S4│ 3│ └─────┴─────┘
+As you can see, this result differs from the previous one in that it contains no tuple for supplier S5. That’s because BY {SNO} in the example is defined to be shorthand for PER (SP{SNO})─SP, because SP is what we want to summarize─and relvar SP doesn’t contain a tuple for supplier S5.
+Now, Example SX2 can be expressed in SQL as follows:
+SELECT SNO , COUNT ( ALL PNO ) AS PCT FROM SP
+GROUP BY SNO
+As this example suggests, summarizations─as opposed to “aggregations”─are typically formulated in SQL by means of a SELECT expression with an explicit GROUP BY clause (but see later!). Points arising:
+ You can think of such expressions as being evaluated as follows. First, the table specified by the FROM clause is partitioned into set of disjoint “groups”─actually tables─as specified by the grouping column(s) in the GROUP BY clause; result rows are then obtained, one for each group, by computing the specified summary (or summaries, plural) for that group and appending other items as specified by the SELECT item commalist. Note: The SQL analog of the term summary is “set function”; the term is doubly inappropriate, however, because (a) the argument to such a function isn’t a set but a bag, in general, and (b) the result isn’t a set either.
+ It’ssafetospecifyjustSELECT,notSELECTDISTINCT,intheexamplebecause(a)theresulttableis guaranteed to contain just one row for each group, by definition, and (b) each group contains just one value for the grouping column(s), again by definition.
+ TheALLspecificationcouldbeomittedfromtheCOUNTinvocationinthisexample,becauseforset functions ALL is the default. (In the example, in fact, it makes no difference whether ALL or DISTINCT is specified, because the combination of supplier number and part number is a key for table SP.)
+ ThesetfunctionCOUNT(*)isaspecialcase─itapplies,nottovaluesinsomecolumn(as,e.g.,SUM(...) does), but to rows in some table. (In the example, the specification COUNT(PNO) could be replaced by COUNT(*) without changing the result.)
+Now let’s get back to Example SX1. Here’s a possible SQL formulation of that example:
+SELECT S.SNO , ( SELECT COUNT ( PNO ) FROM SP
+www.it-ebooks.info
+                148 Chapter 7 / SQL and Relational Algebra II
+The important point here is that the result now does contain a row for supplier S5, because by definition (thanks to the FROM clause, which takes the form FROM S) that result contains one row for each supplier number in table S, not table SP. As you can see, this formulation differs from the one given for Example SX2─the one that missed supplier S5─in that it doesn’t include a GROUP BY clause, and it doesn’t do any grouping (at least, not overtly).
+Aside: By the way, there’s another trap for the unwary here. As you can see, the second item in the SELECT item commalist in the foregoing SQL expression─i.e., the subexpression (SELECT ... S.SNO) AS PCT─is of the form subquery AS name (and the subquery in question is in fact a scalar one). Now, if that very same text were to appear in a FROM clause, the “AS name” specification would be understood as defining a name for the table denoted by that subquery.12 In the SELECT clause, however, that same “AS name” specification is understood as defining a name for the pertinent column of the overall result. It follows that the following SQL expression is not logically equivalent to the one shown above:
+SELECT S.SNO , ( SELECT COUNT ( PNO ) AS PCT FROM SP
+FROM S
+WHERE SP.SNO = S.SNO )
+With this formulation, the table t that’s returned by evaluation of the subquery has a column called PCT. That table t is then doubly coerced to the sole scalar value it contains, producing a column value in the overall result─but (believe it or not) that column in the overall result is not called PCT; instead, it has no name. End of aside.
+To revert to the main thread of the discussion: As a matter of fact, Example SX2 could also be expressed in SQL without using GROUP BY, as follows:
+SELECT DISTINCT SPX.SNO , ( SELECT COUNT ( SPY.PNO ) FROM SP AS SPY
+FROM SP AS SPX
+WHERE SPY.SNO = SPX.SNO ) AS PCT
+As these examples suggest, SQL’s GROUP BY clause is in fact logically redundant─any relational expression that can be represented with it can also be represented without it. Be that as it may, there’s another point that needs to be made here. Suppose Example SX1 had requested, not the count of part numbers, but the sum of quantities, for each supplier:
+SUMMARIZE SP PER ( S { SNO } ) : { TOTQ := SUM ( QTY ) }
+Given our usual sample values, the result looks like this:
+12 More accurately, it would be understood as defining a corresponding range variable (see Chapter 12).
+ www.it-ebooks.info
+                ┌─────┬──────┐ │ SNO │ TOTQ │ ├═════┼──────┤ │S1 │1300│ │S2 │ 700│ │S3 │ 200│ │S4 │ 900│ │S5│ 0│ └─────┴──────┘
+By contrast, this SQL expression─
+SELECT S.SNO , ( SELECT SUM ( QTY ) FROM SP
+FROM S
+WHERE SP.SNO = S.SNO ) AS TOTQ
+FROM S
+WHERE SP.SNO = S.SNO ) AS TOTQ
+SQL and Relational Algebra II / Chapter 7 149
+─gives a result in which the TOTQ value for supplier S5 is shown as null, not zero. That’s because (as mentioned earlier) if any SQL set function other than COUNT(*) or COUNT is invoked on an empty argument, the result is incorrectly defined to be null. To get the correct result, therefore, we need to use COALESCE, as follows:
+SELECT S.SNO , ( SELECT COALESCE ( SUM ( QTY ) , 0 ) FROM SP
+Suppose now that Example SX1 had asked for the sum of quantities for each supplier, but only where that sum is greater than 250:
+( SUMMARIZE SP
+Result:
+┌─────┬──────┐ │ SNO │ TOTQ │ ├═════┼──────┤ │S1 │1300│ │S2 │ 700│ │S4 │ 900│ └─────┴──────┘
+PER ( S { SNO } ) : { TOTQ := SUM ( QTY ) } )
+WHERE TOTQ > 250
+The “natural” SQL formulation of this query would be:
+SELECT SNO , SUM ( QTY ) AS TOTQ
+FROM SP
+GROUP BY SNO
+HAVINGSUM(QTY)>250 /*notTOTQ>250!!!*/
+But it could also be formulated like this:
+www.it-ebooks.info
+                150
+Chapter 7 / SQL and Relational Algebra II
+SELECT DISTINCT SPX.SNO , ( SELECT SUM ( SPY.QTY ) FROM SP AS SPY
+WHERE SPY.SNO = SPX.SNO ) AS TOTQ
+FROM SP AS SPX
+WHERE ( SELECT SUM ( SPY.QTY )
+FROM SP AS SPY
+WHERE SPY.SNO = SPX.SNO ) > 250
+As this example suggests, HAVING, like GROUP BY, is also logically redundant─any relational expression that can be represented with it can also be represented without it. So GROUP BY and HAVING could both be dropped from SQL without any loss of relational functionality! And while it might be true that the GROUP BY and HAVING versions of some query are often more succinct,13 it’s also true that they sometimes deliver the wrong answer. For example, consider what would happen in the foregoing example if we had wanted the sum to be less than, instead of greater than, 250. Simply replacing “>” by “<” in the GROUP BY / HAVING formulation does not work. (Does it work in the other formulation?) Recommendations: If you do use GROUP BY or HAVING, make sure the table you’re summarizing is the one you really want to summarize (typically suppliers rather than shipments, in terms of the examples in this section). Also, be on the lookout for the possibility that some summarization is being done on an empty set, and use COALESCE wherever necessary.
+There’s one more thing I need to say about GROUP BY and HAVING. Consider the following SQL expression:
+SELECT SNO , CITY , SUM ( QTY ) AS TOTQ FROM S NATURAL JOIN SP
+GROUP BY SNO
+Observe that CITY appears in the SELECT item commalist here but isn’t one of the grouping columns. That appearance is legitimate, however, because table S is subject to a certain functional dependency─see Chapter 8─according to which each SNO value in that table has just one corresponding CITY value (again, in that table); what’s more, the SQL standard includes rules according to which the system will in fact be aware of that functional dependency. As a consequence, even though it isn’t a grouping column, CITY is still known to be single valued per group, and it can therefore indeed appear in the SELECT clause as shown (also in the HAVING clause, if there is one).
+Of course, it’s not logically wrong─though there might be negative performance implications─to specify the column as a grouping column anyway, as here:
+SELECT SNO , CITY , SUM ( QTY ) AS TOTQ FROM S NATURAL JOIN SP
+GROUP BY SNO , CITY
+SUMMARIZATION bis
+The SUMMARIZE operator has been part of Tutorial D since its inception. With the introduction of image relations, however, that operator became logically redundant─and while there might be reasons (perhaps pedagogic ones) to retain it, the fact is that most summarizations can be more succinctly expressed by means of EXTEND.14
+13 Here’s another test of your SQL knowledge: In the example under discussion, would it be possible to save some keystrokes by using WITH to introduce a name for the common subexpression “(SELECT SUM(SPY.QTY) ...)”?
+14 Not to mention the fact that SUMMARIZE involves a syntactic construct that looks a bit like an aggregate operator invocation but isn’t one─which as pointed out earlier is a good reason why it might be desirable to dispense with SUMMARIZE altogether.
+ www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 151 Recall Example SX1 from the previous section (“For each supplier, get the supplier number and a count of the
+number of parts supplied”). The SUMMARIZE formulation looked like this:
+SUMMARIZE SP PER ( S { SNO } ) : { PCT := COUNT ( PNO ) }
+Here by contrast is an equivalent EXTEND formulation: EXTENDS{SNO}:{PCT:=COUNT( !!SP)}
+(Since the combination {SNO,PNO} is a key for relvar SP, there’s no need to project the image relation on {PNO} before computing the count.) As the example suggests, EXTEND is certainly another context in which image relations make sense; in fact, they’re arguably even more useful in this context than they are in WHERE clauses.
+The rest of this section consists of more examples. I’ve continued the numbering from the examples in the section “Image Relations bis.”
+Example 6: For each supplier, get supplier details and total shipment quantity, taken over all shipments for the supplier in question.
+EXTENDS:{TOTQ:=SUM( !!SP,QTY)}
+Example 7: For each supplier, get supplier details and total, maximum, and minimum shipment quantity, taken over
+all shipments for the supplier in question.
+EXTENDS:{TOTQ:=SUM( !!SP,QTY), MAXQ:=MAXX( !!SP,QTY,0), MINQ:=MINX( !!SP,QTY,0)}
+Note the use of the multiple form of EXTEND in this example.
+Example 8: For each supplier, get supplier details, total shipment quantity taken over all shipments for the supplier in question, and total shipment quantity taken over all shipments for all suppliers.
+EXTENDS:{TOTQ :=SUM( !!SP,QTY), GTOTQ:=SUM( SP,QTY)}
+Result:
+┌─────┬──────┬───────┐ │ SNO │ TOTQ │ GTOTQ │ ├═════┼──────┼───────┤ │S1 │1300│ 3100│ │S2 │ 700│ 3100│ │S3 │ 200│ 3100│ │S4 │ 900│ 3100│ │S5│ 0│3100│ └─────┴──────┴───────┘
+Example 9: For each city c, get c and the maximum and minimum shipment quantities for all shipments for which the supplier city and part city are both c.
+www.it-ebooks.info
+                152 Chapter 7 / SQL and Relational Algebra II
+WITH ( TEMP := S JOIN SP JOIN P ) : EXTENDTEMP{CITY}:{MAXQ:=MAXX( !!TEMP,QTY,0),
+MINQ:=MINX( !!TEMP,QTY,0)}
+The point of this rather contrived example is to illustrate the usefulness of WITH, in connection with “SUMMARIZE-type” EXTENDs in particular, in avoiding the need to write out some possibly lengthy subexpression several times. Note: This book generally has little to say about performance matters, but I think it’s worth pointing out that we would surely expect the system, in examples like this one, to evaluate the pertinent subexpression once instead of several times. In other words, the use of WITH can be one of those nice win-win situations that are good for both the user and the DBMS.
+GROUP, UNGROUP, AND RELATION VALUED ATTRIBUTES
+Recall from Chapter 2 that relations with relation valued attributes (RVAs for short) are legal. Fig. 7.1 below shows relations R1 and R4 from Figs. 2.1 and 2.2 in that chapter; R4 has an RVA and R1 doesn’t, but the two relations clearly represent the same information.
+┌─────┬─────┐ R1 │SNO│PNO│ ├═════┼═════┤ │S2 │P1 │ │S2 │P2 │ │S3 │P2 │ │S4 │P2 │ │S4 │P4 │ │S4 │P5 │ └─────┴─────┘
+R4
+┌─────┬─────────┐ │ SNO │ PNO_REL │ ├═════┼─────────┤ │ │ ┌─────┐ │ │S2 ││PNO││ │ │ ├═════┤ │ │ ││P1││ │ ││P2││ │ │ └─────┘ │ │ │ ┌─────┐ │ │S3 ││PNO││ │ │ ├═════┤ │ │ ││P2││ │ │ └─────┘ │ │ │ ┌─────┐ │ │S4 ││PNO││ │ │ ├═════┤ │ │ ││P2││ │ ││P4││ │ ││P5││ │ │ └─────┘ │ └─────┴─────────┘
+Fig. 7.1: Relations R1 and R4 from Figs. 2.1 and 2.2 in Chapter 2
+Now, we obviously need a way to map between relations without RVAs and relations with them,
+and that’s the purpose of the GROUP and UNGROUP operators. I don’t want to go into a lot of detail on those operators here; let me just say that, given the relations shown in Fig. 7.1, the expression
+R1 GROUP ( { PNO } AS PNO_REL )
+will produce R4, and the expression
+R4 UNGROUP ( PNO_REL )
+www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 153
+will produce R1.
+By the way, it’s worth noting that the following expression─
+EXTENDR1{SNO}:{PNO_REL:= !!R1}
+─will produce exactly the same result as the GROUP example shown above. In other words, GROUP can be defined in terms of EXTEND and image relations. Now, I’m not suggesting that we get rid of our useful GROUP operator; quite apart from anything else, a language that had an explicit UNGROUP operator (as Tutorial D does) but no explicit GROUP operator could certainly be criticized on ergonomic grounds, if nothing else. But it’s at least interesting, and perhaps pedagogically helpful, to note that the semantics of GROUP can so easily be explained in terms of EXTEND and image relations.
+And by the way again: If R4 includes exactly one tuple for supplier number Sx, say, and if the PNO_REL value in that tuple is empty, then the result of the foregoing UNGROUP will contain no tuple at all for supplier number Sx. For further details, I refer you to my book An Introduction to Database Systems (see Appendix G) or the book Databases, Types, and the Relational Model: The Third Manifesto (again, see Appendix G), by Hugh Darwen and myself.
+The SQL counterparts to GROUP and UNGROUP are quite complex, and I don’t propose to go into details here. However, I will at least show SQL analogs of the Tutorial D examples above. Here first is the GROUP example:15
+SELECT DISTINCT X.SNO , TABLE ( (
+FROM R1 AS X
+And here’s the UNGROUP example:
+SELECT Y.SNO , X.PNO
+FROM R4 AS Y , UNNEST (
+SELECT Y.PNO
+FROM R1 AS Y
+WHERE Y.SNO = X.SNO ) ) AS PNO_REL
+( SELECT Z.PNO_REL
+FROM R4 AS Z
+WHERE Z.SNO = Y.SNO ) ) AS X
+Note: I can’t help pointing out a certain irony in SQL’s version of the GROUP example. As you can see, the SQL expression in that example involves a subquery in the SELECT clause. Of course, a subquery denotes a table; in SQL, however, that table is often coerced─in the context of a SELECT clause in particular─to a single row, or even to a single column value from within that single row. In the case at hand, however, we don’t want any such coercion; so we have to tell SQL explicitly, by means of the TABLE keyword, not to do what it normally would do (by default, as it were) in such a context.
+RVAs Make Outer Join Unnecessary
+There are several further points worth making in connection with relation valued attributes. First of all, RVAs make outer join unnecessary! Second, it turns out they’re sometimes necessary even in base relvars. Third, they’re
+15 The double enclosing parentheses, both here and in the UNGROUP example, are necessary─the argument expression within the outer parentheses is a subquery, which requires parentheses of its own.
+ www.it-ebooks.info
+                154 Chapter 7 / SQL and Relational Algebra II
+conceptually necessary anyway in order to support relational comparison operations. And fourth, they make it desirable to support certain additional aggregate operators. I’ll elaborate on each of these points in turn.
+I’ll begin by showing a slightly more complicated example of an RVA. Consider the following Tutorial D expression:
+EXTENDS:{PQ ≔ !!SP}
+Suppose we evaluate this expression and assign the result to a relvar SPQ. A sample value for SPQ, corresponding to our usual sample values for relvars S and SP, is shown (in outline) in Fig. 7.2 below. Attribute PQ is relation valued.
+┌─────┬───────┬────────┬────────┬───────────────┐ │SNO│SNAME│STATUS│CITY │ PQ │ ├═════┼───────┼────────┼────────┼───────────────┤
+│ ││ │S1 │ Smith │
+│ │ ┌─────┬─────┐ │ 20│London││PNO│QTY││
+│ │ │ │ │ │ │
+│ │ │ │ │ │ │
+10 │ Paris │
+│ │ │
+│ ├═════┼─────┤ │ ││P1│300││ ││P2│200││ │ .. ... │ ││P6│100││ │ └─────┴─────┘ │ │ ┌─────┬─────┐ │ ││PNO│QTY││ │ ├═════┼─────┤ │ ││P1│300││ ││P2│400││ │ └─────┴─────┘ │
+│ │
+│ │
+│ │
+│ │
+│ │
+│ │
+│ │
+│S2 │ Jones │ │ ││ │ │ │ │ │ │ │ ││
+.. .....
+│ ││
+│S5 │ Adams │
+│ ││
+│ ││ │ │ └─────┴─────┘ │ └─────┴───────┴────────┴────────┴───────────────┘
+Fig. 7.2: Relvar SPQ (sample value)
+Now consider the following SQL expression:
+SELECT SNO , SNAME , STATUS , CITY , PNO , QTY FROM S NATURAL LEFT OUTER JOIN SP
+The result of evaluating this expression is shown (again in outline) in Fig. 7.3 opposite.
+Observe now that with our usual sample values, the set of shipments for supplier S5 is empty, and that:
+ InFig.7.2,thatemptysetofshipmentsisrepresentedbyanemptyset.
+ InFig.7.3,bycontrast,thatemptysetisrepresentedbynulls(indicatedbyshadinginthefigure).
+To represent an empty set by an empty set seems like such an obviously good idea! In fact, as I said earlier, there
+would be no need for outer join at all if RVAs were properly supported. Thus, one advantage of RVAs is that they
+.. ...... .........
+│ │ ┌─────┬─────┐ │ 30│Athens││PNO│QTY││ │ │ ├═════┼─────┤ │
+www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 155 deal more elegantly with the problem that outer join is intended to solve than outer join itself does─and I’m tempted
+to say that this fact all by itself, even if there were no other advantages, is a big argument in favor of RVAs.
+┌─────┬───────┬────────┬────────┬─────┬─────┐ │SNO│SNAME│STATUS│CITY │PNO│QTY│ ├─────┼───────┼────────┼────────┼─────┼─────┤
+│S1 │Smith│ │S1 │Smith│ .. ..... │S1 │Smith│ │S2 │Jones│ │S2 │Jones│ .. ..... │S5 │Adams│
+20│London│P1 │300│ 20│London│P2 │200│ .. ...... .. ... 20│London│P6 │100│ 10│Paris │P1 │300│ 10│Paris │P2 │400│ .. ...... .. ... 30│Athens│░░ │░░░│
+└─────┴───────┴────────┴────────┴─────┴─────┘
+Fig. 7.3: Left outer join of S and SP (sample value)
+At the risk of laboring the obvious, I’d like to say too that if there aren’t any shipments for supplier S5, it means, to repeat, that the set of shipments for supplier S5 is empty (and that’s exactly what the relation in Fig. 7.2 says). It certainly doesn’t mean that supplier S5 supplies some unknown part in some unknown quantity; and yet unknown is─and in fact was originally and explicitly intended to be─the way null is usually interpreted. So Fig. 7.3 not only involves nulls (which as we saw in Chapter 4 is bad news for all kinds of reasons), it actually misrepresents the semantics of the situation.
+RVAs in Base Relvars
+Let’s look at some typical operations involving relvar SPQ (Fig. 7.2). Consider first the following queries:  GetsuppliernumbersforsupplierswhosupplypartP2.
+( ( SPQ UNGROUP ( PQ ) ) WHERE PNO = ‘P2’ ) { SNO }
+ GetpartnumbersforpartssuppliedbysupplierS2.
+( ( SPQ WHERE SNO = ‘S2’ ) UNGROUP ( PQ ) ) { PNO }
+As you can see, the natural language versions of these two queries are symmetric, but the Tutorial D formulations on the RVA design (Fig. 7.2) aren’t. By contrast, Tutorial D formulations of the same queries against our usual (non RVA) design are symmetric, as well as being simpler than their RVA counterparts:
+( SP WHERE PNO = ‘P2’ ) { SNO }
+( SP WHERE SNO = ‘S2’ ) { PNO }
+In fact, the queries on the RVA design effectively involve mapping that design to the non RVA design anyway (that’s what the UNGROUPs do).
+Similar remarks apply to updates and constraints. For example, suppose we need to update the database to show that supplier S2 supplies part P5 in a quantity of 500. Here are Tutorial D formulations on (a) the non RVA design, (b) the RVA design:
+www.it-ebooks.info
+                156 Chapter 7 / SQL and Relational Algebra II
+INSERT SP RELATION { TUPLE { SNO ‘S2’ , PNO ‘P5’ , QTY 500 } } ;
+UPDATE SPQ WHERE SNO = ‘S2’ :
+{ INSERT PQ RELATION { TUPLE { PNO ‘P5’ , QTY 500 } } } ;
+Once again, the natural language requirement is stated in a symmetric fashion; its formulation in terms of the non RVA design is symmetric too; but its formulation in terms of the RVA design isn’t (in fact, it’s quite cumbersome). And, of course, the reason for this state of affairs is that the non RVA design itself is asymmetric─in effect, it regards parts as subordinate to suppliers, instead of giving parts and suppliers equal treatment, as it were.
+Examples like the ones discussed above tend to suggest that RVAs in base relvars are probably a bad idea (certainly relvar SPQ in particular isn’t very well designed). But this position might better be seen as a guideline rather than an absolute limitation, because in fact there are cases─comparatively rare ones perhaps─where a base relvar with an RVA is exactly the right design. A sample value for such a relvar (SIBLING) is shown in Fig. 7.4 below. The intended interpretation is that the persons identified within any given PERSONS value are all siblings of one another, and have no other siblings. Thus, Amy and Bob are siblings; Cal, Don, and Eve are siblings; and Fay is an only child. Note that the relvar has just one attribute (an RVA) and three tuples. Note too that the sole key involves an RVA.
+┌─────────┐ │ SIBS │ ├═════════┤ │ ┌─────┐ │ ││SIB││ │ ├═════┤ │ ││Amy││ ││Bob││ │ └─────┘ │ ...
+│ ... │ │ ┌─────┐ │ ││SIB││ │ ├═════┤ │ ││Cal││ ││Don││ ││Eve││ │ └─────┘ │ │ ... │
+│ ... │ │ ┌─────┐ │ ││SIB││ │ ├═════┤ │ ││Fay││ │ └─────┘ │ └─────────┘
+Fig. 7.4: Relvar SIBLING (sample value)
+Note: It’s important to understand that no non RVA relation exists that represents exactly the same information, no more and no less, as the relation shown in Fig. 7.4 does. In particular, if we ungroup that relation as follows─
+SIBLING UNGROUP ( SIBS )
+─we lose the information as to who’s the sibling of whom.
+RVAs Are Necessary for Relational Comparisons
+Consider once again this example from the section on image relations earlier in this chapter: SWHERE( !!SP){PNO}=P{PNO}
+(“suppliers who supply all parts”). Clearly, the boolean expression in the WHERE clause here involves a relational comparison (actually an equality comparison). Recall now from Chapter 6 that an expression of the form r WHERE bx denotes a restriction as such only if bx is a restriction condition, and bx is a restriction condition if and only if
+www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 157
+every attribute reference in bx identifies some attribute of r and there aren’t any relvar references. In the example, therefore, the boolean expression isn’t a genuine restriction condition, because (a) it involves some references to attributes that aren’t attributes of S and (b) it also involves some relvar references (to relvars SP and P). In fact, the example overall is really shorthand for something that might look like this:
+WITH(R1:=EXTENDS :{X:=( !!SP){PNO}}, R2 := EXTEND R1 : { Y := P { PNO } } ) :
+R2 WHERE X = Y
+Now the boolean expression in the WHERE clause (in the last line) is indeed a genuine restriction condition. Observe, however, that attributes X and Y are both RVAs. As the example suggests, therefore, RVAs are always involved, at least implicitly, whenever relational comparisons are performed.
+Aggregate Operators
+Consider again relvar SPQ, with sample value as shown in Fig. 7.2. Attribute PQ is relation valued. And just as it makes sense (and is useful) to define, e.g., numeric aggregate operators such as SUM on numeric attributes, so it makes sense, and is useful, to define relational aggregate operators on relation valued attributes. For example, the following expression returns the union of all of the relations currently appearing as values of attribute PQ in relvar SPQ:
+UNION ( SPQ , PQ )
+Or equivalently (why exactly is this equivalent?):
+UNION ( SPQ { PQ } )
+Tutorial D supports the following relation valued aggregate operators: UNION, D_UNION, and INTERSECT. And SQL has analogs of UNION and INTERSECT (though not D_UNION); however, they’re called, not UNION and INTERSECT as one might reasonably have expected, but FUSION and INTERSECTION [sic], respectively. (It would be very naughty of me to suggest that if union is called FUSION, then intersection ought surely to be called FISSION, so I won’t.)
+“WHAT IF” QUERIES
+“What if” queries are a frequent requirement; they’re used to explore the effect of making certain changes without actually having to make (and subsequently unmake, possibly) the changes in question. Here’s an example (“What if parts in Paris were in Nice instead and their weight was doubled?”):
+www.it-ebooks.info
+                158
+Chapter 7 / SQL and Relational Algebra II
+EXTEND P WHERE CITY = ‘Paris’ : │ { CITY := ‘Nice’ , │ WEIGHT := 2 * WEIGHT } │ │ │ │ │ │ │ │ │ │
+WITH T1 AS
+      ( SELECT
+FROM
+WHERE T2 AS
+P.*
+P
+CITY = ‘Paris’ ) ,
+As you can see, the Tutorial D expression on the left here makes use of EXTEND once again. Note, however, that the target attributes in the assignments in braces aren’t “new” attributes, as they normally are for EXTEND; instead, they’re attributes already existing in the specified relation. What the expression does is this: It yields a relation containing exactly one tuple t2 for each tuple t1 in the current value of relvar P for which the city is Paris─except that, in that tuple t2, the weight is double that in tuple t1 and the city is Nice, not Paris.16 In other words, the expression overall is shorthand for the following (and this expansion should help you understand the SQL version of the query):
+WITH ( R1 := P WHERE CITY = ‘Paris’ ,
+R2 := EXTEND R1 : { NC := ‘Nice’ , NW := 2 * WEIGHT } , R3 := R2 { ALL BUT CITY , WEIGHT } ) :
+R3 RENAME { NC AS CITY , NW AS WEIGHT }
+And now I can take care of some unfinished business from Chapter 5. In that chapter, I said the relational UPDATE operator was shorthand for a certain relational assignment, but the details were a little more complicated than they were for INSERT and DELETE. Now I can explain those details. By way of example, consider the following UPDATE statement:
+UPDATE P WHERE CITY = ‘Paris’ :
+{ CITY := ‘Nice’ , WEIGHT := 2 * WEIGHT } ;
+This statement is logically equivalent to the following relational assignment:
+P := ( P WHERE CITY ≠ ‘Paris’ ) UNION
+( EXTEND ( P WHERE CITY = ‘Paris’ ) :
+{ CITY := ‘Nice’ , WEIGHT := 2 * WEIGHT } ) ;
+Alternatively, recall from Chapter 5 that “updating relvar R” really means we’re replacing the relation r1 that’s the original value of R by another relation r2, where r2 is computed as (r1 MINUS s1) UNION s2 for certain relations s1 and s2. In the case at hand, using “≝” to denote “is defined as,” we have:
+s1 ≝ P WHERE CITY = ‘Paris’
+s2 ≝ EXTEND ( P WHERE CITY = ‘Paris’ ) :
+{ CITY := ‘Nice’ , WEIGHT := 2 * WEIGHT } )
+16 Note, therefore, that the input relation isn’t exactly being “extended” in the usual sense, so it might be nice to find a better keyword than EXTEND for the purpose.
+SELECT FROM
+FROM
+PNO , PNAME , COLOR , NW AS WEIGHT ,
+NC AS CITY
+T2
+( SELECT
+P.* , ‘Nice’ AS NC , 2 * WEIGHT AS NW
+T1 )
+ www.it-ebooks.info
+                ┌────┬────┐ │PX│PY│ ├════┼════┤ │P1│P2│ │P1│P3│ │P2│P4│ │P3│P4│ │P4│P5│ │P5│P6│ └────┴────┘
+TC
+┌────┬────┐ │PX│PY│ ├════┼════┤ │P1│P2│ │P1│P3│ │P2│P4│ │P3│P4│ │P4│P5│ │P5│P6│ │P1│P4│ │ P2 │ P5 │ │ P3 │ P5 │ │ P4 │ P6 │ │ P1 │ P5 │ │ P2 │ P6 │ │ P3 │ P6 │ └────┴────┘
+SQL and Relational Algebra II / Chapter 7 159
+Thus, the expanded form of the UPDATE becomes:
+P := ( P MINUS s1 ) UNION s2 ;
+Note: Actually, we could safely replace MINUS and UNION here by I_MINUS and D_UNION, respectively, and
+we could safely drop the parentheses. (In both cases, why?)
+A NOTE ON RECURSION
+Consider the following edited extract from Exercise 5.16 in Chapter 5:
+The well known bill of materials application involves a relvar─PP, say─showing which parts contain which parts as immediate components. Of course, immediate components are themselves parts, and they can have further immediate components of their own.
+Fig. 7.5 below shows (a) a sample value for that relvar PP and (b) the corresponding transitive closure TC.17 The predicates are as follows:
+ PP:  TC:
+PP
+Part PX contains part PY as an immediate component.
+Part PX contains part PY as a component at some level (not necessarily immediate).
+Fig. 7.5: Relvars PP and TC (sample values)
+Given a (relation) value pp for relvar PP, the relation tc that’s the transitive closure of pp can be defined as follows:
+Definition: The pair (px,py) appears in tc if and only if: 17 Nothing to do with the closure property of the relational algebra.
+ www.it-ebooks.info
+                160
+Chapter 7 / SQL and Relational Algebra II
+a.
+It appears in pp, or
+b. There exists some pz such that the pair (px,pz) appears in pp and the pair (pz,py) appears in tc.
+In other words, if we think of pp as representing a directed graph, with a node for each part and an arc from
+each node to each corresponding immediate component node, then (px,py) appears in the transitive closure if and only if there’s a path in that graph from node px to node py. Observe that the definition involves a recursive reference to relation tc.
+Aside: In practice relvar PP would probably have a QTY attribute as well (showing how many instances of the immediate component part PY are needed to make one instance of part PX), and we would probably want to compute, not just the transitive closure as such, but also the total number of instances of part PY needed to make one instance of part PX: the gross requirements problem. I ignore this refinement for simplicity. End of aside.
+It’s also possible to define the transitive closure procedurally (and iteratively):
+TC := PP ;
+do until TC reaches a “fixpoint” ;
+WITH ( R1 := PP RENAME { PY AS PZ } ,
+R2 := TC RENAME { PX AS PZ } ,
+R3 := ( R1 JOIN R2 ) { PX , PY } ) :
+TC := TC UNION R3 ; end ;
+Loosely speaking, this code works by repeatedly forming an intermediate result consisting of the union of (a) the previous intermediate result and (b) a relation computed on the current iteration. The process is repeated until that intermediate result reaches a fixpoint (i.e., until it ceases to grow). Note: It’s easy to see the code is very inefficient!─in effect, each iteration repeats the entire computation of the previous one. In fact, it’s little more than a direct implementation of the original (recursive) definition. However, it could clearly be made more efficient if desired. Similar remarks apply to all of the code samples in the present section.
+Turning now to Tutorial D, we could define a recursive operator (TCLOSE) to compute the transitive closure as follows:18
+OPERATOR TCLOSE ( XY RELATION { X ... , Y ... } RETURNS RELATION { X ... , Y ... } RETURN ( WITH ( R1 := XY RENAME { Y AS Z } , R2 := XY RENAME { X AS Z } , R3 := ( R1 JOIN R2 ) { X , Y
+) ;
+} ,
+R4 := XY UNION R3 ) :
+IF R4 = XY THEN R4 /* unwind recursion */
+ELSE TCLOSE ( R4 ) /* recursive invocation */ END IF ) ;
+END OPERATOR ;
+18 Actually Tutorial D goes beyond the relational algebra as conventionally understood in that it provides TCLOSE as a built in operator. I show it as a user defined operator here just to show how recursive operators can be defined in Tutorial D.
+ www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 161 Now, e.g., the expression TCLOSE(pp) will return the transitive closure of pp. Hence, for example, the
+expression
+( TCLOSE ( PP ) WHERE PX = ‘P1’) { PY }
+will give the “bill of materials” for part P1, and the expression
+( TCLOSE ( PP ) WHERE PY = ‘P6’) { PX }
+will give the “where used” list for part P6. Note: Computing the bill of materials for a given part is sometimes referred to as part explosion; likewise, computing the “where used” list for a given part is referred to as part implosion.
+Now, SQL too supports what it calls “recursive queries.” Here’s an SQL expression to compute the transitive closure of PP:
+WITH RECURSIVE TC ( PX , PY ) AS ( SELECT PP.PX , PP.PY
+FROM PP
+     UNION
+     SELECT
+     FROM
+     WHERE
+SELECT PX ,
+FROM   TC
+CORRESPONDING PP.PX , TC.PY PP,TC
+PP.PY = TC.PX ) PY
+As you can see, this expression too is a more or less direct transliteration of the original recursive definition. Note: This book deliberately has very little to say about commercial SQL products. However, I’d like to
+offer a brief remark here regarding Oracle specifically. As you might know, Oracle has had some recursive query support for many years. By way of example, the query “Explode part P1” can be expressed in Oracle as follows:
+SELECT LEVEL , PY FROM PP
+CONNECT BY PX = PY
+START WITH PX = ‘P1’
+I don’t want to explain in detail how this expression is evaluated─but I do want to show the result it produces, given the sample data of Fig. 7.5. Here it is:
+┌───────┬────┐ │ LEVEL │ PY │ ├───────┼────┤ │ 1 │ P2 │ │ 2│P4│ │ 3│P5│ │ 4│P6│ │ 1│P3│ │ 2│P4│ │ 3│P5│ │ 4 │ P6 │ └───────┴────┘
+www.it-ebooks.info
+                162 Chapter 7 / SQL and Relational Algebra II
+Note carefully that this result isn’t a relation (and the relational closure property has thereby been violated). First of all, it contains some duplicate rows; for example, the row (2,P4) appears twice. More important, those duplicate rows are not duplicate rows as we usually understand them in SQL (as they might appear in, say, the result of evaluating some SQL expression in the standard); that is, they aren’t just “saying the same thing twice,” as I put it in Chapter 4. To spell the point out, one of those two (2,P4) rows reflects the path in the graph from part P1 to part P4 via part P2; the other reflects the path in the graph from part P1 to part P4 via part P3. Thus, if we deleted one of those rows, we would lose information.
+Aside: Actually the same kind of problem can arise in the SQL standard if the recursive query in question uses UNION ALL instead of UNION DISTINCT─as in practice such queries very typically do. Further details are beyond the scope of this book; however, if you try to code the gross requirements problem in SQL you might see for yourself why it’s tempting, at least superficially, to use UNION ALL. End of aside.
+Note too that in addition to the foregoing violations, the ordering of the rows in the result is significant as well. For example, the reason we know the first (2,P4) row corresponds to the path from P1 to P4 via P2 specifically is because it immediately follows the row corresponding to the path from P1 to its immediate component P2. Thus, if we reordered the rows, again we would lose information.
+Cycles
+Consider Fig. 7.5 once again. Suppose the relation pp shown as a value for relvar PP in that figure additionally contained a tuple representing, say, the pair (P5,P1). Then there would be a cycle in the data (actually two cycles, one involving parts P1-P2-P4-P5-P1 and one involving parts P1-P3-P4-P5-P1). In the case of bill of materials, such cycles should presumably not be allowed to occur, since they make no sense. Sometimes, however, they do make sense; the classic example is a transportation network, in which there are routes from, say, New York (JFK) to London (LHR), London to Paris (CDG), and Paris back to New York again (as well as routes in all of the reverse directions, of course).
+Now, the existence of a cycle in the data has no effect on the transitive closure as such. But it does have the potential to cause an infinite loop in certain kinds of processing. For example, a query to find travel routes from New York to Paris might─if we’re not careful─produce results as follows:
+JFK - LHR - CDG
+JFK - LHR - JFK - LHR - CDG
+JFK - LHR - JFK - LHR - JFK - LHR - CDG etc., etc. etc.
+Of course, it might at least be possible to formulate the query in such a way as to exclude segments in which the destination city is JFK (since we certainly don’t want a route that takes us back to where we started). But even this trick will still allow routes such as:
+JFK - ORD - LHR - ORD - LHR - ORD - LHR - ... - CDG
+(ORD = Chicago). Moreover, it still won’t prevent an infinite loop. Now, we might prevent the infinite loop as such by rejecting routes involving, say, more than four segments; but under such a scheme we could still get, e.g., the route JFK-ORD-LHR-ORD-CDG. Clearly, what we need is a more general mechanism that will allow the query to recognize when a given node in the graph has been previously visited. And SQL does in fact include a feature, the CYCLE clause, that can be used in recursive queries to achieve such an effect. The specifics are a little complicated, and I don’t want to get into details here; suffice it to say that the CYCLE clause provides a means of
+www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 163 tagging nodes (i.e., rows) as they’re visited, and then stopping the recursion if a tagged node is subsequently
+encountered again. For more details, I refer you to the standard document itself.
+WHAT ABOUT ORDER BY?
+The last topic I want to address in this chapter is ORDER BY (just ORDER, in Tutorial D). Now, despite the title of this chapter, ORDER BY isn’t actually part of the relational algebra; in fact, as I pointed out in Chapter 1, it isn’t a relational operator at all, because it produces a result that isn’t a relation (it does take a relation as input, but it produces something else─namely, a sequence of tuples─as output). Please don’t misunderstand me here; I’m not saying ORDER BY isn’t useful; however, I am saying it can’t sensibly appear in a relational expression19 (unless it’s treated simply as a “no op,” I suppose). By definition, therefore, the following expressions, though legal, aren’t relational expressions as such:
+S MATCHING SP ORDER ( ASC SNO ) │ SELECT DISTINCT S.* │ FROM S,SP
+│ WHERE S.SNO = SP.SNO │ ORDER BY SNO ASC
+That said, I’d like to point out that for a couple of reasons ORDER BY is actually a rather strange operator. First, it effectively works by sorting tuples into some specified sequence─and yet “<“ and “>“ aren’t defined for tuples, as we know from Chapter 3.20 Second, it’s not a function. All of the operators of the relational algebra described in this book─in fact, all read-only operators, as that term is usually understood─are functions, meaning there’s always just one possible output for any given input. By contrast, ORDER BY can produce several different outputs from the same input. As an illustration of this point, consider the effect of the operation ORDER BY CITY on our usual suppliers relation. Clearly, this operation can return any of four distinct results, corresponding to the following sequences (I’ll show just the supplier numbers, for simplicity):
+ S5,S1,S4,S2,S3  S5,S4,S1,S2,S3  S5,S1,S4,S3,S2  S5,S4,S1,S3,S2
+Note: It would be remiss of me not to mention in passing that although the operators of the relational algebra described in this book are indeed functions, most of them have counterparts in SQL that aren’t. This state of affairs is due to the fact that, as explained in Chapter 2, SQL sometimes defines the result of the comparison v1 = v2 to be TRUE even when v1 and v2 are distinct. For example, consider the character strings ‘Paris’ and ‘Paris ’, respectively (note the trailing space in the latter); these values are clearly distinct, and yet SQL sometimes regards them as equal. As explained in Chapter 2, therefore, certain SQL expressions are “possibly nondeterministic.” Here’s a simple example:
+19 In particular, therefore, it can’t appear in a view definition─despite the fact that at least one well known product allows it to! Note: It’s sometimes suggested─and, sadly, the SQL standard now explicitly supports the idea─that ORDER BY is needed in connection with what are called quota queries, but this is a popular misconception (see Exercise 7.14).
+20 I suppose SQL might claim it is defined for rows, as opposed to tuples (again, see Chapter 3).
+ www.it-ebooks.info
+                164 Chapter 7 / SQL and Relational Algebra II
+SELECT DISTINCT CITY FROM S
+If one supplier has CITY ‘Paris’ and another ‘Paris ’, then the result will include either ‘Paris’ or ‘Paris ’ (or possibly both), but which result we get might not be defined. We could even legitimately get one result on one day and another on another, even if the database hasn’t changed at all in the interim. You might like to meditate on the implications of this state of affairs.
+EXERCISES
+7.1 For each of the following Tutorial D expressions on the suppliers-and-parts database, give both (a) an SQL analog and (b) an informal interpretation of the expression (i.e., a corresponding predicate) in natural language. Also show the result of evaluating the expressions, given our usual sample values for relvars S, P, and SP.
+a. S MATCHING ( SP WHERE PNO = ‘P2’ )
+b. S NOT MATCHING ( SP WHERE PNO = ‘P2’ )
+c. PWHERE( !!SP){SNO}=S{SNO}
+d. PWHERESUM( !!SP,QTY)<500
+e. PWHERETUPLE{CITYCITY} Œ S{CITY}
+f. EXTEND S : { TAG := ‘Supplier’ }
+g. EXTEND(SMATCHING(SPWHEREPNO=‘P2’)):
+{ TRIPLE_STATUS := 3 * STATUS }
+h. EXTEND(PJOINSP):{SHIPWT:=WEIGHT*QTY}
+i. EXTENDP:{GMWT:=WEIGHT*454,OZWT:=WEIGHT*16}
+j. EXTENDP:{SCT:=COUNT( !!SP)}
+k. EXTEND S :
+{ NP := COUNT ( ( SP RENAME { SNO AS X } ) WHERE X = SNO ) }
+l. SUMMARIZE S BY { CITY } : { SUM_STATUS := SUM ( STATUS ) }
+m. SUMMARIZE ( S WHERE CITY = ‘London’ ) PER ( TABLE_DEE ) :
+{ N := COUNT ( SNO ) }
+Note: Tutorial D allows the PER clause to be omitted, in which case PER (TABLE_DEE) is assumed by default. The foregoing SUMMARIZE could therefore be simplified slightly, thus:
+SUMMARIZE ( S WHERE CITY = ‘London’ ) : { N := COUNT ( SNO ) }
+www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 165
+n. EXTENDSPWHERESNO=‘S1’:{SNO:=‘S7’,QTY=0.5*QTY}
+7.2 In what circumstances (if any) are r1 MATCHING r2 and r2 MATCHING r1 equivalent?
+7.3 Show that RENAME isn’t primitive.
+7.4 Give an expression involving EXTEND instead of SUMMARIZE that’s logically equivalent to the
+following:
+SUMMARIZE SP PER ( S { SNO } ) : { NP := COUNT ( PNO ) }
+7.5 Consider the following Tutorial D expressions. Which if any are equivalent to which of the others? Show an SQL analog in each case.
+a. SUMMARIZErPER(r{}):{CT:=SUM(1)}
+b. SUMMARIZErPER(TABLE_DEE):{CT:=SUM(1)}
+c. SUMMARIZErBY{}:{CT:=SUM(1)}
+d. EXTENDTABLE_DEE:{CT:=COUNT(r)}
+7.6 Consider the relational aggregate operators UNION and INTERSECT. What do you think these operators should return if their argument (a set of relations) happens to be empty?
+7.7 Let relation R4 in Fig. 7.1 denote the current value of some relvar. If R4 is as described in Chapter 2, what’s the predicate for that relvar?
+7.8 Let r be the relation denoted by the following Tutorial D expression: SP GROUP ( { } AS X )
+What does r look like, given our usual sample value for SP? Also, what does the following expression yield? r UNGROUP ( X )
+7.9 Write Tutorial D and/or SQL expressions for the following queries on the suppliers-and-parts database:
+a. Get the total number of parts supplied by supplier S1.
+b. Get supplier numbers for suppliers whose city is first in the alphabetic list of such cities.
+c. Get city names for cities in which at least two suppliers are located.
+d. Get city names for cities in which at least one supplier or at least one part is located, but not both.
+www.it-ebooks.info
+                166 Chapter 7 / SQL and Relational Algebra II
+e. Get part numbers for parts supplied by all suppliers in London.
+f. Get suppliers who supply at least all parts supplied by supplier S2.
+7.10 Let relation pp be as defined in the section “A Note on Recursion” and let TCLOSE be the transitive closure
+operator. What does the expression TCLOSE(TCLOSE(pp)) denote?
+7.11 Given our usual sample values for the suppliers-and-parts database, what does the following Tutorial D
+expression denote?
+EXTENDS:{PNO_REL:=( !!SP){PNO}}
+7.12 Let the relation returned by the expression in the previous exercise be kept as a relvar called SSP. What do the following updates do?
+INSERT SSP RELATION
+{ TUPLE { SNO ‘S6’ , SNAME ‘Lopez’ , STATUS 30 , CITY ‘Madrid’ ,
+PNO_REL RELATION { TUPLE { PNO ‘P5’ } } } } ;
+UPDATE SSP WHERE SNO = ‘S2’ :
+{ INSERT PNO_REL RELATION { TUPLE { PNO ‘P5’ } } } ;
+7.13 Using relvar SSP from the previous exercise, write expressions for the following queries:
+a. Get pairs of supplier numbers for suppliers who supply exactly the same set of parts.
+b. Get pairs of part numbers for parts supplied by exactly the same set of suppliers.
+7.14 A quota query is a query that specifies a desired limit, or quota, on the cardinality of the result: for example, the query “Get the two heaviest parts,” for which the quota is two. Give Tutorial D and SQL formulations of this query. Given our usual data values, what exactly do these formulations return?
+7.15 Using the explicit SUMMARIZE operator, how would you deal with the query “For each supplier, get the supplier number and the sum of distinct shipment quantities for shipments by that supplier”?
+7.16 Given a revised version of the suppliers-and-parts database that looks like this─
+S { SNO } /* suppliers */ SP { SNO , PNO } /* supplier supplies part */ SJ { SNO , JNO } /* supplier supplies project */
+─give Tutorial D and SQL formulations of the query “For each supplier, get supplier details, the number of parts supplied by that supplier, and the number of projects supplied by that supplier.” For Tutorial D, give both EXTEND and SUMMARIZE formulations.
+7.17 What does the following Tutorial D expression mean? SWHERE( !!(!!SP)){PNO}=P{PNO}
+7.18 Is there a logical difference between the following two Tutorial D expressions? If so, what is it?
+www.it-ebooks.info
+                SQL and Relational Algebra II / Chapter 7 167
+EXTEND TABLE_DEE : { NSP := COUNT ( SP ) }
+EXTEND TABLE_DEE : { NSP := COUNT ( !!SP ) }
+7.19 Give an example of a join that’s not a semijoin and a semijoin that’s not a join. When exactly are the
+expressions r1 JOIN r2 and r1 MATCHING r2 equivalent?
+7.20 Let relations r1 and r2 be of the same type, and let t1 be a tuple in r1. For that tuple t1, then, what exactly does the expression !!r2 denote? And what happens if r1 and r2 aren’t just of the same type but are in fact the very same relation?
+7.21 What’s the logical difference, if any, between the following SQL expressions?
+SELECT COUNT ( * ) FROM S
+SELECT SUM ( 1 ) FROM S
+7.22 By definition, ORDER BY can’t appear in a relational expression (or table expression, rather, in SQL). So
+where can it appear?
+www.it-ebooks.info
+                www.it-ebooks.info

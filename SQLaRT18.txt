@@ -1,0 +1,1921 @@
+Appendix F: Answers to Exercises
+
+Note: All mistakes in this appendix are deliberate <joke>. CHAPTER 1
+1.1 Here are a few examples of statements from the early part of the chapter in which every occurrence of the term relation (highlighted here in bold) should be replaced by the term relvar:
+ “[Every]relationhasatleastonecandidatekey.”
+ “[A]foreignkeyisacombination,orset,ofattributesFKinsomerelationr2suchthateachFKvalueis
+required to be equal to some value of some key K in some relation r1 (r1and r2 not necessarily distinct).”
+ “[The]relationalassignmentoperator...allowsthevalueofsomerelationalexpression...tobeassignedto
+some relation.”
+ “Aview(alsoknownasavirtualrelation)isanamedrelationwhosevalueatanygiventimetistheresult
+of evaluating a certain relational expression at that time t.” And so on.
+1.2 E. F. Codd (1923–2003) was the inventor of the relational model, among many other things. In December 2003 I published a brief tribute to him and his achievements, which you can find on the ACM SIGMOD website www.acm.org/sigmod and elsewhere. Note: An expanded version of that tribute appears in my book Date on Database: Writings 2000–2006 (Apress, 2006).
+1.3 A domain can be thought of as a conceptual pool of values from which actual attributes in actual relations take their actual values. In other words, a domain is a type, and the terms domain and type are effectively interchangeable─but personally I much prefer type, as having a longer pedigree (in the computing world, at least), as well as being slightly more succinct. Domain is the term used in most of the older database literature, however. Note: Don’t confuse domains as understood in the relational world with the construct of the same name in SQL, which can be regarded at best as a very weak kind of type (see Chapter 2─in particular, the answer to Exercise 2.1 later in this appendix). Also, be aware that some older writings (including certain very early ones by myself) unfortunately and mistakenly use the term domain when what they really mean is attribute. Be on your lookout for confusion in this area.
+1.4 A database satisfies the referential integrity rule if and only if for every tuple containing a reference (i.e., a foreign key value) there exists a referent (i.e., a tuple in the pertinent “target” relvar with that same value as a value for the pertinent target key). Loosely: If B references A, then A must exist. See Chapters 5 and 8 for further discussion.
+www.it-ebooks.info
+                330 Appendix F / Answers to Exercises
+1.5 Let R be a relvar. Then every relation r that can legally be assigned to R must have the same heading, and hence a fortiori the same attributes and the same degree (see Chapters 2 and 3 for further discussion); and the heading, attributes, and degree of R are, respectively, the heading, attributes, and degree of every such relation r. They can therefore (and in practice always are) specified as part of the definition of R.
+Now let the relation that’s assigned to R at some particular time t be r. Then the body, tuples, and cardinality of R at that time t are, respectively, the body, tuples, and cardinality of r. Note that the body, tuples, and cardinality of a relvar vary over time, while the heading, attributes, and degree don’t.
+By the way, it follows from the foregoing that if we use SQL’s ALTER TABLE to add a column to or drop a column from some base table T, then the effect, logically speaking, is to replace that table T by some distinct table T′ (the term table being, in such contexts, SQL’s counterpart to the relational term relvar). T′ is not “the same table as before”─speaking purely from a logical point of view, that is. But it’s convenient to overlook this nicety in informal contexts.
+1.6 See the section “Model vs. Implementation” in the body of the chapter.
+1.7 (a) Physical data independence is the independence of users and application programs from the way the data
+is physically stored and accessed. It’s a logical consequence of keeping a rigid separation between the model and its implementation. To the extent that such separation is observed, and hence to the extent that physical data independence is achieved, we have the freedom to make changes to the way the data is physically stored and accessed─typically for performance reasons─without at the same time having to make corresponding changes in queries and application programs. Such independence is desirable because it translates into protecting investment in training, applications, and logical database designs.
+(b) The model is the abstract machine with which users interact; the implementation is the realization of that abstract machine on some physical computer system. Users have to understand the model, since it defines the interface they have to deal with; they don’t have to understand the implementation, because that’s under the covers (at least, it should be). The following analogy might help: In order to drive a car, you don’t have to know what goes on under the hood─all you have to know is how to steer, how to shift gear, and so on. So the rules for steering, shifting, and the rest are the model, and what’s under the hood is the implementation. (It’s true that you might drive better if you do have some understanding of what goes on under the hood, but you don’t have to know.
+Analogously, you might use a data model better if you have some knowledge of how it’s implemented─but ideally, at least, you shouldn’t have to know.) Note: The term architecture is sometimes used with a meaning very similar to that of model as defined here.
+1.8 Rows in tables are ordered top to bottom but tuples in relations aren’t; columns in tables are ordered left to right but attributes in relations aren’t; tables might have duplicate rows but relations never have duplicate tuples. Also, relations contain values, but tabular pictures don’t (they don’t even contain “occurrences” or “appearances” of such values); rather, they contain symbols that denote such appearances─for example, the symbol (or numeral) 5, which denotes an appearance of the value five. See the answer to Exercise 3.5 later in this appendix for several further differences.
+1.9 No answer provided.
+1.10 Throughout this book I use the term relational model to mean the abstract machine originally defined by
+Codd (though that abstract machine has been refined, clarified, and extended somewhat since Codd’s original vision). I don’t use the term to mean just a relational design for some particular database. There are lots of relational models in the latter sense but only one in the former sense. (As noted in the body of the chapter, you can find quite a lot more on this issue in Appendix A.)
+www.it-ebooks.info
+                1.11 Here are some:
+ Therelationalmodelhasnothingtosayabout“storedrelations”atall;inparticular,itcategoricallydoesn’t say which relations are stored and which not. In fact, it doesn’t even say that relations as such have to be stored─there might be a better way to do it (and indeed there is, though the specifics are beyond the scope of this book).
+ Evenifweagreethattheterm“storedrelation”mightmakesomekindofsense─meaningauservisible relation that’s represented in storage in some direct and efficient manner, without getting too specific on just what direct and efficient might mean─which relations are “stored” should be of no significance whatsoever at the relational (i.e., user) level of the system. In particular, the relational model categorically does not say that “tables” (meaning, more specifically, base tables, or rather base relations) are stored and views aren’t.
+ Theextractquoteddoesn’tmentionthecruciallogicaldifferencebetweenrelationsandrelvars.
+ Theextractalsoseemstoassumethattableandbasetableareinterchangeableterms(andconcepts)─avery
+serious error, in my opinion.
+ The extract also seems to distinguish between tables and relations (and/or relvars). If “table” means, specifically, an SQL table, then I certainly agree there are some important distinctions to be observed, but they’re not the ones the extract seems to be interested in.
+ “[It’s] important to make a distinction between stored relations ... and virtual relations”: Actually, it’s extremely important from the user’s perspective (and from the perspective of the relational model, come to that) not to make any such distinction at all!
+1.12 Here are a few things that are wrong with it:
+ The relational model as such doesn’t “define tables” at all, in the sense meant by the extract quoted. It doesn’t even “define” relations (or relvars, rather). Instead, such definitions are supplied by some user. And anyway: What’s a “simple” table? Are there any complex ones?
+ What on earth does the phrase “each relation and many to many relationships” mean? What does it mean to “define tables” for such things?
+ Thefollowingconceptsaren’tpartofthemodel,sofarasIknow:entities,relationshipsbetweenentities, linking tables, “cross-reference keys.” (It’s true that Codd’s original model had a rule called “entity integrity,” but that name was only a name, and I reject that rule in any case.) It’s also true that it’s possible to put some charitable interpretations on all of these terms, but the statements that result from such interpretations are usually wrong. For example, relations don’t always represent “entities” (what “entity” is represented by the relation that’s the projection of suppliers on {STATUS,CITY}?).
+ Primaryandsecondaryindexesandrapidaccesstodataareallimplementationnotions─they’renothingtodo with the model. In particular, primary (or, more generally, candidate) keys shouldn’t be equated with “primary indexes.”
+ “Based upon qualifications”? Would it be possible to be a little more precise? It’s truly distressing, in the relational context above all others (where precision of thought and articulation was always a key objective),
+www.it-ebooks.info
+Answers to Exercises / Appendix F 331
+                332
+Appendix F / Answers to Exercises
+
+to find such dreadfully sloppy phrasing. Well, yeah, you know, a relation is kind of like a table, or a kind of a table, or something ... if you see what I mean.
+Finally, what about the operators? It’s an all too common error to think the relational model has to do with structure only and to forget about the operators. But the operators are crucial! As Codd himself once observed: “Structure without operators is ... like anatomy without physiology.”
+As a kind of postscript to the foregoing, I remark that the relational model certainly seems to have received more than its fair share of misunderstanding or misrepresentation in the literature over the years. Here are a few more quotes to illustrate the point:
+ “Relational model: A scheme for defining databases in which data elements are organized into relations, typically viewed as rows in tables.” As I wrote when I first had occasion to comment on this “definition” (which appears in a book on object technology): Never mind the inaccuracies─you mean that’s it? What about the operators? What about integrity? What about declarative query? What about views? What about the model’s set level nature? What about optimization? And so on and so forth.
+ “Anewerformofdatabasemanager,therelationalmodel,...[removes]informationaboutcomplex relationships from the database ... Although the relational model is much more flexible than its predecessors, it pays a price for this flexibility. The information about complex relationships that was removed from the database must be expressed as procedures in every program that accesses the database, a clear violation of the independence required for modularity.” I’ll leave comments on this one to you (it’s taken from that same book on object technology).
+ “Consideradatarelationshipinwhichapartcanhavemultiplesuppliersandviceversa...Therearetwobase tables: a part table and a supplier table. Then there is a cross-reference table from part to supplier and another cross-reference table from supplier to part” (emphasis added). This quote is from what has to be one of the worst textbooks I’ve ever read.
+1.13 Here are some possible CREATE TABLE statements. Regarding the column data types, see Chapter 2. Note: These CREATE TABLE statements, along with their Tutorial D counterparts, are repeated in Chapter 5, where further pertinent discussion can be found. See also the answer to Exercise 2.15 later in this appendix.
+CREATE TABLE S
+( SNO VARCHAR(5)
+SNAME VARCHAR(25) STATUS INTEGER CITY VARCHAR(20) UNIQUE ( SNO ) ) ;
+CREATE TABLE P
+( PNO VARCHAR(6)
+PNAME VARCHAR(25) COLOR CHAR(10) WEIGHT NUMERIC(5,1) CITY VARCHAR(20) UNIQUE ( PNO ) ) ;
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+www.it-ebooks.info
+                CREATE TABLE SP
+( SNO PNO QTY
+VARCHAR(5) VARCHAR(6) INTEGER
+NOT NULL ,
+NOT NULL ,
+NOT NULL ,
+UNIQUE ( SNO , PNO ) ,
+FOREIGN KEY ( SNO ) REFERENCES S ( SNO ) , FOREIGN KEY ( PNO ) REFERENCES P ( PNO ) ) ;
+Note that SQL encloses the column definitions and the key and foreign key specifications all inside the same set of parentheses (contrast this with what Tutorial D does─again, see Chapters 2 and 5). Note too that by default SQL columns permit nulls; if we want to prohibit them, therefore (and I do), we have to specify an explicit constraint to that effect. There are various ways of defining such a constraint; specifying NOT NULL as part of the column definition is probably the easiest.
+1.14 Tutorial D (I can’t show this in SQL, because SQL doesn’t support relational assignment):
+SP := SP UNION RELATION { TUPLE { SNO ‘S5’ , PNO ‘P6’ , QTY 250 } } ;
+The text between the keyword UNION and the closing semicolon is a relation selector invocation (see Chapter 3), and it denotes the relation that contains just the tuple to be inserted. See Chapter 5 for further discussion.
+1.15 I’ll give an answer here for completeness (Tutorial D again), but I’ll defer detailed explanations to Chapter 7:
+WITH ( R1 := S WHERE CITY = ‘Paris’ ,
+R2 := EXTEND R1 : { STATUS := 25 } ) :
+S := ( S MINUS R1 ) UNION R2 ;
+1.16 First consider the generic assignment:
+R := rx ;
+Here R is a relvar name and rx is a relational expression, denoting the relation to be assigned to relvar R. An SQL
+analog might look like this─
+DELETE FROM T ;
+INSERT INTO T (...) tx ;
+─where T is an SQL table corresponding to relvar R and tx is an SQL table expression corresponding to the relational expression rx. Note the need for the preliminary DELETE; note too that anything could happen, loosely speaking, between that DELETE and the subsequent INSERT, whereas there’s no notion in the relational case of there being anything “between the DELETE and the INSERT” (the assignment is a semantically atomic operation). In other words, the foregoing DELETE / INSERT combination, unlike the assignment it’s trying to mimic, is a sequence of two distinct statements. One implication of this fact is that a failure could occur between those two statements, something that couldn’t happen with the assignment as such.
+As for the question “Can all relational assignments be expressed in terms of INSERT and/or DELETE and/or UPDATE?”, the answer is yes (though in fact we don’t need UPDATE as such at all). To be specific, the generic assignment─
+www.it-ebooks.info
+Answers to Exercises / Appendix F 333
+                334 Appendix F / Answers to Exercises
+R := rx ;
+─is logically equivalent to:
+R := ( R MINUS ( R MINUS rx ) ) UNION ( rx MINUS R ) ;
+To elaborate slightly, let d and i be the relations denoted by the expressions R MINUS rx and rx MINUS R,
+respectively. Then the original assignment is logically equivalent to the following one:
+R := ( R MINUS d ) UNION i ;
+This latter assignment is effectively equivalent to deleting d from R and then inserting i into R. Do note, however, that the DELETE and INSERT in question are both done as part of the same statement, not as two separate statements. See the discussion of multiple assignment in Chapter 8.
+There’s another point I need to clear up here, too. In the body of the chapter, I said that SQL doesn’t support relational assignment directly, and that’s true. However, one reviewer of that chapter objected that, for example, the following SQL expression “could be thought of as relational assignment” (I’ve simplified the reviewer’s example somewhat):
+SELECT LS.*
+FROM ( SELECT SNO , SNAME , STATUS
+FROM S
+WHERE CITY = ‘London’ ) AS LS
+In effect, the reviewer was suggesting that this expression is assigning some table value to a table variable called LS. But it isn’t. In particular, it isn’t possible to go on and do further queries or updates on LS; LS isn’t an independent table in its own right, it’s just a temporary table that’s conceptually materialized as part of the process of evaluating the overall SELECT expression. That expression is not a relational assignment. (In any case, assignment of any kind is a statement, not an expression. Statement vs. expression is another of those important logical differences. See Exercise 2.24 in Chapter 2.)
+And one further point: The SQL standard supports a variant of CREATE TABLE, “CREATE TABLE AS,” that allows the base table being created to be initialized to the result of some query, thereby not only creating the table in question but also assigning an initial value to it. Once initialized, however, the table in question behaves just like any other base table; thus, CREATE TABLE AS doesn’t really constitute support for relational assignment, as such, either.
+1.17 The discussions that follow are based on more extensive ones to be found in my book An Introduction to Database Systems (see Appendix G).
+Duplicate tuples: Essentially, the concept makes no sense. Suppose for simplicity that the suppliers relvar had just two attributes, SNO and CITY, and suppose it contained a tuple showing that “it’s a true fact” that supplier S1 is located in London. Then if it also contained a duplicate of that tuple (if that were possible), it would simply be informing us of that same “true fact” a second time. But as Chapter 4 observes, if something is true, saying it twice doesn’t make it more true! For further discussion, see Chapter 4 or the paper “Double Trouble, Double Trouble” mentioned in Appendix G.
+Tuple ordering: The lack of tuple ordering means there’s no such thing as “the first tuple” or “the fifth tuple” or “the 97th tuple” of a relation, and there’s no such thing as “the next tuple”; in other words, there’s no concept of
+www.it-ebooks.info
+                positional addressing, and no concept of “nextness.” If we did have such concepts, we would need certain additional operators as well─for example, “retrieve the nth tuple,” “insert this tuple here,” “move this tuple from here to there,” and so on. As a matter of fact (to lift some text from Appendix A), it’s axiomatic that if we have n different ways to represent information, then we need n different sets of operators.1 And if n > 1, then we have more operators to implement, document, teach, learn, remember, and use (and choose among). But those extra operators add complexity, not power! There’s nothing useful that can be done if n > 1 that can’t be done if n = 1.
+By the way, another good argument against ordering (of any kind) is that positional addressing is fragile─the addresses change as insertions and deletions are performed.
+Attribute ordering: The lack of attribute ordering means there’s no such thing as “the first attribute” or “the second attribute” (and so on), and there’s no “next attribute” (i.e., there’s no concept of “nextness”)─attributes are always referenced by name, never by position. As a result, the scope for errors and obscure programming is reduced. For example, there’s no way to subvert the system by somehow “flopping over” from one attribute to another. This situation contrasts with that found in certain programming systems, where it might be possible to exploit the physical adjacency of logically discrete items, deliberately or otherwise, in a variety of subversive ways. Note: Many other negative consequences of attribute ordering (or column ordering, rather, in SQL) are discussed in subsequent chapters. See also the paper “A Sweet Disorder,” mentioned in Appendix G.
+In the interest of accuracy, I should add that for reasons that don’t concern us here, relations in mathematics, unlike their counterparts in the relational model, do have a left to right ordering to their attributes. A similar remark applies to tuples also. See Appendix A for further discussion.
+CHAPTER 2
+2.1 A type is a named, finite set of values─all possible values of some specific kind: for example, all possible integers, or all possible character strings, or all possible supplier numbers, or all possible XML documents, or all possible relations with a certain heading (etc., etc.). There’s no difference between a domain and a type. Note: SQL does draw a distinction between domains and types, however. In particular, it supports both a CREATE TYPE statement and a CREATE DOMAIN statement. To a first approximation, CREATE TYPE is SQL’s counterpart to the TYPE statement of Tutorial D, which I’ll be discussing in Chapter 8 (though there are many, many differences, not all of them trivial in nature, between the two). CREATE DOMAIN might be regarded, very charitably, as SQL’s attempt to provide a tiny part of the total functionality of CREATE TYPE (it was introduced in SQL:1992, while CREATE TYPE wasn’t introduced until SQL:1999); now that CREATE TYPE exists, there seems little reason to use, or even support, CREATE DOMAIN at all.
+2.2 Every type has at least one associated selector; a selector is an operator that allows us to select, or specify, an arbitrary value of the type in question. Let T be a type and let S be a selector for T; then every value of type T must be returned by some successful invocation of S, and every successful invocation of S must return some value of type T. See Chapter 8 for further discussion. Note: Selectors are provided “automatically” in Tutorial D─since they’re required by the relational model, at least implicitly─but not, in general, in SQL. In fact, although the selector concept necessarily exists, SQL doesn’t really have a term for it; certainly selector as such isn’t an SQL term. Further details are beyond the scope of this book.
+A literal is a “self-defining symbol”; it denotes a value that can be determined at compile time. More precisely, a literal is a symbol that denotes a value that’s fixed and determined by the symbol in question (and the
+1 Note that tuple ordering does indeed constitute a way of representing information─namely, by position; that is, the fact that a given tuple appears here and not there certainly does represent information of some kind.
+Answers to Exercises / Appendix F 335
+ www.it-ebooks.info
+                336 Appendix F / Answers to Exercises
+type of that value is therefore also fixed and determined by the symbol in question). Here are some Tutorial D
+examples:
+4
+‘XYZ’
+FALSE
+5.0
+POINT ( 5.0 , 2.5 )
+/* a literal of type INTEGER */ /* a literal of type CHAR */ /* a literal of type BOOLEAN */ /* a literal of type RATIONAL */ /* a literal of type POINT */
+(The last of these involves the user defined type POINT from the body of the chapter.)
+Every value of every type, tuple and relation types included, must be denotable by means of some literal. A
+literal is a special case of a selector invocation; to be specific, it’s a selector invocation all of whose arguments are themselves specified as literals in turn (implying in particular that a selector invocation with no arguments at all, like the INTEGER selector invocation 4, is a literal by definition). Note finally that there’s a logical difference between a literal as such and a constant─a constant is a value, while a literal is a symbol that denotes such a value. (By the same token. there’s a logical difference between a literal and a value─as just stated, a value is a constant, such as the constant 3, while a literal is a symbol that denotes such a constant.)
+2.3 A THE_ operator is an operator that provides access to some component of some “possible representation,” or possrep, of some specified value of some specified type. See Chapter 8 for further discussion. Note: THE_ operators are effectively provided “automatically” in both Tutorial D and SQL, to a first approximation. However, although the THE_ operator concept necessarily exists, SQL doesn’t exactly have a term for it; certainly THE_ operator as such isn’t an SQL term. Further details are beyond the scope of this book.
+2.4 True in principle; might not be completely true in practice (but to the extent it isn’t, we’re talking about a confusion over model vs. implementation). Incidentally, the epigraph to the chapter is highly pertinent to the present exercise. Here it is again: “A major purpose of type systems is to avoid embarrassing questions about representations, and to forbid situations in which these questions might come up.” In other words, types are a good idea because they raise the level of abstraction (without a proper type system, everything would be nothing but tedious─and error prone─bit twiddling). And here’s another nice quote (this one’s from Andrew Wright: “On Sapphire and Type-Safe Languages,” CACM 46, No. 4, April 2003): “[Types make] program development and debugging easier by making program behavior more understandable.”
+2.5 A parameter is a formal operand in terms of which some operator is defined. An argument is an actual operand that’s substituted for some parameter in some invocation of the operator in question. (People often use these terms as if they were interchangeable; much confusion is caused that way, and you need to be on the lookout for it.) Note: There’s also a logical difference between an argument as such and the expression that’s used to specify it. For example, consider the expression (2 + 3) - 1, which represents an invocation of the arithmetic operator “-”. The first argument to that invocation is the value five, but that argument is specified by the expression 2 + 3, which represents an invocation of the arithmetic operator “+”. (In fact, of course, every expression represents some operator invocation. Even a simple variable reference─V, say─can be regarded as representing an invocation of a certain operator: namely, the operator that returns the current value of the specified variable V.)
+A database is a repository for data. (Note: In the relational world, we might say, a little more specifically, that a database is a container for relvars. But much more precise definitions are possible; one such can be found in Chapter 5 of this book. See also Appendix A.) A DBMS is a software system for managing databases; it provides data storage, recovery, concurrency, integrity, query/update, and other services.
+A foreign key is a subset of the heading of some relvar, values of which must be equal to values of some “target” key in some other relvar (or possibly the same relvar). A pointer is a value (an address, essentially) for
+www.it-ebooks.info
+                which certain special operators─notably referencing and dereferencing operators─can (and in fact must) be defined.2 Note: Brief definitions of the referencing and dereferencing operators were given in a footnote in the body of the chapter.
+A generated type is a type obtained by executing some type generator such as ARRAY, RELATION, or (in SQL) CHAR; specific array, relation, and (in SQL) character string types are thus generated types. A nongenerated type is a type that’s not a generated type.
+A relation is a value; it has a type─a relation type, of course─but it isn’t itself a type. A type is a named, finite set of values: viz., all possible values of some particular kind.
+Type is a model concept; types have semantics that must be understood by the user. Representation is an implementation concept; representations are supposed to be hidden from the user. In particular (and as noted in the body of the chapter), if X is a value or variable of type T, then the operators that apply to X are the operators defined for values and variables of type T, not the operators defined for the representation that applies to values and variables of type T. For example, just because the representation for type ENO (“employee numbers”) happens to be CHAR, say, it doesn’t follow that we can concatenate two employee numbers; we can do that only if concatenation is an operator that’s defined for values of type ENO. See the answer to Exercise 2.4 above for further discussion.
+A system defined (or built in) type is a type that’s available for use as soon as the system is installed (it “comes in the same box the system comes in”). A user defined type is a type whose definition and implementation are provided by some suitably skilled user after the system is installed. (To the user of such a type, however─as opposed to the user who actually defines that type─that type should look and feel just like a system defined type.)
+A system defined (or built in) operator is an operator that’s available for use as soon as the system is installed (it comes in the same box the system comes in). A user defined operator is an operator whose definition and implementation are provided by some suitably skilled user after the system is installed. (To the user of such an operator, however─as opposed to the user who designs and implements that operator─that operator should look and feel just like a system defined operator.) User defined operators can take arguments of either user or system defined types (or a mixture), but system defined operators can obviously take arguments of system defined types only.
+2.6 A scalar type is a type that has no user visible components; a nonscalar type is a type that’s not a scalar type. Values, variables, operators, and so forth are scalar or nonscalar according as their type is scalar or nonscalar. Be aware, however, that these terms are neither very formal nor very precise, in the final analysis. In particular, we’ll meet a couple of important relations in Chapter 3 called TABLE_DUM and TABLE_DEE that are “scalar” by the foregoing definition!─or so it might be argued, at least.
+2.7 Coercion is implicit type conversion. It’s deprecated because it’s error prone (but note that this is primarily a pragmatic issue; whether or not coercions are permitted has little or nothing to do with the relational model as such).
+2.8 Because it muddles type and representation.
+2.9 A type generator is an operator that returns a type instead of a value (and is invoked at compile time instead
+of run time). The relational model requires support for two such: namely, TUPLE and RELATION. Points arising:
+2 A much more extensive discussion of the logical difference between foreign keys and pointers can be found in the paper “Inclusion Dependencies and Foreign Keys” (see Appendix G).
+Answers to Exercises / Appendix F 337
+ www.it-ebooks.info
+                338 Appendix F / Answers to Exercises
+ TypesgeneratedbytheTUPLEandRELATIONtypegeneratorsarenonscalar,butthere’snoreasonin principle why generated types have to be nonscalar. SQL in particular supports several scalar type generators (CHAR, NUMERIC, REF, and many others).
+ Typegeneratorsareknownbymanydifferentnamesintheliterature,includingtypeconstructors(theSQL term), parameterized types, polymorphic types, type templates, and generic types.
+2.10 A relation is in first normal form (1NF) if and only if every tuple contains a single value, of the appropriate type, in every attribute position; in other words, every relation is in first normal form. Given this fact, you might be forgiven for wondering why we bother to talk about the concept at all (and in particular why it’s called “first”). The reason, as I’m sure you know (and as was in fact mentioned in Chapter 1), is that (a) we can extend it to apply to relvars as well as relations, and then (b) we can define a series of “higher” normal forms for relvars that turn out to be important in database design. In other words, 1NF is the base on which those higher normal forms build. But it really isn’t all that important as a notion in itself.
+Note: I should add that 1NF is one of those concepts whose definition has evolved somewhat over the years. It used to be defined to mean that every tuple had to contain a single “atomic” value in every attribute position. As we’ve come to realize, however (and as I tried to show in the body of the chapter), the concept of data value atomicity actually has no objective meaning. An extensive discussion of such matters can be found in the paper “What First Normal Form Really Means” (see Appendix G).
+2.11 The type of X is the type, T say, specified as the type of the result of the operator to be executed last─“the outermost operator”─when X is evaluated. That type is significant because it means X can be used in exactly (that is, in all and only) those positions where a literal of type T can appear.
+2.12 OPERATOR CUBE ( I INTEGER ) RETURNS INTEGER ; RETURN I * I * I ;
+END OPERATOR ;
+2.13 OPERATOR AREA_OF_R ( H LENGTH , W LENGTH ) RETURNS AREA ; RETURN H * W ;
+END OPERATOR ;
+I’m assuming here, not unreasonably, that (a) it’s legal to multiply (“*”) a value of type LENGTH by another
+such value, and (b) the result of such a multiplication is a value of type AREA (another user defined type).
+2.14 The following relation type is the type of the suppliers relvar S:
+RELATION { SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR }
+The suppliers relvar S itself is a variable of this type. And every legal value of that variable─for example, the value shown in Fig. 1.3 in Chapter 1─is a value of this type.
+2.15 SQL definitions are given in the answer to Exercise 1.13 earlier in this appendix. Tutorial D definitions:
+VAR P BASE RELATION
+{ PNO CHAR , PNAME CHAR , COLOR CHAR , WEIGHT RATIONAL , CITY CHAR } KEY { PNO } ;
+www.it-ebooks.info
+                VAR SP BASE RELATION
+{ SNO CHAR , PNO CHAR , QTY INTEGER } KEY { SNO , PNO }
+FOREIGN KEY { SNO } REFERENCES S FOREIGN KEY { PNO } REFERENCES P ;
+Some differences between the SQL and Tutorial D definitions:
+ AsnotedintheanswertoExercise1.13earlierinthisappendix,SQLspecifieskeysandforeignkeys,along with table columns (and certain other items too, beyond the scope of the present discussion) all inside the same set of parentheses─a fact that makes it hard to determine exactly what the pertinent type is. (As a matter of fact, SQL doesn’t really support the concept of a relation type─or table type─at all. See Chapter 3 for further discussion.)
+ The left to right order in which columns are listed matters in SQL. See Chapter 3 for further discussion.
+ SQLtablesdon’thavetohavekeysatall.
+The significance of the fact that relvar P, for example, is of a certain relation type is as follows:
+ TheonlyvaluesthatcaneverbeassignedtorelvarParerelationsofthattype.
+ AreferencetorelvarPcanappearwhereveraliteralofthattypecanappear(asin,forexample,the expression P JOIN SP), in which case it denotes the relation that happens to be the current value of that relvar at the pertinent time. (In other words, a relvar reference is a valid relational expression in Tutorial D; note, however, that an analogous remark does not apply to SQL, at least not 100 percent.) See Chapters 6 and 12 for further discussion.
+One further point: As you can see, I’ve defined attribute QTY to be of type INTEGER. However, my reason for doing so is partly historical─every DBMS I know supports type INTEGER, while few DBMSs if any support the type that would really be more appropriate in the case at hand: viz., NONNEGATIVE_INTEGER (with the obvious semantics). Of course, we could make NONNEGATIVE_INTEGER a user defined type, but I don’t want to get into too much detail regarding user defined types in this book.
+2.16 a. Not valid; LOCATION = CITY(‘London’). b. Valid; BOOLEAN. c. Presumably valid; MONEY (I’m assuming that multiplying a money value by an integer returns another money value). d. Not valid; BUDGET + MONEY(50000). e. Not valid; ENO > ENO(‘E2’). f. Not valid; NAME(THE_C(ENAME) || THE_C(DNAME)) (I’m assuming that type NAME has a single “possrep component” called C, of type CHAR). g. Not valid; CITY(THE_C(LOCATION) || ‘burg’) (I’m assuming that type CITY has a single “possrep component” called C, of type CHAR). Note: I’m also assuming throughout these answers that a given type T always has a selector with the same name. See Chapter 8 for further discussion.
+2.17 Such an operation logically means replacing one type by another, not “updating a type” (types aren’t variables and hence can’t be updated, by definition). Consider the following. First of all, the operation of defining a type doesn’t actually create the corresponding set of values; conceptually, those values already exist, and always will exist (think of type INTEGER, for example). All the “define type” operation (the TYPE statement in Tutorial D─see Chapter 8) really does is introduce a name by which that set of values can be referenced. Likewise, dropping a type doesn’t actually drop the corresponding values, it just drops the name that was introduced by the corresponding “define type” operation. It follows that “updating a type” really means dropping the type name and
+www.it-ebooks.info
+Answers to Exercises / Appendix F 339
+                340 Appendix F / Answers to Exercises
+then reintroducing that very same name to refer to a different set of values. Of course, there’s nothing to preclude support for some kind of “alter type” shorthand to simplify matters─and SQL does support such an operator, in fact─but invoking such a shorthand shouldn’t be thought of as “updating the type.”
+2.18 The empty type is certainly a valid type; however, it wouldn’t make much sense to define a variable to be of such a type, because no value could ever be assigned to such a variable! Despite this fact, the empty type turns out to be crucially important in connection with type inheritance─but that’s a topic that’s (sadly) beyond the scope of the present book. Refer to the book Databases, Types, and the Relational Model: The Third Manifesto, by Hugh Darwen and myself (see Appendix G), if you want to know more.
+2.19 LetTbeanSQLtypeforwhich“=”isnotdefinedandletCbeacolumnoftypeT. ThenCcan’tbepartofa key or foreign key, nor can it be part of the argument to DISTINCT or GROUP BY or ORDER BY, nor can restrictions or joins or unions or intersections or differences be defined in terms of it. And what about implementation constructs such as indexes? There are probably other implications as well.
+Second, let T be an SQL type for which the semantics of “=” are user defined (so T is necessarily user defined itself), and let C be a column of type T. Then the effects of making C part of a key or foreign key or applying DISTINCT or GROUP BY (etc., etc.) to it will be user defined as well, at best, and unpredictable at worst.
+2.20 Here’s a trivial example of such violation. Let X be the character string ‘AB ’ (note the trailing space), let Y be the character string ‘AB’, and let PAD SPACE apply to the pertinent collation. Then the comparison X = Y gives TRUE, and yet the operator invocations CHAR_LENGTH(X) and CHAR_LENGTH(Y) give 3 and 2, respectively. (Note too that even though the comparison X = Y gives TRUE, the comparison X||X = Y||Y doesn’t!) I leave the detailed implications for you to think about, but it should be clear that problems are likely to surface in connection with DISTINCT, GROUP BY, and ORDER BY operations among others (as well as in connection with keys, foreign keys, and certain implementation constructs, such as indexes).
+2.21 Because (a) they’re logically unnecessary, (b) they’re error prone, (c) end users can’t use them, (d) they’re clumsy─in particular, they have a direction to them, which other values don’t─and (e) they undermine type inheritance. (Details of this last point are beyond the scope of this book.) There are other reasons too. See the paper cited earlier (in a footnote to the answer to Exercise 2.5), “Inclusion Dependencies and Foreign Keys,” for further discussion.
+2.22 One answer has to do with nulls; if we “set X to null” (which isn’t really assigning a value to X, because nulls aren’t values, but never mind), the comparison X = NULL certainly doesn’t give TRUE. There are many other examples too, not involving reliance on nulls. E.g., let X be a variable of type CHAR(3), let Y be the character string ‘AB’ (no trailing space), and let NO PAD apply to the pertinent collation. Then assigning Y to X will actually set X to the string ‘AB ’ (one trailing space), and after that assignment the comparison X = Y gives FALSE. Again I leave the implications for you to think about.
+2.23 No! (Which database does type INTEGER belong to?) In an important sense, the whole subject of types and type management is orthogonal to the subject of databases and database management. We might even imagine the need for a “type administrator,” whose job it would be to look after types in a manner analogous to that in which the database administrator looks after databases.
+2.24 An expression represents an operator invocation, and it denotes a value; it can be thought of as a rule for computing or determining the value in question. (Incidentally, the arguments to that operator invocation are themselves specified as expressions in turn─though the expressions in question might just be simple literals or
+www.it-ebooks.info
+                Answers to Exercises / Appendix F 341 simple variable references.) By contrast, a statement doesn’t denote a value; instead, it causes some action to occur,
+such as assigning a value to some variable or changing the flow of control. In SQL, for example,
+X+Y
+is an expression, but
+SET Z = X + Y ;
+is a statement.
+2.25 An RVA is an attribute whose type is some relation type, and whose values are therefore relations of that type (see Chapter 7 for further discussion). A repeating group is an “attribute” of some type T whose values aren’t values of type T─note the contradiction in terms here!─but, rather, bags or sets or sequences (or ...) of values of type T. Note: Type T here is often a tuple type (or something approximating a tuple type). In a system that allows repeating groups, for example, a file might be such that each record consists of an ENO field (employee number), an ENAME field (employee name), and a repeating group JOBHIST, in which each entry consists of a JOB field (job title), a FROM field, and a TO field (where FROM and TO are dates).
+2.26 “Subquery” is an SQL term meaning, loosely, a SELECT expression enclosed in parentheses. Later chapters will elaborate (especially Chapter 12).
+2.27 Regarding SQL row and table types, see Chapter 3. As for type BOOLEAN, yes, “=” does apply; TRUE is equal to TRUE and FALSE is equal to FALSE. In SQL, what’s more, “<” applies as well!─FALSE is considered to be less than TRUE (i.e., the comparison “FALSE < TRUE” returns TRUE, in SQL).
+CHAPTER 3
+3.1 See the body of the chapter.
+3.2 Two values of any kind are equal if and only if they’re the very same value (meaning they must be of the
+same type, a fortiori). In particular, therefore, (a) two tuples t and t′ are equal if and only if they have the same attributes A1, A2, ..., An and for all i (i = 1, 2, ..., n), the value v of Ai in t is equal to the value v′ of Ai in t′; (b) two relations r and r′ are equal if and only if they have the same heading and the same body (i.e., their headings are equal and their bodies are equal).
+3.3 Tutorial D tuple selector invocations (actually literals): TUPLE { PNO ‘P1’ , PNAME ‘Nut’ ,
+COLOR ‘Red’ , WEIGHT 12.0 , CITY ‘London’ } TUPLE { SNO ‘S1’ , PNO ‘P1’ , QTY 300 }
+SQL analogs (“row value constructor” invocations):
+ROW ( ‘P1’ , ‘Nut’ , ‘Red’ , 12.0 , ‘London’ )
+www.it-ebooks.info
+                342 Appendix F / Answers to Exercises ROW ( ‘S1’ , ‘P1’ , 300 )
+Observe the lack of column names (or field names, to use the SQL term) and the reliance on left to right ordering in these SQL expressions. The keyword ROW can be omitted without changing the meanings.
+3.4 The following selector invocation (actually a literal) denotes a relation of two tuples:
+RELATION { TUPLE { SNO ‘S1’ , PNO ‘P1’ , QTY 300 } , TUPLE { SNO ‘S1’ , PNO ‘P2’ , QTY 200 } }
+SQL analog (a “table value constructor” invocation, involving two “row value constructor” invocations):
+VALUES ROW ( ‘S1’ , ‘P1’ , 300 ) , ROW ( ‘S1’ , ‘P2’ , 200 )
+Either or both of the two row value constructor invocations here can omit the ROW keyword if desired. By the way, the fact that there are no parentheses enclosing that commalist of row value constructor invocations isn’t an error. In fact, the following SQL expression─
+VALUES ( ROW ( ‘S1’ , ‘P1’ , 300 ) , ROW ( ‘S1’ , ‘P2’ , 200 ) )
+(which is certainly legal, syntactically speaking)─denotes something entirely different! See the answer to Exercise 3.10 later.
+3.5 The list that follows is based on one in my book An Introduction to Database Systems (see Appendix G).
+ Eachattributeintheheadingofarelationinvolvesatypename,butthosetypenamesareusuallyomitted
+from tables (where by tables I mean tabular pictures of relations).
+ Eachcomponentofeachtupleinthebodyofarelationinvolvesatypenameandanattributename,butthose
+type and attribute names are usually omitted from tabular pictures.
+ Eachattributevalueineachtupleinthebodyofarelationisavalueoftheapplicabletype,butthosevalues (or literals denoting those values, rather) are usually shown in some abbreviated form─for example, S1 instead of ‘S1’─in tabular pictures.
+ The columns of a table have a left to right ordering, but the attributes of a relation don’t. One implication of this point is that (unlike attributes) columns can have duplicate names, or even no names at all. For example, consider the SQL expression
+SELECT DISTINCT S.CITY , S.STATUS * 2 , P.CITY
+FROM S, P
+What are the column names in the result of this expression?
+ Therowsofatablehaveatoptobottomordering,butthetuplesofarelationdon’t.
+ Atablemightcontainduplicaterows,butarelationnevercontainsduplicatetuples.
+www.it-ebooks.info
+                Answers to Exercises / Appendix F 343
+ Tables(atleastinSQL)alwayshaveatleastonecolumn,whilerelationsareallowedtohavenoattributesat
+all (see the section “TABLE_DUM and TABLE_DEE” in the body of the chapter).
+ Tables(atleastinSQL)areallowedtoincludenulls,butrelationscertainlyaren’t.
+ Tables(inthesenseoftabularpictures)are“flat”ortwo-dimensional,butrelationsaren-dimensional.
+3.6 One exception is as follows: Since no database relation can have an attribute of any pointer type, no tuple in such a relation can have an attribute of any pointer type either. The other exception is a little harder to state, but what it boils down to is that if tuple t has heading {H}, then no attribute of t can be defined in terms of any tuple or relation type with that same heading {H}, at any level of nesting.
+Here are Tutorial D expressions denoting (a) a tuple with a tuple valued attribute and (b) a tuple with a relation valued attribute:
+TUPLE { NAME ‘Superman’ ,
+ADDR TUPLE { STREET ‘1600 Pennsylvania Ave.’ ,
+CITY ‘Washington’ , STATE ‘DC’ , ZIP ‘20500’ } }
+TUPLE { SNO ‘S2’ , PNO_REL RELATION { TUPLE { PNO ‘P1’ } , TUPLE { PNO ‘P2’ } } }
+3.7 For a relation with one RVA, see relation R4 in Fig. 2.2 in Chapter 2; for an equivalent relation with no RVA, see relation R1 in Fig. 2.1 in Chapter 2. As for one with two RVAs, consider the table on the left below. The intended meaning is:
+Course CNO can be taught by every teacher TNO in TEACHER (and no other teachers) and uses every textbook XNO in TEXT (and no other textbooks).
+The table on the right represents a relation without RVAs that conveys the same information.
+┌─────┬─────────┬─────────┐ │CNO│TEACHER│TEXT │ ├═════┼─────────┼─────────┤
+┌─────┬─────┬─────┐ │CNO│TNO│XNO│ ├═════┼═════┼═════┤ │C1 │T2 │X1 │ │C1 │T2 │X2 │ │C1 │T4 │X1 │ │C1 │T4 │X2 │ │C1 │T5 │X1 │ │C1 │T5 │X2 │ │C2 │T4 │X2 │ │C2 │T4 │X4 │ │C2 │T4 │X5 │ └─────┴─────┴─────┘
+As for a relation with an RVA such that there’s no relation without an RVA that represents precisely the same information, one simple example can be obtained from Fig. 2.2 in Chapter 2 by just replacing the PNO_REL value for (say) supplier S2 by an empty relation:
+│
+│ C1
+│
+│
+│
+│
+│
+│
+│ C2
+│
+│
+│
+││ ││X5││ │ │ │ └─────┘ │ └─────┴─────────┴─────────┘
+│ ┌─────┐ │ ┌─────┐ │ ││TNO│││XNO││ │ ├═════┤ │ ├═════┤ │ ││T2 │││X1 ││ ││T4 │││X2 ││ ││T5 ││└─────┘│ │ └─────┘ │ │ │ ┌─────┐ │ ┌─────┐ │ ││TNO│││XNO││ │ ├═════┤ │ ├═════┤ │ ││T4 │││X2 ││ │└─────┘││X4 ││
+www.it-ebooks.info
+                344
+Appendix F / Answers to Exercises
+┌─────┬─────────┐ │ SNO │ PNO_REL │ ├═════┼─────────┤ │ │ ┌─────┐ │ │S2 ││PNO││ │ │ ├═════┤ │ │ │ └─────┘ │ │ │ ┌─────┐ │ │S3 ││PNO││ │ │ ├═════┤ │ │ ││P2││ │ │ └─────┘ │ │ │ ┌─────┐ │ │S4 ││PNO││ │ │ ├═════┤ │ │ ││P2││ │ ││P4││ │ ││P5││ │ │ └─────┘ │ └─────┴─────────┘
+Subsidiary exercise: Why exactly is there no relation without an RVA that represents the same information as the relation just shown?
+However, it isn’t necessary to invoke the notion of an empty relation in order to come up with an example of a relation with an RVA such that there’s no relation without an RVA that represents precisely the same information. (Subsidiary exercise: Justify this remark! If you give up, refer to the discussion of the SIBLING example in Chapter 7.)
+Perhaps I should elaborate on what it means for two relations to represent the same information. Basically, relations r1 and r2 represent the same information if and only if it’s possible to map r1 into r2 and vice versa by means of operations of the relational algebra.3 With reference to relations R4 in Fig. 2.2 in Chapter 2 and R1 in Fig. 2.1 in Chapter 2, for example, we have:
+R4 = R1 GROUP ( { PNO } AS PNO_REL )
+R1 = R4 UNGROUP ( PNO_REL )
+Each relation can thus be defined in terms of the other, and the two therefore do represent the same information. See Chapter 7 for further discussion of the GROUP and UNGROUP operators.
+3.8 TABLE_DEE and TABLE_DUM (DEE and DUM for short) are the only relations with no attributes; DEE contains exactly one tuple (the 0-tuple), DUM contains no tuples at all. SQL doesn’t support them because tables in SQL are always required to have at least one column. (In other words, SQL’s version of the relational algebra is like an arithmetic that has no zero.) As for why this is so, your guess is as good as mine.
+3.9 (Note: You might want to come back and take another look at this answer after reading Chapter 10.) We need the concept of relations in general before we can have the concept of relations of degree zero in particular. The concept of relations in general depends on predicate logic. Predicate logic depends on propositional logic.
+3 Another useful informal characterization is this: Relations r1 and r2 represent the same information if and only if, for any query q1 that can be addressed to r1, there’s a corresponding query q2 that can be addressed to r2 that produces the same result (and vice versa).
+ www.it-ebooks.info
+                Propositional logic depends on the truth values TRUE and FALSE. So if we tried to replace TRUE and FALSE by DEE and DUM, we would be going round in circles!
+Also, it would be a little odd (to say the least) if all boolean expressions suddenly became relational expressions, and host languages thus suddenly all had to support relational data types.
+Would it make sense to define a relvar of degree zero? It’s hard but not impossible to imagine a situation in which such a relvar might be useful─but that’s not the point. Rather, the point is that the system shouldn’t include a prohibition against defining such a relvar. If it did, then that fact would constitute a violation of orthogonality, and such violations always come back to bite us eventually.
+3.10 The first denotes an SQL table of four rows (three distinct ones, plus a duplicate of one of those three). The second denotes an SQL table of one row, that row consisting of four “field” values all of which are rows in turn. Note that none of the fields involved (in either case) is named.
+3.11 The given expression is semantically equivalent to this one:
+SELECT SNO
+FROM S
+WHERE STATUS > 20
+OR (STATUS=20ANDSNO>‘S4’) OR STATUS IS NULL
+OR SNO IS NULL
+3.12 See the body of the chapter.
+3.13 See the body of the chapter.
+3.14 EXISTS (t), where t is the SQL analog of the relational expression r. Note: Another possibility is (SELECT
+COUNT(*) FROM (t)) > 0; however, this possibility is slightly deprecated, for reasons to be explained in Chapter 10.
+3.15 The complete syntax for a relation selector invocation in Tutorial D is as follows: RELATION [ <heading> ] { <tuple exp commalist> }
+Simplifying slightly, a <heading> is a commalist of attribute-name/type-name pairs enclosed in braces; it must be specified if the <tuple exp commalist> is empty, but can be omitted otherwise. By way of example, therefore, the empty suppliers relation can be specified as follows:
+RELATION { SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } { }
+As an aside, I note that TABLE_DEE and TABLE_DUM can be thought of as shorthand for the relation selector invocations RELATION {} {TUPLE {}} and RELATION {} {}, respectively.
+As for SQL: The SQL analog of a relation selector invocation is (an important special case of) a VALUES expression. The syntax is:
+VALUES <row exp commalist>
+As you can see, there’s nothing here analogous to the optional <heading> component of a Tutorial D selector
+invocation. As a consequence, the <row exp commalist> mustn’t be empty, and SQL has no direct way of
+www.it-ebooks.info
+Answers to Exercises / Appendix F 345
+                346 Appendix F / Answers to Exercises
+specifying an empty table. Thus, workarounds are needed. For example, the empty suppliers table might be
+specified as follows:
+SELECT * FROM S WHERE FALSE
+3.16 Yes! However, we would of course want such operators always to produce a valid tuple as a result (i.e., we would want closure for such operations, just as we have closure for relational operations). For tuple union, for example, we would want the input tuples to be such that attributes with the same name have the same value (and are therefore of the same type, a fortiori). By way of example, let t1 and t2 be a supplier tuple and a shipment tuple, respectively, and let t1 and t2 have the same SNO value. Then the union of t1 and t2, t1 UNION t2, is a tuple of type TUPLE {SNO CHAR, SNAME CHAR, STATUS INTEGER, CITY CHAR, PNO CHAR, QTY INTEGER}, with components as in t1 or t2 or both (as applicable). E.g., if t1 is (S1,Smith, 20,London) and t2 is (S1,P1,300)─to adopt an obvious shorthand notation for tuples─then their union is the tuple (S1,Smith,20,London,P1,300). Note: This operation might not unreasonably be called tuple join instead of tuple union.
+Of course, it’s not just the usual set operators that might reasonably be adapted to tuples specifically─the same goes for certain of the well known relational operators, too. A particularly important example is provided by the tuple projection operator, which is a straightforward adaptation of the relational projection operator. For example, let t be a supplier tuple; then the projection t{SNO,CITY} of t on attributes {SNO,CITY} is that subtuple of t that contains just the SNO and CITY components from t. Likewise, t{CITY} is that subtuple of t that contains just the CITY component from t, and t{} is that subtuple of t that contains no components at all (in other words, it’s the 0-tuple). In fact, it’s worth noting explicitly that every tuple has a projection on the empty set of attributes whose value is, precisely, the 0-tuple.
+3.17 See the body of the chapter.
+3.18 AS is used in SELECT clauses (to introduce column names); CREATE VIEW (ditto); FROM clauses (to
+introduce range variable names─by contrast, the syntax used to introduce column names in this context doesn’t use AS); WITH specifications; and other contexts not discussed in this book.
+You were also asked (a) in which cases the keyword was optional; (b) in which cases the AS clause took the form “<something> AS name”; and (c) in which cases it took the form “name AS <something>“: No answer provided.
+CHAPTER 4
+4.1 To deal with this argument properly would take more space than we have here, but it all boils down to what’s sometimes called The Principle of Identity of Indiscernibles (see Appendix A). Let a and b be any two entities─for example, two pennies. Well, if there’s absolutely no way whatsoever of distinguishing between a and b, then there aren’t two entities but only one! Now, it might be true for certain purposes that the two entities can be interchanged, but that fact isn’t sufficient to make them indiscernible (there’s a logical difference between interchangeability and indiscernibility, in fact, and arguments to the effect that “duplicates occur naturally in the real world” tend to be based on a muddle over this difference). A detailed analysis of this whole issue can be found in the paper “Double Trouble, Double Trouble” (see Appendix G).
+4.2 Before we can answer this question, we need to pin down exactly what WHERE and UNION mean in the presence of duplicates. The paper “The Theory of Bags: An Investigative Tutorial” (see Appendix G) goes into details on such matters; here let me just say that if we adopt the SQL definitions, then the law certainly doesn’t apply. In fact, it doesn’t apply to either UNION ALL or UNION DISTINCT! By way of example, let T be an SQL
+www.it-ebooks.info
+                Answers to Exercises / Appendix F 347 table with just one column─C, say─containing just two rows, each of them containing just the value v. Then the
+following expressions produce the indicated results:
+SELECT C FROM T WHERE TRUE OR TRUE
+Result: v * 2.
+SELECT C
+FROM T
+WHERE TRUE UNION DISTINCT SELECT C
+FROM T WHERE TRUE
+Result: v * 1.
+SELECT C FROM T WHERE TRUE UNION ALL SELECT C FROM T WHERE TRUE
+Result: v * 4.
+Note: If the various (implicit or explicit) ALLs in the foregoing expressions were all replaced by
+DISTINCT, it would be a different story. What do you conclude?
+4.3 Remarks similar to those in the answer to the previous exercise apply here also. Again I’ll skip the details; I’ll just say for the record that, first, the answer depends, of course, on what definitions we adopt for UNION and INTERSECT for bags as opposed to sets; second, with the SQL definitions, the law doesn’t apply. I’ll leave development of a counterexample to you.
+4.4 As far as I can see, the only way to resolve the ambiguity is by effectively defining a mapping from each of the (multiset) argument tables to a proper set, and likewise defining a mapping of the (multiset) result table─i.e., the desired cartesian product─to a proper set. (The mappings involve attaching a unique identifier to each row.) It seems to me, in fact, that the standard’s failed attempt at a definition here serves only to emphasize the point that one of the most fundamental concepts in the entire SQL language (viz., the idea that tables should permit duplicate rows) is fundamentally flawed─and cannot be repaired without, in effect, dispensing with the concept altogether.
+4.5 I don’t think the problem can be fixed.
+4.6 No answer provided!
+4.7 The question was: Do you think nulls occur naturally in the real world? Only you can answer this
+question─but if your answer is yes, I think you should examine your reasoning very carefully. For example,
+www.it-ebooks.info
+                348 Appendix F / Answers to Exercises
+consider the statement “Joe’s salary is $50,000.” That statement is either true or false. Now, you might not know whether it’s true or false; but your not knowing has nothing to do with whether it actually is true or false. In particular, your not knowing is certainly not the same as saying “Joe’s salary is null”! “Joe’s salary is $50,000” is a statement about the real world. “Joe’s salary is null” is a statement about your knowledge (or lack of knowledge, rather) of the real world. We certainly shouldn’t keep a mixture of these two very different kinds of statements in the same relation, or in the same relvar.
+Suppose you had to represent the fact that you don’t know Joe’s salary in some box on some paper form. Would you enter a null, as such, into that form? I don’t think so! Rather, you would leave the box blank, or put a question mark, or write “unknown,” or something along those lines. And that blank, or question mark, or “unknown”─or whatever─is a value, not a null (recall that the one thing we can be definite about regarding nulls is that they aren’t values). Speaking for myself, therefore, no, I don’t think nulls do “occur naturally in the real world.”
+4.8 True (though not in SQL!). Null is a marker that represents the absence of information, while UNKNOWN is a value, just as TRUE and FALSE are values. So there’s a logical difference between the two, and to confuse them as SQL does is a logical mistake (I’d like to say it’s a big logical mistake, but all logical mistakes are big by definition).
+4.9 Yes, it does; SQL’s analog of MAYBE p is p IS UNKNOWN.
+4.10 In 2VL there are exactly 4 monadic connectives and exactly 16 dyadic connectives, corresponding to the 4
+possible monadic truth tables and 16 possible dyadic truth tables. Here are those truth tables (I’ve indicated the ones that have common names, such as NOT, AND, and OR):4
+│ │ NOT│ │ ───┼─── ───┼─── ───┼─── ───┼─── T│T T│T T│F T│F F│T F│F F│T F│F
+│TF │TF NAND│TF │TF ───┼───── ───┼───── ───┼───── ───┼─────
+T│TT T│TF T│FT T│FF F│TT F│TT F│TT F│TT
+OR │ T F │TF XOR│TF │TF ───┼───── ───┼───── ───┼───── ───┼─────
+T│TT T│TF T│FT T│FF F│TF F│TF F│TF F│TF
+│TF IFF│TF │TF NOR│TF ───┼───── ───┼───── ───┼───── ───┼─────
+T│TT T│TF T│FT T│FF F│FT F│FT F│FT F│FT
+│TF AND│TF │TF │TF ───┼───── ───┼───── ───┼───── ───┼─────
+T│TT T│TF T│FT T│FF F│FF F│FF F│FF F│FF
+4 Note that the dyadic tables are shown here in a style slightly different from that used in the body of the chapter. Both styles are acceptable, but (as I’ll mention again in Chapter 10) sometimes one style is more convenient, sometimes the other is.
+ www.it-ebooks.info
+                In 3VL, by contrast, there are 27 (3 to the power 3) monadic connectives and 19,683 (3 to the power 32) dyadic connectives. (In general, in fact, nVL has n to the power n monadic connectives and n to the power n2 dyadic connectives.) Many conclusions might be drawn from these facts; one of the most immediate is that 3VL is vastly more complex than 2VL (much more so, probably, than most people, including those who think nulls are a good thing, realize, or at least admit to).
+4.11 Classical 2VL supports (among other things) NOT, AND, and OR and is thus truth functionally complete, because all possible 2VL connectives can be expressed in terms of NOT and either AND or OR (see the answer to Exercise 10.4 later in this appendix for further explanation). And it turns out that SQL’s 3VL─under an extremely charitable interpretation of that term!─is also truth functionally complete. The paper “Is SQL’s Three-Valued Logic Truth Functionally Complete?” (see Appendix G) discusses this issue in detail.
+4.12 It’s not a tautology in 3VL, because if bx evaluates to UNKNOWN, the whole expression also evaluates to UNKNOWN. But there does exist an analogous tautology in 3VL: viz., bx OR NOT bx OR MAYBE bx. Note: This state of affairs explains why, in SQL, if you execute the query “Get all suppliers in London” and then the query “Get all suppliers not in London,” you don’t necessarily get (in combination) all suppliers; you have to execute the query “Get all suppliers who may be in London” as well. Note the implications for query rewrite; note too the potential for serious mistakes (on the part of both users and the system, I might add─and there’s some history here). To spell the point out: It’s very natural to assume that expressions that are tautologies in 2VL are also tautologies in 3VL, but such is not necessarily the case.
+4.13 It’s not a contradiction in 3VL, because if bx evaluates to UNKNOWN, the whole expression also evaluates to UNKNOWN. But there does exist an analogous (slightly tricky!) contradiction in 3VL: viz., bx AND NOT bx AND NOT MAYBE bx. Note: As you might expect, this state of affairs has implications similar to those noted in the answer to the previous exercise.
+4.14 In 3VL (at least as realized in SQL), r JOIN r isn’t necessarily equal to r, and INTERSECT isn’t a special case of JOIN. Why so? Because in SQL, believe it or not, two nulls don’t “compare equal” for join but do “compare equal” for intersection. (I take this state of affairs to be just another of the vast─infinite?─number of absurdities that nulls inevitably seem to lead us into.) However, TIMES is still a special case of JOIN, as it is in 2VL.
+4.15 Here are the rules: Let x be an SQL row. Suppose for definiteness and simplicity that x has just two components, x1 and x2 (in left to right order, of course!). Then x IS NULL is defined to be equivalent to x1 IS NULL AND x2 IS NULL, and x IS NOT NULL is defined to be equivalent to x1 IS NOT NULL AND x2 IS NOT NULL. For the given row, both of these expressions evaluate to FALSE, and it follows that the row in question is neither null nor nonnull ... What do you conclude from this state of affairs?
+By the way: At least one reviewer commented at this point that he’d never thought of a row being null. But rows are values (just as tuples and relations are values), and hence the idea of some row being unknown makes exactly as much sense as, say, the idea of some salary being unknown. Thus, if the concept of representing an unknown value by a “null” makes any sense at all─which of course I don’t think it does─then it surely applies to rows (and tables, and any other kind of value you can think of) just as much as it does to scalars. And as this exercise demonstrates, SQL tries to support this position─at least for rows─but fails. (Of course, it ought logically to support it for tables, too, but in that case it doesn’t even try. I mean, there’s no such thing as a “null table” in SQL.)
+4.16 No. Here are the truth tables:
+www.it-ebooks.info
+Answers to Exercises / Appendix F 349
+                350
+Appendix F / Answers to Exercises
+NOT│ IS NOT TRUE│ ───┼─── ───────────┼───
+T│FT│F U│UU│T F│TF│T
+4.17
+4.15 above) that x has just two components, x1 and x2. Then x IS NOT NULL is defined to be equivalent to x1 IS NOT NULL AND x2 IS NOT NULL, and NOT (x IS NULL) is defined to be equivalent to x1 IS NOT NULL OR x2 IS NOT NULL. What do you conclude from this state of affairs?
+4.18 The transformation isn’t valid, as you can see by considering what happens if EMP.DNO is null (were you surprised?). The implications, once again, are that users and the system are both likely to make mistakes (and again there’s some history here).
+4.19 The query means “Get suppliers who are known not to supply part P2” (note that known not, and note also the subtle difference between that phrase and not known); it does not mean “Get suppliers who don’t supply part P2.” The two formulations aren’t equivalent (consider, e.g., the case where the only SP row for part number P2 in table SP has a null supplier number).
+4.20 No two of the three statements are equivalent. Statement a. follows the rules of SQL’s 3VL; statement b. follows the definition of SQL’s UNIQUE operator; and statement c. follows SQL’s definition of duplicates. In particular, if k1 and k2 are both null, then a. gives UNKNOWN, b. gives FALSE, and c. gives TRUE (!). Here for the record are the rules in question:
+ InSQL’s3VL,thecomparisonk1=k2givesTRUEifk1andk2arebothnonnullandareequal,FALSEifk1 and k2 are both nonnull and are unequal, and UNKNOWN otherwise.
+ WithSQL’sUNIQUEoperator,thecomparisonk1=k2givesTRUEifandonlyifk1andk2arebothnonnull and are equal, and FALSE otherwise. (See Chapter 11 for further explanation.)
+ InSQL,k1andk2areduplicatesifandonlyifeither(a)they’renonnullandequalor(b)they’rebothnull. Note: Throughout the foregoing, “equal” refers to SQL’s own, somewhat idiosyncratic definition of the “=”
+operator (see Chapter 2). Subsidiary exercise: Do you think these rules are reasonable? Justify your answer.
+4.21 The output from INTERSECT ALL and EXCEPT ALL can indeed contain duplicates, but only if duplicates
+are present in the input; unlike UNION ALL, therefore, these two operators never “generate” duplicates.
+4.22 Yes! (We don’t want duplicates in the database, but that doesn’t mean we never want duplicates anywhere else. As I said in the body of the chapter, there’s a logical difference between logic and rhetoric.)
+4.23 A very good question.
+4.24 Well, I don’t know about you, but I have quite a few comments myself!
+ Firstofall,thephrase“thenullvalue”wouldbebetterreducedtojust“null”throughout.
+No. For definiteness, consider the case in which x is an SQL row. Suppose (as in the answer to Exercise
+www.it-ebooks.info
+                 Second,observethat(asnotedinChapter4)althoughSQLsupportsthree-valuedlogic,itsBOOLEANdata type has just two values, TRUE and FALSE; “the third truth value” is represented not by a value at all but by null. This state of affairs explains (?) the distinction drawn in the second quote between “boolean values” and “SQL truth values”─as far as SQL is concerned, there are three truth values (TRUE, FALSE, and UNKNOWN) but only two boolean values (TRUE and FALSE).
+ Next: “This [standard] does not make a distinction between the null value of the boolean data type5 and the truth value Unknown ... [They] may be used interchangeably to mean exactly the same thing.” But, of course, null doesn’t always mean “the third truth value,” so null and “the truth value Unknown” certainly can’t be used “interchangeably” as claimed. In fact, the keyword NULL can’t usually be used in place of the keyword UNKNOWN even when UNKNOWN is the sense intended (see c. and f. below).
+ “UnlessprohibitedbyaNOTNULLconstraint,thebooleandatatypealsosupportsthetruthvalueUnknown ...”: NOT NULL doesn’t apply to data types, it applies to uses of data types (typically as part of a column definition).
+ Formal systems (like SQL) in which the truth values are ordered usually define that ordering to be total. In particular, for three-valued logic, the ordering would typically be such that TRUE > UNKNOWN and UNKNOWN > FALSE both return TRUE. SQL, however, defines any comparison involving UNKNOWN (even UNKNOWN = UNKNOWN) to return UNKNOWN.
+ Following on from the previous point: TRUE > UNKNOWN and UNKNOWN > FALSE (etc.) are apparently legal SQL expressions─but they’re not, according to the standard, legal “boolean value expressions” (despite the fact that they do return a boolean value ... or perhaps I should say, despite the fact that they return “an SQL truth value”).
+Finally, the six SQL expressions (or would-be expressions):
+a. Legal; returns TRUE.
+b. Legal; returns null (UNKNOWN).
+c. Illegal.
+d. Legal; returns TRUE.
+e. Legal; returns null (UNKNOWN).
+f. Illegal.
+4.25 No answer provided.
+5 The phrase “The null value of the boolean data type” is rather strange in itself, since there’s just a single null and that null, since it isn’t a value, actually has no type at all.
+Answers to Exercises / Appendix F 351
+    www.it-ebooks.info
+                352 Appendix F / Answers to Exercises CHAPTER 5
+5.1 In some ways a tuple does resemble a record and an attribute a field─but these resemblances are only approximate. A relvar shouldn’t be regarded as just a file, but rather as a “file with discipline,” as it were. The discipline in question is one that results in a considerable simplification in the structure of the data as seen by the user, and hence in a corresponding simplification in the operators needed to deal with that data, and indeed in the user interface in general. What is that discipline? Well, it’s that there’s no top to bottom ordering to the records; and no left to right ordering to the fields; and no duplicate records; and no nulls; and no repeating groups; and no pointers; and no anonymous fields (and on and on). Partly as a consequence of these facts, it really is much better to think of a relvar like this: The heading represents some predicate (or some intension), and the body at any given time represents the extension of that predicate at that time.
+5.2 Loosely, the specified remark means the UPDATE operation in question “updates the STATUS attribute in tuples for suppliers in London.” But tuples (and, a fortiori, attribute values within tuples) are values and simply can’t be updated, by definition. Here’s a more precise version of the remark:
+ LetrelationsbethecurrentvalueofrelvarS.
+ Let ls be that restriction of s for which the CITY value is London.
+ Letls′bethatrelationthat’sidenticaltolsexceptthattheSTATUSvalueineachtupleisthenewvalueas specified in the given UPDATE operation.
+ Lets′betherelationdenotedbytheexpression(sMINUSls)UNIONls′.
+ Thens′isassignedtoS.
+5.3 Because relational operations are fundamentally set level and SQL’s “positioned update” operations are necessarily tuple level (or row level, rather), by definition. Although set level operations for which the set in question is of cardinality one are sometimes─perhaps even frequently─acceptable, they can’t always work. In particular, tuple level update operations might work for a while and then cease to work when integrity constraint support is improved.
+5.4 It’s defined in terms of EXCEPT ALL. Consider the SQL DELETE statement:
+DELETE FROM T WHERE bx ;
+Let temp denote the result of the expression SELECT * FROM T WHERE bx. Note that if row r appears exactly n times in temp, it also appears exactly n times in T. Then the effect of the specified DELETE statement is to assign the result of the expression
+SELECT * FROM T EXCEPT ALL SELECT * FROM temp
+to table T. (Note that EXCEPT DISTINCT would have the additional effect of eliminating duplicates from T that
+don’t appear in temp.)
+5.5 The statements aren’t equivalent. The source for the first is the table t1 denoted by the specified table
+subquery; the source for the second is the table t2 containing just the row denoted by the specified row subquery
+www.it-ebooks.info
+                (i.e., the VALUES argument). If table S does include a row for supplier S6, then t1 and t2 are identical. But if table S doesn’t include such a row, then t1 is empty while t2 contains a row of all nulls.
+As for Tutorial D analogs of the two SQL statements: Well, note first of all that in order for such analogs even to exist, it’s necessary to assume that table SS doesn’t permit duplicates, because “relvars that permit duplicates” aren’t supported in Tutorial D (in fact, they’re a contradiction in terms). Under this assumption, however, a Tutorial D analog of the first statement is reasonably straightforward:
+INSERT SS ( S WHERE SNO = ‘S6’ ) ;
+As for the second statement, the closest we can get in Tutorial D is:
+INSERT SS RELATION { TUPLE FROM ( S WHERE SNO = ‘S6’ ) } ;
+Recall from Chapter 3 that the expression TUPLE FROM rx extracts the single tuple from the relation denoted by the relational expression rx (that relation must have cardinality one). So if relvar S does contain a (necessarily unique) tuple for supplier S6, the foregoing INSERT will behave more or less as its SQL counterpart. But if relvar S doesn’t contain such a tuple, then the INSERT will fail (more precisely, the TUPLE FROM invocation will fail), whereas the SQL analog will as already noted insert a row of all nulls. Subsidiary exercise: Which behavior do you think is more reasonable (or more useful)─Tutorial D’s or SQL’s?
+5.6 The Assignment Principle states that after assignment of the value v to the variable V, the comparison V = v must evaluate to TRUE. SQL violates this principle if “v is null”; it also violates it on certain character string assignments; and it certainly also violates it for any type for which the “=” operator isn’t defined, including type XML in particular, and possibly certain user defined types as well. Negative consequences: Too many to list here.
+5.7 As in the body of the chapter, I assume the availability of certain user defined types in the following definitions. For simplicity, I also choose to overlook the fact that some of the column names I’ve chosen (which?) are in fact reserved words in SQL.
+CREATE TABLE TAX_BRACKET
+( LOW MONEY NOT NULL ,
+HIGH MONEY NOT NULL , PERCENTAGE INTEGER NOT NULL , UNIQUE ( LOW ) ,
+UNIQUE ( HIGH ) ,
+UNIQUE ( PERCENTAGE )
+CREATE TABLE ROSTER
+( DAY DAY_OF_WEEK NOT
+TIME TIME_OF_DAY NOT GATE GATE NOT PILOT NAME NOT UNIQUE ( DAY , TIME , UNIQUE ( DAY , TIME ,
+) ;
+NULL ,
+NULL ,
+NULL ,
+NULL ,
+GATE ) , PILOT ) ) ;
+www.it-ebooks.info
+Answers to Exercises / Appendix F 353
+                354
+Appendix F / Answers to Exercises
+CREATE TABLE MARRIAGE
+( SPOUSE_A NAME NOT NULL ,
+SPOUSE_B NAME NOT NULL , DATE_OF_MARRIAGE DATE NOT NULL ,
+UNIQUE ( SPOUSE_A , DATE_OF_MARRIAGE ) , UNIQUE ( DATE_OF_MARRIAGE , SPOUSE_B ) , UNIQUE ( SPOUSE_B , SPOUSE_A ) ) ;
+5.8
+variables. (That said, it’s certainly possible, and sometimes useful, to think of some subset k of the heading of relation r as if it were “a key for r” if it’s unique and irreducible with respect to the tuples of r. But thinking this way is strictly incorrect, and potentially confusing, and certainly much less useful than thinking about keys for relvars as opposed to relations.)
+5.9 Here’s one: Suppose relvar A has a “reducible key” consisting of the disjoint union of K and X, say, where K and X are both subsets of the heading of A and K is a genuine key. Then the functional dependency K Æ X holds in relvar A. Suppose now that relvar B has a foreign key referencing that “reducible key” in A. Then the functional dependency K Æ X holds in B as well. As a result, B probably displays some redundancy; in fact, it’s probably not in Boyce/Codd normal form.6
+5.10 Keys are sets of attributes─in fact, every key is a subset of the pertinent heading─and key values are thus tuples by definition, even when the tuples in question have exactly one attribute. Thus, for example, the key for the parts relvar P is {PNO} and not just PNO, and the key value for the parts tuple for part P1 is TUPLE {PNO ‘P1’} and not just ‘P1’.
+5.11 Let m be the smallest integer greater than or equal to n/2. R will have the maximum possible number of keys if either (a) every distinct set of m attributes is a key or (b) n is odd and every distinct set of m-1 attributes is a key. Either way, it follows that the maximum number of keys in R is n!/(m!*(n-m)!).7 Relvars TAX_BRACKET and MARRIAGE─see the answer to Exercise 5.7 above─are examples of relvars with the maximum possible number of keys; so is any relvar of degree zero. (If n = 0, the formula becomes 0!/(0!*0!), and 0! is 1.)
+5.12 A superkey is a subset of the heading with the uniqueness property; a key is a superkey with the irreducibility property. All keys are superkeys, but “most” superkeys aren’t keys.
+The concept of a subkey can be useful in studying normalization. Here’s a definition: Let X be a subset of the heading of relvar R; then X is a subkey for R if and only if there exists some key K for R such that X is a subset of K. For example, the following are all of the subkeys for relvar SP: {SNO,PNO}, {SNO}, {PNO}, and {} (note that the empty set {} is necessarily a subkey for all possible relvars R). By way of illustration, here’s a definition of third normal form that makes use of the subkey concept: Relvar R is in third normal form, 3NF, if and only if, for every nontrivial functional dependency X Æ Y to which R is subject, X is a superkey or Y is a subkey. (A nontrivial functional dependency is one for which the right side isn’t a subset of the left side.)
+5.13 Sample data:
+6 Details of Boyce/Codd normal form and other normal forms higher than 1NF are beyond the scope of this book. However, I’m sure you know something about them anyway, so I’ll feel free to mention them from time to time in the present appendix without further apology. For a detailed tutorial treatment of such topics, see the book Normal Forms and All That Jazz (referenced in Appendix G).
+7 Recall from Chapter 3 that the expression n! (which is read as either “n factorial” or “factorial n” and is often pronounced “n bang”) is defined as the product n * (n-1) * ... * 2 * 1.
+Because keys imply constraints; constraints apply to variables, not values; and relations are values, not
+ www.it-ebooks.info
+                EMP ┌─────┬─────┐ │ ENO │ MNO │ ├═════┼═════┤ │E4 │E2 │ │E3 │E2 │ │E2 │E1 │ │E1 │E1 │ └─────┴─────┘
+I’m using the trick here of pretending that a certain employee (namely, employee E1) acts as his or her own manager, which is one way of avoiding the use of nulls in this kind of situation. Another and probably better way is to separate the reporting structure relationships out into a relvar of their own, excluding from that relvar any employee who has no manager:
+EMP ┌─────┬─────┐ │ENO│...│ ├═════┼─────┤ │E4 │...│ │E3 │...│ │E2 │...│ │E1 │...│ └─────┴─────┘
+EM ┌─────┬─────┐ │ENO│...│ ├═════┼─────┤ │E4 │E2 │ │E3 │E2 │ │E2 │E1 │ └─────┴─────┘
+Subsidiary exercise: What are the predicates for relvar EM and the two versions of relvar EMP here? Thinking carefully about this question should serve to reinforce the suggestion that the second design is preferable.
+5.14 Because it doesn’t need to, on account of the fact that column correspondences are established in SQL (in this context, at least, though not in all contexts) on the basis of ordinal position rather than name. See the discussion in the body of the chapter.
+5.15 Note first that such a situation must represent a one to one relationship, by definition. One obvious case arises if we split some relvar “vertically,” as in the following example (suppliers):
+VAR SNT BASE RELATION
+{ SNO CHAR , SNAME CHAR , STATUS INTEGER } KEY { SNO }
+FOREIGN KEY { SNO } REFERENCES SC ;
+VAR SC BASE RELATION
+{ SNO CHAR , CITY CHAR }
+KEY { SNO }
+FOREIGN KEY { SNO } REFERENCES SNT ;
+One implication is that we probably need a mechanism for updating two or more relvars at the same time, and probably a mechanism for defining two or more relvars at the same time as well. See the discussion of multiple assignment in Chapter 8.
+5.16 Tutorial D definitions (in accordance with the paper “Toward an Industrial Strength Dialect of Tutorial D”─see Appendix G─I assume here that Tutorial D supports the self-explanatory referential actions CASCADE and NO CASCADE):
+www.it-ebooks.info
+Answers to Exercises / Appendix F 355
+                356
+Appendix F / Answers to Exercises
+VAR P BASE RELATION { PNO ... , ... } KEY { PNO } ;
+VAR PP BASE RELATION { MAJOR_PNO ... , MINOR_PNO ... , QTY ... } KEY { MAJOR_PNO , MINOR_PNO }
+FOREIGN KEY { MAJOR_PNO } REFERENCES P
+RENAME { PNO AS MAJOR_PNO } ON DELETE CASCADE FOREIGN KEY { MINOR_PNO } REFERENCES P
+RENAME { PNO AS MINOR_PNO } ON DELETE NO CASCADE ;
+With these definitions, deleting a part p will cascade to delete parts that are components of p but not parts of which p is a component.
+SQL definitions:
+CREATE TABLE P ( PNO ... , ... , UNIQUE ( PNO ) ) ;
+CREATE TABLE PP (
+MAJOR_PNO ... , MINOR_PNO ... , QTY ... , UNIQUE ( MAJOR_PNO , MINOR_PNO ) ,
+FOREIGN KEY ( MAJOR_PNO ) REFERENCES P ( PNO )
+ON DELETE CASCADE , FOREIGN KEY ( MINOR_PNO ) REFERENCES P
+ON DELETE RESTRICT ) ;
+Regarding the specification ON DELETE RESTRICT here, see the answer to the next exercise.
+Note: In this example, the two foreign keys in table PP both refer to the same key in table P. Now, in the
+body of the chapter, I said that in such a case “you might want to ensure ... that one of the foreign keys has the same column names as [the target key], even though the other one doesn’t (and can’t).” As you can see, however, I haven’t adopted my own suggestion in the case at hand; instead, I’ve opted for a more symmetric design, in which each of the foreign key columns has a name consisting of the corresponding target column name prefixed with a kind of role name (MAJOR_ and MINOR_, respectively).
+5.17 It’s obviously not possible to give a definitive answer to this exercise. I’ll just mention the referential actions supported by the standard, which are NO ACTION (the default), CASCADE, RESTRICT, SET DEFAULT, and SET NULL. Subsidiary exercise: What do you think the difference is (if any) between NO ACTION and RESTRICT? Does it make sense? Is it useful?
+5.18 Loosely, a predicate is a truth valued function, and a proposition is a predicate with an empty set of parameters. See the body of the chapter for some examples, and Chapter 10 for more examples and an extended discussion of these concepts in general.
+5.19 Relvar P: Part PNO is used in the enterprise, is named PNAME, has color COLOR and weight WEIGHT, and is stored in city CITY. Relvar SP: Supplier SNO supplies part PNO in quantity QTY.
+5.20 The intension of relvar R is the intended interpretation of R; the extension of relvar R at a given time is the set of tuples appearing in R at that time. In other words, the intension corresponds to the heading and the extension to the body.
+5.21 No answer provided.
+www.it-ebooks.info
+                5.22 The Closed World Assumption says (loosely) that everything stated or implied by the database is true and everything else is false. And The Open World Assumption─yes, there is such a thing─says that everything stated or implied by the database is true and everything else is unknown. (Loosely speaking, in other words, The Closed World Assumption says tuple t appears in relvar R if and only if t satisfies the predicate for R; The Open World Assumption says tuple t appears in relvar R only if t satisfies the predicate for R.)
+What are the implications of the foregoing? Well, first let’s agree to abbreviate Closed World Assumption and Open World Assumption to CWA and OWA, respectively. Now consider the query “Is supplier S6 under contract?” Of course, the system has no understanding of what it means for a “supplier” to be “under contract,” and so we have to formulate the query a little more precisely, thus: “Does there exist a tuple for supplier S6 in relvar S?” Given our usual sample data values, the answer is no, and under the CWA that no is interpreted as meaning supplier S6 isn’t under contract. Under the OWA, however, that same no is interpreted as meaning it’s unknown whether supplier S6 is under contract. Now consider the inverse query “Is it not the case that supplier S6 is under contract?”─more precisely, “Is it not the case that there exists a tuple for supplier S6 in relvar S?” The answer is yes, which is interpreted as meaning supplier S6 isn’t under contract under the CWA but as meaning, again, that it’s unknown whether supplier S6 is under contract under the OWA. In this example, therefore, yes and no apparently mean the same thing, under the OWA! The net of this discussion is that the OWA can’t properly deal with negation, and further that it’s likely to lead to a requirement for three-valued logic, and hence that it’s strongly deprecated for these very reasons. The paper “The Closed World Assumption” (see Appendix G) gives more information. See also Appendix C.
+5.23 To say relvar R has an empty key is to say R can never contain more than one tuple. Why? Because every tuple has the same value for the empty set of attributes─namely, the empty tuple (see the answer to Exercise 3.16, elsewhere in this appendix); thus, if R had an empty key, and if R were to contain two or more tuples, we would have a key uniqueness violation on our hands. And, yes, constraining R never to contain more than one tuple could certainly be useful. I’ll leave finding an example of such a situation as a subsidiary exercise.
+5.24 See the answer to Exercise 5.18 above.
+5.25 The question certainly makes sense, insofar as every relvar has an associated predicate. However, just what
+the predicate is for some given relvar is in the mind of the definer of that relvar (and in the user’s mind too, I trust). For example, if I define a relvar C as follows─
+VAR C BASE RELATION { CITY CHAR } KEY { CITY } ;
+─the corresponding predicate might be almost anything! It might, for example, be CITY is a city in California; or CITY is a city in which at least one supplier is located; or CITY is a city that’s the capital of some country;8 and so on. In the same way, the predicate for a relvar of degree zero─
+VAR Z BASE RELATION { } KEY { } ;
+─might also be “almost anything,” except that (since the relvar has no attributes and the corresponding predicate therefore has no parameters) the predicate in question must in fact degenerate to a proposition. That proposition will evaluate to TRUE when the value of Z is TABLE_DEE and FALSE when the value is TABLE_DUM.
+8 Or even CITY is the name of somebody’s favorite teddy bear. There’s nothing in the relvar definition to say that CITY has to denote a city.
+Answers to Exercises / Appendix F 357
+ www.it-ebooks.info
+                358 Appendix F / Answers to Exercises
+By the way, observe that relvar Z has an empty key. It’s obvious that every degree zero relvar must have an empty key; however, you shouldn’t conclude that degree zero relvars are the only ones with empty keys (see the answer to Exercise 5.23 above).
+5.26 Of course not. In fact, “most” relations aren’t values of some relvar. As a trivial example, the relation denoted by S{CITY}, the projection of the current value of relvar S on {CITY}, isn’t a value of any relvar in the suppliers-and-parts database. Note, therefore, that throughout this book, when I talk about some relation, I don’t necessarily mean a relation that’s the value of some relvar.
+5.27 There are two cases to consider: (a) The relation depicted is a sample value for some relvar R; (b) the relation depicted is a sample value for some relational expression rx, where rx is something other than a simple relvar reference (recall that a relvar reference is basically just the pertinent relvar name). In the first case, double underlining simply indicates that a primary key PK has been declared for R and the pertinent attribute is part of PK. In the second case, you can think of rx as the defining expression for some temporary relvar R (think of it as a view defining expression and R as the corresponding view, if you like); then double underlining indicates that a primary key PK could in principle be declared for R and the pertinent attribute is part of PK.
+CHAPTER 6
+First of all, here are answers to a couple of exercises that were stated inline in the body of the chapter. The first asked what the difference was, given our usual sample data, between the expressions P JOIN (S{CITY}) and (P JOIN S){CITY}. Answer: The first yields full part details (PNO, PNAME, COLOR, WEIGHT, and CITY) for parts in the same city as at least one supplier, the second yields just CITY values for those same parts (speaking a trifle loosely in both cases).
+The second exercise asked what the difference was between an equijoin and a natural join. Answer: Let the relations to be joined be r1 and r2, and assume for simplicity that r1 and r2 have just one common attribute, A. Before we can perform the equijoin, then, we need to do some renaming. For definiteness, suppose we apply the renaming to r2, to yield r3 = r2 RENAME {A AS B}. Then the equijoin is defined to be equal to (r1 TIMES r3) WHERE A = B. Note in particular that A and B are both attributes of the result, and every tuple in that result will have the same value for those two attributes. Projecting attribute B away from that result yields the natural join r1 JOIN r2.
+6.1 a. The result has duplicate column names (as well as left to right column ordering). b. The result has left to right column ordering. c. The result has an unnamed column (as well as left to right column ordering). d. The result has duplicate rows (even though the SELECT clause explicitly specifies S.SNO, not SP.SNO, and SNO values are unique in table S). e. Compile time error: S NATURAL JOIN P has no column called S.CITY.9 f. Nothing wrong (though it would be nice if CORRESPONDING were specified). g. The result has duplicate rows and left to right column ordering; it also has no SNO column, a fact that might come as a surprise.10 h. The result has duplicate column names (as well as left to right column ordering). i. Compile time error: AS specification not allowed
+9 It doesn’t really have a column called S.SNO, either (it has a column called SNO, unqualified, instead); however, there’s a bizarre syntax rule to the effect that the column can be referred to by that qualified name anyway, as in the case at hand. (When I say the rule is bizarre, I mean it’s extremely difficult to state precisely, as well as being both counterintuitive and logically incorrect.)
+10 In other words, although a column reference of the form “S.SNO” would be legal in the SELECT clause here─see part e. of the exercise─the expanded form of the expression “S.*” in that same context includes no such reference!
+ www.it-ebooks.info
+                Answers to Exercises / Appendix F 359 (because the expression “(S NATURAL JOIN P)” is neither a table name nor a table subquery─see Chapter 12). j.
+The result has duplicate column names (as well as left to right column ordering).
+6.2 No! In particular, certain relational divides that you might expect to fail don’t. Here are some examples (which won’t make much sense until you’ve read the relevant section of Chapter 7):
+ Let relation z be of type RELATION {PNO CHAR} and let its body be empty. Then the expression SP { SNO , PNO } DIVIDEBY z { PNO }
+reduces to the projection SP{SNO} of SP on SNO.
+ Let z be either TABLE_DEE or TABLE_DUM. Then the expression
+r DIVIDEBY z
+reduces to r JOIN z. In other words, if z is TABLE_DEE, the result is just r; if z is TABLE_DUM, the result
+is the empty relation of the same type as r.
+ Let relations r and s be of the same type. Then the expression
+r DIVIDEBY s
+gives TABLE_DEE if r is nonempty and every tuple of s appears in r, TABLE_DUM otherwise.
+ Finally,rDIVIDEBYrgivesTABLE_DUMifrisempty,TABLE_DEEotherwise.
+6.3 The joining attributes are SNO, PNO, and CITY (each of which is a common attribute for exactly two of the relations to be joined, as it happens). The result predicate is: Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY; part PNO is used in the enterprise, is named PNAME, has color COLOR and weight WEIGHT, and is stored in city CITY; and supplier SNO supplies part PNO in quantity QTY. Note that both appearances of SNO in this predicate refer to the same parameter, as do both appearances of PNO and both appearances of CITY. Given our usual sample values, the result looks like this:
+┌─────┬───────┬────────┬────────┬─────┬─────┬───────┬───────┬────────┐ │SNO│SNAME│STATUS│CITY │PNO│QTY│PNAME│COLOR│WEIGHT│ ├═════┼───────┼────────┼────────┼═════┼─────┼───────┼───────┼────────┤ │S1 │Smith│ 20│London│P1 │300│Nut │Red │ 12.0│
+│S1 │Smith│
+│S1 │Smith│
+│S2 │Jones│
+│S3 │Blake│
+│S4 │Clark│ 20│London│P4 │200│Screw│Red │ 14.0│ └─────┴───────┴────────┴────────┴─────┴─────┴───────┴───────┴────────┘
+The simplest SQL formulation is just
+S NATURAL JOIN SP NATURAL JOIN P
+20│London│P4 │200│Screw│Red │ 14.0│ 20│London│P6 │100│Cog │Red │ 19.0│ 10│Paris │P2 │400│Bolt │Green│ 17.0│ 30│Paris │P2 │200│Bolt │Green│ 17.0│
+www.it-ebooks.info
+                360 Appendix F / Answers to Exercises
+(though it might be necessary to prefix this expression with “SELECT * FROM,” depending on context─see
+Chapter 12).
+6.4 In 2-dimensional cartesian geometry, the points (x,0) and (0,y) are the projections of the point (x,y) on the X axis and the Y axis, respectively; equivalently, (x) and (y) are the projections into certain 1-dimensional spaces of the point (x,y) in 2-dimensional space. These notions are readily generalizable to n dimensions (recall from Chapter 3 that relations are indeed n-dimensional).
+6.5 Throughout these answers, I show SQL expressions that aren’t necessarily direct transliterations of their algebraic counterparts but are, rather, “more natural” formulations of the query in SQL terms.
+a. SQL analog:
+SELECT DISTINCT CITY FROM S NATURAL JOIN SP WHERE PNO = ‘P2’
+Predicate: City CITY is such that some supplier who supplies part P2 is located there.
+┌────────┐ │CITY │ ├════════┤ │ London │ │ Paris │ └────────┘
+b. SQL analog:
+SELECT *
+FROM P
+WHERE PNO NOT IN
+( SELECT PNO
+FROM SP
+WHERE SNO = ‘S2’ )
+Predicate: Part PNO is used in the enterprise, is named PNAME, has color COLOR and weight WEIGHT, is stored in city CITY, and isn’t supplied by supplier S2.
+┌─────┬───────┬───────┬────────┬────────┐ │PNO│PNAME│COLOR│WEIGHT│CITY │ ├═════┼───────┼───────┼────────┼────────┤ │P3 │Screw│Blue │ 17.0│Oslo │ │P4 │Screw│Red │ 14.0│London│ │P5 │Cam │Blue │ 12.0│Paris │ │P6 │Cog │Red │ 19.0│London│ └─────┴───────┴───────┴────────┴────────┘
+c. SQL analog:
+www.it-ebooks.info
+                SELECT CITY
+FROM S
+EXCEPT CORRESPONDING SELECT CITY
+FROM P
+Predicate: City CITY is such that some supplier is located there but no part is stored there.
+┌────────┐ │CITY │ ├════════┤ │ Athens │ └────────┘
+d. SQL analog:
+SELECT SNO , PNO
+FROM S NATURAL JOIN P
+Note: There’s no need to do the preliminary projections (of S on {SNO,CITY} and P on {PNO,CITY}) in the Tutorial D version, either. Do you think the optimizer might ignore them?
+Predicate: Supplier SNO and part PNO are colocated.
+┌─────┬─────┐ │ SNO │ PNO │ ├═════┼═════┤ │S1 │P1 │ │S1 │P4 │ │S1 │P6 │ │S2 │P2 │ │S2 │P5 │ │S3 │P2 │ │S3 │P5 │ │S4 │P1 │ │S4 │P4 │ │S4 │P6 │ └─────┴─────┘
+e. SQL analog:
+SELECT S.CITY FROM S,P
+AS SC , P.CITY AS PC
+Predicate: Some supplier is located in city SC and some part is stored in city PC.
+www.it-ebooks.info
+Answers to Exercises / Appendix F 361
+                362
+Appendix F / Answers to Exercises
+┌────────┬────────┐ │ SC │ PC │ ├════════┼════════┤ │ London │ London │ │ London │ Paris │ │ London │ Oslo │ │ Paris │ London │ │ Paris │ Paris │ │Paris │Oslo │ │ Athens │ London │ │ Athens │ Paris │ │ Athens │ Oslo │ └────────┴────────┘
+6.6
+join are commutative is immediate from the fact that the definitions are symmetric in the two relations concerned. I now show that union is associative. Let t be a tuple. Using “≡” to stand for “if and only if” (or “is equivalent to”) and “Œ” to stand for “appears in,” we have:
+Intersection and product are both special cases of join, so we can ignore them here. The fact that union and
+t Œ rUNION(sUNIONu) ≡ t Œ rORt Œ (sUNIONu) ≡ tŒrOR(tŒsORtŒu) ≡ (tŒrORtŒs)ORtŒu
+≡ t Œ (rUNIONs)ORt Œ u ≡ t Œ (rUNIONs)UNIONu
+Note the appeal in the third line to the associativity of OR. The proof that join is associative is analogous. As for SQL, well, let’s first of all ignore nulls and duplicate rows (what happens if we don’t?). Then:
+ SELECT A, B FROM T1 UNION CORRESPONDING SELECT B, A FROM T2 and SELECT B, A FROM T2 UNION CORRESPONDING SELECT A, B FROM T1 aren’t equivalent, because they produce results with different left to right column orderings. Thus, union in general isn’t commutative in SQL (and the same goes for intersection).
+ T1JOINT2andT2JOINT1aren’tequivalent(ingeneral),becausetheyproduceresultswithdifferentleftto right column orderings. Thus, join in general isn’t commutative in SQL (and the same goes for product).
+The operators are, however, all associative.
+6.7 RENAME is the only one─and even that one’s debatable! See the answer to Exercise 7.3 later in this appendix.
+6.8 The product of a single table t is defined to be just t. But the question of what the product of t1 and t2 is if t1 and t2 both contain duplicate rows is a tricky one! See the answer to Exercise 4.4 earlier in this appendix for further discussion.
+6.9 Tutorial D on the left, SQL on the right, as usual (the solutions aren’t unique, in general; note too that the Tutorial D solutions in particular could often be improved by using operators to be described in Chapter 7):
+a. SP │ SELECT * FROM SP │ or
+│ TABLE SP /* see Chapter 12 */
+www.it-ebooks.info
+                b. (SPWHEREPNO=‘P1’) │ {SNO} │
+SELECT SNO
+FROM   SP
+c. S d. (
+WHERE STATUS ≥ 15 │ AND STATUS £ 25 │
+SELECT
+(SJOINSP) │ WHERE CITY = ‘London’ ) │ { PNO } │
+SELECT
+FROM
+WHERE
+e. P{PNO}MINUS │ ((SJOINSP) │ WHERE CITY = ‘London’ ) │
+SELECT PNO
+FROM   P
+f. WITH(Z:=SP{SNO,PNO}): ((ZRENAME{PNOASX})
+JOIN
+│ SELECTDISTINCTXX.PNOASX,
+( Z RENAME { PNO AS Y } ) ) {X,Y} │
+g. ( S WHERE STATUS <
+STATUS FROM ( TUPLE FROM ( S WHERESNO=‘S1’))){SNO}
+│ WHERE │
+│
+│
+(
+{ PNO }
+EXCEPT
+│
+│ FROM
+│ WHERE
+│ AND
+CORRESPONDING
+PNO
+SP,S
+SP.SNO = S.SNO S.CITY = ‘London’
+│ WHERE
+PNO = ‘P1’
+*
+S
+STATUS BETWEEN 15 AND 25
+DISTINCT PNO SP,S
+SP.SNO = S.SNO S.CITY = ‘London’
+FROM │ WHERE
+│ AND
+SELECT
+│
+│ FROM
+│ WHERE
+│ SELECT
+│ FROM
+YY.PNO AS Y SPASXX,SPASYY
+XX.SNO = YY.SNO
+SNO
+S
+STATUS<
+SELECT STATUS
+FROM S
+WHERE SNO = ‘S1’ )
+Note: The expression STATUS FROM (TUPLE FROM ...) in the Tutorial D solution here extracts the STATUS value from the single tuple in the relation that’s the TUPLE FROM argument (that relation must have cardinality one). By contrast, the SQL solution effectively does a double coercion: First, it coerces a table of one row to that row; second, it coerces that row to the single scalar value it contains.
+h. WITH(RX:= RY :=
+S WHERE
+CITY = ‘London’ , SP RENAME {PNOASY}):
+│ SELECT PNO
+│FROMP
+│ WHERE NOT EXISTS (
+│ SELECT * FROM S
+│ WHERE CITY = ‘London’
+│ AND NOT EXISTS (
+│ SELECT*
+│FROM SP
+│ WHERE SP.SNO = S.SNO
+│ AND SP.PNO = P.PNO ) )
+((PWHERE
+( RY WHERE Y = PNO ) ) { SNO }
+⊇ RX{SNO}) {PNO}
+Note the use of a relational comparison in the Tutorial D expression here. The SQL version uses EXISTS (see Chapter 10). A more elegant Tutorial D solution can be found as the answer to Exercise 7.9e later in this appendix.
+www.it-ebooks.info
+Answers to Exercises / Appendix F 363
+                364 Appendix F / Answers to Exercises
+i. (S{SNO}JOINP{PNO})
+MINUS SP { SNO , PNO }
+j. WITH ( RX := SP WHERE SNO=‘S2’,
+RY := SP RENAME {SNOASY}):
+SWHERE(RYWHEREY=SNO) {PNO} ⊇ RX{PNO}
+│ SELECTSNO,PNO
+│ FROM S,P
+│ EXCEPT CORRESPONDING │ SELECT SNO , PNO
+│ FROM SP
+│ SELECT SNO
+│FROM S
+│ WHERE NOT EXISTS ( │ SELECT*
+│ FROM SPASSPX
+│ WHERE │ AND
+│ SELECT │ FROM
+│ WHERE │ AND
+SNO = ‘S2’
+NOT EXISTS (
+*
+SP AS SPY
+SPY.SNO = S.SNO SPY.PNO = SPX.PNO ) )
+A more elegant Tutorial D solution can be found as the answer to Exercise 7.9f later in this appendix.
+6.10 It’s intuitively obvious that all three statements are true. No further answer provided.
+6.11 Union isn’t idempotent in SQL, because the expression SELECT * FROM T UNION CORRESPONDING
+SELECT * FROM T isn’t identically equal to SELECT * FROM T. That’s because if T contains any duplicates, they’ll be eliminated from the result of the union. (And what happens if T contains any nulls? Good question!)
+Join is idempotent, and therefore so are intersection and cartesian product─in all cases, in the relational model but not in SQL, “thanks” again to duplicates and nulls.
+6.12 As explained in the body of the chapter, the expression r{} denotes the projection of r on no attributes; it returns TABLE_DUM if r is empty and TABLE_DEE otherwise. The answer to the question “What’s the corresponding predicate?” depends on what the predicate for r is. For example, the predicate for SP{} is (a trifle loosely): There exists a supplier SNO, there exists a part PNO, and there exists a quantity QTY such that supplier number SNO supplies part PNO in quantity QTY. Note that this predicate is in fact a proposition; if SP is empty (in which case SP{} is TABLE_DUM) it evaluates to FALSE, otherwise (in which case SP{} is TABLE_DEE) it evaluates to TRUE.
+The expression r{ALL BUT} denotes the projection of r on all of its attributes (in other words, it denotes the identity projection of r); it returns r. The corresponding predicate is identical to that for r.
+6.13 So far as I know, DB2 and Ingres both perform this kind of optimization (DB2 refers to it as “predicate transitive closure”). Other products might do so too.
+6.14 The expression means “Get suppliers who supply all purple parts.” Of course, the point is that (given our usual sample data values) there aren’t any purple parts. The expression correctly returns a relation identical to the current value of relvar S (i.e., all five suppliers, loosely speaking). For further explanation─in particular, for justification of the fact that this is indeed the correct answer─see Chapter 11.
+6.15 For S{CITY} D_UNION P{CITY}, a rough equivalent in SQL might look like this:
+www.it-ebooks.info
+                SELECT FROM (
+WHERE (
+CITY
+SELECT CITY FROM S
+UNION CORRESPONDING
+SELECT CITY FROM P ) AS TEMP NOT EXISTS
+SELECT CITY FROM S INTERSECT CORRESPONDING SELECT CITY FROM P )
+This SQL expression isn’t precisely equivalent to the original, however. To be specific, if supplier cities and part cities aren’t disjoint, then the SQL expression won’t fail at run time but will simply return an empty result. Note: The CORRESPONDING specifications could safely be omitted in this example─why, exactly?─but it’s easier, and shouldn’t hurt, always to specify CORRESPONDING, even when it’s logically unnecessary. As for the AS TEMP specification, it’s required─on the subquery in the FROM clause but not on the subquery in the WHERE clause (where in fact it would be illegal!)─for reasons explained in Chapter 7.
+Turning now to S{CITY} I_MINUS P{CITY}, a rough equivalent in SQL might look like this:
+SELECT FROM (
+WHERE (
+CITY
+SELECT CITY FROM S
+EXCEPT CORRESPONDING
+SELECT CITY FROM P ) AS TEMP NOT EXISTS
+SELECT CITY FROM P
+EXCEPT CORRESPONDING
+SELECT CITY FROM S )
+Again, however, this SQL expression isn’t precisely equivalent to the original, however. To be specific, if part cities aren’t a subset of supplier cities, then the SQL expression won’t fail at run time but will simply return an empty result.
+6.16 Relations r1 and r2 are joinable if and only if attributes with the same name are of the same type (equivalently, if and only if the set theory union of their headings is a legal heading). That’s the dyadic case. Extending the definition to the n-adic case is easy: Relations r1, r2, ..., rn (n > 0) are joinable if and only if, for all i, j (1 £ i £ n, 1 £ j £ n), relations ri and rj are joinable.
+6.17 It’s possible to define n-adic versions of JOIN, UNION, and D_UNION because the operators (a) are all both commutative and associative and (b) all have a corresponding identity value.
+SQL does effectively support (analogs of) n-adic join and union, though not for n < 2. For join, the syntax is:
+[ SELECT * FROM ] t1 NATURAL JOIN t2 NATURAL JOIN t3
+........... NATURAL JOIN tn
+For union, the syntax is:
+SELECT * FROM t1 UNION CORRESPONDING SELECT * FROM t2 UNION CORRESPONDING SELECT * FROM t3
+................................ UNION CORRESPONDING SELECT * FROM tn
+www.it-ebooks.info
+Answers to Exercises / Appendix F 365
+                366 Appendix F / Answers to Exercises
+An n-adic version of MINUS or I_MINUS makes no sense because MINUS and I_MINUS are neither
+commutative nor associative, nor do they have a corresponding identity value.
+6.18 For a brief justification, see the answer to Exercise 6.12 above. A longer one follows. Consider the projection S{SNO} of (the relation that’s current value of) the suppliers relvar S on {SNO}. Let’s refer to the result of this projection as r; given our usual sample data values, r contains five tuples. Now consider the projection of that relation r on the empty set of attributes, r{}. As we saw in the answer to Exercise 3.16 earlier in this appendix, projecting any tuple on no attributes at all yields an empty tuple; thus, every tuple in r produces an empty tuple when r is projected on no attributes. But all empty tuples are duplicates of one another; thus, projecting the 5-tuple relation r on no attributes yields a relation with no attributes and one (empty) tuple, or in other words TABLE_DEE.
+Now recall that every relvar has an associated predicate. For relvar S, that predicate looks like this:
+Supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY. For the projection r = S{SNO}, it looks like this:
+There exists some name SNAME, there exists some status STATUS, and there exists some city CITY such that supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY.
+And for the projection r{}, it looks like this:
+There exists some supplier number SNO, there exists some name SNAME, there exists some status STATUS, and there exists some city CITY such that supplier SNO is under contract, is named SNAME, has status STATUS, and is located in city CITY.
+Observe now that this last predicate is in fact a proposition: It evaluates to TRUE or FALSE, unequivocally. In the case at hand, r{} is TABLE_DEE and the predicate (proposition) evaluates to TRUE. But suppose no suppliers at all were represented in the database at this time. Then S{SNO} would yield an empty relation r, r{} would be TABLE_DUM, and the predicate (proposition) in question would evaluate to FALSE.
+6.19 The expression returns the current value of table S─unless table P is currently empty, in which case it returns an empty result.
+CHAPTER 7
+Here first are answers to certain exercises that were stated inline in the body of the chapter. In one, we were given relvars as follows─
+S { SNO } /* suppliers */ SP { SNO , PNO } /* supplier supplies part */ PJ {PNO,JNO} /*partisusedinproject*/ J { JNO } /* projects */
+─and we were asked for a SQL formulation of the query “Get all (sno,jno) pairs such that sno appears in S, jno appears in J, and supplier sno supplies all parts used in project jno.” A possible formulation is as follows:
+www.it-ebooks.info
+                SELECT FROM
+WHERE
+SX.SNO , JX.JNO SASSX,JASJX NOT EXISTS
+( SELECT *
+FROM PASPX WHERE EXISTS
+( SELECT *
+FROM PJ AS PJX WHERE PJX.PNO = AND PJX.JNO =
+AND NOT EXISTS ( SELECT *
+FROM SP AS SPX WHERE SPX.PNO = AND SPX.SNO =
+PX.PNO
+JX.JNO )
+PX.PNO
+SX.SNO ) )
+Note: For a detailed discussion of how to tackle complicated queries like this one in SQL, see Chapter 11.
+Another inline exercise asked what happens if (a) r1 and r2 are relations with no attribute names in common, (b) r2 is empty, (c) we form the product r1 TIMES r2, and finally (d) we divide that product by r2. Answer: It should be clear that the product is empty, and hence the final result is empty too (it has the same heading as r1, but of course it isn’t equal to r1, in general). Do note, however, that dividing by an empty relation isn’t an error (it’s not like dividing by zero in arithmetic).
+Another inline exercise asked why the following Tutorial D and SQL expressions weren’t quite equivalent: SWHERESUM( !!SP,QTY)<1000
+SELECT S.*
+FROM
+WHERE
+GROUP
+HAVING
+S , SP
+S.SNO = SP.SNO
+BY S.SNO , S.SNAME , S.STATUS , S.CITY SUM ( SP.QTY ) < 1000
+The difference is that the Tutorial D expression will return a result that includes suppliers (like supplier S5, given our usual sample data values) who supply no parts at all, but the SQL expression won’t. Subsidiary exercise: What accounts for the discrepancy?
+7.1 Throughout these answers, I show SQL expressions that aren’t necessarily direct transliterations of their algebraic counterparts but are, rather, “more natural” formulations of the query in SQL terms. The solutions aren’t necessarily unique. Note: This latter remark applies to many of the code solutions throughout the remainder of this appendix, and I won’t bother to make it again.
+a. SQL analog:
+     SELECT *
+     FROM   S
+     WHERE  SNO IN
+( SELECT SNO
+FROM SP
+WHERE PNO = ‘P2’ )
+Predicate: Supplier SNO is under contract, is named SNAME, has status STATUS, is located in city CITY, and supplies part P2.
+www.it-ebooks.info
+Answers to Exercises / Appendix F 367
+                368
+Appendix F / Answers to Exercises
+b.
+SQL analog:
+SELECT *
+FROM S
+WHERE SNO NOT IN
+( SELECT SNO
+FROM SP
+WHERE PNO = ‘P2’ )
+Predicate: Supplier SNO is under contract, is named SNAME, has status STATUS, is located in city CITY, and doesn’t supply part P2.
+┌─────┬───────┬────────┬────────┐ │SNO│SNAME│STATUS│CITY │ ├═════┼───────┼────────┼────────┤ │S5 │Adams│ 30│Athens│ └─────┴───────┴────────┴────────┘
+SQL analog:
+SELECT *
+FROM PASPX WHERE NOT EXISTS
+( SELECT *
+FROM SASSX WHERE NOT EXISTS
+( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO
+AND SPX.PNO = PX.PNO ) )
+Predicate: Part PNO is used in the enterprise, is named PNAME, has color COLOR and weight WEIGHT, is stored in city CITY, and is supplied by all suppliers.
+┌─────┬───────┬───────┬────────┬────────┐ │PNO│PNAME│COLOR│WEIGHT│CITY │ ├═════┼───────┼───────┼────────┼────────┤ └─────┴───────┴───────┴────────┴────────┘
+c.
+┌─────┬───────┬────────┬────────┐ │SNO│SNAME│STATUS│CITY │ ├═════┼───────┼────────┼────────┤
+│S1 │Smith│
+│S2 │Jones│
+│S3 │Blake│
+│S4 │Clark│ └─────┴───────┴────────┴────────┘
+20│London│ 10│Paris │ 30│Paris │ 20│London│
+www.it-ebooks.info
+                d. SQL analog:
+SELECT *
+FROM P
+WHERE (SELECTCOALESCE(SUM(QTY),0)
+FROM SP
+WHERE SP.PNO = P.PNO ) < 500
+Predicate: Part PNO is used in the enterprise, is named PNAME, has color COLOR and weight WEIGHT, is stored in city CITY, and is supplied in a total quantity, taken over all suppliers, that’s less than 500.
+┌─────┬───────┬───────┬────────┬────────┐ │PNO│PNAME│COLOR│WEIGHT│CITY │ ├═════┼───────┼───────┼────────┼────────┤ │P3 │Screw│Blue │ 17.0│Oslo │ │P6 │Cog │Red │ 19.0│London│ └─────┴───────┴───────┴────────┴────────┘
+e. SQL analog:
+SELECT *
+FROM P
+WHERE CITY IN
+( SELECT CITY FROM S)
+Predicate: Part PNO is used in the enterprise, is named PNAME, has color COLOR and weight WEIGHT, is stored in city CITY, and is located in the same city as some supplier.
+┌─────┬───────┬───────┬────────┬────────┐ │PNO│PNAME│COLOR│WEIGHT│CITY │ ├═════┼───────┼───────┼────────┼────────┤ │P1 │Nut │Red │ 12.0│London│ │P2 │Bolt │Green│ 17.0│Paris │ │P4 │Screw│Red │ 14.0│London│ │P5 │Cam │Blue │ 12.0│Paris │ │P6 │Cog │Red │ 19.0│London│ └─────┴───────┴───────┴────────┴────────┘
+f. SQL analog:
+SELECT S.* , ‘Supplier’ AS TAG FROM S
+Predicate: Supplier SNO is under contract, is named SNAME, has status STATUS, is located in city CITY, and has a TAG of ‘Supplier’.
+www.it-ebooks.info
+Answers to Exercises / Appendix F 369
+                370
+Appendix F / Answers to Exercises
+g.
+SQL analog:
+SELECT DISTINCT SNO , S.* , 3 * STATUS AS TRIPLE_STATUS FROM S NATURAL JOIN SP
+WHERE PNO = ‘P2’
+Predicate: Supplier SNO is under contract, is named SNAME, has status STATUS, is located in city CITY, supplies part P2, and has TRIPLE_STATUS equal to three times the value of STATUS.
+┌─────┬───────┬────────┬────────┬───────────────┐ │ SNO │ SNAME │ STATUS │ CITY │ TRIPLE_STATUS │ ├═════┼───────┼────────┼────────┼───────────────┤
+h.
+SQL analog:
+SELECT PNO , PNAME, COLOR , WEIGHT , CITY , SNO , QTY
+┌─────┬───────┬────────┬────────┬──────────┐ │SNO│SNAME│STATUS│CITY │TAG │ ├═════┼───────┼────────┼────────┼──────────┤
+│S1 │Smith│
+│S2 │Jones│
+│S3 │Blake│
+│S4 │Clark│
+│S5 │Adams│ └─────┴───────┴────────┴────────┴──────────┘
+20│London│Supplier│ 10│Paris │Supplier│ 30│Paris │Supplier│ 20│London│Supplier│ 30│Athens│Supplier│
+│S1 │Smith│
+│S2 │Jones│
+│S3 │Blake│
+│S4 │Clark│ └─────┴───────┴────────┴────────┴───────────────┘
+FROM P NATURAL JOIN SP
+WEIGHT * QTY AS SHIPWT
+20│London│ 60│ 10│Paris │ 30│ 30│Paris │ 90│ 20│London│ 60│
+Predicate: Part PNO is used in the enterprise, is named PNAME, has color COLOR and weight WEIGHT, is stored in city CITY, is supplied by supplier SNO in quantity QTY, and that shipment (of PNO by SNO) has total weight SHIPWT equal to WEIGHT times QTY.
+┌─────┬───────┬───────┬────────┬────────┬─────┬─────┬────────┐ │PNO│PNAME│COLOR│WEIGHT│CITY │SNO│QTY│SHIPWT│ ├═════┼───────┼───────┼────────┼────────┼═════┼─────┼────────┤ │P1 │Nut │Red │ 12.0│London│S1 │300│3600.0│ │P1 │Nut │Red │ 12.0│London│S2 │300│3600.0│ │P2 │Bolt │Green│ 17.0│Paris │S1 │200│3400.0│ │P2 │Bolt │Green│ 17.0│Paris │S2 │400│6800.0│ │P2 │Bolt │Green│ 17.0│Paris │S3 │200│3400.0│ │P2 │Bolt │Green│ 17.0│Paris │S4 │200│3400.0│ │P3 │Screw│Blue │ 17.0│Oslo │S1 │400│6800.0│ │P4 │Screw│Red │ 14.0│London│S1 │200│2800.0│ │P4 │Screw│Red │ 14.0│London│S4 │300│4200.0│ │P5 │Cam │Blue │ 12.0│Paris │S1 │100│1200.0│ │P5 │Cam │Blue │ 12.0│Paris │S4 │400│4800.0│ │P6 │Cog │Red │ 19.0│London│S1 │100│1900.0│ └─────┴───────┴───────┴────────┴────────┴─────┴─────┴────────┘
+www.it-ebooks.info
+                i. SQL analog:
+SELECT P.* , WEIGHT * 454 AS GMWT , WEIGHT * 16 AS OZWT FROM P
+Predicate: Part PNO is used in the enterprise, is named PNAME, has color COLOR, weight WEIGHT, weight in grams GMWT (= 454 times WEIGHT), and weight in ounces OZWT (= 16 times WEIGHT).
+┌─────┬───────┬───────┬────────┬────────┬────────┬───────┐ │PNO│PNAME│COLOR│WEIGHT│CITY │GMWT │OZWT │ ├═════┼───────┼───────┼────────┼────────┼────────┼───────┤ │P1 │Nut │Red │ 12.0│London│5448.0│192.0│ │P2 │Bolt │Green│ 17.0│Paris │7718.0│204.0│ │P3 │Screw│Blue │ 17.0│Oslo │7718.0│204.0│ │P4 │Screw│Red │ 14.0│London│6356.0│168.0│ │P5 │Cam │Blue │ 12.0│Paris │5448.0│192.0│ │P6 │Cog │Red │ 19.0│London│8626.0│228.0│ └─────┴───────┴───────┴────────┴────────┴────────┴───────┘
+j. SQL analog:
+SELECT P.* , ( SELECT COUNT ( SNO ) FROM SP
+FROM P
+WHERE SP.PNO = P.PNO ) AS SCT
+Predicate: Part PNO is used in the enterprise, is named PNAME, has color COLOR, weight WEIGHT, and city CITY, and is supplied by SCT suppliers.
+┌─────┬───────┬───────┬────────┬────────┬─────┐ │PNO│PNAME│COLOR│WEIGHT│CITY │SCT│ ├═════┼───────┼───────┼────────┼────────┼─────┤ │P1 │Nut │Red │ 12.0│London│ 2│ │P2 │Bolt │Green│ 17.0│Paris │ 4│ │P3 │Screw│Blue │ 17.0│Oslo │ 1│ │P4 │Screw│Red │ 14.0│London│ 2│ │P5 │Cam │Blue │ 12.0│Paris │ 2│ │P6 │Cog │Red │ 19.0│London│ 1│ └─────┴───────┴───────┴────────┴────────┴─────┘
+k. SQL analog:
+SELECT S.* , ( SELECT COUNT ( PNO ) FROM SP
+FROM S
+WHERE SP.SNO = S.SNO ) AS NP
+Predicate: Supplier SNO is under contract, is named SNAME, has status STATUS, is located in city CITY, and supplies NP parts.
+www.it-ebooks.info
+Answers to Exercises / Appendix F 371
+                372 Appendix F / Answers to Exercises
+┌─────┬───────┬────────┬────────┬────┐ │SNO│SNAME│STATUS│CITY │NP│ ├═════┼───────┼────────┼────────┼────┤
+│S1 │Smith│
+│S2 │Jones│
+│S3 │Blake│
+│S4 │Clark│
+│S5 │Adams│ └─────┴───────┴────────┴────────┴────┘
+20│London│ 6│ 10│Paris │ 2│ 30│Paris │ 1│ 20│London│ 3│ 30│Athens│ 0│
+l. SQL analog:
+SELECT CITY , SUM ( STATUS ) AS SUM_STATUS FROM S
+GROUP BY CITY
+Predicate: The sum of status values for suppliers in city CITY is SUM_STATUS.
+┌────────┬────────────┐ │ CITY │ SUM_STATUS │ ├════════┼────────────┤
+│ London │
+│Paris │
+│ Athens │ └────────┴────────────┘
+m. SQL analog:
+SELECT COUNT ( SNO ) AS N FROM S
+WHERE CITY = ‘London’
+Predicate: There are N suppliers in London.
+┌───┐ │N│ ├───┤ │2│ └───┘
+The lack of double underlining here is not a mistake.
+n. SQL analog:
+SELECT ‘S7’ AS SNO , PNO , QTY * 0.5 AS QTY FROM SP
+WHERE SNO = ‘S1’
+Predicate: SNO is S7 and supplier S1 supplies part PNO in quantity twice QTY.
+40 │ 40│ 30 │
+www.it-ebooks.info
+                ┌─────┬─────┬─────┐ │ SNO │ PNO │ QTY │ ├═════┼═════┼─────┤ │S7 │P1 │150│ │S7 │P2 │100│ │S7 │P3 │200│ │S7 │P4 │100│ │S7 │P5 │ 50│ │S7 │P6 │ 50│ └─────┴─────┴─────┘
+7.2 The expressions r1 MATCHING r2 and r2 MATCHING r1 are equivalent if and only if r1 and r2 are of the same type, in which case both expressions reduce to just JOIN{r1,r2} (and this latter expression reduces in turn to INTERSECT{r1,r2}).
+7.3 RENAME isn’t primitive because (for example) the expressions
+S RENAME { CITY AS SCITY }
+and
+are equivalent. Note: Possible appearances to the contrary notwithstanding, EXTEND isn’t primitive either─it can be defined in terms of join (at least in principle), as is shown in the book Databases, Types, and the Relational Model: The Third Manifesto, by Hugh Darwen and myself (see Appendix G).
+7.4 EXTENDS{SNO}:{NP:=COUNT( !!SP)}
+7.5 You can determine which of the expressions are equivalent to which by inspecting the following results of
+evaluating them. Note that the “summary” SUM(1), evaluated over n tuples, is equal to n. (Even if n is zero! SQL, of course, would say the result is null in such a case.)
+( EXTEND S : { SCITY := CITY } ) { ALL BUT CITY }
+┌────┐ a. rempty:│CT│ ├────┤ └────┘
+┌────┐ b. rempty:│CT│ ├────┤ │0│ └────┘ ┌────┐ c. rempty:│CT│ ├────┤ └────┘
+┌────┐ d. rempty:│CT│ ├────┤ │0│ └────┘
+┌────┐ rhasntuples│CT │
+(n > 0): rhasntuples│CT │
+(n > 0): rhasntuples│CT │
+(n > 0): rhasntuples│CT │
+(n > 0):
+├────┤ │n│ └────┘
+├────┤ │n│ └────┘ ┌────┐
+├────┤ │n│ └────┘ ┌────┐
+├────┤ │n│ └────┘ ┌────┐
+www.it-ebooks.info
+Answers to Exercises / Appendix F 373
+                374 Appendix F / Answers to Exercises
+In other words, the result is a relation of degree one in every case. If r is nonempty, all four expressions are equivalent; otherwise a. and c. are equivalent, and b. and d. are equivalent. SQL analogs:
+a. SELECTCOUNT(*)ASCT FROM r
+EXCEPT CORRESPONDING SELECT 0 AS CT
+FROM r
+b. SELECTCOUNT(*)ASCT FROM r
+c. Same as a.
+d. Same as b.
+7.6 They return, respectively, the empty relation and the universal relation (of the applicable type in each case). Note: The universal relation of type RELATION{H} is the relation of that type that contains all possible tuples of type TUPLE{H}. The implementation might reasonably want to outlaw invocations of INTERSECT on an empty argument (at least if those invocations really need the result to be materialized).
+Just to remind you, SQL’s analogs of the UNION and INTERSECT aggregate operators are called FUSION and INTERSECTION, respectively. If their arguments are empty, they both return null. Otherwise, they return a result as follows (these are direct quotes from the standard; T is the table over which the aggregation is being done). First FUSION:
+[The] result is the multiset M such that for each value V in the element type, including the null value [sic], the number of elements of M that are identical to V is the sum of the number of identical copies of V in the multisets that are the values of the column in each row of T.
+(The “element type” is the type of the elements of the multisets in the argument column.) Now INTERSECTION:
+[The] result is a multiset M such that for each value V in the element type, including the null value, the number of duplicates of V in M is the minimum of the number of identical copies of V in the multisets that are the values of the column in each row of T.
+Note the asymmetry, incidentally: In SQL, INTERSECTION (and INTERSECT) are defined in terms of MIN, but FUSION (and UNION) are defined in terms not of MAX but of SUM (?).
+7.7 The predicate can be stated in many different ways, of course. Here’s one reasonably straightforward formulation: Supplier SNO supplies part PNO if and only if part PNO is mentioned in relation PNO_REL. That “and only if” is important, by the way (right?).
+7.8 Relation r has the same cardinality as SP and the same heading, except that it has one additional attribute, X, which is relation valued. The relations that are values of X have degree zero; furthermore, each is TABLE_DEE, not TABLE_DUM, because every tuple sp in SP effectively includes the 0-tuple as its value for that subtuple of sp that corresponds to the empty set of attributes. Thus, each tuple in r effectively consists of the corresponding tuple from SP extended with the X value TABLE_DEE, and the original GROUP expression is logically equivalent to the following:
+www.it-ebooks.info
+                EXTEND SP : { X := TABLE_DEE }
+The expression r UNGROUP (X) yields the original SP relation again. 7.9 Tutorial D on the left, SQL on the right as usual:
+a. N:=COUNT(SP │ SETN=(SELECTCOUNT(*)
+WHERESNO=‘S1’); │ │
+b. ( S WHERE CITY = MIN(S,CITY)){SNO}
+FROM SP
+WHERE SNO=‘S1’);
+c. S { CITY } WHERECOUNT( !!S)>1
+d. S { CITY } XUNION XUNIONP{CITY}
+│ │ │ │ │
+SELECT DISTINCT CITY FROM SASSX
+WHERE ( SELECT COUNT (
+FROM S AS SY WHERE SY.CITY
+e. (PWHERE( !!SP){SNO} ⊇ (SWHERECITY=‘London’){SNO})
+{ PNO }
+│ SELECT PNO │ FROM P
+f. SWHERE( !!SP){PNO} ⊇ (SPWHERESNO=‘S2’){PNO}
+│ │ │ │ │ │ │ │ │ │ │
+SELECT SNO
+FROM   S
+│ │ │ │ │ │ │ │ │
+SELECT CITY
+FROM S
+WHERE CITY NOT IN (
+UNION CORRESPONDING SELECT CITY
+FROM P
+WHERE CITY NOT IN (
+SELECT CITY FROMP)
+SELECT CITY FROMS)
+www.it-ebooks.info
+Answers to Exercises / Appendix F 375
+│ SELECT *
+│ FROM S
+│ WHERE CITY=
+│ ( SELECT MIN │ FROMS)
+(CITY)
+* ) =SX.CITY)>1
+│ WHERE │ SELECT │ WHERE │ AND
+│ SELECT │ FROM │ WHERE │ AND
+NOT EXISTS (
+* FROM S
+CITY = ‘London’ NOT EXISTS (
+*
+SP
+SP.SNO = S.SNO SP.PNO = P.PNO ) )
+WHERE
+SELECT
+FROM
+WHERE
+AND
+SELECT
+FROM
+WHERE
+AND
+NOT EXISTS (
+*
+SP AS SPX
+SNO = ‘S2’
+NOT EXISTS (
+*
+SP AS SPY
+SPY.SNO = S.SNO SPY.PNO = SPX.PNO ) )
+                376 Appendix F / Answers to Exercises
+7.10 It’s the same as TCLOSE (pp). In other words, transitive closure is idempotent. Note: I’m extending the definition of idempotence slightly here. In Chapter 6, I said (in effect) that a dyadic operator Op is idempotent if and only if x Op x = x for all x; now I’m saying (in effect) that a monadic operator Op is idempotent if and only if Op(Op(x)) = Op(x) for all x.
+7.11 It denotes a relation looking like this (in outline):
+┌─────┬───────┬────────┬────────┬─────────┐ │ SNO │ SNAME │ STATUS │ CITY │ PNO_REL │ ├═════┼───────┼────────┼────────┼─────────┤
+│││
+│ │ ┌─────┐ │ 20│London││PNO││
+│ S1 │
+│
+│
+│
+│
+│
+│
+│ S2 │
+│ │ │
+│ Smith │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ Jones │ ││ │ │ │ │ ││
+│ │ │ │ │ │ │
+10 │ Paris │
+│ │ │
+│ ├═════┤ │ ││P1││ ││P2││ │ .. │ ││P6││ │ └─────┘ │ │ ┌─────┐ │ ││PNO││ │ ├═════┤ │ ││P1││ ││P2││ │ └─────┘ │
+.. .....
+│ ││
+│ S5 │ Adams │
+│ ││
+│ ││ │ │ └─────┘ │ └─────┴───────┴────────┴────────┴─────────┘
+The expression is logically equivalent to the following:
+( S JOIN SP { SNO , PNO } ) GROUP ( { PNO }
+.. ...... ..
+│ │ ┌─────┐ │
+30│Athens││PNO││ │ │ ├═════┤ │
+Attribute PNO_REL is an RVA. Note, incidentally, that if r is the foregoing relation, then the expression ( r UNGROUP ( PNO_REL ) ) { ALL BUT PNO }
+will not return our usual suppliers relation. To be precise, it will return a relation that differs from our usual suppliers relation only in that it’ll have no tuple for supplier S5.
+7.12 The first is straightforward: It inserts a new tuple, with supplier number S6, name Lopez, status 30, city Madrid, and PNO_REL value a relation containing just one tuple, containing in turn the PNO value P5. As for the second, I think it would be helpful to repeat from Appendix D the Tutorial D grammar for <relation assign> (the names of the syntactic categories are meant to be self-explanatory):
+<relation assign>
+::= <relvar name> := <relation exp>
+| <insert> | <d_insert> | <delete> | <i_delete> | <update>
+www.it-ebooks.info
+AS PNO_REL )
+                <insert>
+::=
+<d_insert>
+::=
+<delete>
+::=
+|
+<i_delete>
+::=
+<update>
+::=
+Answers to Exercises / Appendix F 377 INSERT <relvar name> <relation exp>
+D_INSERT <relvar name> <relation exp> DELETE <relvar name> <relation exp>
+DELETE <relvar name> [ WHERE <boolean exp> ]
+I_DELETE <relvar name> <relation exp>
+UPDATE <relvar name> [ WHERE <boolean exp> ] :
+{ <attribute assign commalist> }
+And an <attribute assign>, if the attribute in question is relation valued, is basically just a <relation assign> (except that the pertinent <attribute name> appears in place of the target <relvar name> in that <relation assign>), and that’s where we came in. Thus, in the exercise, what the second update does is replace the tuple for supplier S2 by another in which the PNO_REL value additionally includes a tuple for part P5.
+7.13 Query a. is easy:
+WITH ( X := ( SSP RENAME { SNO AS XNO } ) { XNO , PNO_REL } ,
+Y := ( SSP RENAME { SNO AS YNO } ) { YNO , PNO_REL } ) :
+( X JOIN Y ) { XNO , YNO }
+Note that the join here is being done on an RVA (and so is implicitly performing relational comparisons). Query b., by contrast, is not so straightforward. Query a. was easy because SSP “nests parts within
+suppliers,” as it were; for Query b. we would really like to have suppliers nested within parts instead. So let’s do that:11
+WITH ( PPS := ( SSP UNGROUP ( PNO_REL ) ) GROUP ( { SNO } AS SNO_REL ) , X :=(PPSRENAME{PNOASXNO}){XNO,SNO_REL},
+Y :=(PPSRENAME{PNOASYNO}){YNO,SNO_REL}):
+( X JOIN Y ) { XNO , YNO }
+7.14 WITH(R1:=PRENAME{WEIGHTASWT}, R2 := EXTEND P : { N_HEAVIER :=
+COUNT ( R1 WHERE WT > WEIGHT ) } ) : ( R2 WHERE N_HEAVIER < 2 ) { ALL BUT N_HEAVIER }
+SELECT *
+FROM P AS PX
+WHERE ( SELECT COUNT ( * )
+FROM P AS PY
+WHERE PX.WEIGHT < PY.WEIGHT ) < 2
+11 The example thus points up an important difference between RVAs in a relational system and hierarchies in a system like IMS (or XML?). In IMS, the hierarchies are “hardwired into the database,” as it were; in other words, we’re stuck with whatever hierarchies the database designer has seen fit to give us. In a relational system, by contrast, we can dynamically construct whatever hierarchies we want, by means of appropriate operators of the relational algebra.
+ www.it-ebooks.info
+                378 Appendix F / Answers to Exercises
+Both formulations return parts P2, P3, and P6 (i.e., a result of cardinality three, even though the specified quota was two). Quota queries can also return a result of cardinality less than the specified quota (e.g., consider the query “Get the ten heaviest parts”).
+Note: Quota queries are quite common in practice. In our book Databases, Types, and the Relational Model: The Third Manifesto (see Appendix G), therefore, Hugh Darwen and I suggest a shorthand for expressing them, according to which the foregoing query might be expressed thus in Tutorial D:
+((RANKPBY(DESCWEIGHTASW))WHEREW £ 2){ALLBUTW} SQL has something similar.
+7.15 This formulation does the trick:
+SUMMARIZE SP { SNO , QTY } PER ( S { SNO } ) : { SDQ := SUM ( QTY ) }
+But the following formulation, using EXTEND and image relations, is surely to be preferred: EXTENDS{SNO}:{SDQ:=SUM( !!SP{QTY}}
+Here for interest is an SQL analog:
+SELECT SNO ,
+( SELECT COALESCE ( SUM ( DISTINCT QTY ) , 0 ) AS SDQ
+FROM S
+7.16 EXTENDS:{NP:=COUNT( !!SP),NJ:=COUNT( !!SJ)}
+JOIN { S , SUMMARIZE SP PER ( S { SNO } ) : { NP := COUNT ( PNO ) } , SUMMARIZE SJ PER ( S { SNO } ) : { NJ := COUNT ( JNO ) } }
+SELECT SNO , ( (
+FROM S
+SELECT COUNT ( PNO )
+FROM SP
+WHERE SP.SNO = S.SNO ) AS NP , SELECT COUNT ( JNO )
+FROM SJ
+WHERE SJ.SNO = S.SNO ) AS NJ
+7.17 For a given supplier number, sno say, the expression !!SP denotes a relation with heading {PNO,QTY} and body consisting of those (pno,qty) pairs that correspond in SP to that supplier number sno. Call that relation ir (for image relation). By definition, then, for that supplier number sno, the expression !!(!!SP) is shorthand for the following:
+( ( ir ) MATCHING RELATION { TUPLE { } } ) { ALL BUT } This expression in turn is equivalent to:
+( ( ir ) MATCHING TABLE_DEE ) { PNO , QTY }
+www.it-ebooks.info
+                Answers to Exercises / Appendix F 379 And this expression reduces to just ir. Thus, “!!“ is idempotent (i.e., !!(!!r) is equivalent to !!r for all r), and the
+overall expression
+SWHERE( !!(!!SP)){PNO}=P{PNO}
+is equivalent to:
+SWHERE( !!SP){PNO}=P{PNO}
+(“Get suppliers who supply all parts”).
+7.18 No, there’s no logical difference.
+7.19 S JOIN SP isn’t a semijoin; S MATCHING SP isn’t a join (it’s a projection of a join). The expressions r1
+JOIN r2 and r1 MATCHING r2 are equivalent if and only if relations r1 and r2 are of the same type (when the final projection becomes an identity projection, and the expression overall degenerates to r1 INTERSECT r2).
+7.20 If r1 and r2 are of the same type and t1 is a tuple in r1, the expression !!r2 (for t1) denotes a relation of degree zero─TABLE_DEE if t1 appears in r2, TABLE_DUM otherwise. And if r1 and r2 are the same relation (r, say), !!r2 becomes !!r, and it denotes TABLE_DEE for every tuple in r.
+7.21 They’re the same unless table S is empty, in which case the first yields a one-column, one-row table containing a zero and the second yields a one-column, one-row table “containing a null.”
+7.22 In SQL, typically in a cursor definition; in Tutorial D (where ORDER BY is spelled just ORDER), in a special operator (“LOAD”), not discussed further in this book, that retrieves a specified relation into an array (of tuples).
+CHAPTER 8
+8.1 A type constraint is a definition of the set of values that constitute a given type. The type constraint for type T is checked whenever some selector for type T is invoked; if the check fails, the selector invocation fails on a type constraint violation. Subsidiary exercise: What do you think should happen if the type constraint for type T evaluates to FALSE at the time type T is defined? (Answer: This state of affairs isn’t necessarily an error, but the type in question will be empty. See the answer to Exercise 2.18 elsewhere in this appendix.)
+A database constraint is a constraint on the values that can appear in a given database. Database constraints are checked “at semicolons”─more specifically, at the end of any statement that assigns a value to any of the pertinent relvars. If the check fails, the assignment fails on a database constraint violation. Note: Database constraints must also be checked when they’re defined. If that check fails, the constraint definition must be rejected.
+8.2 The Golden Rule states (in effect) that no update operation must ever cause any database constraint to evaluate to FALSE, and hence a fortiori that no update operation must ever cause any relvar constraint to evaluate to FALSE either. However, a (total) relvar constraint might evaluate to FALSE, not because some single relvar constraint is violated, but rather because some multirelvar constraint is violated. The point is hardly significant, however, given that─as mentioned in the body of the chapter and explained in more detail in Chapter 9─which relvar constraints are single relvar and which multirelvar is somewhat arbitrary anyway.
+www.it-ebooks.info
+                380 Appendix F / Answers to Exercises
+8.3 Assertion is SQL’s term for a constraint specified via CREATE ASSERTION. An attribute constraint is a specification to the effect that a certain attribute is of a certain type. A base table constraint is an SQL constraint that’s specified as part of a base table definition (and not as part of a column definition within such a base table definition). A column constraint is an SQL constraint that’s specified as part of a column definition within a base table definition. A multirelvar constraint is a database constraint that mentions two or more distinct relvars. A referential constraint is a constraint to the effect that if B references A, then A must exist. A relvar constraint for relvar R is a database constraint that mentions R. A row constraint is an SQL constraint with the property that it can be checked for a given row by examining just that row in isolation. A single relvar constraint is a database constraint that mentions just one relvar. A state constraint is a database constraint that isn’t a transition constraint. “The” (total) database constraint for database DB is the logical AND of all of the relvar constraints for relvars in DB and TRUE. “The” (total) relvar constraint for relvar R is the logical AND of all of the database constraints that mention R and TRUE. A transition constraint is a constraint on the legal transitions a database can make from one “state” (i.e., value) to another. A tuple constraint is a relvar constraint with the property that it can be checked for a given tuple by examining just that tuple in isolation. Which of these categories if any do (a) key constraints, (b) foreign key constraints, fall into? No answers provided.
+8.4 See the body of the chapter.
+8.5 a. The integer 345. b. The value of QTY (where, let’s assume, QTY is a variable of type QTY).
+8.6 See the body of the chapter.
+8.7 TYPE CITY POSSREP { C CHAR CONSTRAINT C = ‘London’ OR C = ‘Paris’
+OR C = ‘Rome’
+OR C = ‘Athens’
+OR C = ‘Oslo’
+OR C = ‘Stockholm’
+OR C = ‘Madrid’
+OR C = ‘Amsterdam’ } ;
+Now we can define the CITY attribute in relvars S and P to be of type CITY instead of just type CHAR.
+8.8 By definition, there’s no way to impose a constraint in SQL that’s exactly equivalent to the one given in the previous answer, even if we define an explicit type, because SQL doesn’t support type constraints as such. But we could impose the constraint that supplier cities in particular are limited to the same eight values by means of a suitable database constraint, and similarly for part cities. For example, we could define a base table as follows:
+CREATE TABLE C ( CITY VARCHAR(20) , UNIQUE ( CITY ) ) ;
+We could then “populate” this table with the eight city values:
+INSERT INTO C ( CITY ) VALUES
+‘London’ , ‘Paris’ , ‘Rome’ , ‘Athens’ , ‘Oslo’ , ‘Stockholm’ , ‘Madrid’ , ‘Amsterdam’ ;
+www.it-ebooks.info
+                Now we could define some foreign keys:
+CREATE TABLE S ( ... ,
+FOREIGN KEY ( CITY ) REFERENCES C ( CITY ) ) ;
+CREATE TABLE P ( ... ,
+FOREIGN KEY ( CITY ) REFERENCES C ( CITY ) ) ;
+This approach has the advantage that it makes it easier to change the set of valid cities, if the requirement should arise.
+Another approach would be to define an appropriate set of base table (or column) constraints as part of the definitions of base tables S and P. Note: SQL’s “domains”─see Chapter 2─could help with this approach (if they’re supported, of course!), because they could allow the pertinent constraint to be written just once and shared by all pertinent columns. For example (in outline):
+CREATE DOMAIN CITY AS VARCHAR(20) CONSTRAINT ... CHECK ( VALUE IN (
+‘London’ , ‘Paris’ , ‘Rome’ , ‘Athens’ , ‘Oslo’ , ‘Stockholm’ , ‘Madrid’ , ‘Amsterdam’ ) ) ;
+Now we can define the CITY columns in tables S and P to be of “domain CITY” instead of type VARCHAR(20), and they’ll then “automatically” be subject to the required constraint.
+Another approach would be to use an appropriate set of CREATE ASSERTION statements. Yet another would be to define some appropriate triggered procedures.
+All of these approaches are somewhat tedious, with the first perhaps being the least unsatisfactory.
+8.9 TYPE SNO POSSREP
+{ C CHAR CONSTRAINT
+CHAR_LENGTH(C) ≥ 2ANDCHAR_LENGTH(C) £ 5
+AND SUBSTR ( C , 1 , 1 ) = ‘S’
+AND CAST_AS_INTEGER ( SUBSTR ( C , 2 ) ) ≥ 0 ANDCAST_AS_INTEGER(SUBSTR(C,2)) £ 9999};
+I’m assuming that operators CHAR_LENGTH, SUBSTR, and CAST_AS_INTEGER are available and have the obvious semantics.
+8.10 TYPE LINESEG POSSREP { BEGIN POINT , END POINT } ;
+I’m assuming the existence of a user defined type called POINT as defined in the body of the chapter. Note, incidentally, that an SQL analog of the foregoing type definition wouldn’t be able to use BEGIN and END as names of the corresponding attributes─attributes being (most unfortunately!) SQL’s term for components of what it calls a “structured type”─because BEGIN and END are reserved words in SQL. (It would, however, be able to use the delimited identifiers “BEGIN” and “END” for the purpose. A delimited identifier in SQL is an arbitrary string of characters─including, possibly, the string of characters that forms an SQL reserved word─enclosed in what SQL calls double quotes, or in other words conventional quotation marks.)
+www.it-ebooks.info
+Answers to Exercises / Appendix F 381
+                382 Appendix F / Answers to Exercises
+8.11 Type POINT is an example, but there are many others─for example, you might like to think about type PARALLELOGRAM, which can “possibly be represented” in numerous different ways (how many can you think of?). As for type constraints for such a type: Conceptually, each possrep specification must include a type constraint; however, those constraints must all be logically equivalent. For example:
+TYPE POINT
+POSSREP CARTESIAN { X RATIONAL , Y RATIONAL
+CONSTRAINTSQRT(X**2+Y**2) £ 100.0} POSSREP POLAR { R RATIONAL , THETA RATIONAL
+CONSTRAINT R £ 100.0 } ;
+Whether some shorthand could be provided that would effectively allow us to specify the constraint just once
+instead of once per possrep is a separate issue, beyond the scope of this book.
+8.12 A line segment can possibly be represented by its begin and end points or by its midpoint, length, and slope (angle of inclination).
+8.13 I’ll give answers in terms of the INSERT, DELETE, and UPDATE shorthands, not relational assignment as such:
+CX1: INSERT into S, UPDATE of STATUS in S
+CX2: INSERT into S, UPDATE of CITY or STATUS in S
+CX3: INSERT into S, UPDATE of SNO in S
+CX4: INSERT into S, UPDATE of SNO or CITY in S
+CX5: UPDATE of STATUS in S, INSERT into SP, UPDATE of SNO or PNO in SP (I’m assuming here that constraint CX6, the foreign key constraint from SP to S, is being enforced)
+CX6: DELETE from S, UPDATE of SNO in S, INSERT into SP, UPDATE of SNO in SP
+CX7: INSERT into LS or NLS, UPDATE of SNO in LS or NLS
+CX8: INSERT into S or P, UPDATE of SNO or CITY in S, UPDATE of PNO or CITY in P
+CX9: UPDATE of SNO or STATUS in S
+8.14 This exercise is a little unfair, since you aren’t supposed to be an expert in Tutorial D! Be that as it may, the answer is yes for KEY and FOREIGN KEY constraints, no for other constraints. Note: There’s no particular reason why the answer shouldn’t be yes in the latter case too, if it were thought desirable; however, any temptation to intermingle (and thereby muddle, à la SQL) specification of the pertinent relation type and specification of such constraints should be firmly resisted. Also, we’d have to be careful over what it might mean for such a “base relvar” constraint if the base relvar to whose definition it’s attached happens to be empty (see the answer to Exercise 8.16 below).
+8.15 (The following answer is a little simplified but captures the essence of what’s going on.) Let c be a base table constraint on table T; then the CREATE ASSERTION counterpart to c is logically of the form FORALL r
+www.it-ebooks.info
+                (c)─or, in terms a little closer to concrete SQL syntax, NOT EXISTS r (NOT c)─where r stands for a row in T. In other words, the logically necessary universal quantification is implicit in a base table constraint but has to be explicit in an assertion. See Chapter 10 for further explanation.
+8.16 The formal reason has to do with the definition of FORALL when the applicable “range” is an empty set; again, see Chapter 10 for further explanation. Tutorial D has nothing directly analogous to base table constraints in general and thus doesn’t display analogous behavior.
+8.17 CREATE TABLE S ( ... ,
+CONSTRAINT CX5
+CHECK ( STATUS >= 20 OR SNO NOT IN ( SELECT SNO
+CREATE TABLE P ( ... ,
+CONSTRAINT CX5
+CHECK ( NOT EXISTS ( SELECT *
+FROM S NATURAL JOIN SP WHERE STATUS < 20
+AND PNO=‘P6’)));
+Observe that in this latter formulation, the constraint specification makes no reference to the base table whose definition it forms part of. Thus, the same specification could form part of the definition of absolutely any base table whatsoever. (It’s essentially identical to the CREATE ASSERTION version, anyway.)
+8.18 The boolean expression in constraint CX1 is a simple restriction condition; the one in constraint CX5 is more complex. One implication is that a tuple presented for insertion into S can be checked against constraint CX1 without even looking at any of the values currently existing in the database, whereas the same is not true for constraint CX5.
+8.19 Yes, of course it’s possible; constraint CX3 does the trick. But note that, in general, neither a constraint like CX3 nor an explicit KEY specification can guarantee that the specified attribute combination satisfies the irreducibility requirement on candidate keys─though it would at least be possible to impose a syntax rule to the effect that if two distinct keys are specified for the same relvar, then neither is allowed to be a proper subset of the other. Such a rule would help, but it still wouldn’t do the whole job.12
+8.20 CREATE ASSERTION CX8 CHECK ( ( SELECT COUNT ( * )
+FROM (
+SELECT CITY
+FROM S
+WHERE SNO = ‘S1’
+UNION CORRESPONDING
+SELECT CITY
+FROM P
+WHERE PNO=‘P1’)ASPOINTLESS)<2);
+Answers to Exercises / Appendix F 383
+FROM SP
+WHERE PNO=‘P6’)));
+ 12 No such rule exists in SQL, however. What’s more, any implementation that tried to impose such a rule would be in violation of the standard!─i.e., the SQL standard explicitly permits “keys” to be declared that the user and the system both know to be proper superkeys. The “justification”─such as it is─for this state of affairs is beyond the scope of this book.
+www.it-ebooks.info
+                384 Appendix F / Answers to Exercises
+Note the need for an AS clause to accompany the subquery in the outer FROM clause here, even though the name it introduces is never referenced. See the discussion in the section on EXTEND in Chapter 7 if you need to refresh your memory regarding this point.
+8.21 Space reasons make it too difficult to show Tutorial D and SQL formulations side by side here, so in each case I’ll show the former first and the latter second. I omit details of which operations might cause the constraints to be violated.
+a. CONSTRAINT CXA IS_EMPTY
+( P WHERE COLOR = ‘Red’ AND WEIGHT ≥ 50.0 ) ;
+Or:
+CONSTRAINT CXA
+AND ( P , COLOR ≠ ‘Red’ OR WEIGHT < 50 ) ;
+CREATE ASSERTION CXA CHECK ( NOT EXISTS ( SELECT *
+FROM P
+WHERE COLOR = ‘Red’
+AND WEIGHT >= 50.0 ) ) ;
+Or:
+CREATE ASSERTION CXA CHECK (
+( SELECT COALESCE ( EVERY ( COLOR <> ‘Red’ OR
+WEIGHT < 50 ) , TRUE )
+FROM S)=TRUE);
+b. CONSTRAINT CXB IS_EMPTY (
+( S WHERE CITY = ‘London’ )
+WHERETUPLE{PNO‘P2’} œ (!!SP){PNO});
+CREATE ASSERTION NOT EXISTS (
+CXB CHECK (
+SELECT * FROM S
+WHERE CITY = ‘London’ AND SNO NOT IN
+( SELECT SNO FROM SP
+WHERE PNO=‘P2’)));
+c. CONSTRAINTCOUNT(S)=COUNT(S{CITY});
+CREATE ASSERTION CXC CHECK ( UNIQUE ( SELECT CITY FROM S ) ) ;
+d. CONSTRAINT CXD COUNT ( S WHERE CITY = ‘Athens’ ) < 2 ; CREATE ASSERTION CXD CHECK
+( UNIQUE ( SELECT * FROM S WHERE CITY = ‘Athens’ ) ) ;
+e. CONSTRAINT CXE IS_NOT_EMPTY ( S WHERE CITY = ‘London’ ) ;
+CREATE ASSERTION CXE CHECK
+( EXISTS ( SELECT * FROM S WHERE CITY = ‘London’ ) ) ;
+www.it-ebooks.info
+                Answers to Exercises / Appendix F 385 f. CONSTRAINT CXF IS_NOT_EMPTY ( P WHERE COLOR = ‘Red’
+AND WEIGHT < 50.0 ) ;
+CREATE ASSERTION CXF CHECK
+( EXISTS ( SELECT * FROM P
+WHERE COLOR = ‘Red’
+AND WEIGHT < 50.0 ) ) ;
+g. CONSTRAINTCXGAVGX(S,STATUS,10)≥10;
+CREATE ASSERTION CXG CHECK ( CASE
+WHEN NOT EXISTS ( SELECT * FROM S ) THEN TRUE
+ELSE ( SELECT AVG ( STATUS ) FROM S ) ≥ 10 END ) ;
+Note: The foregoing formulations allow relvar S to be empty without violating the required constraint. But suppose the SQL formulation were simplified thus:
+CREATE ASSERTION CXG CHECK
+( ( SELECT AVG ( STATUS ) FROM S ) ≥ 10 ) ;
+Now if relvar S is empty, the AVG invocation returns null, and the comparison “null ≥ 10” returns UNKNOWN. Now, we saw in Chapter 4 that (to quote) “queries in SQL retrieve data for which the expression in the WHERE clause evaluates to TRUE, not to FALSE and not to UNKNOWN”; in other words, UNKNOWN effectively gets coerced to FALSE in the context of a query. But if the same thing happens in the context of a constraint like the one under discussion, the effect is that the constraint is considered to be satisfied. In such a context, in other words, UNKNOWN is coerced to TRUE instead of FALSE!
+To pursue the point a moment longer, suppose (a) we execute a CREATE ASSERTION saying that shipment quantities must be greater than zero (QTY > 0), and then (b) we execute the following sequence of SQL statements:
+INSERT INTO SP ( SNO , PNO , QTY ) VALUES ( ‘S5’ , ‘P6’ , NULL ) ;
+SELECT * FROM SP WHERE QTY > 0 ;
+The INSERT will succeed─in the constraint, the expression QTY > 0 will evaluate to UNKNOWN, which will be coerced to TRUE─but the inserted row won’t appear in the result of the SELECT. (In fact, knowing that shipment quantities are supposed to be greater than zero, the user would be within his or her rights to expect that SELECT to be logically equivalent to just SELECT * FROM SP.) At the very least, therefore, the user will see a violation of The Assignment Principle in this example. I regard this state of affairs as yet another of the vast─infinite?─number of weirdnesses that nulls inevitably seem to give rise to.
+h. CONSTRAINTCXHIS_EMPTY(SPWHEREQTY>2*AVGX(SP,QTY,0));
+www.it-ebooks.info
+                386 Appendix F / Answers to Exercises
+CREATE ASSERTION CXH CHECK ( CASE
+WHEN NOT EXISTS ( SELECT * FROM SP ) THEN TRUE ELSE NOT EXISTS ( SELECT * FROM SP
+END ) ;
+i. CONSTRAINT CXI CASE
+WHEN COUNT ( S ) < 2 THEN TRUE
+ELSE IS_EMPTY ( JOIN
+{ ( S WHERE STATUS = MAX ( S
+( S WHERE STATUS = MIN ( S END CASE ;
+FROM
+{ STATUS } ) ) { { STATUS } ) ) {
+SP ) )
+CITY } , CITY } } )
+) FROM S ) )FROMS )
+CREATE ASSERTION CXI CHECK ( CASE
+WHEN ( SELECT COUNT ( * ) FROM S ) < 2 THEN TRUE ELSE NOT EXISTS
+( SELECT * FROM S AS X , S AS Y
+WHERE X.STATUS = ( SELECT MAX ( STATUS AND Y.STATUS = ( SELECT MIN ( STATUS AND X.CITY = Y.CITY )
+END ) ;
+j. CONSTRAINTCXJP{CITY} ⊆ S{CITY};
+CREATE ASSERTION CXJ CHECK ( NOT EXISTS ( SELECT * FROM P
+WHERE QTY>2*(SELECTAVG(QTY)
+WHERE NOT EXISTS
+(SELECT*FROMSWHERE S.CITY=P.CITY)));
+k. CONSTRAINT CXK IS_EMPTY (
+( EXTEND P : { SC := ( (!!SP) JOIN S ) { CITY } } )
+WHERETUPLE{CITYCITY} œ SC);
+CREATE ASSERTION CXK CHECK ( NOT EXISTS ( SELECT * FROM P
+S
+= P.CITY
+WHERE NOT EXISTS
+( SELECT * FROM WHERE S.CITY AND EXISTS ( SELECT
+* FROM SP WHERE S.SNO = SP.SNO
+AND P.PNO=SP.PNO))));
+l. The interesting thing about this exercise (or one of the interesting things, at any rate) is that it’s ambiguous. It might mean every individual London supplier must supply more different kinds of part than every individual Paris supplier; or it might mean the number of different kinds of parts supplied by London suppliers considered en masse must be greater than the number of different kinds of parts supplied by Paris suppliers considered en masse; and there might be other interpretations, too. The following formulations assume the second of these interpretations, but the whole question of ambiguity is revisited in Chapter 11.
+CONSTRAINT CXL
+COUNT ( ( ( S WHERE CITY = ‘London’ ) JOIN SP ) { PNO } ) > COUNT(((SWHERECITY=‘Paris’ )JOINSP){PNO});
+www.it-ebooks.info
+                CREATE ASSERTION CXL CHECK (
+( SELECT COUNT ( DISTINCT PNO ) FROM S NATURAL JOIN SP
+WHERE CITY = ‘London’ ) >
+( SELECT COUNT ( DISTINCT PNO ) FROM S NATURAL JOIN SP
+WHERE CITY = ‘Paris’ ) ) ;
+m. CONSTRAINT CXM
+SUM ( ( ( S WHERE CITY = ‘London’ ) JOIN SP ) , QTY ) > SUM(((SWHERECITY=‘Paris’ )JOINSP),QTY);
+CREATE ASSERTION CXM CHECK (
+( SELECT COALESCE ( SUM ( QTY ) , 0 ) FROM S NATURAL JOIN SP
+WHERE CITY = ‘London’ ) >
+( SELECT COALESCE ( SUM ( QTY ) , 0 ) FROM S NATURAL JOIN SP
+WHERE CITY = ‘Paris’ ) ) ;
+n. CONSTRAINT CXN IS_EMPTY
+( ( SP JOIN P ) WHERE QTY * WEIGHT > 20000.0 ) ;
+CREATE ASSERTION CXN CHECK
+( NOT EXISTS ( SELECT * FROM SP NATURAL JOIN P
+WHERE QTY * WEIGHT > 20000.0 ) ) ;
+8.22 Constraint CX22a certainly suffices (it’s directly analogous to the formulation I gave for CX4 in the body of the chapter). As for constraint CX22b: Well, let’s see if we can prove it does the job. First of all, to simplify the discussion, let’s agree to ignore supplier names, since they’re irrelevant to the matter at hand. Then we need to show, first, that if the FD {CITY} Æ {STATUS} holds, then S is equal to the join of its projections on {SNO,CITY} and {CITY,STATUS}; second, if S is equal to the join of its projections on {SNO,CITY} and {CITY,STATUS}, then the FD {SNO} Æ {CITY} holds. Denote S{SNO,CITY} and S{CITY,STATUS} by SC and CT, respectively, and denote JOIN{SC,CT} by J. Adopting an obvious shorthand notation for tuples, then, we have for the first part of the proof:
+ Let(s,c,t)ŒS. Then(s,c)ŒSCand(c,t)ŒCT,andso(s,c,t)ŒJ;soS⊆J.
+ Let (s,c,t) Œ J. Then (s,c) Œ SC; hence (s,c,t′) Œ S for some t′. But t = t′ thanks to the FD, so (s,c,t) Œ S and
+henceJ⊆S. ItfollowsthatS=J. Turning to the second part:
+ Let both (s,c,t) and (s′,c,t′) Œ S. Then (s,c) Œ SC and (c,t′) Œ CT, so (s,c,t′) Œ J; hence (s,c,t′) Œ S. But {SNO} is a key for S and so t = t′ (because certainly (s,c,t) Œ S); hence the FD {CITY} Æ {STATUS} holds.
+It follows that constraint CX22b does indeed represent the FD, as required. Note carefully, however, that it does so only because we were able to appeal (in the second part of the proof) to the fact that {SNO} is a key for relvar S; it would not correctly represent the desired FD, absent that key constraint.
+8.23 It guarantees that the constraint is satisfied by an empty database (i.e., one containing no relvars).
+8.24 Suppose we were to define a relvar SC with attributes SNO and CITY and predicate Supplier SNO has no
+office in city CITY. Suppose further that supplier S1 has an office in just ten cities. Then The Closed World
+www.it-ebooks.info
+Answers to Exercises / Appendix F 387
+                388 Appendix F / Answers to Exercises
+Assumption would imply that relvar SC must have n-10 tuples for supplier S1, where n is the total number of valid
+cities (possibly in the entire world)!
+8.25 We need a multiple assignment (if we are to do the delete in a single statement as requested). Let the
+supplier number of the specified supplier be x. Then:
+DELETE S WHERE SNO = x , DELETE SP WHERE SNO = x ;
+The individual assignments (DELETEs) can be specified in either order.
+8.26 These constraints can’t be expressed declaratively in either SQL or Tutorial D, since neither of those languages currently has any direct support for transition constraints. Triggered procedures can be used, but details of triggered procedures are beyond the scope of this book. However, here are possible formulations using the “primed relvar name” convention discussed briefly in the section “Miscellaneous Issues”:
+a. CONSTRAINT CXA IS_EMPTY
+(PWHERESUM( !!SP,QTY)>SUM( !!SP’,QTY));
+b. CONSTRAINT CXB
+IS_EMPTY ( ( ( ( S’
+WHERE AND AND
+AND IS_EMPTY ( ( ( ( S’ WHERE
+AND
+c. CONSTRAINT CXC IS_EMPTY
+WHERE CITY = ‘Athens’ ) { SNO } ) JOIN S ) CITY ≠ ‘Athens’
+CITY ≠ ‘London’
+CITY ≠ ‘Paris’ )
+WHERE CITY = ‘London’ ) { SNO } ) JOIN S ) CITY ≠ ‘London’
+CITY ≠ ‘Paris’ ) ;
+(SWHERESUM( !!SP,QTY)<0.5*SUM( !!SP’,QTY));
+The qualification “in a single update” is important because we aren’t trying to outlaw the possibility─and in fact we can’t─of reducing the total shipment quantity by, say, one third in one update and then another third in another.
+8.27 No answer provided.
+8.28 SQL fails to support type constraints for a rather complicated reason having to do with type inheritance. The
+specifics are beyond the scope of this book; if you’re interested, you can find a detailed discussion in the book Databases, Types, and the Relational Model: The Third Manifesto, by Hugh Darwen and myself (see Appendix G). As for consequences, one is that when you define a type in SQL, you can’t even specify the values that make up that type!─except for the a priori constraint imposed by the representation─and so, absent further controls, you can wind up with incorrect data in the database (even nonsensical data, like a shoe size of 1000, or even -1000).
+8.29 In principle they all apply─though Tutorial D in particular deliberately provides no way of specifying constraints, other than a priori ones, for either nonscalar or system defined types.
+8.30 The generic expansion of an arbitrary UPDATE in terms of DELETE and INSERT can be inferred by straightforward generalization from the following simple, albeit somewhat abstract, example. Let relvar R have just two attributes, X and Y, and consider the following UPDATE on R:
+UPDATERWHEREX=x:{Y ≔ y};
+www.it-ebooks.info
+                Let the current (“old”) value of R be r. Define d and i as follows:
+d = {t:t Œ rANDt.X=x}
+i = {t′:EXISTSt Œ d(t.X=t′.X)ANDt′.Y=y}
+Then the original UPDATE is logically equivalent to the following assignment:
+R ≔ rMINUS(dUNIONi); Or equivalently to the following multiple assignment:
+DELETE R d , INSERT R i ; CHAPTER 9
+9.1 VAR NON_COLOCATED VIRTUAL
+( ( S { SNO } JOIN P { PNO } ) NOT MATCHING ( S JOIN P ) )
+KEY { SNO , PNO } ;
+CREATE VIEW NON_COLOCATED AS ( SELECT SNO , PNO
+FROM S,P
+WHERE S.CITY <> P.CITY )
+/* UNIQUE ( SNO , PNO ) */ ;
+9.2 Substituting the view definition for the view reference in the outer FROM clause, we obtain:
+SELECT DISTINCT STATUS , QTY
+FROM ( SELECT SNO , SNAME , STATUS , PNO , QTY
+FROM S NATURAL JOIN SP
+WHERE CITY = ‘London’ ) AS Temp WHERE PNO IN
+          ( SELECT PNO
+            FROM   P
+WHERE CITY <> ‘London’ )
+This simplifies (potentially!) to:
+SELECT
+FROM
+WHERE
+AND
+DISTINCT STATUS , QTY S NATURAL JOIN SP CITY = ‘London’
+PNO IN
+          ( SELECT PNO
+            FROM   P
+WHERE CITY <> ‘London’ )
+9.3 The sole key is {SNO,PNO}. The predicate is: Supplier SNO is under contract, is named SNAME, has status STATUS, is located in London, and supplies part PNO in quantity QTY.
+www.it-ebooks.info
+Answers to Exercises / Appendix F 389
+                390 Appendix F / Answers to Exercises
+9.4 Note that a. and b. are expressions, the rest are statements.
+a. ( P WHERE WEIGHT > 14.0 ) WHERE COLOR = ‘Green’
+This expression can be simplified to:
+P WHERE WEIGHT > 14.0 AND COLOR = ‘Green’
+The simplification is worth making, too, because the first formulation implies two passes over the data while the second implies just one.
+b. (EXTEND(PWHEREWEIGHT>14.0):
+{ W := WEIGHT + 5.3 } ) { PNO , W }
+c. INSERT ( P WHERE WEIGHT > 14.0 )
+RELATION { TUPLE { PNO ‘P9’ , PNAME ‘Screw’ , WEIGHT 15.0 ,
+COLOR ‘Purple’ , CITY ‘Rome’ } } ;
+Observe that this INSERT is logically equivalent to a relational assignment in which the target is specified as something other than a simple relvar reference. The ability to update views implies that such assignments must indeed be legitimate, both syntactically and semantically, although the corresponding syntax is currently not supported in Tutorial D (neither for assignment in general nor for INSERT in particular). Note: Similar but not identical remarks apply to parts d. and e. below.
+d. DELETE ( P WHERE WEIGHT > 14.0 ) WHERE WEIGHT < 9.0 ;
+This syntax is currently illegal, although oddly enough the following (which is obviously logically equivalent
+to that just shown) is legal:
+DELETE P WHERE WEIGHT > 14.0 AND WEIGHT < 9.0 ;
+Of course, this DELETE is actually a “no op,” because WEIGHT > 14.0 AND WEIGHT < 9.0 is a logical contradiction. Do you think the optimizer would be able to recognize this fact?
+e. UPDATE ( P WHERE WEIGHT > 14.0 ) WHERE WEIGHT = 18.0 :
+{ COLOR := ‘White’ } ;
+Again this syntax is currently illegal, but the following is legal:
+UPDATE P WHERE WEIGHT > 14.0 AND WEIGHT = 18.0 :
+{ COLOR := ‘White’ } ;
+Do you think the optimizer would be able to recognize the fact that the restriction condition WEIGHT > 14.0 here can be ignored?
+9.5 Here first is an SQL version of the view definition from Exercise 9.4:
+www.it-ebooks.info
+                CREATE VIEW HP AS
+( SELECT PNO , PNAME , COLOR , WEIGHT , CITY
+FROM P
+WHERE WEIGHT > 14.0 ) /* UNIQUE ( PNO ) * / ;
+For parts a.-e., I first show an SQL analog of the Tutorial D formulation, followed by the expanded form:
+a. SELECT HP.PNO , HP.PNAME , HP.COLOR , HP.WEIGHT , HP.CITY FROM HP
+WHERE HP.COLOR = ‘Green’
+SELECT HP.PNO , HP.PNAME , HP.COLOR , HP.WEIGHT , HP.CITY FROM ( SELECT PNO , PNAME , COLOR, WEIGHT , CITY
+FROM P
+WHERE WEIGHT > 14.0 ) AS HP WHERE HP.COLOR = ‘Green’
+I leave further simplification, here and in subsequent parts, as a subsidiary exercise (barring explicit statements to the contrary).
+b. SELECT PNO,WEIGHT+5.3ASW FROM HP
+SELECT FROM (
+c. INSERT INSERT
+HP.PNO , HP.WEIGHT + 5.3 AS W
+SELECT P.PNO , P.PNAME , P.COLOR , P.WEIGHT , P.CITY
+FROM P
+WHERE P.WEIGHT > 14.0 ) AS HP
+INTOHP(PNO,PNAME,WEIGHT,COLOR,CITY)
+VALUES ( ‘P9’ , ‘Screw’ , 15.0 , ‘Purple’ , ‘Rome’ ) ;
+INTO ( SELECT P.PNO , P.PNAME , P.WEIGHT , P.COLOR , P.CITY FROM P
+WHERE P.WEIGHT > 14.0 ) AS HP
+VALUES ( ‘P9’ , ‘Screw’ , 15.0 , ‘Purple’ , ‘Rome’ ) ;
+The remarks regarding Tutorial D in the solution to Exercise 9.4c apply here also, mutatis mutandis.
+d. DELETE FROM ( SELECT P.PNO , P.PNAME , P.COLOR , P.WEIGHT , P.COLOR FROM P
+WHERE P.WEIGHT > 14.0 ) AS HP WHERE HP.WEIGHT < 9.0 ;
+This transformed version isn’t valid SQL syntax, but a valid equivalent is a little easier to find:
+DELETE FROM P WHERE WEIGHT > 14.0 AND WEIGHT < 9.0 ;
+(As noted in the answer to Exercise 9.4d, this DELETE is actually a “no op.”)
+e. UPDATE ( SELECT P.PNO , P.PNAME , P.COLOR , P.WEIGHT , P.COLOR FROM P
+WHERE P.WEIGHT > 14.0 ) AS HP
+SET COLOR = ‘White’
+WHERE HP.WEIGHT = 18.0 ;
+www.it-ebooks.info
+Answers to Exercises / Appendix F 391
+                392 Appendix F / Answers to Exercises
+Syntactically valid equivalent:
+UPDATE P
+SET COLOR = ‘White’
+WHERE WEIGHT = 18.0 AND WEIGHT > 14.0 ;
+9.6 Here are some:
+ Ifusersaretooperateonviewsinsteadofbaserelvars,it’sclearthatthoseviewsshouldlooktotheuseras much like base relvars as possible. In accordance with The Principle of Interchangeability, in fact, the user shouldn’t have to know they’re views at all but should be able to treat them as if they were base relvars. And just as the user of a base relvar needs to know what keys that base relvar has, so the user of a view needs to know what keys that view has. Explicitly declaring those keys is one way to make that information available.
+ TheDBMSmightbeunabletoinferkeysforitself(thisisalmostcertainlythecase,ingeneral,withSQL products on the market today). Explicit declarations are thus likely to be the only means available (to the DBA, that is) of informing the DBMS, as well as the user, of the existence of such keys.
+ EveniftheDBMSwereabletoinferkeysforitself,explicitdeclarationswouldatleastenablethesystemto check that its inferences and the DBA’s explicit specifications were consistent.
+ TheDBAmighthavesomeknowledgethattheDBMSdoesn’t,andmightthusbeabletoimproveonthe DBMS’s inferences.
+ Asshowninthebodyofthechapter,suchafacilitycouldprovideasimpleandconvenientwayofstating certain important constraints that could otherwise be stated only in circumlocutory fashion.
+Subsidiary exercise: Which if any of the foregoing points do you think apply not just to key constraints in particular but to integrity constraints in general?
+9.7 One example is as follows: The suppliers relvar is equal to the join of its projections on {SNO,SNAME}, {SNO,STATUS}, and {SNO,CITY}─just so long as appropriate constraints are in force, that is (what are those constraints exactly?). So we could make those projections base relvars and make the join a view.
+9.8 Here are some pertinent observations. First, the replacement process itself involves several steps, which might be summarized as follows:
+/* define the new base relvars: */
+VAR LS BASE RELATION
+{ SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } KEY { SNO } ;
+VAR NLS BASE RELATION
+{ SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } KEY { SNO } ;
+www.it-ebooks.info
+                /* copy the data to the new base relvars: */
+LS :=(SWHERECITY=‘London’); NLS := ( S WHERE CITY ≠ ‘London’ ) ; /* drop the old relvar: */
+DROP VAR S ;
+/* create the desired view: */
+VAR S VIRTUAL ( LS D_UNION NLS ) KEY { SNO } ;
+Now we must do something about the foreign key in relvar SP that references the old base relvar S. Clearly, it would be best if that foreign key could now be taken as referring to the view S instead;13 if this is impossible (as it typically is in today’s products), then we might want to define another base relvar as follows:
+VAR SS BASE RELATION { SNO CHAR } KEY { SNO } ;
+And copy the data (obviously this must be done before dropping base relvar S):
+SS := S { SNO } ;
+Now we need to add the following foreign key specification to the definitions of relvars LS and NLS:
+FOREIGN KEY { SNO } REFERENCES SS
+Finally, we must change the specification for the foreign key {SNO} in relvar SP to refer to SS instead of S.
+9.9 a. No answer provided─except to note that if it’s difficult to answer the question for some product, then that very fact is part of the point of the exercise in the first place. b. Same as for part a., but more so. c. Ditto.
+9.10 For the distinction, see the body of the chapter. SQL doesn’t support snapshots at the time of writing.
+(It does support CREATE TABLE AS─see the last part of the answer to Exercise 1.16, earlier in this appendix─which allows a base table to be initialized when it’s created, but CREATE TABLE AS has no REFRESH option.)
+9.11 “Materialized view” is a deprecated term for a snapshot. The term is deprecated because it muddies concepts that are logically distinct and ought to be kept distinct─by definition, views simply aren’t materialized, so far as the model is concerned─and it’s leading us into a situation in which we no longer have a clear term for a concept we did have a clear term for, originally. It should be firmly resisted. (I realize I’ve probably already lost this battle, but I’m an eternal optimist.) In fact, I’m tempted to go further; it seems to me that people who advocate use of the term
+13 Indeed, logical data independence is a strong argument in favor of allowing constraints in general to be defined for views as well as base relvars.
+Answers to Exercises / Appendix F 393
+ www.it-ebooks.info
+                394 Appendix F / Answers to Exercises
+“materialized view” are betraying their lack of understanding of the relational model in particular and the distinction
+between model and implementation in general.
+9.12 First, here’s a definition of Design b. in terms of Design a. (pertinent constraints included):
+VAR SSP VIRTUAL ( S JOIN SP ) KEY { SNO , PNO } ;
+VAR XSS VIRTUAL ( S NOT MATCHING SP ) KEY { SNO } ;
+CONSTRAINT B_FROM_A IS_EMPTY ( SSP JOIN XSS ) ;
+(Constraint B_FROM_A and the specified key constraints are together what we would have to tell the user if we wanted the user to think of relvars SSP and XSS as base relvars, not views.) And here’s a definition of Design a. in terms of Design b.:
+VAR S VIRTUAL ( XSS D_UNION SSP { ALL BUT PNO , QTY } ) KEY { SNO } ;
+VAR SP VIRTUAL ( SSP { SNO , PNO , QTY } ) KEY { SNO , PNO } ;
+CONSTRAINT A_FROM_B IS_EMPTY ( SP NOT MATCHING S ) ;
+Given these constraints, the designs are information equivalent. But Design a. is superior, because the relvars in that design are in fifth normal form. By contrast, relvar SSP in Design b. isn’t even in second normal form; as a consequence, it displays redundancy and is thereby subject to certain “update anomalies.” Consider also what happens with Design b. if some supplier ceases to supply any parts, or used not to supply any but now does. Further discussion of the problems with Design b. is beyond the scope of this book; I just note that (as the example suggests) database design disciplines like normalization can help in the task of choosing “the best” design from a set of designs that are information equivalent.
+Incidentally, I note in passing that─given that {SNO} is a key for relvar S─constraint A_FROM_B here shows another way of formulating a referential constraint. In practice, of course, it would be simpler just to include the following foreign key specification as part of the definition of relvar SP:
+FOREIGN KEY { SNO } REFERENCES S
+9.13 The following discussion relies on the fact that (as Appendix A explains in more detail) databases are really variables─i.e., we really need to draw a distinction between database values and database variables, analogous to that between relation values and relation variables. Let DBD1 and DBD2 be (logical) database designs; let DB1 and DB2 be database variables conforming to DBD1 and DBD2, respectively; and let db1 and db2 be the current values of DB1 and DB2, respectively. Further, let there exist mappings M12 and M21─i.e., sequences of relational algebra operations, loosely speaking─that transform db1 into db2 and db2 into db1, respectively. Then db1 and db2 are information equivalent, meaning that for every expression involving only relations from db1, there’s an expression involving only relations from db2 that yields the same result (and vice versa).
+Now let database variables DB1 and DB2 be such that for every possible value db1 of DB1 there exists an information equivalent value db2 of DB2 (and vice versa). Then DB1 and DB2 per se are information equivalent, as are the corresponding designs DBD1 and DBD2.
+www.it-ebooks.info
+                Now let database variables DB1 and DB2, as well as their current values db1 and db2, be information equivalent. Let U1 be an update on DB1 that transforms db1 into db1′. Then there must exist an update U2 on DB2 that transforms db2 into db2′, such that db1′ and db2′ are information equivalent. Note that the remarks of this paragraph apply in particular to the case in which DB1 consists only of base relvars and DB2 consists only of views of relvars in DB1.
+Finally, let database variables DB1 and DB2, as well as their current values db1 and db2, not be information equivalent. Then there must exist an expression involving only relations from db1 with no counterpart involving only relations from db2 (or vice versa), and there must exist an update on DB1 with no counterpart on DB2 (or vice versa)─speaking somewhat loosely in both cases. Again note that the remarks of this paragraph apply in particular to the case in which DB1 consists only of base relvars and DB2 consists only of views of relvars in DB1.
+9.14 (You might want to review the section “The Reliance on Attribute Names” in Chapter 6 before reading this answer.) Yes, views should indeed have been sufficient to solve the logical data independence problem. But the trouble with views as conventionally understood is that a view definition specifies both the application’s perception of some portion of the database and the mapping between that perception and the database “as it really is.” In order to achieve the kind of data independence I’m talking about here, those two specifications need to be kept separate (and the mapping specification in particular should be hidden from the user).
+CHAPTER 10
+First of all, in the body of the chapter I asked which of the following natural language sentences were legal propositions. My own answers are as follows (but some of them might be open to debate):
+ Bach is the greatest musician who ever lived. Yes.
+ What’s the time? No. It doesn’t make sense to ask “Is it true that p?” where p is “What’s the time?”
+ Supplier S2 is located in some city, x. My own answer here is yes, but you might argue reasonably argue that it should be no. In fact, the example is a good illustration of the ambiguity problem discussed earlier in the chapter; my answer is based on the assumption that the phrase “some city, x” could be abbreviated to just “some city” without changing the overall meaning of the sentence,14 but you might reasonably argue the opposite. Compare and contrast “We both have the same favorite author, x” (see below).
+ Some countries have a female president. Yes.
+ All politicians are corrupt. Yes.
+ Supplier S1 is located in Paris. Yes (though it’s false, given our usual sample values).
+ We both have the same favorite author, x. No. Here I’m assuming that the phrase “the same favorite author, x” couldn’t be abbreviated to just “the same favorite author” without changing the overall meaning of the sentence (but you could reasonably argue the opposite). If my assumption is correct, then x is a variable (better: a parameter), and until we know what argument is to be substituted for that parameter─i.e., until we
+14 In other words, x here is a bound variable, and the sentence could be rephrased thus: “There exists some city, say x, such that supplier S2 is located in city x.”
+Answers to Exercises / Appendix F 395
+ www.it-ebooks.info
+                396 Appendix F / Answers to Exercises
+know what that x stands for, as it were─we can’t assign a truth value to the sentence. But when we do
+know─i.e., when we substitute Jane Austen, say, for x─then the sentence does become a proposition.
+ Nothing is heavier than lead. Yes.
+ It will rain tomorrow. No. It doesn’t make sense to ask “Is it true that it will rain tomorrow?”─at least, not if you’re expecting an answer (yes or no) that’s guaranteed to be unequivocally correct. Alternatively, we might say that tomorrow here is a variable, and we can’t assign a truth value to the sentence until we know what that variable stands for.
+ Supplier S6’s city is unknown. Yes. See Appendix C for further discussion of propositions like this one.
+10.1 See the answer to Exercise 4.10 earlier in this appendix.
+10.2 This is one of De Morgan’s laws. It’s proved in Chapter 11.
+10.3 Consider the following truth table:
+p │ q │ NOT p │ p OR q │ x AND y │ (x AND y) IMPLIES q │ │(=x)│(=y)│ │
+───┼───┼───────┼────────┼─────────┼───────────────────── T│T│F│T│F│ T T│F│F│T│F│ T F│T│T│T│T│ T F│F│T│F│F│ T
+Since the final column contains T (true) in every position, the given expression is indeed a tautology. 10.4 First of all, it’s easy to see that we don’t need both OR and AND, because
+pANDq ≡ NOT(NOT(p)ORNOT(q)) and
+pORq ≡ NOT(NOT(p)ANDNOT(q))
+These equivalences are easily established by means of truth tables, as in the answer to Exercise 10.3 above (in fact, the first is the contrapositive of the equivalence─one of De Morgan’s laws─from Exercise 10.2). What they show is that OR and AND can each be defined in terms of the other, together with NOT. It follows that we can freely use both OR and AND in what follows.
+Now consider the connectives involving a single proposition p. Let c(p) be the connective under consideration. Then the possibilities are as follows:
+c(p) ≡ pORNOT(p) /*alwaysTRUE */ c(p) ≡ pANDNOT(p) /*alwaysFALSE*/ c(p) ≡ p /* identity */ c(p) ≡ NOT(p) /*NOT */
+Now consider the connectives involving two propositions p and q. Let c(p,q) be the connective under consideration. Then the possibilities are as follows:
+www.it-ebooks.info
+                c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡ c(p,q) ≡
+pORNOT(p)ORqORNOT(q) pANDNOT(p)ANDqANDNOT(q)
+p
+NOT(p)
+q
+NOT(q)
+pORq
+pANDq
+pORNOT(q)
+pANDNOT(q)
+NOT(p)ORq
+NOT(p)ANDq
+NOT(p)ORNOT(q) NOT(p)ANDNOT(q) (NOT(p)ORq)AND(NOT(q)ORp) (NOT(p)ANDq)OR(NOT(q)ANDp)
+As a subsidiary exercise, and in order to convince yourself that the foregoing definitions do indeed cover all of the possibilities, you might like to construct the corresponding truth tables (and compare them with those given in the answer to Exercise 4.10 earlier in this appendix).
+Turning to part (b) of the exercise: Actually there are two such primitives, NOR and NAND, often denoted by a down arrow, “Ø” (the Peirce arrow) and a vertical bar, “|” (the Sheffer stroke), respectively. Here are the truth tables:
+NOR│ T F ───┼─────
+T│FF F│FT
+NAND │ T F ─────┼─────
+T │FT F │TT
+As these tables suggest, pØq (“p NOR q”) is equivalent to NOT (p OR q) and p|q (“p NAND q”) is equivalent to NOT (p AND q). In what follows, I’ll concentrate on NOR (I’ll leave NAND to you). Observe that this connective can be thought of as “neither nor” (“neither the first operand nor the second is true”). I now show how to define NOT, OR, and AND in terms of this operator:
+NOT(p) ≡pØp
+pORq ≡ (pØq)Ø(pØq) pANDq ≡ (pØp)Ø(qØq)
+For example, let’s take a closer look at the case of p AND q (I’ll leave the NOT(p) and p OR q cases to you):
+p │ q │ pØp │ qØq │ (pØp)Ø(qØq) ───┼───┼─────┼─────┼────────────
+T│T│F│F│ T T│F│F│T│ F F│T│T│F│ F F│F│T│T│ F
+This truth table shows that (pØp)Ø(qØq) is equivalent to p AND q, because its first, second, and final columns are identical to the corresponding columns in the truth table for AND:
+www.it-ebooks.info
+Answers to Exercises / Appendix F 397
+                398
+Appendix F / Answers to Exercises
+p │ q │ p AND q ───┼───┼─────────
+T│T│ T T│F│ F F│T│ F F│F│ F
+Since we’ve already seen that all of the other connectives can be expressed in terms of NOT, OR, and AND, the overall conclusion follows.
+10.5 (a) “The sun is a star” and “the moon is a star” are both propositions, though the first is true and the second false. (b) The sun satisfies the predicate, the moon doesn’t.
+10.6 This exercise points up the question of ambiguity once more. If the predicate means x has exactly two moons, then clearly Jupiter doesn’t satisfy it. But if it means x has at least two moons (and maybe more), then Jupiter does satisfy it. Once again, then, we see how logic forces us─or does its best to force us, at any rate─into thinking clearly and saying exactly what we mean.
+10.7 A parameter can be replaced by any argument whatsoever, just so long as it’s of the right type. A designator isn’t, and in fact can’t be, replaced by anything at all; instead─just like a variable reference in a programming language, in fact─it simply “designates,” or denotes, the value of the pertinent variable at the pertinent time (i.e., when the constraint is checked, in the case at hand).
+10.8 “Get names of suppliers such that there exists a shipment─a single shipment, that is─that links them to every part.” The query probably isn’t very sensible; note that it will return either (a) all supplier names if the cardinality of relvar P is less than two or (b) an empty result otherwise.
+10.9 The following SQL expressions are deliberately meant to be as close to their relational counterparts (as given in the body of the chapter) as possible. See Chapter 11 for further discussion.
+Example 1: Get all pairs of supplier numbers such that the suppliers concerned are colocated.
+SELECT SX.SNO AS SA , SY.SNO AS SB FROM SASSX,SASSY
+WHERE SX.CITY = SY.CITY
+AND SX.SNO < SY.SNO
+Example 2: Get supplier names for suppliers who supply at least one red part.
+SELECT FROM
+WHERE
+DISTINCT SX.SNAME SASSX
+EXISTS
+( SELECT *
+FROM SP AS SPX WHERE EXISTS
+( SELECT *
+FROM PASPX
+WHERE PX.COLOR = ‘Red’
+AND SX.SNO = SPX.SNO
+AND SPX.PNO = PX.PNO ) )
+www.it-ebooks.info
+                Answers to Exercises / Appendix F 399 Example 3: Get supplier names for suppliers who supply at least one part supplied by supplier S2.
+SELECT DISTINCT SX.SNAME FROM S AS SX
+WHERE EXISTS
+( SELECT *
+FROM SP AS SPX WHERE EXISTS
+( SELECT *
+FROM SP AS SPY
+WHERE SX.SNO = SPX.SNO AND SPX.PNO = SPY.PNO AND SPY.SNO = ‘S2’ ) )
+Example 4: Get supplier names for suppliers who don’t supply part P2.
+SELECT FROM
+WHERE
+DISTINCT SX.SNAME SASSX
+NOT EXISTS
+( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO AND SPX.PNO = ‘P2’ )
+Example 5: For each shipment, get full shipment details, including total shipment weight.
+SELECT SPX.* , PX.WEIGHT * SPX.QTY AS SHIPWT FROM PASPX,SPASSPX
+WHERE PX.PNO = SPX.PNO
+Example 6: For each part, get the part number and the total shipment quantity.
+SELECT PX.PNO , ( SELECT COALESCE ( SUM ( SPX.QTY ) , 0 ) FROM SP AS SPX
+FROM P AS PX
+WHERE SPX.PNO = PX.PNO ) AS TOTQ
+Example 7: Get part cities that store more than five red parts.
+SELECT DISTINCT PX.CITY
+FROM P AS PX WHERE ( SELECT
+        FROM
+        WHERE
+        AND
+COUNT ( * )
+PASPY
+PY.CITY = PX.CITY PY.COLOR = ‘Red’ ) > 5
+10.10 The following truth table shows (how, exactly?) that AND is associative; the proof for OR is analogous.
+www.it-ebooks.info
+                400
+Appendix F / Answers to Exercises
+p │ q │ r │ p AND q │ (p AND q) AND r │ q AND r │ p AND (q AND r) ───┼───┼───┼─────────┼─────────────────┼─────────┼────────────────
+T│T│T│T│ T │T│ T T│T│F│F│ F │F│ F T│F│T│F│ F │F│ F T│F│F│F│ F │F│ F F│T│T│F│ F │F│ F F│T│F│F│ F │F│ F F│F│T│F│ F │F│ F F│F│F│F│ F │F│ F
+Note: The formal name for AND is conjunction, and its operands (i.e., the terms being ANDed together) are called conjuncts. Similarly, the formal name for OR is disjunction, and its operands are called disjuncts. Further, since (a) AND and OR are commutative as well as associative and (b) they both possess an identity value, we can define n-adic versions, as follows:
+ AND{p1,p2,...,pn}isdefinedtobeequivalentto
+( p1 ) AND ( p2 ) AND ... AND ( pn ) AND TRUE
+If none of the p’s involves any ANDs, this expression overall is said to be in conjunctive normal form (CNF).
+ OR{p1,p2,...,pn}isdefinedtobeequivalentto
+( p1 ) OR ( p2 ) OR ... OR ( pn ) OR FALSE
+If none of the p’s involves any ORs, this expression overall is said to be in disjunctive normal form (DNF).
+10.11 a. Not valid (suppose x ranges over an empty set and q is TRUE; then EXISTS x (q) is FALSE). b. Not valid (suppose x ranges over an empty set and q is FALSE; then FORALL x (q) is TRUE). c. Valid. d. Valid. e. Not valid (suppose x ranges over an empty set; then FORALL x (p(x)) is TRUE but EXISTS x (p(x)) is FALSE, and TRUE ⇒ FALSE is FALSE). f. Not valid (suppose x ranges over an empty set; then EXISTS x (TRUE) is FALSE). g. Not valid (suppose x ranges over an empty set; then FORALL x (FALSE) is TRUE). h. Valid. i. Not valid (e.g., the fact that exactly one integer is equal to zero doesn’t imply that all integers are equal to zero). j. Not valid (e.g., the fact that all days are 24 hours long and the fact there exists at least one day that’s 24 hours long don’t together imply that exactly one day is 24 hours long). k. Valid. Note: (Valid!) equivalences and implications like those under discussion here (and in the next exercise) can be used as a basis for a set of calculus expression transformation rules, much like the algebraic expression transformation rules discussed in Chapter 6. See Chapter 11 for further discussion.
+10.12 a. Valid. b. Valid. c. Valid. d. Valid. e. Not valid (e.g., saying that for every integer y there exists a greater integer x isn’t the same as saying there exists an integer x that’s greater than all integers y). f. Valid.
+10.13 I give solutions only where there’s some significant point to be made regarding the solution in question. For cross reference purposes, I show the numbers of the original exercises in italics. Exercises from Chapter 6:
+6.12 The following relational calculus expressions denote TABLE_DEE and TABLE_DUM, respectively: { } WHERE TRUE
+www.it-ebooks.info
+                { } WHERE FALSE
+And this expression denotes the projection of the current value of relvar S on no attributes:
+{ } WHERE EXISTS ( SX )
+The relational calculus isn’t usually considered as having a direct counterpart to Tutorial D’s r{ALL BUT ...}, but there’s no reason in principle why it shouldn’t.
+6.15 The relational calculus isn’t usually considered as having a direct counterpart to Tutorial D’s D_UNION or I_MINUS, but there’s no reason in principle why it shouldn’t.
+10.13 (cont.) Exercises from Chapter 7: 7.1
+d. {PX}WHERESUM(SPXWHERESPX.PNO=PX.PNO,QTY)<500
+e. { PX } WHERE EXISTS ( SX WHERE SX.CITY = PX.CITY )
+j. {PX,SCT:=COUNT(SPXWHERESPX.PNO=PX.PNO)}
+7.8 A relational calculus analog of the Tutorial D expression SP GROUP ({} AS X) is: { SPX , X := { } }
+7.11 { SX , PNO_REL := { SPX.PNO } WHERE SPX.SNO = SX.SNO }
+7.12 In practice we need analogs of the conventional INSERT, DELETE, and UPDATE (and relational
+assignment) operators that are in keeping with a calculus style rather than an algebraic one (and this observation is true regardless of whether we’re talking about relvars with RVAs, as in the present context, or without them). Further details are beyond the scope of the present book, but in any case are straightforward. No further answer provided.
+10.13 (cont.) Exercises from Chapter 8: No answers provided. 10.13 (cont.) Exercises from Chapter 9: No answers provided.
+10.14 Recall from the body of the chapter that the set over which a range variable ranges is always the body of some relation─usually but not always the relation that’s the current value of some relvar (emphasis added). In this example, the range variable ranges over what is, in effect, a union:
+RANGEVAR CX RANGES OVER { SX.CITY } , { PX.CITY } ; { CX } WHERE TRUE
+www.it-ebooks.info
+Answers to Exercises / Appendix F 401
+                402 Appendix F / Answers to Exercises
+Note that the definition of range variable CX makes use of range variables SX and PX, which I assume to have been
+previously defined.
+10.15 In order to show that SQL is relationally complete, it’s sufficient to show that (a) there exist SQL expressions for each of the algebraic operators restrict, project, product, union, and difference (because as we saw in Chapter 6, all of the other algebraic operators discussed in this book can be defined in terms of these five),15 and (b) the operands to those SQL expressions can be arbitrarily complex SQL expressions in turn. So let’s try.
+First of all, as we know, SQL effectively does support the relational algebra RENAME operator, thanks to the availability of the optional AS specification on items in the SELECT clause.16 We can therefore ensure that tables do all have proper column names, and hence that the operands to product, union, and difference in particular satisfy the requirements of the algebra with respect to column naming. Furthermore─provided those column naming requirements are indeed satisfied─the SQL column name inheritance rules in fact coincide with those of the algebra as described in Chapter 6.
+Here then are SQL expressions corresponding approximately to the five primitive operators mentioned above:
+Algebra
+R WHERE bx R{A,B,...,C} R1 TIMES R2
+R1 UNION R2
+R1 MINUS R2
+SQL
+SELECT * FROM R WHERE bx SELECTDISTINCTA,B,...,CFROMR SELECT * FROM R1 , R2
+SELECT * FROM R1 UNION CORRESPONDING SELECT * FROM R2
+SELECT * FROM R1 EXCEPT CORRESPONDING SELECT * FROM R2
+  Moreover, (a) R, R1, and R2 in the SQL expressions shown above are all table expressions (in the sense in which I’ve been using this latter term throughout this book up to this point), and (b) if we take any of those expressions and enclose it in parentheses, what results is a table expression in turn.17 It follows that SQL is indeed relationally complete. Or is it? Unfortunately, the answer is no. The reason is that there’s a slight (?) glitch in the foregoing argument─SQL fails to support projection on no columns at all, because it doesn’t support empty
+15 Except for TCLOSE─but TCLOSE wasn’t included in the original definition of what it meant to be relationally complete, anyway. Note: You might be wondering about some of the other operators from Chapter 7 (e.g., EXTEND, SUMMARIZE, and GROUP and UNGROUP). In fact, Hugh Darwen and I show in our book Databases, Types, and the Relational Model: The Third Manifesto (see Appendix G) that these operators can indeed be defined in terms of restrict, project, etc.
+16 To state the matter a little more precisely: An SQL analog of the algebraic expression R RENAME {A AS B} is the (extremely inconvenient!) SQL expression SELECT X, Y, ..., Z, A AS B FROM R (where X, Y, ..., Z are all of the columns of R apart from A, and I choose to overlook the fact that the SQL expression results in a table with a left to right ordering to its columns).
+17 I choose to overlook the fact that SQL would actually require such a table expression, when used in any of the contexts under discussion, to be accompanied by a pointless range variable definition.
+ www.it-ebooks.info
+                Answers to Exercises / Appendix F 403 commalists in the SELECT clause. As a consequence, it doesn’t support TABLE_DEE or TABLE_DUM, and
+therefore it isn’t relationally complete after all ... but it “nearly” is.
+10.16 Let TP and DC denote the propositions “the database contains only true propositions” and “the database is consistent,” respectively. Then the first bullet item says:
+IF TP THEN DC The second says:
+IF NOT ( DC ) THEN NOT ( TP )
+And it’s easy to see that these two propositions are indeed equivalent (in fact, each is the contrapositive of the
+other).
+10.17 No, it isn’t─though textbooks on logic usually claim the opposite, and in practice it’s “usually” achievable. Here’s an example of a relational calculus expression where the predicate in the WHERE clause can’t be replaced by a PNF equivalent:
+SX WHERE EXISTS SPX ( SPX.SNO = SX.SNO ) OR SX.CITY = ‘Athens’
+The paper “A Remark on Prenex Normal Form” (see Appendix G) explains the situation in detail.
+CHAPTER 11
+11.1 First of all, you were asked several times in the body of the chapter whether it was necessary to worry about the possibility that the tables involved might include duplicate rows or nulls or both. But I categorically refuse─and so, I would like to suggest politely, should you─to waste any more time worrying about such matters. Avoid duplicates, avoid nulls, and then the transformations will all work just fine (and so will many other things, too).
+That said, let me now give solutions to a couple of the more significant inline exercises:
+(From the end of the section on Example 7.) Here’s an SQL formulation of the query “Get suppliers SX such that for all parts PX and PY, if PX.CITY ≠ PY.CITY, then SX doesn’t supply both of them.” (How does this formulation differ from the one shown in the body of the chapter?)
+SELECT FROM
+WHERE
+SX.*
+S AS SX
+NOT EXISTS
+( SELECT *
+FROM PASPX WHERE EXISTS
+( SELECT *
+FROM P AS PY
+WHERE PX.CITY <> PY.CITY AND EXISTS
+( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO AND SPX.PNO = PX.PNO )
+www.it-ebooks.info
+                404 Appendix F / Answers to Exercises
+                   AND    EXISTS
+                        ( SELECT *
+FROM SP AS SPX
+WHERE SPX.SNO = SX.SNO
+AND SPX.PNO = PY.PNO ) ) )
+(From the end of the section on Example 12.) You were asked to give SQL formulations (a) using GROUP BY and HAVING, (b) not using GROUP BY and HAVING, for the following queries:
+ GetsuppliernumbersforsupplierswhosupplyNdifferentpartsforsomeN>3.
+ GetsuppliernumbersforsupplierswhosupplyNdifferentpartsforsomeN<4.
+Here are GROUP BY and HAVING formulations:
+SELECT SNO
+FROM SP
+GROUP BY SNO
+HAVING COUNT ( * ) > 3
+SELECT SNO
+FROM SP
+GROUP BY SNO
+HAVING COUNT ( * ) < 4 UNION CORRESPONDING SELECT SNO
+FROM S
+WHERE SNO NOT IN
+( SELECT SNO
+FROM SP )
+And here are non GROUP BY, non HAVING formulations:
+SELECT SNO
+FROM S
+WHERE ( SELECT COUNT ( * )
+FROM SP
+WHERE SP.SNO = S.SNO ) > 3
+SELECT SNO
+FROM S
+WHERE ( SELECT COUNT ( * )
+FROM SP
+WHERE SP.SNO = S.SNO ) < 4
+You were also asked: What do you conclude from this exercise? Well, one thing I conclude is that we need to be very circumspect in our use of GROUP BY and HAVING. Observe in particular that the natural language queries were symmetric, which the GROUP BY / HAVING formulations aren’t. By contrast, the non GROUP BY, non HAVING formulations are symmetric.
+11.2 No answer provided.
+www.it-ebooks.info
+                11.3 No answer provided (obviously).
+11.4 First of all, the exercise asked if you think the GROUP BY / HAVING expressions are easier to understand
+than the relational calculus expression (or the direct SQL transliteration of that expression). Only you can answer this question, of course, but I’m pretty sure the answer for most people would have to be no. Second, the exercise also asked if those GROUP BY / HAVING expressions accurately represent the desired query. Answer: The third one does; by contrast, the first returns all employee numbers in EMP and the second returns no employee numbers at all. Third, the exercise also asked what happens in each case if there aren’t exactly three shortest employees. I’ll leave this one to you!
+11.5 I’m certainly not going to give anything like a complete answer to this exercise, but I will at least observe that the following equivalences allow certain algebraic expressions to be converted into calculus ones and vice versa:
+ rWHEREbx1ANDbx2 ≡ (rWHEREbx1)JOIN(rWHEREbx2)  rWHEREbx1ORbx2 ≡ (rWHEREbx1)UNION(rWHEREbx2)  rWHERENOT(bx) ≡ rMINUS(rWHEREbx)
+Other transformations were discussed in passing throughout the body of the book (from Chapter 6 on). 11.6 Well, I certainly don’t see why not.
+CHAPTER 12
+12.1 A NATURAL JOIN B : Illegal
+A INTERSECT B : Illegal
+SELECT * FROM A NATURAL JOIN B : Legal
+SELECT * FROM A INTERSECT B : Illegal
+SELECT * FROM ( A NATURAL JOIN B ) : Legal
+SELECT * FROM ( A INTERSECT B ) : Illegal
+SELECT * FROM ( SELECT * FROM A INTERSECT SELECT * FROM B ) : Illegal SELECT * FROM ( A NATURAL JOIN B ) AS C : Illegal
+SELECT * FROM ( A INTERSECT B ) AS C : Illegal
+TABLE A NATURAL JOIN TABLE B : Illegal
+www.it-ebooks.info
+Answers to Exercises / Appendix F 405
+                406
+Appendix F / Answers to Exercises
+TABLE A INTERSECT TABLE B : Legal
+SELECT * FROM A INTERSECT SELECT * FROM B : Legal
+( SELECT * FROM A ) INTERSECT ( SELECT * FROM B ) : Legal (SELECT*FROMA)ASAAINTERSECT(SELECT*FROMB)ASBB: Illegal
+You were also asked what you conclude from this exercise. One thing I conclude is that the rules are very difficult to remember (to say the least). In particular, SQL expressions involving INTERSECT can’t always be transformed straightforwardly into their JOIN counterparts. I remark also that if we replace INTERSECT by NATURAL JOIN in the last two expressions, then the legal one becomes illegal and vice versa! That’s because, believe it or not, the expressions
+( SELECT * FROM A ) and
+( SELECT * FROM B )
+are considered to be subqueries in the context of NATURAL JOIN but not that of INTERSECT. (In other words, a subquery is a SELECT expression enclosed in parentheses, loosely speaking, but a SELECT expression enclosed in parentheses isn’t necessarily a subquery.)
+12.2 The effects are as follows: The second expression was previously illegal but becomes legal; the third, fifth, eleventh, twelfth, and thirteen were legal but become illegal; and the others were all illegal anyway and remain so. What do you conclude from this exercise?
+12.3 It gives FALSE. Note, therefore (to spell the point out), it’s possible in SQL for two values to be “equal” and yet not “like” each other! (Lewis Carroll, where are you?)
+12.4 The first gives:
+┌────────┐ │ STATUS │ ├════════┤ │ 10│ │ 20│ │ 30│ └────────┘
+(The point here is that BETWEEN is inclusive, not exclusive, and so 10 and 30 are both included in the result. Does this state of affairs accord with your own intuitive understanding of the meaning of between?) The second gives:
+┌────────┐ │CITY │ ├════════┤ │ London │ └────────┘
+www.it-ebooks.info
+                And the third gives:
+┌────────┐ │CITY │ ├════════┤ └────────┘
+London isn’t included in the result. The reason is that the expression y BETWEEN x AND z
+is shorthand for
+x <= y AND y <= z
+The problem here is that the natural language expression “y is between x and z” is symmetric in x and z (i.e., switching x and z has no effect on the meaning), while the same is not true for the SQL expression “y BETWEEN x AND z.” In a nutshell, BETWEEN in SQL doesn’t mean the same as between in natural language.
+12.5 First of all, observe that both comparand expressions are subqueries, and they therefore evaluate to tables. Now, those tables both have exactly one column, a fact that can be determined at compile time. What’s more, given our usual sample values, they also both have exactly one row; the subqueries are therefore scalar subqueries, and the overall comparison is thus legal (a double coercion occurs on both sides, and the net effect is that two scalar values are compared). But suppose the WHERE clause in the second subquery had specified 12.0 instead of 14.0. Given our usual sample values, the comparison overall would then no longer be legal (it would fail at run time), because the second subquery would now be a table subquery instead of a scalar one.
+12.6 No answer provided.
+12.7 No answer provided.
+12.8 No answer provided.
+12.9 No answer provided.
+APPENDIX C
+C.1 Here’s an SQL version of constraint EQD2 (only; constraint EQD3 is essentially similar, of course).
+CREATE ASSERTION EQD2 CHECK
+( NOT EXISTS ( SELECT SNO
+AND
+FROM ST
+WHERE SNO IN ( SELECT SNO
+FROM SUT ) )
+www.it-ebooks.info
+Answers to Exercises / Appendix F 407
+                408
+Appendix F / Answers to Exercises
+C.2
+( SELECT SNO , STATUS , CAST ( STATUS
+FROM ST ) ,
+NOT
+AND NOT
+AND NOT
+WITH T1 AS
+     T2 AS
+     T3 AS
+     T4 AS
+     T5 AS
+     T6 AS
+     T7 AS
+     T8 AS
+S AS
+SELECT SNO
+FROM   S
+EXISTS (
+EXISTS (
+EXISTS (
+SELECT SNO
+FROM   SUT
+WHERE  SNO
+SELECT SNO
+FROM   SN
+IN ( SELECT SNO FROM ST ) )
+( SELECT
+FROM T1 ) ,
+( SELECT
+FROM SUT ) ,
+( SELECT
+  FROM   T1
+  UNION
+  SELECT
+  FROM
+( SELECT
+  FROM
+( SELECT
+  FROM
+( SELECT
+  FROM
+( SELECT
+CORRESPONDING SNO , XSTATUS T3 ) ,
+SNO , CITY AS SC ) ,
+SNO , ‘d/k’ AS SUC ) ,
+SNO , ‘n/a’ AS SNC ) ,
+WHERE
+SELECT FROM (
+WHERE
+SNO
+NOT
+IN ( SELECT SNO FROM ST
+UNION CORRESPONDING SELECT SNO
+FROM SUT ) )
+SNO , XSTATUS
+SNO , ‘d/k’ AS
+SNO , XSTATUS
+       SNO , XCITY
+FROM   T5
+UNION CORRESPONDING SELECT SNO , XCITY FROM T6
+UNION
+SELECT
+FROM
+CORRESPONDING SNO , XCITY T7 ) ,
+SNO
+SELECT
+FROM ST
+UNION CORRESPONDING SELECT SNO
+FROM SNO NOT
+SUT ) AS POINTLESS IN ( SELECT SNO
+FROM SN)));
+AS CHAR ( 3 ) ) AS XSTATUS
+XSTATUS
+XCITY
+ XCITY
+ XCITY
+( SELECT SNO , SNAME , XSTATUS , XCITY
+FROM SN NATURAL JOIN T4 NATURAL JOIN T8 )
+, SNAME , XSTATUS , XCITY
+C.3
+by the expression VALUES(‘S1’) doesn’t have a name.
+SNO
+Because CORRESPONDING means “match on column names” and the single column in the table produced
+www.it-ebooks.info

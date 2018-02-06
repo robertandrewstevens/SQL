@@ -1,0 +1,602 @@
+Chapter 4: No Duplicates, No Nulls
+
+I haven’t even mentioned yet the way the silly notions 
+Discussed so far interreact and lead us into oceans
+Of complication and despond and general distress.
+Are two nulls equal (duplicates)? I fear, both NO and YES.
+─Anon.: Where Bugs Go
+
+In the previous chapter, I said the following (approximately):
+
+- Relationsnevercontainduplicatetuples,becausethebodyofarelationisaset(asetoftuples)andsetsin mathematics don’t contain duplicate elements.
+
+- Relationsnevercontainnulls,becausethebodyofarelationisasetoftuples,andtuplesinturnnever contain nulls.
+
+I also suggested that since there was so much to be said about these topics, it was better to devote a separate chapter to them. This is that chapter. Note: By definition, the topics in question are SQL topics, not relational ones; in what follows, therefore, I’ll use the terminology of SQL rather than that of the relational model (for the most part, at any rate).
+
+WHAT’S WRONG WITH DUPLICATES?
+
+There are numerous practical arguments in support of the position that duplicate rows (“duplicates” for short) should be prohibited. Here I want to emphasize just one─but I think it’s a powerful one [1]. However, it does rely on certain notions I haven’t discussed yet in this book, so I need to make a couple of preliminary assumptions:
+
+1. I assume you know that relational DBMSs include a component called the optimizer [2], whose job is to try to figure out the best way to implement user queries and the like (where “best” basically means best performing).
+
+2. I assume you also know that one of the things optimizers do is what’s sometimes called query rewrite.
+Query rewrite is the process of transforming some relational expression exp1 (representing some user query, say) into another such expression exp2, such that exp1 and exp2 are guaranteed to produce the same result when evaluated but exp2 performs better than exp1 (at least, we hope so). Note: Be aware, however, that the term query rewrite is also used in certain commercial products with a different (typically more limited) meaning.
+
+Now I can present my argument. The fundamental point I want to make is that certain expression transformations, and hence certain optimizations, that would be valid if SQL were truly relational aren’t valid in the presence of duplicates. By way of example, consider the (nonrelational) database shown in Fig. 4.1. Note right away that the tables in that database have no keys (which is why there’s no double underlining in the figure). And by the way: If you’re thinking the database is unrealistic─and especially if you’re thinking you’re not going to be convinced by the arguments that follow, therefore─please see the further remarks on this example at the beginning of the next section.
+
+P
+PNO PNAME
+P1  Screw
+P1  Screw
+P1  Screw
+P2  Screw
+
+SP
+SNO PNO
+S1  P1
+S1  P1
+S1  P2
+
+Fig. 4.1: A nonrelational database, with duplicates
+
+Before going any further, perhaps I should ask the question: What does it mean to have three (P1, Screw) rows in table P and not two, or four, or seventeen? It must mean something, for if it means nothing, then why are the duplicates there in the first place? As I once heard Ted Codd say: If something is true, saying it twice doesn’t make it any more true [3].
+
+So I have to assume there’s some meaning attached to the duplication, even though that meaning, whatever it is, is hardly very explicit [4]. Given that duplicates do have some meaning, therefore, there are presumably going to be business decisions made on the basis of the fact that, for example, there are three (P1,Screw) rows in table P and not two or four or seventeen. For if not, then (to repeat) why are the duplicates there in the first place?
+
+Now consider the following query on the database of Fig. 4.1: “Get part numbers for parts that either are screws or are supplied by supplier S1, or both.” Here are some candidate SQL formulations for this query, together with the result produced in each case:
+
+
+
+1. 
+
+SELECT P.PNO 
+FROM   P
+WHERE  P.PNAME = ‘Screw’ 
+OR     P.PNO IN
+     ( SELECT SP.PNO 
+       FROM SP
+       WHERE SP.SNO = ‘S1’ )
+
+Result: P1*3, P2*1.
+
+2. 
+
+SELECT SP.PNO 
+FROM   SP
+WHERE  SP.SNO = ‘S1’
+OR     SP.PNO IN
+     ( SELECT P.PNO
+       FROM   P
+       WHERE P.PNAME = ‘Screw’ )
+
+Result: P1*2, P2*1.
+
+3. 
+
+SELECT P.PNO 
+FROM   P, SP
+WHERE  ( SP.SNO = ‘S1’ AND 
+         SP.PNO = P.PNO )
+OR     P.PNAME = ‘Screw’
+
+Result: P1*9, P2*3.
+
+4. 
+
+SELECT SP.PNO 
+FROM   P, SP
+WHERE ( SP.SNO = ‘S1’ AND 
+        SP.PNO = P.PNO )
+OR     P.PNAME = ‘Screw’
+
+Result: P1*8, P2*4.
+
+5. 
+
+SELECT P.PNO 
+FROM   P
+WHERE  P.PNAME = ‘Screw’ 
+UNION  ALL
+SELECT SP.PNO
+FROM   SP
+WHERE  SP.SNO = ‘S1’
+
+Result: P1*5, P2*2.
+
+6. 
+
+SELECT DISTINCT P.PNO 
+FROM   P
+WHERE  P.PNAME = ‘Screw’ 
+UNION  ALL
+SELECT SP.PNO
+FROM   SP
+WHERE  SP.SNO = ‘S1’
+
+Result: P1*3, P2*2.
+
+7. 
+
+SELECT P.PNO 
+FROM   P
+WHERE  P.PNAME = ‘Screw’ 
+UNION  ALL
+SELECT DISTINCT SP.PNO FROM SP
+WHERE  SP.SNO = ‘S1’
+
+Result: P1*4, P2*2.
+
+8. 
+
+SELECT DISTINCT P.PNO 
+FROM   P
+WHERE  P.PNAME = ‘Screw’ 
+OR     P.PNO IN
+     ( SELECT SP.PNO 
+       FROM SP
+       WHERE SP.SNO = ‘S1’ )
+
+Result: P1*1, P2*1.
+
+9. 
+
+SELECT DISTINCT SP.PNO 
+FROM   SP
+WHERE  SP.SNO = ‘S1’
+OR     SP.PNO IN
+     ( SELECT P.PNO
+       FROM P
+       WHERE P.PNAME = ‘Screw’ )
+
+Result: P1*1, P2*1.
+
+10. 
+
+SELECT P.PNO 
+FROM   P
+GROUP  BY P.PNO , P.PNAME 
+HAVING P.PNAME  = ‘Screw’ 
+OR     P.PNO IN
+     ( SELECT SP.PNO
+       FROM SP
+       WHERE SP.SNO = ‘S1’ )
+
+Result: P1*1, P2*1.
+
+11. 
+
+SELECT P.PNO
+FROM   P, SP
+GROUP  BY P.PNO , P.PNAME , SP.SNO , SP.PNO 
+HAVING ( SP.SNO = ‘S1’ AND
+         SP.PNO = P.PNO ) 
+OR     P.PNAME = ‘Screw’
+
+Result: P1*2, P2*2.
+
+12. 
+
+SELECT P.PNO 
+FROM   P
+WHERE  P.PNAME = ‘Screw’ 
+UNION
+SELECT SP.PNO
+FROM   SP
+WHERE  SP.SNO = ‘S1’
+
+Result: P1*1, P2*1.
+
+Aside: Actually, certain of the foregoing formulations─which?─are a little suspect, because they effectively assume that every screw is supplied by at least one supplier. But this fact makes no material difference to the argument that follows. End of aside.
+
+The first point to notice, then, is that the twelve different formulations produce nine different results: different, that is, with respect to their degree of duplication. (By the way, I make no claim that the twelve different formulations and the nine different results are the only ones possible; indeed, they aren’t, in general.) Thus, if the user really cares about duplicates, then he or she needs to be extremely careful in formulating the query in such a way as to obtain exactly the desired result.
+
+Furthermore, analogous remarks apply to the system itself: Because different formulations can produce different results, the optimizer too has to be extremely careful in its task of expression transformation. For example, the optimizer isn’t free to transform, say, formulation 1 into formulation 12 or the other way around, even if it would like to. In other words, duplicate rows act as a significant optimization inhibitor. Here are some implications of this fact:
+
+- The optimizer code itself is harder to write, harder to maintain, and probably more buggy ─ all of which combine to make the product more expensive and less reliable, as well as later in delivery to the marketplace, than it might be.
+
+- System performance is likely to be worse than it might be.
+
+- Users are going to have to get involved in performance issues. To be more specific, they’re going to have to spend time and effort in figuring out how to formulate a given query in order to get the best performance─a state of affairs that (as noted in Chapter 1) the relational model was expressly intended to avoid.
+
+The fact that duplicates serve as an optimization inhibitor is particularly frustrating in view of the fact that, in most cases, users probably don’t care how many duplicates appear in the result. In other words:
+
+- Different formulations produce different results.
+
+- However, the differences are probably irrelevant from the user’s point of view.
+
+- But the optimizer is unaware of this latter fact and is therefore prevented, unnecessarily, from performing the transformations it might like to perform.
+
+On the basis of examples like the foregoing, I’m tempted to say you should always ensure that query results contain no duplicates─for example, by always specifying DISTINCT in your SQL queries─and thus simply forget about the whole problem (and if you follow this advice, there can be no good reason for having duplicates in the first place!). However, I’ll have more to say about this suggestion in the section immediately following.
+
+DUPLICATES: FURTHER ISSUES
+
+There’s much, much more that could be said regarding duplicates and what’s wrong with them, but I’ll limit myself here to just three further points. First of all, you might reasonably object that in practice base tables, at least, never do include duplicates, and the foregoing example thus intuitively fails. True enough (probably); but the trouble is, SQL can generate duplicates in query results. Indeed, different formulations of the same query can produce results with different degrees of duplication, even if the input tables themselves have no duplicates at all. For example, here are two possible formulations of the query “Get supplier numbers for suppliers who supply at least one part” on our usual suppliers-and-parts database (and note here that the input tables certainly don’t contain any duplicates):
+
+SELECT SNO
+FROM   S
+WHERE  SNO IN 
+     ( SELECT SNO
+       FROM SP ) 
+
+SELECT SNO
+FROM   S NATURAL JOIN SP
+
+At least one of these expressions─which?─will produce a result with duplicates, in general. (Exercise: Given our usual sample data values, what results do the two expressions produce?) So if you don’t want to think of the tables in Fig. 4.1 as base tables specifically, fine: Just take them to be the output from previous queries, and the rest of the analysis goes through unchanged.
+
+Second, there’s another at least psychological argument against duplicates that I think is quite persuasive (thanks to Jonathan Gennick for this one): If, in accordance with the n-dimensional perspective on relations introduced in Chapter 3, you think of a table as a plot of points in some n-dimensional space, then duplicate rows clearly don’t add anything─they simply amount to plotting the same point twice.
+
+My last point is this. Suppose table T does permit duplicates. Then we can’t tell the difference between “genuine” duplicates in T and duplicates that arise from errors in data entry on T! For example, suppose the person responsible for data entry unintentionally enters the very same row twice─e.g., by inadvertently hitting the return key twice (easily done, by the way). Then there’s no straightforward way to delete the “second” row without deleting the “first” as well. Note that we presumably do want to delete that “second” row, since it shouldn’t have been entered in the first place.
+
+AVOIDING DUPLICATES IN SQL
+
+The relational model prohibits duplicates; to use SQL relationally, therefore, steps must be taken to prevent them from occurring. Now, if every base table has at least one key (see Chapter 5), then duplicates will never occur in base tables as such. As already mentioned, however, certain SQL expressions can still yield result tables with duplicates. Here are some of the cases in which such tables can be produced:
+
+- SELECT ALL
+
+- UNION ALL
+
+- VALUES (i.e., table value constructor invocations)
+
+Regarding VALUES, see Chapter 3. Regarding ALL, note first that this keyword (and its alternative,
+DISTINCT) can be specified:
+
+- In a SELECT clause, immediately following the SELECT keyword
+
+- In a union, intersection, or difference, immediately following the applicable keyword (UNION, INTERSECT, and EXCEPT, respectively)
+
+- Inside the parentheses in aninvocation of a “setfunction” such as SUM, immediately preceding the argument expression
+
+Note: DISTINCT is the default for UNION, INTERSECT, and EXCEPT; ALL is the default in the other cases. 
+
+Now, the “set function” case is special; you must specify ALL, at least implicitly, if you want the function to take duplicate values into account, which sometimes you do (see Chapter 7). But the other cases have to do with elimination of duplicate rows, which must always be done, at least in principle, if you want to use SQL relationally. Thus, the obvious recommendations in those cases are: Always specify DISTINCT; preferably do so explicitly; and never specify ALL. Then you can just forget about duplicate rows entirely.
+
+In practice, however, matters aren’t quite that simple. Why not? Well, I don’t think I can do better here than repeat the essence of what I wrote in this book’s predecessor (Database in Depth, O’Reilly Media Inc., 2005):
+
+At this point in the original draft, I added that if you find the discipline of always specifying DISTINCT annoying, don’t complain to me─complain to the SQL vendors instead. But my reviewers reacted with almost unanimous horror to my suggestion that you should always specify DISTINCT. One wrote: “Those who really know SQL well will be shocked at the thought of coding SELECT DISTINCT by default.” Well, I’d like to suggest, politely, that (a) those who are “shocked at the thought” probably know the implementations well, not SQL, and (b) their shock is probably due to their recognition that those implementations do such a poor job of optimizing away unnecessary DISTINCTs [5]. If I write SELECT DISTINCT SNO FROM S..., that DISTINCT can safely be ignored. If I write either EXISTS (SELECT DISTINCT...) or IN (SELECT DISTINCT ...), those DISTINCTs can safely be ignored. If I write SELECT DISTINCT SNO FROM SP ... GROUP BY SNO, that DISTINCT can safely be ignored. If I write SELECT DISTINCT... UNION SELECT DISTINCT..., those DISTINCTs can safely be ignored. And so on. Why should I, as a user, have to devote time and effort to figuring out whether some DISTINCT is going to be a performance hit and whether it’s logically safe to omit it?─and to remembering all of the details of SQL’s inconsistent rules for when duplicates are automatically eliminated and when they’re not?
+
+Well, I could go on. However, I decided─against my own better judgment, but in the interest of maintaining good relations (with my reviewers, I mean)─not to follow my own advice elsewhere in this book but only to request duplicate elimination explicitly when it seemed to be logically necessary to do so. It wasn’t always easy to decide when that was, either. But at least now I can add my voice to those complaining to the vendors, I suppose.
+
+So the recommendation (sadly) boils down to this: First, make sure you know when SQL eliminates duplicates without you asking it to. Second, in those cases where you do have to ask, make sure you know whether it matters if you don’t. Third, in those cases where it matters, specify DISTINCT (but, as Hugh Darwen once said, be annoyed about it). And never specify ALL!
+
+WHAT’S WRONG WITH NULLS?
+
+The opening paragraph from the section “What’s Wrong with Duplicates?” applies equally well here, with just one tiny text substitution, so I’ll basically just repeat it: There are numerous practical arguments in support of the position that nulls should be prohibited. Here I want to emphasize just one─but I think it’s a powerful one. But it does rely on certain notions I haven’t discussed yet in this book, so I need to make a couple of preliminary assumptions:
+
+1. I assume you know that any comparison in which at least one of the comparands is null evaluates to the UNKNOWN truth value instead of TRUE or FALSE. The justification for this state of affairs is the intended interpretation of null as value unknown: If the value of A is unknown, then it’s also unknown whether, for example, A > B, regardless of the value of B (even─perhaps especially─if the value of B is unknown as well). Note: That same state of affairs is also the source of the term three-valued logic (3VL). That is, the notion of nulls, as understood in SQL, inevitably leads to a logic in which there are three truth values instead of the usual two. (The relational model, by contrast, is based on conventional two-valued logic, 2VL.)
+
+2. I assume you’re also familiar with the 3VL truth tables for the familiar logical operators─also known as connectives─NOT, AND, and OR (T = TRUE, F = FALSE, U = UNKNOWN):
+
+p NOT p 
+- -----
+T F 
+U U 
+F T 
+
+p q p AND q
+- - -------
+T T T 
+T U U 
+T F F 
+U T U 
+U U U 
+U F F 
+F T F 
+F U F 
+F F F
+
+p q p OR q
+- - ------
+T T T
+T U T 
+T F T 
+U T T 
+U U U 
+U F U 
+F T T 
+F U U 
+F F F
+
+Observe in particular that NOT returns UNKNOWN if its input is UNKNOWN; AND returns UNKNOWN if one input is UNKNOWN and the other is either UNKNOWN or TRUE; and OR returns UNKNOWN if one input is UNKNOWN and the other is either UNKNOWN or FALSE.
+
+Now I can present my argument. The fundamental point I want to make is that certain boolean expressions─and therefore certain queries in particular─can produce results that are correct according to three- valued logic but not correct in the real world. By way of example, consider the (nonrelational) database shown in Fig. 4.2, in which “the CITY is null” for part P1. Note carefully that the shading in that figure, in the place where the CITY value for part P1 ought to be, stands for nothing at all; conceptually, there’s nothing at all─not even a string of blanks or an empty string─in that position (which means the “tuple” for part P1 isn’t really a tuple, a point I’ll come back to near the end of this section).
+
+S
+SNO CITY
+--- ------
+S1  London
+
+P
+PNO CITY
+--- ------
+P1  ░░░░░░
+
+Fig. 4.2: A nonrelational database, with a null
+
+Consider now the following (admittedly rather contrived) query on the database of Fig. 4.2: “Get (SNO,PNO) pairs where either the supplier and part cities are different or the part city isn’t Paris (or both).” Here’s an SQL formulation of this query:
+
+SELECT S.SNO , P.PNO 
+FROM   S , P
+WHERE  S.CITY <> P.CITY 
+OR     P.CITY <> ‘Paris’
+
+Now I want to focus on the boolean expression in the WHERE clause:
+
+( S.CITY <> P.CITY ) OR ( P.CITY <> ‘Paris’ )
+
+(I’ve added some parentheses for clarity.) For the only data we have, this expression evaluates to UNKNOWN OR UNKNOWN, which reduces to just UNKNOWN. Now, queries in SQL retrieve data for which the expression in the WHERE clause evaluates to TRUE, not to FALSE and not to UNKNOWN [6]; in the example, therefore, nothing is retrieved at all.
+
+But part P1 does have some corresponding city in the real world [7]; in other words, “the null CITY” for part P1 does stand for some real value, say c. Now, either c is Paris or it isn’t. If it is, then the expression
+
+( S.CITY <> P.CITY ) OR ( P.CITY <> ‘Paris’ )
+
+becomes (for the only data we have)
+
+( ‘London’ <> ‘Paris’ ) OR ( ‘Paris’ <> ‘Paris’ )
+
+which evaluates to TRUE, because the first term evaluates to TRUE. Alternatively, if c isn’t Paris, then the expression becomes (again, for the only data we have)
+
+( ‘London’ <> c ) OR ( c <> ‘Paris’ )
+
+which also evaluates to TRUE, because the second term evaluates to TRUE. Thus, the boolean expression is always true in the real world, and the query should therefore return the pair (S1, P1), regardless of what real value the null stands for. In other words, the result that’s correct according to the logic (meaning, specifically, 3VL) and the result that’s correct in the real world are different!
+
+By way of another example, consider the following query on that same table P from Fig. 4.2 (I didn’t lead with this example because it’s even more contrived than the previous one, but in some ways it makes the point with even more force):
+
+SELECT PNO
+FROM   P
+WHERE  CITY = CITY
+
+The real world answer here is surely the set of part numbers currently appearing in P (in other words, the set containing just part number P1, given the sample data shown in Fig. 4.2). SQL, however, will return no part numbers at all.
+
+To sum up: If you have any nulls in your database, then you’re getting wrong answers to certain of your queries. What’s more, you have no way of knowing, of course, just which queries you’re getting wrong answers to and which not; all results become suspect. You can never trust the answers you get from a database with nulls. In my opinion, this state of affairs is a complete showstopper.
+
+Aside: To all of the above, I can’t resist adding that even though SQL does support 3VL, and even though it does support the keyword UNKNOWN, that keyword does not─unlike the keywords TRUE and FALSE─denote a value of type BOOLEAN. (This is just one of the numerous flaws in SQL’s 3VL support; there are many, many others, but most of them are beyond the scope of this book.) To elaborate briefly: As with 2VL, the SQL type BOOLEAN contains just two values, TRUE and FALSE; “the third truth value” is represented, quite incorrectly, by null! Here are some consequences of this fact:
+
+- Assigning UNKNOWN to a variable B of type BOOLEAN actually sets B to null
+
+- After such an assignment, the comparison B = UNKNOWN doesn’t give TRUE─instead, it gives null (meaning, to spell the point out, that SQL apparently believes, or claims, that it’s unknown whether B is UNKNOWN). Note, incidentally, that this state of affairs constitutes a violation of The Assignment Principle (see Exercise 2.22 in Chapter 2, also Chapter 5)
+
+- In fact, the comparison B = UNKNOWN always gives null (meaning UNKNOWN), regardless of the value of B, because it’s logically equivalent to the comparison “B = NULL” (not meant to be valid SQL syntax)
+
+To understand the seriousness of such flaws, you might care to meditate on the analogy of a numeric type that uses null instead of zero to represent zero. End of aside.
+
+As with the business of duplicates earlier, there’s a lot more that could be said on the whole issue of nulls, but I just want to close with a brief look at the formal argument against them. Recall that, by definition, a null isn’t a value. It follows that:
+
+- A “type” that contains a null isn’t a type (because types contain values)
+
+- A “tuple” that contains a null isn’t a tuple (because tuples contain values)
+
+- A “relation” that contains a null isn’t a relation (because relations contain tuples, and tuples don’t contain nulls)
+
+- In fact, nulls (like duplicates)violate one of the most fundamental relational principles of all ─ viz., The Information Principle. Once again, see Appendix A for further discussion of that principle.
+
+The net of all this is that if nulls are present, then we’re certainly not talking about the relational model (I don’t know what we are talking about, but it’s not the relational model); the entire edifice crumbles, and all bets are off.
+
+AVOIDING NULLS IN SQL
+
+The relational model prohibits nulls; to use SQL relationally, therefore, steps must be taken to prevent them from occurring. First of all, a NOT NULL constraint should be specified, explicitly or implicitly, for every column in every base table (see Chapter 5); then nulls will never occur in base tables as such. Unfortunately, however, certain SQL expressions can still yield result tables containing nulls. Here are some of the situations in which nulls can be produced:
+
+- The SQL “set functions” such as SUM all return null if their argument is empty (except for COUNT and COUNT(*), which correctly return zero in such a situation)
+
+- If a scalar subquery evaluates to an empty table, that empty table is coerced to anull
+
+- If a row subquery evaluates to an empty table, that empty table is coerced to a row of all nulls. Note: A row of all nulls and a null row aren’t the same thing at all, logically speaking (another logical difference here, in fact)─yet SQL does think they’re the same thing, at least some of the time. But it would take us much too far afield to get into the detailed implications of this state of affairs here
+
+- Outer joins and “union joins” are expressly designed to produce nulls in their result [8]
+
+- If the ELSE clause is omitted from a CASE expression, an ELSE clause of the form ELSE NULL is assumed
+
+- The expression NULLIF(x, y) returns null if x = y evaluates to TRUE
+
+- The “referential triggered actions” ON DELETE SET NULL and ON UPDATE SET NULL can both generate nulls (obviously enough)
+
+Strong recommendations:
+
+- Do specify NOT NULL, explicitly or implicitly, for every column in every base table
+
+- Don’t use the keyword NULL in any other context whatsoever (i.e., anywhere other than a NOT NULL constraint or logical equivalent)
+
+- Don’t use the keyword UNKNOWN in any context whatsoever
+
+- Don’t omit the ELSE clause from a CASE expression unless you’re certain it would never have been reached anyway
+
+- Don’t use NULLIF
+
+- Don’t use outer join, and don’t use the keywords OUTER, FULL, LEFT, and RIGHT (except possibly as suggested in the section “A Remark on Outer Join” below)
+
+- Don’t use union join
+
+- Don’t specify either PARTIAL or FULL on MATCH (they have meaning only when nulls are present). For similar reasons, don’t use the MATCH option on foreign key constraints, and don’t use IS DISTINCT FROM. (In the absence of nulls, the expression a IS DISTINCT FROM b is logically equivalent to the expression a <> b.)
+
+- Don’t use IS TRUE, IS NOT TRUE, IS FALSE, or IS NOT FALSE. The reason is that, if bx is a boolean expression, then the following logical equivalences fail to be valid only if nulls are present:
+
+bx IS TRUE ≡ bx
+bx IS NOT TRUE ≡ NOT bx 
+bx IS FALSE ≡ NOT bx 
+bx IS NOT FALSE ≡ bx
+
+In other words, IS TRUE and the rest are distractions at best, in the absence of nulls.
+
+- Finally, do use COALESCE on every scalar expression that might “evaluate to null” without it (Apologies for the quotation marks, but the fact is that the phrase “evaluates to null” is a solecism)
+
+In case you’re not familiar with COALESCE, let me elaborate briefly on the last of these recommendations. Essentially, COALESCE is an operator that lets us replace a null by some nonnull value “as soon as it appears” (i.e., before it has a chance to do any significant damage). Here’s the definition: Let a, b, ..., c be scalar expressions. Then the expression COALESCE (a, b, ..., c) returns null if its arguments are all null, or the value of its first nonnull argument otherwise. Of course, to use it “sensibly,” you do need to make sure at least one of a, b, ..., c is nonnull! Here’s a fairly realistic example:
+
+SELECT S.SNO , ( SELECT COALESCE ( SUM ( ALL SP.QTY ) , 0 ) 
+                 FROM SP
+                 WHERE SP.SNO = S.SNO ) AS TOTQ
+FROM S
+
+In this example, if the SUM invocation “evaluates to null”─which it will do in particular for any supplier that doesn’t have any matching shipments─then the COALESCE invocation will replace that null by a zero. (Incidentally, this example also illustrates a situation in which use of ALL instead of DISTINCT isn’t just acceptable but is logically required, though it might be implicit. See Chapter 7.) Given our usual sample data,
+therefore, the query produces the following result:
+
+SNO TOTQ
+--- ----
+S1  1300
+S2   700
+S3   200
+S4   900
+S5     0
+
+A REMARK ON OUTER JOIN
+
+Outer join is expressly designed to produce nulls in its result and should therefore be avoided, in general. Relationally speaking, it’s a kind of shotgun marriage: It forces tables into a kind of union─yes, I do mean union, not join─even when the tables in question fail to conform to the usual requirements for union (see Chapter 6). It does this, in effect, by padding one or both of the tables with nulls before doing the union, thereby making them conform to those usual requirements after all. But there’s no reason why that padding shouldn’t be done with proper values instead of nulls, as in this example:
+
+SELECT SNO , PNO FROM SP
+UNION
+SELECT SNO , ‘nil’ AS PNO FROM S
+WHERE  SNO NOT IN ( SELECT SNO FROM SP )
+
+Result (note the line for supplier S5 in particular):
+
+SNO PNO
+S1  P1
+S1  P2
+S1  P3
+S1  P4
+S1  P5
+S1  P6
+S2  P1
+S2  P2
+S3  P2
+S4  P2
+S4  P4
+S4  P5
+S5  nil
+
+Alternatively, the same result could be obtained by using the explicit SQL outer join operator in conjunction with COALESCE, as here:
+
+SELECT SNO , COALESCE ( PNO , ‘nil’ ) AS PNO 
+FROM   S NATURAL LEFT OUTER JOIN SP
+
+CONCLUDING REMARKS
+
+There are a few final remarks I want to make regarding nulls and 3VL specifically. Nulls and 3VL are supposed to be a solution to the “missing information” problem─but I believe I’ve shown that, to the extent they can be considered a “solution” at all, they’re a disastrously bad one. Before I leave the topic, however, I’d like to raise, and respond to, an argument that’s often heard in this connection. That argument goes something like this:
+
+All of those examples you give where nulls lead to wrong answers are very artificial. Real world queries aren’t like that! More generally, most of your criticisms seem very academic and theoretical─I bet you can’t show any real practical situations where nulls have given rise to the kinds of problems you worry about, and I bet you can’t prove such practical situations do occur.
+
+Needless to say, I have several responses to this argument. The first is: How do we know nulls haven’t caused real practical problems, anyway? It seems to me that if some serious real world situation─an oil spill, a collapsed bridge, a wrong medical diagnosis─were found to be due to nulls, there might be valid reasons (nontechnical ones, I mean) why the information would never get out. We’ve all heard stories of embarrassing failures caused by software glitches of other kinds, even in the absence of nulls; in my opinion, nulls can only serve to make such failures more likely.
+
+Second, suppose someone─me, for example─were to go around claiming that some software product or application contained a serious logical error due to nulls. Can you imagine the lawsuits?
+
+Third and most important, I think those of us who criticize nulls don’t need to be defensive, anyway; I think we should stand the counterarguments on their head, as it were. After all, it’s undeniable that nulls can lead to errors in certain cases. So it’s not up to us to prove those “certain cases” might include practical, real world situations; rather, it’s up to those who want to defend nulls to prove they don’t. And I venture to suggest that in practice it would be quite difficult, and very likely impossible, to prove any such thing.
+
+Of course, if nulls are prohibited, then missing information will have to be handled by some other means. Unfortunately, those other means are a little too complex, in general, to be discussed in detail here. The SQL mechanism of (nonnull) default values can be used in simple cases; but for a more comprehensive approach to the problem─including in particular an explanation of how you can still get “don’t know” answers when you want them, even from a database without nulls─I refer you to Appendix C.
+
+EXERCISES
+
+4.1 “Duplicates in databases are a good idea in because duplicates occur naturally in the real world. For example, all pennies are duplicates of one another.” How would you respond to this argument?
+
+4.2 Let r be a relation and let bx and by be boolean expressions. Then there’s a law (used in relational systems to help with optimization, among other things) that states that (r WHERE bx) UNION (r WHERE by) ≡ r WHERE bx OR by. If r isn’t a relation but an SQL table with duplicates, does this law still apply?
+
+4.3 Let a, b, and c be sets. Then the distributive law of intersection over union (also used in relational systems to help with optimization among other things) states that a INTERSECT (b UNION c) ≡ (a INTERSECT b) UNION (a INTERSECT c). If a, b, and c are bags instead of sets, does this law still apply?
+
+4.4 Part of the SQL standard’s explanation of the FROM clause (as in a SELECT - FROM - WHERE expression) reads as follows:
+
+[The] result of the <from clause> is the ... cartesian product of the tables identified by [the specifications in that <from clause>]. The ... cartesian product, CP, is the multiset of all rows r such that r is the concatenation of a row from each of the identified tables ...
+
+Note, therefore, that CP isn’t well defined!─the fact that the standard goes on to say that “The cardinality of CP is the product of the cardinalities of the identified tables” notwithstanding. For example, consider the tables T1 and T2 shown here:
+
+T1
+C1
+--
+0
+0
+
+T2
+C2
+--
+1
+2
+
+Observe now that all of the following fit the above definition for “the” cartesian product CP of T1 and T2 (that is, any of them could be “the” multiset referred to):
+
+CP1
+C1 C2
+0  1
+0  1
+0  1
+0  2
+
+CP2
+┌────┬────┐ │C1│C2│ CP3 ├────┼────┤ │0│1│ │0│1│ │0│2│ │0│2│ └────┴────┘
+┌────┬────┐ │C1│C2│ ├────┼────┤ │0│1│ │0│2│ │0│2│ │0│2│ └────┴────┘
+
+Can you fix up the wording of the standard appropriately?
+
+4.5 Consider the following
+
+
+SQL cursor definition:
+DECLARE X CURSOR FOR SELECT SNO , QTY
+FROM SP ;
+Note that (a) cursor X permits updates, (b) the table visible through cursor X permits duplicates, but (c) the underlying table SP doesn’t (permit duplicates, that is). Now suppose the operation DELETE ... WHERE CURRENT OF X is executed. Then there’s no way, in general, of saying which specific row of table SP is deleted by that operation. How would you fix this problem?
+4.6 Please write out one googol times: There’s no such thing as a duplicate. Note: A googol is one followed by 100 zeros (i.e., 10 to the hundredth power). A googolplex is one followed by a googol zeros (i.e., 10 to the “googolth” power).
+4.7 Do you think nulls occur naturally in the real world?
+4.8 There’s a logical difference between null and the third truth value: True or false? (Perhaps I should ask:
+True, false, or unknown?)
+www.it-ebooks.info
+                82 Chapter 4 / No Duplicates, No Nulls
+4.9 In the body of the chapter, I gave truth tables for one monadic 3VL connective (NOT) and two dyadic 3VL connectives (AND and OR), but there are many other connectives as well (see Exercise 4.10 below). Another useful monadic connective is MAYBE,9 with truth table as follows:
+P │ MAYBE p ───┼─────────
+T│F U│T F│F
+Does SQL support this connective?
+4.10 Following on from the previous exercise, how many distinct connectives are there altogether in 2VL? What about 3VL? What do you conclude from your answers to these questions?
+4.11 A logic is truth functionally complete if it supports, directly or indirectly, all possible connectives. Truth functional completeness is an extremely important property; a logic that didn’t satisfy it would be like an arithmetic that had no support for certain operations, say “+”. Is classical 2VL truth functionally complete? Is SQL’s 3VL truth functionally complete?
+4.12 Let bx be a boolean expression. Then bx OR NOT bx is also a boolean expression, and in 2VL it’s guaranteed to evaluate to TRUE (it’s an example of what logicians call a tautology). Is it a tautology in 3VL? If not, is there an analogous tautology in 3VL?
+4.13 With bx as in the previous exercise, bx AND NOT bx is also a boolean expression, and in 2VL it’s guaranteed to evaluate to FALSE (it’s an example of what logicians call a contradiction). Is it a contradiction in 3VL? If not, is there an analogous contradiction in 3VL?
+4.14 In 2VL, r JOIN r is equal to r and INTERSECT and TIMES are both special cases of JOIN (see Chapter 6). Are these observations still valid in 3VL?
+4.15 The following is a legitimate SQL row value constructor invocation: ROW (1,NULL). Is the row it denotes null or nonnull?
+4.16 Let bx be an SQL boolean expression. Then NOT (bx) and (bx) IS NOT TRUE are both SQL boolean expressions. Are they equivalent?
+4.17 Let x be an SQL expression. Then x IS NOT NULL and NOT (x IS NULL) are both SQL boolean expressions. Are they equivalent?
+4.18 Let DEPT and EMP be SQL tables; let DNO be a column in both; let ENO be a column in EMP; and consider the expression DEPT.DNO = EMP.DNO AND EMP.DNO = ‘D1’ (this expression might be part of the WHERE clause in some query, for example). Now, a “good” optimizer might very well transform this expression into DEPT.DNO = EMP.DNO AND EMP.DNO = ‘D1’ AND DEPT.DNO = ‘D1’, on the grounds that a = b and b =
+9 Useful, that is, if we buy into the notion that 3VL as such is useful, which of course I don’t.
+ www.it-ebooks.info
+                No Duplicates, No Nulls / Chapter 4 83 c together imply that a = c (see Exercise 6.13 in Chapter 6). But is this transformation valid? If not, why not? And
+what are the implications?
+4.19 Suppose the suppliers-and-parts database permits nulls; in particular, suppose columns SP.SNO and SP.PNO permit nulls.10 Here then is a query on that database, expressed for reasons beyond the scope of this chapter not in SQL but in a kind of pidgin form of relational calculus (see Chapter 10):
+S WHERE NOT EXISTS SP ( SP.SNO = S.SNO AND SP.PNO = ‘P2’ )
+What does this query mean? And is the following formulation equivalent?
+S WHERE NOT ( S.SNO IN ( SP.SNO WHERE SP.PNO = ‘P2’ ) )
+4.20 Let k1 and k2 be values of the same type. In SQL, then, what exactly do the following statements mean?
+a. k1 and k2 are “the same” for the purposes of a comparison in, e.g., a WHERE clause.
+b. k1 and k2 are “the same” for the purposes of key uniqueness.
+c. k1 and k2 are “the same” for the purposes of duplicate elimination.
+4.21 In the body of the chapter, I said UNION ALL can generate duplicates. But what about INTERSECT ALL and EXCEPT ALL?
+4.22 Are the recommendations “Always specify DISTINCT” and “Never specify ALL” duplicates of each other?
+4.23 If TABLE_DEE corresponds to TRUE (or yes) and TABLE_DUM to FALSE (or no), then what corresponds
+to UNKNOWN (or maybe)?
+4.24 The following quotes are taken from the SQL standard:11
+- “The data type boolean comprises the distinct truth values True and False. Unless prohibited by a NOT NULL constraint, the boolean data type also supports the truth value Unknown as the null value. This [standard] does not make
+a distinction between the null value of the boolean data type and the truth value Unknown ... [They] may be used interchangeably to mean exactly the same thing.”
+- “All boolean values and SQL truth values are comparable ... The value True is greater than the value False, and any comparison involving the null value or an Unknown truth value will return an Unknown result.”
+10 If {SNO,PNO} is the primary key for shipments, then columns SP.SNO and SP.PNO couldn’t permit nulls without violating the entity integrity rule. So in case such a possibility bothers you (it doesn’t bother me, because I don’t believe in that rule anyway), let me change the example slightly; let me introduce another column, SPNO (shipment number), into the shipments table, and let me make {SPNO} the primary key. Then {SNO,PNO} will still be a key, but it won’t be the primary key, and the entity integrity rule therefore won’t apply. (Incidentally, the very fact that the entity integrity rule is supposed to apply only to primary keys, not to candidate keys in general, seems to me to be another reason to regard that rule with suspicion. Not to mention the fact that it’s also supposed to apply only to base tables, not to tables in general, which I think makes it more suspect still.)
+11 Note that the standard uses True, Unknown, and False in prose discussions but TRUE, UNKNOWN, and FALSE in its SQL grammar.
+            www.it-ebooks.info
+                84 Chapter 4 / No Duplicates, No Nulls
+Do you have any comments on these quotes? In particular, which if any of the following do you think are legal SQL
+expressions? And what do they return, if they’re legal?
+a. TRUE OR FALSE
+b. TRUE OR UNKNOWN
+c. TRUE OR NULL
+d. TRUE > FALSE
+e. TRUE > UNKNOWN
+f. TRUE > NULL
+4.25 In his book Using the New DB2 (Morgan Kaufmann, 1996), in a section titled “A Brief History of SQL,” Don Chamberlin─who is widely acknowledged to be “the father of SQL”─has the following to say (I’m quoting the text more or less verbatim, except that I’ve added some italics):
+During the early development of SQL ... some decisions were made that were ultimately to generate a great deal [of] controversy ... Chief among these were the decisions to support null values [sic] and to permit duplicate rows ... I will [briefly examine] the reasons for these decisions ... My purpose here is historical rather than persuasive ... I recognize that nulls and duplicates are religious topics, and I do not expect anyone to have a conversion experience after reading this chapter.
+Do you agree with Chamberlin that nulls and duplicates are “religious topics”?
+
+[1] One reviewer felt strongly that an even more powerful practical argument (in fact, the most practical argument of all) is simply that duplicates don’t match reality─a database that permits duplicates just hasn’t been designed properly and can’t be, as I put it in Chapter 1, “a faithful model of reality.” I’m very sympathetic to this position. But this book isn’t about database design, and duplicates aren’t just a design issue in any case. Thus, what I’m trying to do here is show the problems duplicates can cause, regardless of whether they’re due to bad design. A detailed analysis of this whole issue, design aspects included, can be found in the paper “Double Trouble, Double Trouble” (see Appendix G).
+
+[2] Here’s as good a place as any to stress the point that─contrary to common commercial practice, perhaps─ my use of the unqualified term “optimization” (and related terms) in this book always refers to something the DBMS is responsible for, not something the user has to do. In other words, I’m not talking about what’s sometimes called “hand optimization.”
+
+[3] I once quoted this line in a seminar, and an attendee said “You can say that again!” To which I replied “Yes─there’s a logical difference between logic and rhetoric.”
+
+[4] I note in passing, therefore, that duplicates violate one of the original objectives of the relational model, which was explicitness─the meaning of the data should be as obvious and explicit as possible, since databases are supposed to be suitable for sharing among a variety of disparate users. The presence of duplicates strongly suggests that part of that meaning is hidden instead of being explicit. In fact, duplicates violate one of the most fundamental relational principles of all: viz., The Information Principle (discussed further in Appendix A).
+
+[5] The implication is that SELECT DISTINCT might take longer to execute than SELECT ALL, even if the DISTINCT is effectively a “no op.” Well, that might be so; I don’t want to labor the point; I’ll just observe that the reason those implementations typically can’t optimize away unnecessary DISTINCTs is that they don’t understand how key inference works (i.e., they can’t figure out the keys that apply to the result of an arbitrary table expression). This latter issue is explored in depth in a paper by Hugh Darwen, “The Role of Functional Dependence in Query Decomposition” (see Appendix G).
+
+[6] A more accurate statement is: If the boolean expression in a WHERE clause evaluates to UNKNOWN, that UNKNOWN gets coerced to FALSE. Incidentally, it’s interesting to note that, by contrast, if the boolean expression in a CHECK clause─see Chapter 8─evaluates to UNKNOWN, that UNKNOWN gets coerced not to FALSE but to TRUE! This state of affairs (this inconsistency, rather) might reasonably be regarded as yet another nail in the nulls coffin. See the answer to Exercise 8.21g in Appendix F for further discussion.
+
+[7] I’m relying here on the fact that (as noted earlier) the intended interpretation of null is value unknown, from which it follows that the fact that “the CITY is null” for part P1 means part P1 does have some city, but we don’t know what it is. (In fact, if part P1 had no city at all─i.e., if the property of having a city didn’t apply to part P1─then that part shouldn’t have been mentioned in the table in the first place. See the discussion of relvar predicates in Chapter 5.)
+
+[8] SQL’s UNION JOIN operator, which was a flawed attempt to support an already flawed operator called outer union, was introduced in SQL:1992 and dropped in SQL:2003.

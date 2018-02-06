@@ -1,0 +1,515 @@
+Chapter 3: Tuples and Relations, Rows and Tables
+
+[I] have reduced several great confused Volumes into a few perspicuous Tables. ─ John Graunt (1662)
+
+From the first two chapters you should have gained a pretty good understanding of what tuples and relations are, at least intuitively. Now I want to define those concepts more precisely, and I want to explore some of the consequences of those more precise definitions; also, I want to describe the analogous SQL constructs (viz., rows and tables) and offer some specific recommendations to help with our goal of using SQL relationally. Perhaps I should warn you that the formal definitions might look a little daunting ─ but that’s not unusual with formal definitions; the concepts themselves are quite straightforward, once you’ve struggled through the formalism, and you should be ready to do that by now because the terminology, at least, should be quite familiar to you.
+
+WHAT’S A TUPLE?
+
+Is this a tuple?
+
+SNO CHAR SNAME CHAR STATUS INTEGER CITY CHAR
+-------- ---------- -------------- ---------
+S1       Smith                  20 London
+
+Well, no, it isn’t ─ it’s a picture of a tuple, not a tuple as such (and note that for once I’ve included the type names in that picture as well as the attribute names). As we saw in Chapter 1, there’s a logical difference between a thing and a picture of a thing, and that difference can be very important. For example, tuples have no left to right ordering to their attributes, and so the following is an equally good (bad?) picture of the very same tuple:
+
+STATUS INTEGER SNAME CHAR CITY CHAR SNO CHAR
+-------------- ---------- --------- -------- 
+            20 Smith      London    S1
+
+Thus, while I’ll certainly be showing many pictures like these in the pages to follow, please keep in mind that they’re only pictures, and they can sometimes suggest some things that aren’t true.
+
+With that caveat out of the way, I can now say exactly what a tuple is:
+
+Definition: Let T1, T2, ..., Tn (n ≥ 0) be type names, not necessarily all distinct. Associate with each Ti a distinct attribute name, Ai; each of the n attribute-name/type-name combinations that results is an attribute.
+
+Associate with each attribute an attribute value, vi, of type Ti; each of the n attribute/value combinations that results is a component. Then the set of all n components thus defined, t say, is a tuple value (or just a tuple for short) over the attributes A1, A2, ..., An. The value n is the degree of t; a tuple of degree one is unary, a tuple of degree two is binary, a tuple of degree three is ternary, ..., and more generally a tuple of degree n is n-ary. The set of all n attributes is the heading of t.
+
+For example, with reference to the first of the two pictures on the previous page of the tuple for supplier S1, we have:
+
+- Degree: 4. The heading is also said to have degree 4.
+
+- Type names (as shown in the picture, left to right): CHAR, CHAR, INTEGER, CHAR.
+
+- Corresponding attribute names: SNO, SNAME, STATUS, CITY.
+
+- Corresponding attribute values: ‘S1’, ‘Smith’, 20, ‘London’. Note the quotes enclosing the character string values here, incidentally; I didn’t show any such quotes in the pictures, but perhaps I should have done ─ it would have been more correct.
+
+Aside: Suppose for a moment, as we did in Chapter 2, that attribute SNO was of type SNO (a user defined type) instead of type CHAR. Then it would be even more incorrect to say the SNO value in the tuple we’re talking about was S1, or even ‘S1’; rather, it would be SNO(‘S1’). A value of type SNO is a value of type SNO, not a value of type CHAR! ─ a difference in type is certainly a logical difference. (Recall from Chapter 2 that the expression SNO(‘S1’) is a selector invocation ─ in fact, a literal ─ of type SNO.) End of aside.
+
+- Heading: The easiest thing to do here is show another picture:
+
+SNO CHAR SNAME CHAR STATUS INTEGER CITY CHAR
+-------- ---------- -------------- ---------
+
+Of course, this picture represents a set, and the order of attributes is arbitrary. Here’s another picture of the same heading:
+
+STATUS INTEGER SNAME CHAR CITY CHAR SNO CHAR
+-------------- ---------- --------- --------
+
+Exercise: How many different pictures of this same general nature could we draw to represent this same heading? (Answer: 4! = 4*3*2*1 = 24 [1])
+
+Now, a tuple is a value; like all values, therefore, it has a type (as we know from Chapter 2), and that type, like all types, has a name. In Tutorial D, such names take the form TUPLE {H}, where {H} is the heading. In our example, the name is:
+
+TUPLE { SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR }
+
+(but the order in which the attributes are specified is arbitrary).
+
+To repeat, a tuple is a value. Like all values, therefore, it must be returned by some selector invocation (a tuple selector invocation, naturally, if the value is a tuple). Here’s a tuple selector invocation for our example (Tutorial D again):
+
+TUPLE { SNO ‘S1’ , SNAME ‘Smith’ , STATUS 20 , CITY ‘London’ }
+
+(where the order in which the components are specified is again arbitrary). Observe that in Tutorial D each component is specified as just an attribute-name/expression pair, where the specified expression denotes the corresponding attribute value; the attribute type is omitted because it can always be inferred from the type of the specified expression.
+
+Here’s another example (unlike the previous one, this one isn’t a literal, because not all of its arguments are specified as literals in turn):
+
+TUPLE { SNO SX , SNAME ‘James’ , STATUS TX , CITY CX }
+
+I’m assuming here that SX, TX, and CX are variables of types CHAR, INTEGER, and CHAR, respectively. 
+
+As these examples indicate, a tuple selector invocation in Tutorial D consists in general of the keyword TUPLE, followed by a commalist of attribute-name/expression pairs, the whole commalist enclosed in braces. Note, therefore, that the keyword TUPLE does double duty in Tutorial D ─ it’s used in connection both with tuple selector invocations, as we’ve just seen, and with tuple type names as we saw earlier. An analogous remark applies to the keyword RELATION also (see the section “What’s a Relation?” later in this chapter).
+
+Consequences of the Definitions
+
+Now I want to highlight some important consequences of the foregoing definitions. The first is: No tuple ever contains any nulls. The reason is that, by definition, every tuple contains a value (of the appropriate type) for each of its attributes, and (as we saw in Chapter 1) nulls aren’t values ─ despite the fact that SQL often, though not always, refers to them explicitly as null values. Recommendation: Since the phrase “null value” is a contradiction in terms, don’t use it; always say just “null” instead. Note that this recommendation isn’t just a matter of pedantry; rather, it’s a matter of thinking straight. SQL itself manages to make numerous mistakes in its handling of nulls, and some of those mistakes can be traced directly to the fact that SQL does sometimes, but not always, think of null as a value. (Indeed, this ambivalence is reflected in the standard’s very definition of the concept, which reads as follows: “null value: A special value that is used to indicate the absence of any data value.” In other words: Null is a value that means there isn’t a value.)
+
+Now, if no tuple ever contains any nulls, then no relation does so either, a fortiori; so right away we have at least a formal reason for rejecting the concept of nulls ─ but in the next chapter I’ll give some much more pragmatic reasons as well.
+
+The next consequence ─ or pair of consequences, rather ─ is: Every subset of a tuple is a tuple and every subset of a heading is a heading. (I did mention these points in Chapter 1, but now I want to elaborate on them.) By way of example, given our usual tuple for supplier S1, what we might call “the {SNO, CITY} value” within that tuple is itself another tuple (of degree two):
+
+SNO CHAR CITY CHAR
+-------- ---------
+S1       London
+
+Its heading is as indicated, and its type is TUPLE {SNO CHAR, CITY CHAR}. Likewise, the following is a tuple also:
+
+SNO CHAR
+--------
+S1
+
+This tuple is of degree one, and its type is TUPLE {SNO CHAR}.
+
+Now, as I’m sure you know, the empty set ─ i.e., the set that contains no elements ─ is a subset of every set. It follows that the empty heading is a valid heading! ─ and hence that a tuple with an empty set of components is a valid tuple (though it’s a little hard to draw pictures of such a tuple on paper, and I’m not even going to try). A tuple with an empty heading has type TUPLE {}; indeed, we sometimes refer to it explicitly as a 0-tuple, in order to emphasize the fact that it has no components and is of degree zero. We also sometimes call it an empty tuple. Now, you might think such a tuple is unlikely to be of much use in practice; in fact, however, it turns out, perhaps rather surprisingly, to be of crucial importance. I’ll have more to say about it in the section “TABLE_DUM and TABLE_DEE,” later.
+
+Let’s get back to the original tuple for supplier S1 (i.e., the one of degree four) for a moment. Suppose we’re given that tuple and we want to access the actual value of some attribute, say the SNO attribute, from that tuple. Then we have to extract that value, somehow, from the tuple that contains it. Tutorial D uses syntax of the form SNO FROM t for this purpose (where t is any expression that denotes a tuple with an SNO attribute). SQL uses dot qualification: t.SNO.
+
+Note: It follows from the foregoing paragraph that a value v and a tuple t that contains just that value v aren’t the same thing; in particular, they’re of different types. This logical difference is analogous to that described in Chapter 2, between a tuple t and a relation r that contains just that tuple t; these aren’t the same thing either (they too are of different types).
+
+Now I’d like to turn to the notion of tuple equality. (Again I mentioned this notion in Chapter 1, but now I want to elaborate on it.) Recall first from Chapter 2 that the “=” comparison operator is ─ in fact, must be ─ defined for every type, and tuple types are no exception. Basically, two tuples are equal if and only if they’re the very same tuple (just as, for example, two integers are equal if and only if they’re the very same integer). But it’s worth spelling out the semantics of tuple equality in detail, since so much in the relational model depends on it ─ for example, candidate keys, foreign keys, and almost all of the operators of the relational algebra are defined in terms of it. Here then is a precise definition:
+
+Definition: Tuples t and t′ are equal if and only if they have the same attributes A1, A2, ..., An ─ in other words, they’re of the same type ─ and, for all i (i = 1, 2, ..., n), the value v of Ai in t is equal to the value v′ of Ai in t′.
+
+Also (to repeat from Chapter 1, this might seem obvious, but it needs to be said), two tuples are duplicates of each other if and only if they’re equal. Thus, e.g., the tuple for supplier S1 in the suppliers relation of Fig. 1.3 is equal to, and is therefore a duplicate of, itself ─ and it isn’t equal to, or a duplicate of, anything else (any other tuple in particular).
+
+By the way, it’s an immediate consequence of the foregoing definition that all 0-tuples are duplicates of one another. For this reason, we’re within our rights if we talk in terms of the 0-tuple instead of “a” 0-tuple, and indeed we usually do. Note, moreover, that we can validly say that the 0-tuple is a subset of every tuple (just as we can say the empty set is a subset of every set).
+
+So the comparison operator “=”, and therefore the comparison operator “≠” also, do both necessarily apply to tuples. However, the operators “<” and “>” do not apply. The reason is that tuples are fundamentally sets (sets of components, to be specific), and such operators make no sense for sets.
+
+In closing this section, let me draw your attention to Exercise 3.16 at the end of the chapter (also the discussion of that exercise in Appendix F), which I strongly recommend you devote some thought to. Later chapters in the book will appeal to some of the points raised by that exercise.
+
+ROWS IN SQL
+
+SQL supports rows, not tuples; in particular, it supports row types, a row type constructor, and row value constructors, which are analogous, somewhat, to Tutorial D’s tuple types, TUPLE type generator, and tuple selectors, respectively. (Row types and row type constructors, though not row value constructors, were also discussed in Chapter 2.) But these analogies are loose at best, because, crucially, rows, unlike tuples, have a left to right ordering to their components. For example, the expressions ROW(1, 2) and ROW(2, 1) ─ both of which are legitimate row value constructor invocations in SQL ─ represent two different SQL rows. Note: The keyword ROW in an SQL row value constructor invocation is optional; in practice, it’s almost always omitted.
+
+Thanks to that left to right ordering, row components (“fields”) in SQL can be, and indeed are, identified by ordinal position instead of by name. For example, consider the following row value constructor invocation (actually it’s a row literal, though SQL doesn’t use that term):
+
+( ‘S1’ , ‘Smith’ , 20 , ‘London’ )
+
+This row clearly has (among other things) a component with the value ‘Smith’; logically speaking, however, we can’t say that component is “the SNAME component,” we can only say it’s the second component.
+
+I should add that rows in SQL always contain at least one component; SQL has no analog of the 0-tuple of the relational model (there’s no “0-row”).
+
+As discussed in Chapter 2 ─ recall the example involving the SQL row variable SRV ─ SQL also supports a row assignment operation [2]. In particular, such assignments are involved (in effect) in SQL UPDATE statements. For example, the following UPDATE statement
+
+UPDATE S
+SET    STATUS = 20 , CITY = ‘London’ 
+WHERE  CITY = ‘Paris’ ;
+
+is defined to be logically equivalent to this one (note the row assignment in the second line):
+
+UPDATE S
+SET  ( STATUS, CITY) = (20, ‘London’) 
+WHERE  CITY = ‘Paris’ ;
+
+As for comparison operations, most boolean expressions in SQL, including (believe it or not) simple “scalar” comparisons in particular, are actually defined in terms of rows rather than scalars. Here’s an example of a SELECT expression in which the WHERE clause contains an explicit row comparison:
+
+SELECT SNO
+FROM   S
+WHERE  (STATUS, CITY) = (20, ‘London’)
+
+This SELECT expression is logically equivalent to the following one:
+
+SELECT SNO
+FROM   S
+WHERE  STATUS = 20 AND CITY = ‘London’
+
+As another example, the expression
+
+SELECT SNO
+FROM   S
+WHERE  (STATUS, CITY) <> (20, ‘London’)
+
+is logically equivalent to:
+
+SELECT SNO
+FROM   S
+WHERE  STATUS <> 20 OR CITY <> ‘London’
+
+Note carefully in the expanded form of this example that the two individual comparisons in the WHERE clause are connected by OR, not AND.
+
+Moreover, since row components have a left to right ordering, SQL is also able to support “<” and “>” as row comparison operators. Here’s an example:
+
+SELECT SNO
+FROM   S
+WHERE  (STATUS, CITY) > (20, ‘London’)
+
+This expression is logically equivalent to:
+
+SELECT SNO
+FROM   S
+WHERE  STATUS > 20 OR ( STATUS = 20 AND CITY > ‘London’ )
+
+In practice, however, the vast majority of row comparisons involve rows of degree one, as here:
+
+SELECT SNO
+FROM   S
+WHERE  (STATUS) = (20)
+
+Now, all of the comparand expressions in the examples so far have been, specifically, row value constructor invocations. But now I need to explain that SQL has a syntax rule to the effect that if such an invocation consists of a single scalar expression enclosed in parentheses, then the parentheses can optionally be dropped, as here:
+
+SELECT SNO
+FROM   S
+WHERE  STATUS = 20
+
+The “row comparison” in the WHERE clause in this example is thus effectively a scalar comparison (STATUS and 20 are both scalar expressions). Strictly speaking, however, there’s no such thing as a scalar comparison in SQL; the expression STATUS = 20 is still technically a row comparison (and the “scalar” comparands are effectively coerced to rows), so far as SQL is concerned.
+
+Recommendation: Unless the rows being compared are of degree one (and are thus effectively scalars), don’t use the comparison operators “<”, “<=”, “>”, and “>=”; they rely on left to right column ordering, they have no direct counterpart in the relational model, and in any case they’re seriously error prone. (It’s relevant to note in this connection that when this functionality was first proposed for SQL, the standardizers had great difficulty in defining the semantics properly; in fact, it took them several iterations before they got it right.)
+
+WHAT’S A RELATION?
+
+I’ll use our usual suppliers relation as a basis for examples in this section. Here’s a picture:
+
+SNO CHAR SNAME CHAR STATUS INTEGER CITY CHAR
+-------- ---------- -------------- --------- 
+S1       Smith                  20 London
+S2       Jones                  10 Paris
+S3       Blake                  30 Paris
+S4       Clark                  20 London
+S5       Adams                  30 Athens
+
+And here’s a definition:
+
+Definition: Let {H} be a tuple heading and let t1, t2, ..., tm (m ≥ 0) be distinct tuples, all with heading {H} [3]. Then the combination, r say, of {H} and the set of tuples {t1, t2, ..., tm} is a relation value (or just a relation for short) over the attributes A1, A2, ..., An, where A1, A2, ..., An are all of the attributes in {H}. The heading of r is {H}; r has the same attributes (and hence the same attribute names and types) and the same degree as that heading does. The set of tuples {t1, t2, ..., tm} is the body of r. The value m is the cardinality of r.
+
+I’ll leave it as an exercise for you to interpret the suppliers relation in terms of the foregoing definition. However, I will at least explain why we call such things relations. Basically, each tuple in a relation represents an n-ary relationship, in the ordinary natural language sense of that term, interrelating a set of n values (one such value for each tuple attribute); the full set of tuples in a given relation represents the full set of such relationships that happen to exist at some given time; and, mathematically speaking, that set of tuples is a relation. Thus, the explanation often heard, to the effect that the relational model is so called because it lets us “relate one table to another,” though accurate in a kind of secondary sense, really misses the basic point. The relational model is so called because it deals with certain abstractions that we can think of informally as “tables” but are known in mathematics, formally, as relations.
+
+Now, a relation, like a tuple, is itself a value and has a type, and that type has a name. In Tutorial D, such names take the form RELATION {H}, where {H} is the heading ─ for example:
+
+RELATION { SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR }
+
+(The order in which the attributes are specified is arbitrary.) Also, every relation value is denoted by some relation selector invocation ─ for example:
+
+RELATION
+{ TUPLE { SNO ‘S1’ , SNAME ‘Smith’ , STATUS 20 , CITY ‘London’ } ,
+  TUPLE { SNO ‘S2’ , SNAME ‘Jones’ , STATUS 10 , CITY ‘Paris’  } , 
+  TUPLE { SNO ‘S3’ , SNAME ‘Blake’ , STATUS 30 , CITY ‘Paris’  } , 
+  TUPLE { SNO ‘S4’ , SNAME ‘Clark’ , STATUS 20 , CITY ‘London’ } , 
+  TUPLE { SNO ‘S5’ , SNAME ‘Adams’ , STATUS 30 , CITY ‘Athens’ } }
+
+The order in which the tuples are specified is arbitrary. Here’s another example (unlike the previous one, this one isn’t a literal):
+
+RELATION { tx1 , tx2 , tx3 }
+
+I’m assuming here that tx1, tx2, and tx3 are tuple expressions and are all of the same tuple type. As these examples suggest, a relation selector invocation in Tutorial D consists in general [4] of the keyword RELATION, followed by a commalist of tuple expressions enclosed in braces (and those tuple expressions must all be of the same tuple type).
+
+Consequences of the Definitions
+
+Most of the properties of relations I talked about in Chapter 1 are direct consequences of the definitions discussed above, but there are some points I didn’t call out explicitly before, and I want to elaborate on some of the others. The first two I want to mention are as follows:
+
+- Relations never contain duplicate tuples ─ because the body of a relation is a set (a set of tuples) and sets in mathematics don’t contain duplicate elements.
+
+- Relations never contain nulls ─ because the body of a relation is a set of tuples, and we’ve already seenthat tuples in turn never contain nulls.
+
+But these two points are so significant, and there’s so much I need to say about them, that I’ll defer detailed treatment to the next chapter. In the next few sections, I’ll address a series of possibly less weighty issues (?) arising from the definitions.
+
+RELATIONS AND THEIR BODIES
+
+The first point I want to discuss is this: Every subset of a body is a body ─ or, loosely, every subset of a relation is a relation. (Once again I mentioned this fact in Chapter 1, but now I want to say a little more about it.) In particular, since the empty set is a subset of every set, a relation can have a body that consists of an empty set of tuples (and we call such a relation an empty relation). For example, suppose there are no shipments right now. Then relvar SP will have as its current value the empty shipments relation, which we might draw like this (and now I revert to the convention by which we omit the type names from a heading in informal contexts; throughout the rest of the book, in fact, I’ll feel free to regard headings as either including or excluding type names ─ whichever best suits my purpose at the time):
+
+SNO PNO QTY
+--- --- ---
+
+Note that, given any particular relation type, there’s exactly one empty relation of that type ─ but empty relations of different types aren’t the same thing, precisely because they’re of different types. For example, the empty suppliers relation isn’t equal to the empty parts relation (their bodies are equal but their headings aren’t).
+
+Consider now the relation depicted here:
+
+SNO PNO QTY
+--- --- ---
+S1  P1  300
+
+This relation contains just one tuple (equivalently, it’s of cardinality one). If we want to access the single tuple it contains, then we’ll have to extract it somehow from its containing relation. Tutorial D uses syntax of the form TUPLE FROM rx for this purpose, where rx is any expression that denotes a relation of cardinality one ─ for example, it might be the expression RELATION {TUPLE {SNO ‘S1’, PNO ‘P1’, QTY 300}}, which is in fact a relation selector invocation (actually it’s a literal). SQL, by contrast, uses coercion: If (a) tx is a table expression that’s being used as a row subquery (meaning it appears where a row expression is expected), then (b) the table t denoted by tx is supposed to contain just one row r, and (c) that table t is coerced to that row r. Here’s an example (it’s the row assignment example from the section “Row and Table Types in SQL” in Chapter 2):
+
+SET SRV = ( S WHERE SNO = ‘S1’ ) ;
+
+We also need to be able to test whether a given tuple t appears in a given relation r. In Tutorial D: 
+
+t Œ r
+
+This expression returns TRUE if t appears in r and FALSE otherwise. The symbol “Œ” denotes the set membership operator; the expression t Œ r can be read as “t [is] in r” or “t appears in r.” In fact, as you’ve probably realized, “Œ” is essentially SQL’s IN ─ except that the left operand of SQL’s IN is usually a scalar, not a row, which means there’s some coercion going on once again (i.e., the scalar is coerced to the row that contains it) [5]. Here’s an example (“Get suppliers who supply at least one part”):
+
+SELECT SNO , SNAME , STATUS , CITY
+FROM   S
+WHERE  SNO IN /* “SNO” coerced to “ROW(SNO)” */
+     ( SELECT SNO FROM SP )
+
+Note: As I’m sure you know, SQL also supports NOT IN. The Tutorial D analog is “œ”; in other words, the Tutorial D expression “t œ r” means tuple t isn’t in relation r.
+
+RELATIONS ARE n-DIMENSIONAL
+
+I’ve stressed the point several times that, while a relation can be pictured as a table, it isn’t a table. (To say it yet again, a picture of a thing isn’t the same as the thing.) Of course, it can be very convenient to think of a relation as a table; after all, tables are user friendly; indeed, as noted in Chapter 1, it’s the fact that we can think of relations, informally, as tables ─ sometimes more explicitly as “flat” or “two-dimensional” tables ─ that makes relational systems intuitively easy to understand and use, and makes it intuitively easy to reason about the way such systems behave. In other words, it’s a very nice property of the relational model that its basic data structure, the relation, has such an intuitively attractive pictorial representation.
+
+Unfortunately, however, many people seem to have been blinded by that attractive pictorial representation into thinking that relations as such are “flat” or “two-dimensional.” But they’re not. Rather, if relation r has n attributes, then each tuple in r represents a point in a certain n-dimensional space (and the relation overall represents a set of such points). For example, each of the five tuples appearing in our usual suppliers relation represents a certain point in a certain 4-dimensional space (the four dimensions corresponding, of course, to the four attributes of that relation), and the relation overall can thus be said to be 4-dimensional. Thus, relations are n-dimensional, not two-dimensional [6]. As I’ve written elsewhere (in quite a few places, in fact): Let’s all vow never to say “flat relations” ever again.
+
+RELATIONAL COMPARISONS
+
+Like tuple types, relation types are no exception to the rule that the “=” comparison operator must be defined for every type; that is, given two relations r1 and r2 of the same relation type T, we must at least be able to test whether they’re equal. Other comparisons might be useful, too; for example, we might want to test whether r1 includes r2 (meaning every tuple in r2 is also in r1), or whether r1 properly includes r2 (meaning every tuple in r2 is also in r1 but r1 contains at least one tuple that isn’t in r2). Here’s an example, expressed in Tutorial D as usual, of an equality comparison on relations:
+
+S { CITY } = P { CITY }
+
+The left comparand here is the projection of suppliers on {CITY} [7], the right comparand is the projection of parts on {CITY}, and the comparison returns TRUE if these two projections are equal, FALSE otherwise. In other words, the comparison (which is a boolean expression) means: “The set of supplier cities is equal to the set of part cities” (and it evaluates to either TRUE or FALSE, of course).
+
+Here’s another example:
+
+S{SNO} ⊃ SP{SNO}
+
+The symbol “⊃” here means “properly includes” (or, equivalently, “is a proper superset of”). The meaning of this expression (considerably paraphrased) is: “Some suppliers supply no parts at all” (which again necessarily evaluates to either TRUE or FALSE).
+
+Other useful relational comparison operators include “⊇” (“includes”), “⊆” (“is included in”), and “⊂” (“is properly included in”). Note: Of these operators, the “⊆” operator in particular is usually referred to, a trifle arbitrarily, as “the” relational inclusion operator.
+
+One extremely common requirement is to be able to perform an “=” comparison between some given relation r and an empty relation of the same type ─ in other words, a test to see whether r is empty. So it’s convenient to define a shorthand:
+
+IS_EMPTY ( r )
+
+This expression is defined to return TRUE if relation r is empty and FALSE otherwise. I’ll be relying on it
+heavily in chapters to come (especially Chapter 8). The inverse operator is useful too:
+
+IS_NOT_EMPTY ( r )
+
+This expression is logically equivalent to NOT (IS_EMPTY(r)).
+
+TABLE_DUM AND TABLE_DEE
+
+Recall from the discussion of tuples earlier in this chapter that the empty set is a subset of every set, and hence that there’s such a thing as the empty tuple (also called the 0-tuple), and of course that tuple has an empty heading. For exactly the same reason, a relation too might have an empty heading ─ a heading is a set of attributes, and there’s no reason why that set shouldn’t be empty. Such a relation is of type RELATION {}, and its degree is zero.
+
+Let r be a relation of degree zero, then. How many such relations are there? The answer is: Just two. First, r might be empty (meaning it contains no tuples) ─ remember there’s always exactly one empty relation of any given type. Second, if r isn’t empty, then the tuples it contains must all be 0-tuples. But there’s only one 0-tuple! ─ equivalently, all 0-tuples are duplicates of one another ─ and so r can’t possibly contain more than one of them. So there are indeed just two relations with no attributes: one with just one tuple, and one with no tuples at all. For fairly obvious reasons, I’m not going to try drawing pictures of these relations (in fact, this is the one place where the idea of thinking of relations as tables breaks down completely).
+
+Now, you might well be thinking: So what? Why on earth would I ever want a relation that has no attributes at all? Even if they’re mathematically respectable (which they are), surely they’re of no practical significance? In fact, however, it turns out they’re of very great practical significance indeed: so much so, that we have pet names for them ─ we call them TABLE_DUM and TABLE_DEE, or DUM and DEE for short (DUM is the empty one, DEE is the one with one tuple). And what makes them so significant is their meanings, which are FALSE (or no) for DUM and TRUE (or yes) for DEE. They have the most fundamental meanings of all. Note: I’ll be discussing the whole notion of relations and their meaning in much more detail in Chapters 5 and 6.
+
+By the way, a good way to remember which is which is this: DEE and yes both have an “E”; DUM and no don’t.
+
+Now, I haven’t covered enough in this book yet to show concrete examples of DUM and DEE in action, as it were, but we’ll see plenty of examples of their use in the pages ahead. Here I’ll just mention one point that should make at least intuitive sense at this early juncture: These two relations (especially TABLE_DEE) play a role in the relational algebra that’s analogous to the role played by zero in conventional arithmetic. And we all know how important zero is; in fact, it’s hard to imagine an arithmetic without zero (the ancient Romans tried, but it didn’t get them very far). Well, it should be equally hard to imagine a relational algebra without TABLE_DEE. Which brings us to SQL... SQL, since it has no counterpart to the 0-tuple, clearly (but unfortunately) has no counterpart to TABLE_DUM or TABLE_DEE either [8].
+
+TABLES IN SQL
+
+Note: Throughout this section, by the term table I mean a table value specifically ─ an SQL table value, that is ─ and not a table variable (which is what CREATE TABLE and CREATE VIEW create). I’ll discuss table variables in Chapter 5.
+
+Now, I explained in Chapter 2 that SQL doesn’t really have anything analogous to the concept of a relation type at all; instead, an SQL table is just a collection of rows (a bag of rows, in general, not necessarily a set) that are of a certain row type. It follows that SQL doesn’t really have anything analogous to the RELATION type generator, either ─ though as we know from Chapter 2 it does support other type generators, including ROW, ARRAY, and MULTISET. It does, however, have something called a table value constructor that’s analogous, somewhat, to a relation selector. Here’s an example:
+
+VALUES ( 1 , 2 ), ( 2 , 1 ), ( 1 , 1 ), ( 1 , 2 )
+
+This expression (actually it’s a table literal, though SQL doesn’t use this term) evaluates to a table with four ─ not three! ─ rows and two columns. What’s more, those columns have no names. As I’ve already explained, the columns of an SQL table are ordered, left to right; as a consequence, those columns can be, and sometimes have to be, identified by ordinal position instead of name.
+
+By way of another example, consider the following table value constructor invocation:
+
+VALUES ( ‘S1’ , ‘Smith’ , 20 , ‘London’ ) , 
+       ( ‘S2’ , ‘Jones’ , 10 , ‘Paris’  ) , 
+       ( ‘S3’ , ‘Blake’ , 30 , ‘Paris’  ) , 
+       ( ‘S4’ , ‘Clark’ , 20 , ‘London’ ) , 
+       ( ‘S5’ , ‘Adams’ , 30 , ‘Athens’ )
+
+Note that, in order for this expression to be regarded as a fair approximation to its relational counterpart (i.e., a relation literal denoting the relation that’s the current value of relvar S as shown in Fig. 1.3), we must:
+
+1. Ensure, for each column of the table specified by the VALUES expression, that all of the values are of the pertinent type. (In particular, if some given ordinal position in any of the specified rows corresponds to attribute A of the intended relational counterpart, then we must ensure that the same ordinal position in all of those rows corresponds to that same attribute A.)
+
+2. Ensure that we don’t specify the same row twice.
+
+Note: As you know, in the relational model a heading is a set of attributes. In SQL, by contrast, because columns have a left to right ordering, it would be more correct to regard a heading as a sequence, not a set, of attributes (or columns, rather). If the recommendations of this book are followed, however, this logical difference can mostly (?) be ignored.
+
+What about table assignment and comparison operators? Well, table assignment is a big topic, and I’ll defer the details to Chapter 5. As for table comparisons, SQL has no direct support ─ not even for equality [9]! ─ but workarounds are available. For example, here’s an SQL counterpart to the Tutorial D comparison S{CITY} = P{CITY}:
+
+NOT EXISTS ( SELECT CITY FROM S 
+             EXCEPT
+             SELECT CITY FROM P ) 
+AND
+NOT EXISTS ( SELECT CITY FROM P 
+             EXCEPT
+             SELECT CITY FROM S )
+
+And here’s a counterpart to the Tutorial D comparison S{SNO} ⊃ SP{SNO}:
+
+EXISTS ( SELECT SNO FROM S
+         EXCEPT
+         SELECT SNO FROM SP ) 
+AND
+NOT EXISTS ( SELECT SNO FROM SP 
+             EXCEPT
+             SELECT SNO FROM S )
+
+COLUMN NAMING IN SQL
+
+In the relational model, (a) every attribute of every relation has a name (i.e., anonymous attributes are prohibited), and (b) such names are unique within the relevant relation (i.e., duplicate attribute names are prohibited). In SQL, analogous rules are enforced sometimes, but not always. To be specific, they’re enforced for the tables that happen to be the current values of table variables ─ defined via CREATE TABLE or CREATE VIEW ─ but not for the tables that result from evaluation of some table expression [10]. Strong recommendation: Use AS clauses whenever necessary (and possible) to give proper column names to columns that otherwise (a) wouldn’t have a name at all or (b) would have a name that wasn’t unique. Here are some examples:
+
+SELECT DISTINCT SNAME , ‘Supplier’ AS TAG 
+FROM   S
+
+SELECT DISTINCT SNAME , 2 * STATUS AS DOUBLE_STATUS 
+FROM   S
+
+SELECT MAX ( WEIGHT ) AS MBW 
+FROM   P
+WHERE  COLOR = ‘Blue’
+
+CREATE VIEW SDS AS
+     ( SELECT DISTINCT SNAME , 2 * STATUS AS DOUBLE_STATUS 
+       FROM S);
+
+SELECT DISTINCT S.CITY AS SCITY , P.CITY AS PCITY
+FROM   S, P, P
+WHERE  S.SNO = SP.SNO
+AND    SP.PNO = P.PNO
+
+SELECT TEMP.*
+FROM ( SELECT * FROM S JOIN P ON S.CITY > P.CITY ) AS TEMP 
+     ( SNO , SNAME , STATUS , SCITY ,
+       PNO , PNAME , COLOR , WEIGHT , PCITY )
+
+Of course, the foregoing recommendation can safely be ignored if there’s no subsequent need to reference the otherwise anonymous or non-uniquely named columns. For example, the third of the foregoing examples could safely be abbreviated in some circumstances (in a WHERE or HAVING clause, perhaps) to just:
+
+SELECT MAX ( WEIGHT ) 
+FROM   P
+WHERE  COLOR = ‘Blue’
+
+Perhaps more important, note that the recommendation unfortunately can’t be followed at all in the case of tables specified by means of VALUES expressions. However, workarounds are possible. For example, the following is legal:
+
+SELECT TEMP.*
+FROM ( VALUES ( ‘S1’ , ‘Smith’ , 20 , ‘London’ ) ,
+              ( ‘S2’ , ‘Jones’ , 10 , ‘Paris’  ) , 
+              ( ‘S3’ , ‘Blake’ , 30 , ‘Paris’  ) , 
+              ( ‘S4’ , ‘Clark’ , 20 , ‘London’ ) , 
+              ( ‘S5’ , ‘Adams’ , 30 , ‘Athens’ ) )
+       AS TEMP ( SNO , SNAME , STATUS , CITY )
+
+Explanation: I’ve enclosed the VALUES expression in parentheses (thereby making it a subquery), attached an AS clause, and specified column names as well as a “correlation name” within that AS clause (see Chapter 12).
+
+Important note: The operators of the relational algebra rely on proper attribute naming in a variety of ways. For example, as we’ll see in Chapter 6, the relational UNION operator requires its operands to have the same heading (and hence the same attribute names), and the result then has the same heading as well. One advantage of this scheme is precisely that it avoids the complexities caused (in SQL) by reliance on ordinal position! In order to use SQL relationally, therefore, you should apply the same discipline to the SQL analogs of those relational operators. Strong recommendation: As a prerequisite to enforcing such a discipline, if two columns in SQL represent “the same kind of information,” give them the same name wherever possible. (That’s why, for example, the two supplier number columns in our running example, the suppliers-and-parts database, are both called SNO and not, say, SNO in one table and SNR in the other.) Conversely, if two columns represent different kinds of information, it’s usually a good idea to give them different names.
+
+The only case where it’s impossible to follow the foregoing recommendation is when two columns in the same table both represent the same kind of information. For example, consider an SQL table EMP with columns representing employee number and manager number, respectively, where manager number is itself another employee number. These two columns will have to have different names, say ENO and MNO, respectively. As a consequence, some column renaming will sometimes have to be done, as in this example (note the specification “ENO AS MNO” in the third line):
+
+( SELECT ENO , MNO FROM EMP ) AS TEMP1 
+  NATURAL JOIN
+( SELECT ENO AS MNO , ... FROM EMP ) AS TEMP2
+/* where “...” is EMP columns other than ENO and MNO */
+
+Such renaming will also have to be done, if you want to use SQL relationally, if columns simply haven’t been named appropriately in the first place (e.g., if you’re confronted with a database that’s been defined by somebody else ─ doubtless a common state of affairs in practice). A strategy you might want to consider in such circumstances is the following:
+
+- For each table T in the database, define a view V that’s identical to table T except possibly for some column renaming.
+
+- Make sure all views so defined abide by the column naming discipline described above.
+
+- Operate in terms of those views instead of the underlying tables.
+
+Unfortunately, it’s impossible to ignore the fact 100 percent that columns have an ordinal position in SQL. (Of course, it’s precisely because of this fact that SQL is able to get away with its anonymous columns and duplicate column names.) Note in particular that columns still have an ordinal position in SQL even when they don’t need to (i.e., when they’re all properly named anyway); this observation applies to columns in base tables and views in particular. Strong recommendation: Never write SQL code that relies on such ordinal positioning. Examples of where SQL attaches significance to such positioning include (but probably aren’t limited to):
+
+- SELECT * (see Chapter 12)
+
+- The FROM clause, if more than one table is specified
+
+- Explicit JOIN operations (see Chapter 6)
+
+- UNION, INTERSECT, and EXCEPT operations, if CORRESPONDING isn’t specified (see Chapter 6)
+
+- In the column name commalist, if specified, following the definition of a range variable (see Chapter 12)
+
+- In the column name commalist, if specified, in CREATE VIEW (see Chapter 9)
+
+- INSERT, if no column name commalist is specified (see Chapter 5)
+
+- VALUES expressions
+
+- Row assignments and comparisons
+
+- ALL and ANY comparisons, if the comparands are of degree greater than one (see Chapter 11)
+
+CONCLUDING REMARKS
+
+In this chapter I’ve given precise definitions for the fundamental concepts tuple and relation. As I said earlier, those definitions can be a little daunting at first, but I hope you were able to make sense of them after having read the first two chapters. I also discussed tuple and relation types, selectors, and comparisons, as well as a number of important consequences of the definitions; in particular, I briefly described the important relations TABLE_DUM and TABLE_DEE. And I discussed the SQL counterparts of all of these notions, where such counterparts exist. In closing, I’d like to stress the importance of the recommendations, in the section immediately preceding this one, regarding column naming in SQL. Later chapters will rely heavily on those recommendations.
+
+EXERCISES
+
+3.1 Define as precisely as you can the terms attribute, body, cardinality, degree, heading, relation, relation type, and tuple.
+
+3.2 State as precisely as you can what it means for (a) two tuples to be equal; (b) two relations to be equal.
+
+3.3 Write Tutorial D tuple selector invocations for a typical tuple from (a) the parts relvar, (b) the shipments relvar. Also show SQL’s counterparts, if any, to those selector invocations.
+
+3.4 Write a typical Tutorial D relation selector invocation. Also show SQL’s counterpart, if any, to that selector invocation.
+
+3.5 (This is essentially a repeat of Exercise 1.8 from Chapter 1, but you should be able to give a more comprehensive answer now.) There are many differences between a relation and a table. List as many as you can. 
+
+3.6 The attributes of a tuple can be of any type whatsoever (well, almost; can you think of any exceptions?). Give an example of (a) a tuple with a tuple valued attribute, (b) a tuple with a relation valued attribute (RVA).
+
+3.7 Give an example of a relation with (a) one RVA, (b) two RVAs. Also give two more relations that represent the same information as those relations but don’t involve RVAs. Also give an example of a relation with an RVA such that there’s no relation that represents precisely the same information but has no RVA.
+
+3.8 Explain the relations TABLE_DUM and TABLE_DEE in your own words. Why exactly doesn’t SQL support them?
+
+3.9 As we saw in the body of the chapter, TABLE_DEE means TRUE and TABLE_DUM means FALSE. Do these facts mean we could dispense with the usual BOOLEAN data type? Also, DEE and DUM are relations, not relvars. Do you think it would ever make sense to define a relvar of degree zero?
+
+3.10 What’s the logical difference if any ─ as opposed to the obvious syntactic difference ─ between the following two SQL expressions?
+
+VALUES    ( 1, 2 ), ( 2 , 1 ), ( 1 , 1 ), ( 1 , 2 )
+VALUES ( ( 1 , 2 ), ( 2 , 1 ), ( 1 , 1 ), ( 1 , 2 ) )
+
+3.11 What exactly does the following SQL expression mean?
+
+SELECT SNO
+FROM   S
+WHERE  (NOT((STATUS, SNO) <= (20, ‘S4’))) IS NOT FALSE
+
+3.12 Explain in your own words what it means to say that relations are n-dimensional.
+
+3.13 List as many situations as you can think of in which SQL regards left to right column ordering as significant.
+
+3.14 Give an SQL analog for the Tutorial D expression IS_NOT_EMPTY(r).
+
+3.15 I said in the body of the chapter that a relation selector invocation in Tutorial D consists of the keyword RELATION, followed by a commalist of tuple expressions enclosed in braces (and those tuple expressions must all be of the same tuple type) ─ and I implied, though I didn’t say as much explicitly, that the type of the relation denoted by the overall expression was RELATION {H}, where TUPLE {H} was the common type of all of the specified tuple expressions. But what if the set of specified tuple expressions is empty? ─ in other words, what if the relation being selected is empty? How can its type be determined?
+
+Following on from the foregoing, how can we specify an empty table in SQL?
+
+3.16 A tuple is a set (a set of components); so do you think it might make sense to define versions of the usual set operators (union, intersection, etc.) that apply to tuples?
+
+3.17 State in your own words, as carefully as you can, the discipline described in the body of the chapter regarding SQL column names.
+
+3.18 The column naming discipline referred to in the previous exercise relies on the use of AS clauses. But such clauses can appear in SQL in several different contexts; moreover, the syntax sometimes takes the form “X AS <something>“ and sometimes “<something> AS X” (if you see what I mean); and the keyword is sometimes optional and sometimes mandatory [11]. List all of the contexts in which AS can appear, showing which are of the form “X AS ...” and which “... AS X”, and in which cases the keyword is optional.
+
+[1] More generally, the expression n! (which is read as either “n factorial” or “factorial n” and is often pronounced “n bang”) is defined as the product n*(n - 1)* ... *2*1.
+
+[2] Strictly speaking, I shouldn’t be talking about assignments of any kind in this chapter, because assignment has to do with variables and this chapter is concerned with values, not variables. But it’s convenient to include at least this brief mention of SQL row assignment here.
+
+[3] A remark on notation: In mathematics, the symbol H enclosed in braces, as in “{H}” here, would denote a set containing a single element H. And so it does in this definition too, of course ─ but that symbol H in turn must be understood as denoting a composite object (viz., a commalist of attributes, in the case at hand). Now, if I were to say, in mathematics, that the set {X} is a subset of the set {Y}, I could only mean X and Y were identical. But when I say the same thing in the present book (and when X and Y do indeed denote composite objects), then I mean the set of items constituting X is a subset of the set of items constituting Y. I hope that’s clear! Note: The picture is perhaps muddied slightly by the fact that I don’t always use notation of the form {X} to denote sets of attributes. For example, my definition of the term key in Chapter 5 begins: “Let K [i.e., not {K}] be a subset of the heading of relvar R.” In general, in fact, I’ll feel free to include braces or exclude them according to what suits my purpose best at the time. I hope this state of affairs won’t confuse you.
+
+[4] But see Exercise 3.15.
+
+[5] Why exactly is the definite article correct here (“the” row)?
+
+[6] Indeed, I think it could be argued that one reason we hear so much about the need for “multidimensional databases” (for decision support applications in particular) is precisely because so many people fail to realize that relations are multidimensional already.
+
+[7] The Tutorial D expression r{A, B, ..., C} denotes the projection of relation r on attributes A, B, ..., C. See Chapter 6 for further discussion.
+
+[8] Perhaps I should say a little more about the pet names TABLE_DUM and TABLE_DEE. First, for the benefit of non English speakers, I should explain that they’re basically just wordplay on Tweedledum and Tweedledee, who were originally characters in a children’s nursery rhyme and were subsequently incorporated into Lewis Carroll’s Through the Looking-Glass. Second, the names are perhaps a little unfortunate, given that these two relations are precisely the ones that can’t reasonably be depicted as tables! But we’ve been using those names for so long now in the relational world that we’re probably not going to change them.
+
+[9] The odd thing is, it does have direct support for equality testing on “multisets” ─ including, therefore, multisets of rows in particular. (It also has direct support for equality testing on arrays.) Here’s a quote from the standard: “Two multisets A and B are distinct if there exists a value V in the element type of A and B, including the null value [sic], such that the number of elements in A that are not distinct from V does not equal the number of elements in B that are not distinct from V.” (I hope that’s perfectly clear! Note that the extract quoted does indeed define what it means for two multisets to be equal, because ─ simplifying slightly ─ if A and B aren’t distinct, then they’re equal.) As noted in Chapter 2, however, a multiset of rows in SQL isn’t the same thing as a table, because it can’t be operated upon by means of SQL’s regular table operators.
+
+[10] It’s certainly true in this latter case that SQL fails to enforce the rule against duplicate column names. However, it’s not quite true to say it fails to enforce the rule against anonymous columns: If some column would otherwise have no name, the implementation is supposed to give that column a name that’s unique within its containing table but is otherwise implementation dependent. In practical terms, however, there’s no real difference between saying something is implementation dependent and saying it’s undefined (see Chapter 12). Calling such columns anonymous is thus not too far from the truth.
+
+[11] For this reason, in fact, I always show the keyword explicitly, even when it’s not required. It can be hard to remember when keywords are optional in SQL and when they’re mandatory. And in any case it would surely seem strange, in the case of AS in particular, to talk about something being an “AS clause” or “AS specification” if there isn’t any AS.

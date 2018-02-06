@@ -1,0 +1,630 @@
+Chapter 2: Types and Domains
+
+A major purpose of type systems is to avoid embarrassing questions about representations, and to forbid situations in which these questions might come up. ─ Luca Cardelli and Peter Wegner: “On Understanding Types, Data Abstraction, and Polymorphism” ACM Comp. Surv. 17, No. 4 (December 1985)
+
+This chapter is related only tangentially to the main theme of the book. Types are certainly fundamental, and the ideas discussed in this chapter are certainly important (they might help to dispel certain common misconceptions, too); however, type theory as such isn’t a specifically relational topic, and type-related matters don’t seem ─ at least on the surface ─ to have much to do with SQL daily life, as it were. What’s more, while there are certainly SQL problems in this area, there isn’t much you can do about them, for the most part; I mean, there isn’t much concrete advice I can offer to help with the goal of using SQL relationally (though there is some, as you’ll see). So you might want to give this chapter just a “once over lightly” reading on a first pass, and come back to it after you’ve absorbed more of the material from later chapters.
+
+TYPES AND RELATIONS
+
+Data types (types for short) are fundamental to computer science. Relational theory in particular requires a supporting type theory, because relations are defined over types; that is, every attribute of every relation is defined to be of some type (and the same is true of relvars too, of course). For example, I’m going to assume throughout this book that attribute STATUS of the suppliers relvar S is defined to be of type INTEGER. Under that assumption, every relation that’s a possible value for relvar S must also have a STATUS attribute of type INTEGER ─ which means in turn that every tuple in such a relation must also have a STATUS attribute that’s of type INTEGER, which means in turn that the tuple in question must have a STATUS value that’s an integer.
+
+I’ll be discussing such matters in more detail later in this chapter. For now, let me just say that ─ with certain important exceptions, which I’ll also be discussing later ─ a relational attribute can be of any type whatsoever, implying among other things that such types can be arbitrarily complex. In particular, those types can be either system or user defined. In this book, however, I don’t plan to say much about user defined types as such, because:
+
+- The whole point about user defined types (from the point of view of the user who is merely using them, that is, as opposed to the user who actually has the job of defining them) is that they’re supposed to behave just like system defined types anyway.
+
+- Comparatively few users will ever be faced with the job of defining a type ─ and type definition doesn’t really involve any specifically relational considerations in any case.
+
+From this point forward, therefore, you can take the term type to mean a system defined type specifically, unless the context demands otherwise. The relational model prescribes just one such type, BOOLEAN (the most fundamental type of all). Type BOOLEAN contains exactly two values: two truth values, to be specific, denoted by the literals TRUE and FALSE, respectively. Of course, real systems will support a variety of other system defined types as well, and I’ll assume for definiteness that types INTEGER (integers), RATIONAL (rational numbers), and CHARACTER (character strings of arbitrary length) are among those supported. Note: I’ll discuss the system defined types supported by SQL in particular later in the chapter.
+
+Aside: A rational number is a number that can be expressed as the ratio of two integers (e.g., 3/8, 5/12, -4/3); an irrational number is a number that can’t be so expressed (e.g., p, ÷2). Rational numbers (only) have the property that, in decimal notation, the fractional part of such a number can be expressed as either (a) a finite sequence of digits followed by an infinite sequence of zeros, which can be ignored without loss (e.g., 3/8 = 0.375000...), or (b) a possibly empty finite sequence of digits followed by another finite sequence of digits, the first of which is nonzero, that infinitely repeats (e.g., 5/12 = 0.41666...). By contrast, the fractional part of an irrational number in decimal notation consists of an infinite, non-repeating sequence of digits (e.g., p = 3.14159..., ÷2 = 1.41421...). A real number is a number that’s either rational or irrational. Now, many programming languages support a numeric type they call REAL; computers being finite, however, the only real numbers computers are actually capable of representing are necessarily rational ones. Hence Tutorial D’s choice of the keyword RATIONAL. End of aside.
+
+In the interest of historical accuracy, I should now explain that when Codd first defined the relational model, he said relations were defined over domains, not types. In fact, however, domains and types are exactly the same thing. Now, you can take this claim as a position statement on my part, if you like, but I want to present a series of arguments in support of that position. I’ll start with the relational model as Codd originally defined it; thus, I’ll use the term domain, not type, until further notice. There are two major topics I want to discuss, one in each of the next two sections:
+
+- Equality comparisons and “domain check override”: This part of the discussion I hope will convince you that domains really are types.
+
+- Data value atomicity and first normal form: And this part I hope will convince you that those types can be arbitrarily complex.
+
+EQUALITY COMPARISONS
+
+Despite what I said a few moments ago about ignoring user defined types, I’m going to assume in the present section, purely for the sake of the example, that the supplier number (SNO) attributes in relvars S and SP are of some user defined type ─ sorry, domain ─ which I’ll assume for simplicity is called SNO as well. Likewise, I’m going to assume that the part number (PNO) attributes in relvars P and SP are also of a user defined type (or domain) with the same name, PNO. Please note that these assumptions aren’t crucial to my argument; it’s just that I think they make the argument a little more convincing, and perhaps easier to follow.
+
+I’ll start with the fact that, as everyone knows (?), two values can be compared for equality in the relational model only if they come from the same domain. For example, the following comparison (which might be part of the WHERE clause in some SQL query) is obviously valid:
+
+    SP.SNO = S.SNO /* OK */ 
+
+By contrast, this one obviously (?) isn’t:
+
+    SP.PNO = S.SNO /* not OK */
+
+Why not? Because part numbers and supplier numbers are different kinds of things ─ they’re defined on different domains. So the general idea is that the DBMS [1] should reject any attempt to perform any relational operation (join, union, whatever) that involves, either explicitly or implicitly, an equality comparison between values from different domains. For example, suppose some user wants to find suppliers (like supplier S5 in the sample values of Fig. 1.3 in Chapter 1) who currently supply no parts at all. The following is an attempt to formulate this query in SQL:
+
+SELECT S.SNO , S.SNAME , S.STATUS , S.CITY 
+FROM   S
+WHERE  NOT EXISTS
+     ( SELECT *
+       FROM SP
+       WHERE SP.PNO = S.SNO ) /* not OK */
+
+(There’s no terminating semicolon because this is an expression, not a statement. See Exercise 2.24 at the end of the chapter.)
+
+As the comment says, this formulation is certainly not OK. The reason is that, in the last line, the user presumably meant to say WHERE SP.SNO = S.SNO, but by mistake ─ probably just a slip of the typing fingers ─ he or she said WHERE SP.PNO = S.SNO instead. And, given that we’re indeed talking about a simple typo (probably), it would be a friendly act on the part of the DBMS to interrupt the user at this point, highlight the error, and perhaps ask if the user would like to correct it before proceeding.
+
+Now, I don’t know any SQL product that actually behaves in the way I’ve just suggested; in today’s products, depending on how you’ve set up the database, either the query will simply fail or it’ll give the wrong answer. Well ... not exactly the wrong answer, perhaps, but the right answer to the wrong question. (Does that make you feel any better?)
+
+To repeat, therefore, the DBMS should reject a comparison like SP.PNO = S.SNO if it isn’t valid. However, Codd felt there should be a way in such a situation for the user to make the DBMS go ahead and do the comparison anyway, even though it’s apparently not valid, on the grounds that sometimes the user will know more than the DBMS does. Now, it’s hard for me to do justice to this idea, because I frankly don’t think it makes sense ─ but let me give it a try. Suppose it’s your job to design a database involving, let’s say, customers and suppliers; and you therefore decide to have a domain of customer numbers and a domain of supplier numbers; and you build your database that way, and load it, and everything works just fine for a year or two. Then, one day, one of your users comes along with a query you never heard before ─ namely: “Are any of our customers also suppliers to us?” Observe that this is a perfectly reasonable query; observe too that it might involve a comparison between a customer number and a supplier number (a cross domain comparison) to see if they’re equal. And if it does, well, certainly the system mustn’t prevent you from doing that comparison; certainly the system mustn’t prevent you from posing a reasonable query.
+
+On the basis of such arguments, Codd proposed what he called “domain check override” (DCO) versions of certain of his relational operators. A DCO version of join, for example, would perform the join even if the joining attributes were defined on different domains. In SQL terms, we might imagine this proposal being realized by means of a new clause, IGNORE DOMAIN CHECKS, that could be included in an SQL query, as here:
+
+SELECT ...
+FROM ...
+WHERE CUSTNO = SNO 
+IGNORE DOMAIN CHECKS
+
+And this new clause would be separately authorizable ─ most users wouldn’t be allowed to use it (perhaps only the DBA [2] would be allowed to use it).
+
+Before analyzing the DCO idea in detail, I want to look at a simpler example. Consider the following two queries on the suppliers-and-parts database:
+
+SELECT ...
+FROM   P, SP
+WHERE  P.WEIGHT = SP.QTY
+
+SELECT ...
+FROM   P, SP
+WHERE  P.WEIGHT - SP.QTY = 0
+
+Assuming, reasonably enough, that weights and quantities are defined on different domains, the query on the left is clearly invalid. But what about the one on the right? According to Codd, that one’s valid! In his book The Relational Model for Database Management Version 2 (Addison-Wesley, 1990), page 47, he says that in such a situation “the DBMS [merely] checks that the basic data types are the same”; in the case at hand, those “basic data types” are all just numbers (loosely speaking), and so that check succeeds.
+
+To me, this conclusion is unacceptable. Clearly, the expressions P.WEIGHT = SP.QTY and P.WEIGHT - SP.QTY = 0 both mean essentially the same thing. Surely, therefore, they must both be valid or both be invalid; the idea that one might be valid and the other not surely makes no sense. So it seems to me there’s something strange about Codd-style domain checks in the first place, before we even get to domain check override. (In essence, in fact, Codd-style domain checks apply only in the very special case where both comparands are specified as simple attribute references. Observe that the comparison P.WEIGHT = SP.QTY falls into this special category but the comparison P.WEIGHT-SP.QTY = 0 doesn’t.)
+
+Let’s look at some even simpler examples. Consider the following comparisons (each of which might appear as part of an SQL WHERE clause, for example):
+
+S.SNO = ‘X4’ 
+P.PNO = ‘X4’ 
+S.SNO = P.PNO
+
+I hope you agree it’s at least plausible that the first two of these could be valid (and evaluate successfully, and possibly even give TRUE) and the third not. But if so, then I hope you also agree there’s something strange going on; apparently, we can have three values a, b, and c such that a = c is true and b = c is true, but as for a = b ─ well, we can’t even do the comparison, let alone have it come out true! So what’s going on?
+
+I return now to the fact that attributes S.SNO and P.PNO are defined on domains SNO and PNO, respectively, and my claim that domains are actually types; as previously noted, in fact, I’m assuming for the sake of the present discussion that domains SNO and PNO in particular are user defined types. Now, it’s possible (even likely) that those user defined types are both physically represented in terms of the system defined type CHAR; in fact, let’s assume such is indeed the case, for definiteness. However, those representations are part of the implementation, not the model ─ they’re irrelevant to the user, and as we saw in Chapter 1 they’re supposed to be hidden from the user. In particular, therefore, the operators that apply to supplier numbers and part numbers are the operators defined in connection with those types, not the operators that happen to be defined in connection with type CHAR (see the section “What’s a Type?” later in this chapter). For example, we can concatenate two character strings, but we probably can’t concatenate two supplier numbers (we could do this latter only if concatenation were an operator defined in connection with type SNO).
+
+Now, when we define a type, we also have to define the operators that can be used in connection with values and variables of the type in question (again, see the section “What’s a Type?”). And one operator we must define is what’s called a selector operator, which allows us to select, or specify, an arbitrary value of the type in question [3]. In the case of type SNO, for example, the selector (which in practice would probably also be called SNO) allows us to select the particular SNO value that has some specified CHAR representation. Here’s an example:
+
+SNO(‘S1’)
+
+This expression is an invocation of the SNO selector, and it returns a certain supplier number: namely, the one represented by the character string ‘S1’. Likewise, the expression
+
+PNO(‘P1’)
+
+is an invocation of the PNO selector, and it returns a certain part number: namely, the one represented by the character string ‘P1’. In other words, the SNO and PNO selectors effectively work by taking a certain CHAR value and converting it to a certain SNO value and a certain PNO value, respectively.
+
+Now let’s get back to the comparison S.SNO = ‘X4’. As you can see, the comparands here are of different types (types SNO and CHAR, to be specific; in fact, ‘X4’ is a character string literal). Since they’re of different types, they certainly can’t be equal (recall from the beginning of the present section that two values can be compared for equality “only if they come from the same domain”). But the system does at least know there’s an operator ─ namely, the SNO selector ─ that effectively performs CHAR to SNO conversions. So it can invoke that operator, implicitly, to convert the CHAR comparand to a supplier number, thereby effectively replacing the original comparison by this one:
+
+S.SNO = SNO(‘X4’)
+
+Now we’re comparing two supplier numbers, which is legitimate.
+
+In the same kind of way, the system can effectively replace the comparison P.PNO = ‘X4’ by this one:
+
+P.PNO = PNO(‘X4’)
+
+But in the case of the comparison S.SNO = P.PNO, there’s no conversion operator known to the system (at least, let’s assume not) that will convert a supplier number to a part number or the other way around, and so the comparison fails on a type error: The comparands are of different types, and there’s no way to make them be of the same type.
+
+Note: Implicit type conversion as illustrated in the foregoing examples is often called coercion in the literature. In the first example, therefore, we can say the character string ‘X4’ is coerced to type SNO; in the second it’s coerced to type PNO. I’ll have a little more to say about coercion in SQL in particular in the section “Type Checking and Coercion in SQL,” later.
+
+To continue with the example: Another operator we must define when we define a type like SNO or PNO is what’s called, generically, a THE_ operator, which effectively converts a given SNO or PNO value to the character string (or whatever else it is) that’s used to represent it [4]. Assume for the sake of the example that the THE_ operators for types SNO and PNO are called THE_SC and THE_PC, respectively. Then, if we really did want to compare S.SNO and P.PNO for equality, the only sense I can make of that requirement is that we want to test whether the corresponding character string representations are the same, which we might do like this:
+
+THE_SC ( S.SNO ) = THE_PC ( P.PNO )
+
+In other words: Convert the supplier number to a string, convert the part number to a string, and compare the two strings.
+
+As I’m sure you can see, the mechanism I’ve been sketching, involving selectors and THE_ operators, effectively provides both (a) the domain checking we want in the first place and (b) a way of overriding that checking, when desired, in the second place. Moreover, it does all this in a clean, fully orthogonal, non ad hoc manner. By contrast, domain check override doesn’t really do the job; in fact, it doesn’t really make sense at all, because it confuses types and representations (as noted previously, types are a model concept, representations are an implementation concept). Note: If you’re not familiar with orthogonality as an important language design principle, you can read about it in “A Note on Orthogonality” in my book Relational Database Writings 1994-1997 (Addison-Wesley, 1998).
+
+Now, you might have realized that what I’m talking about is here is what’s known in language circles as strong typing. Different writers have slightly different definitions for this term, but basically it means that (a) everything ─ in particular, every value and every variable ─ has a type, and (b) whenever we try to perform some operation, the system checks that the operands are of the right types for the operation in question (or, possibly, are coercible to those right types). Observe too that this mechanism works for all operations, not just for the equality comparisons I’ve been discussing; the emphasis on equality and other comparison operations in discussions of domain checking in the literature is sanctioned by historical usage but is in fact misplaced. For example, consider the following expressions:
+
+P.WEIGHT * SP.QTY 
+P.WEIGHT + SP.QTY
+
+The first of these is probably valid (it yields another weight: namely, the total weight of the pertinent shipment). The second, by contrast, is probably not valid (what could it possibly mean to add a weight and a quantity?).
+
+I’d like to close this section by stressing the absolutely fundamental role played by the equality operator (“=”). It wasn’t just an accident that the discussions above happened to focus on the question of comparing two values for equality. The fact is, equality truly is central, and the relational model requires it to be supported for every type. Indeed, since a type is basically a set of values (see the section “What’s a Type?”), without the “=” operator we couldn’t even say what values constitute the type in question! That is, given some type T and some value v, we couldn’t say, absent that operator, whether or not v was one of the values in the set of values constituting type T.
+
+What’s more, the relational model also specifies the semantics of the “=” operator, as follows: If v1 and v2 are values of the same type, then v1 = v2 evaluates to TRUE if v1 and v2 are the very same value and FALSE otherwise. (As a matter of fact, I said exactly this in Chapter 1, as you might recall.) By contrast, if v1 and v2 are values of different types, then v1 = v2 has no meaning ─ it’s not even a legal comparison ─ unless v1 can be coerced to the type of v2 or the other way around, in which case we aren’t really talking about a comparison between v1 and v2 as such anyway.
+
+DATA VALUE ATOMICITY
+
+I hope the previous section succeeded in convincing you that domains really are types, no more and no less. Now I want to turn to the issue of data value atomicity and the related notion of first normal form (1NF for short). In Chapter 1, I said that 1NF meant that every tuple in every relation contains just a single value (of the appropriate type) in every attribute position ─ and it’s usual to add that those “single values” are supposed to be atomic. But this latter requirement raises the obvious question: What does it mean for data to be atomic?
+
+Well, on page 6 of the book mentioned earlier (The Relational Model for Database Management Version 2), Codd defines atomic data as data that “cannot be decomposed into smaller pieces by the DBMS (excluding certain special functions).” Even if we ignore that parenthetical exclusion, however, this definition is a trifle puzzling; at best, it’s certainly not very precise. For example, what about character strings? Are character strings atomic? Well, every database product I know provides a variety of operators ─ LIKE, SUBSTR (substring), “||” (concatenate), and so on ─ that rely by definition on the fact that character strings in general can be “decomposed into smaller pieces by the DBMS.” So are such strings atomic? What do you think?
+
+Here are some other examples of values whose atomicity is at least open to question and yet we would certainly want to allow as attribute values in tuples in relations:
+
+- Bit strings
+
+- Rational numbers (which might be regarded as being decomposable into integer and fractional parts)
+
+- Dates and times (which might be regarded as being decomposable into year-month-day and hour-minute-second components, respectively)
+
+And so on.
+
+Now I’d like to move on to what might be considered a more startling example. Refer to Fig. 2.1 below. Relation R1 in that figure is a reduced version of the shipments relation from our running example; it shows that certain suppliers supply certain parts, and it contains one tuple for each legitimate (SNO,PNO) combination. For the sake of the example, let’s agree that supplier numbers and part numbers are indeed “atomic”; then we can presumably agree that R1, at least, is in 1NF.
+
+R1 
+
+SNO PNO
+S2  P1 
+S2  P2 
+S3  P2 
+S4  P2 
+S4  P4 
+S4  P5 
+
+
+R2 
+
+SNO PNO
+S2  P1, P2
+S3  P2 
+S4  P2, P4, P5
+
+R3
+
+SNO PNO_SET 
+S2  {P1, P2}
+S3  {P2} 
+S4  {P2, P4, P5}
+
+Fig. 2.1: Relations R1, R2, and R3
+
+Now suppose we replace R1 by R2, which shows that certain suppliers supply certain groups of parts (attribute PNO in R2 is what some writers would call multivalued, and values of that attribute are groups of part numbers). Then most people would surely say that R2 is not in 1NF; in fact, it looks like a case of “repeating groups,” and repeating groups are the one thing that just about everybody agrees 1NF is supposed to prohibit (because such groups are obviously not atomic ─ right?).
+
+Well, let’s agree for the sake of the argument that R2 isn’t in 1NF. But suppose we now replace R2 by R3. Then I claim that R3 is in 1NF [5]! For consider:
+
+- First, note that I’ve renamed the attribute PNO_SET, and I’ve shown the groups of part numbers that are PNO_SET values enclosed in braces, to emphasize the fact that each such group is indeed a single value: a set value, to be sure, but a set is still, at a certain level of abstraction, a single value.
+
+- Second (and regardless of what you might think of my first argument), the fact is that a set like {P2, P4, P5} is no more and no less decomposable by the DBMS than a character string is. Like character strings, sets do have some inner structure; as with character strings, however, it’s convenient to ignore that structure for certain purposes. In other words, if character strings are compatible with the requirements of 1NF ─ that is, if character strings are atomic ─ then sets must be, too.
+
+The real point I’m getting at here is that the notion of atomicity has no absolute meaning; it just depends on what we want to do with the data. Sometimes we want to deal with an entire set of part numbers as a single thing; sometimes we want to deal with individual part numbers within that set ─ but then we’re descending to a lower level of detail, or lower level of abstraction. The following analogy might help. In physics (which after all is where the terminology of atomicity comes from) the situation is exactly parallel: Sometimes we want to think about individual atoms as indivisible things, sometimes we want to think about the subatomic particles (i.e., the protons, neutrons, and electrons) that make up those atoms. What’s more, protons and neutrons, at least, aren’t really indivisible, either ─ they contain a variety of “subsubatomic” particles called quarks. And so on, possibly (?).
+
+Let’s return for a moment to relation R3. In Fig. 2.1, I showed PNO_SET values as general sets. But it would be more useful in practice if they were, more specifically, relations (see Fig. 2.2, where I’ve changed the attribute name to PNO_REL). Why would it be more useful? Because relations, not general sets, are what the relational model is all about [6]. As a consequence, the full power of the relational algebra immediately becomes available for the relations in question ─ they can be restricted, projected, joined, and so on. By contrast, if we were to use general sets instead of relations, then we would need to introduce new operators (set union, set intersection, and so on) for dealing with those sets ... Much better to get as much mileage as we can out of the operators we already have!
+
+R4
+
+SNO PNO_REL
+S2  PNO
+    P1
+    P2
+S3  PNO
+    P2
+S4  PNO
+    P2
+    P4
+    P5
+
+Fig. 2.2: Relation R4 (a revised version of R3)
+
+Terminology: Attribute PNO_REL in Fig. 2.2 is a relation valued attribute (RVA). Of course, the underlying domain is relation valued too (that is, the values it’s made up of are relations). I’ll have more to say about RVAs in Chapter 7; here let me just note that SQL doesn’t support them. (More precisely, it doesn’t support what would be its analog of RVAs, table valued columns. Oddly enough, however, it does support columns whose values are arrays, and columns whose values are rows, and even columns whose values are “multisets of rows” ─ where a multiset, also known as a bag, is like a set except that it permits duplicates [7]. Columns whose values are multisets of rows thus do look a little bit like “table valued columns”; however, they aren’t table valued columns, because the values they contain can’t be operated upon by means of SQL’s regular table operators and thus aren’t regular SQL table values, by definition.)
+
+Now, I chose the foregoing example deliberately, for its shock value. After all, relations with RVAs do look rather like “relations” with repeating groups, and you’ve probably always heard that repeating groups are a “no no” in the relational world. But I could have used any number of different examples to make my point; I could have shown attributes (and therefore domains) that contained arrays; or bags (multisets); or lists; or photographs; or audio or video recordings; or X rays; or fingerprints; or XML documents; or any other kind of value, “atomic” or “nonatomic,” you might care to think of. Attributes, and therefore domains, can contain anything (any values, that is).
+
+Incidentally, you might recall that a few years ago we were hearing a great deal about so called “object/relational” systems. Well, the foregoing paragraph goes a long way toward explaining why a true object/relational system would in fact be nothing more nor less than a true relational system ─ which is to say, a system that supports the relational model, with all that such support entails (after all, the whole point about an object/relational system from the user’s point of view is precisely that we can have attribute values in relations that are of arbitrary complexity). Perhaps a better way to say it is: A proper object/relational system is just a relational system with proper type support (including proper user defined type support in particular) ─ which just means it’s a proper relational system, no more and no less. And what some are pleased to call “the object/relational model” is, likewise, just the relational model, no more and no less.
+
+WHAT’S A TYPE?
+
+From this point forward I’ll favor the term type over the term domain. So what is a type, exactly? In essence, it’s a named, finite set of values ─ all possible values of some specific kind: for example, all possible integers, or all possible character strings, or all possible supplier numbers, or all possible XML documents, or all possible relations with a certain heading (and so on). To elaborate briefly:
+
+- The types we’re interested in a real ways finite because we’re dealing with computers, which (as pointed out in connection with type RATIONAL earlier in the chapter) are finite by definition.
+
+- Note also that qualifier named: Types with different names are different types. 
+
+Moreover:
+
+- Every value is of some type ─ in fact, exactly one type, except possibly if type inheritance is supported, a concept that’s beyond the scope of this book. Note: Since no value is of more than one type, it follows that types are disjoint (non-overlapping), by definition. However, perhaps I need to elaborate on this point briefly. As one reviewer of this chapter said, surely types WarmBloodedAnimal and FourLeggedAnimal overlap? Indeed they do; but what I’m saying is that if types overlap, then for a variety of reasons we’re getting into the realm of type inheritance ─ in fact, into the realm of what’s called multiple inheritance. Since those reasons, and indeed the whole topic of inheritance, are independent of the context we’re in, be it relational or something else, I’m not going to discuss them in this book.
+
+- Every variable, every attribute, every operator that returns a result, and every parameter of every operator is declared to be of some type [8]. And to say that, e.g., variable V is declared to be of type T means, precisely, that every value v that can legally be assigned to V is in turn of type T.
+
+- Every expression denotes some value and is therefore of some type: namely, the type of the value in question, which is to say the type of the value returned by the outermost operator in the expression (where by “outermost” I mean the operator that’s executed last). For example, the type of the expression
+
+    (a/b) + (x - y)
+
+is the declared type of the operator “+”, whatever that happens to be.
+
+The fact that parameters in particular are declared to be of some type touches on an issue that I’ve mentioned but haven’t properly discussed as yet: namely, the fact that associated with every type there’s a set of operators for operating on values and variables of the type in question ─ where to say that operator Op is “associated with” type T means, precisely, that operator Op has a parameter of declared type T [9]. For example, integers have the usual arithmetic operators; dates and times have special calendar arithmetic operators; XML documents have what are called “XPath” and “XQuery” operators; relations have the operators of the relational algebra; and every type has the operators of assignment (“:=”) and equality comparison (“=”). Thus, any system that provides proper type support ─ and “proper type support” here certainly includes allowing users to define their own types ─ must provide a way for users to define their own operators, too, because types without operators are useless. Note: User defined operators can be defined in association with system defined types as well as user defined ones (or a mixture, of course), as you would surely expect.
+
+Observe now that, by definition, values and variables of a given type can be operated upon only by means of the operators associated with that type. For example, in the case of the system defined type INTEGER:
+
+- The system provides an assignment operator “:=” for assigning integer values to integer variables.
+
+- It also provides a format for writing integer literals. (However, it doesn’t provide any selector operators more general than simple literals, nor does it provide any THE_ operators, because ─ as should be obvious if you think about it ─ such operators aren’t needed for a system defined type like INTEGER.)
+
+- It also provides comparison operators “=”, “≠”, “<”, and soon, for comparing integer values.
+
+- It also provides arithmetic operators “+”, “*”, and soon, for performing arithmetic on integer values.
+
+- It does not provide string operators “||” (concatenate), SUBSTR (substring), and soon, for performing string operations on integer values; in other words, string operations on integer values aren’t supported.
+
+By contrast, in the case of the user defined type SNO (still assuming it is user defined), we would certainly define the necessary selector and THE_ operators, and we would also define assignment (“:=”) and comparison operators (“=”, “≠”, possibly “<”, and so on). However, we probably wouldn’t define operators “+”, “*”, and so on, which would mean that arithmetic on supplier numbers wouldn’t be supported (what could it possibly mean to add or multiply two supplier numbers?).
+
+From everything I’ve said so far, then, it should be clear that defining a new type involves at least all of the following:
+
+1. Defining a name for the type (obviously enough).
+
+2. Defining the values that make up that type. I’ll discuss this aspect in detail in Chapter 8.
+
+3. Defining the hidden physical representation for values of that type. As noted earlier, this is an implementation issue, not a model issue, and I won’t discuss it further in this book.
+
+4. Defining a selector operator for selecting, or specifying, values of that type.
+
+5. Defining the operators ─ including in particular assignment (“:=”), equality comparison (“=”), and THE_ operators ─ that apply to values and variables of that type (see below).
+
+6. For those operators that return a result, defining the type of that result (again, see below).
+
+Observe that points 4, 5, and 6 taken together imply that the system knows precisely which expressions are legal, and for those expressions that are legal it knows the type of the result as well.
+
+By way of example, suppose we have a user defined type POINT, representing geometric points in two-dimensional space. Here then is the Tutorial D definition ─ I could have used SQL, but operator definitions in SQL involve a number of details that I don’t want to get into here ─ for an operator called REFLECT which, given a point P with cartesian coordinates (x,y), returns the “reflected” or “inverse” point with cartesian coordinates (-x,-y):
+
+1. OPERATOR REFLECT ( P POINT ) RETURNS POINT ;
+
+2. RETURN POINT ( - THE_X ( P ) , - THE_Y ( P ) ) ;
+
+3. END OPERATOR ;
+
+Explanation:
+
+- Line 1 shows that the operator is called REFLECT; takes a single parameter P, of type POINT; and returns a result also of type POINT (so the declared type of the operator is POINT).
+
+- Line 2 is the operator implementation code. It consists of a single RETURN statement. The value to be returned is a point, and it’s obtained by invoking the POINT selector; that invocation has two arguments, corresponding to the X and Y coordinates of the point to be returned. Each of those arguments is defined by means of a THE_ operator invocation; those invocations yield the X and Y coordinates of the point argument corresponding to parameter P, and negating those coordinates leads us to the desired result [10].
+
+- Line 3 marks the end of the definition.
+
+Now, the discussions in this section so far have been framed in terms of user defined types, for the most part. But similar considerations apply to system defined types also, except that in this case the various definitions are furnished by the system instead of by some user. For example, if INTEGER is a system defined type, then it’s the system that defines the name, defines legal integer values, defines the hidden representation, and ─ as we’ve already seen ─ defines a corresponding literal format, defines the corresponding operators “:=”, “=”, “+”, and so on (though users can define additional operators as well, of course).
+
+There’s one last point I want to make. I’ve mentioned selector operators several times; what I haven’t said, however (at least not explicitly), is that selectors ─ more precisely, selector invocations ─ are really just a generalization of the more familiar concept of a literal [11]. What I mean by this remark is that all literals are selector invocations, but not all selector invocations are literals (in fact, a selector invocation is a literal if and only if its arguments are themselves all specified as literals in turn). For example, POINT(X,Y) and POINT(1.0,2.5) are both invocations of the POINT selector, but only the second is a POINT literal. It follows that every type has (must have) an associated format for writing literals. And for completeness I should add that every value of every type must be denotable by means of some literal.
+
+SCALAR vs. NONSCALAR TYPES
+
+It’s usual to think of types as being either scalar or nonscalar. Loosely, a type is scalar if it has no user visible components and nonscalar otherwise ─ and values, variables, attributes, operators, parameters, and expressions of some type T are scalar or nonscalar according as type T itself is scalar or nonscalar. For example:
+
+- Type INTEGER is a scalar type; hence, values, variables, and soon of type INTEGER are also all scalar, meaning they have no user visible components.
+
+- Tuple and relation types are nonscalar ─ the pertinent user visible components being the corresponding attributes ─ and hence tuple and relation values, variables, and so on are also all nonscalar.
+
+That said, I must now emphasize that these notions are quite informal. Indeed, we’ve already seen that the concept of data value atomicity has no absolute meaning, and “scalarness” is just that same concept by another name. Thus, the relational model certainly doesn’t rely on the scalar vs. nonscalar distinction in any formal sense. In this book, however, I do rely on it informally; I mean, I do find it intuitively useful. To be specific, I use the term scalar in connection with types that are neither tuple nor relation types, and the term nonscalar in connection with types that are either tuple or relation types [12].
+
+Aside: Another term you’ll sometimes hear used to mean “scalarness” is encapsulation. Be aware, however, that this term is also used ─ especially in object contexts ─ to refer to the physical bundling, or packaging, of code and data (or operator definitions and data representation definitions, to be more precise). But to use the term in this latter sense is to mix model and implementation considerations; clearly the user shouldn’t care, and shouldn’t need to care, whether code and data are physically bundled together or are kept separate. End of aside.
+
+Let’s look at an example. Here’s a Tutorial D definition for the base relvar S (“suppliers”) ─ and note that, for simplicity, I now define the attributes all to be of some system defined type:
+
+1. VAR S BASE
+2.     RELATION { SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } 
+3.     KEY { SNO } ;
+
+Explanation:
+
+- The keyword VAR in line 1 means this is a variable definition; S is the name of that variable, and the keyword BASE means the variable is a base relvar specifically.
+
+- Line 2 specifies the type of this variable. The keyword RELATION shows it’s a relation type; the rest of the line specifies the set of attributes that make up the corresponding heading (where, as you’ll recall from Chapter 1, an attribute is defined to be an attribute-name/type-name pair, and no two attributes in the same heading have the same attribute name). The type is, of course, a nonscalar type. No significance attaches to the order in which the attributes are specified.
+
+- Line 3 defines {SNO} to be a (candidate) key for this relvar.
+
+In fact, the example also illustrates another point ─ namely, that the type
+
+RELATION { SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR }
+
+is an example of a generated type. A generated type is a type that’s obtained by invoking some type generator (in the example, the type generator is, specifically, RELATION). You can think of a type generator as a special kind of operator; it’s special because (a) it returns a type instead of a value, and (b) it’s invoked at compile time instead of run time. For instance, most programming languages support a type generator called ARRAY, which lets users define a variety of specific array types. For present purposes, however, the only type generators we’re interested in are TUPLE and RELATION. Here’s an example involving the TUPLE type generator:
+
+VAR STV /* tuple variable */
+    TUPLE { STATUS INTEGER , SNO CHAR , CITY CHAR , SNAME CHAR } ;
+
+The value of variable STV at any given time is a tuple with the same heading as that of relvar S (I’ve deliberately specified the attributes in a different order, just to show the order doesn’t matter) [13]. Thus, we might imagine a code fragment that (a) extracts a one-tuple relation (perhaps the relation containing just the tuple for supplier S1) from the current value of relvar S, then (b) extracts the single tuple from that one-tuple relation, and finally (c) assigns that tuple to the variable STV. In Tutorial D:
+
+STV := TUPLE FROM ( S WHERE SNO = ‘S1’ ) ;
+
+Important: I don’t want you to misunderstand me here. While a variable like STV might certainly be needed in some application program that accesses the suppliers-and-parts database, I’m not saying such a variable can appear inside the database itself. A relational database contains variables of exactly one kind ─ namely, relation variables (relvars); in other words, relvars are the only kind of variable allowed in a relational database. (This latter fact ─ i.e., that relvars are the only kind of variable allowed in a relational database ─ constitutes what’s called The Information Principle. I’ll have more to say about it in Appendix A.)
+
+By the way, note carefully that (as the foregoing example suggests) there’s a logical difference between a tuple t and the relation r that contains just that tuple t. In particular, they’re of different types ─ t is of some tuple type and r is of some relation type (though the types do at least have the same heading, or in other words the same attributes).
+
+Finally, a few miscellaneous points to close this section:
+
+- Even though tuple and relation types do have user visible components (namely, their attributes), there’s no suggestion that those components have to be physically stored as such. In fact, the physical representation of tuples and relations should be hidden from the user, just as it is for scalar values. (Recall the discussion of physical data independence in Chapter 1.)
+
+- Like scalar types, tuple and relation types certainly need associated selector operators (and literals as a special case). I’ll defer the details to the next chapter. They don’t need THE_ operators, however; instead, they have operators that provide access to the corresponding attributes, and those operators play a role somewhat analogous to that played by THE_ operators in connection with scalar types.
+
+- Tuple and relation types also need assignment and equality comparison operators. I gave an example of tuple assignment earlier in the present section; I’ll defer details of the other operators to the next chapter.
+
+SCALAR TYPES IN SQL
+
+I turn now to SQL. SQL supports the following more or less self-explanatory system defined scalar types (it also allows users to define their own types, but as I’ve already said I’m more or less ignoring user defined types in this chapter):
+
+BOOLEAN INTEGER       CHARACTER(n)
+        SMALLINT      CHARACTER VARYING(n) 
+        BIGINT        CHARACTER LARGE OBJECT(n) 
+        NUMERIC(p, q) BINARY(n)
+        DECIMAL(p, q) BINARY VARYING(n)
+        FLOAT(p)      BINARY LARGE OBJECT(n)
+
+This isn’t an exhaustive list; other SQL system defined types include an “XML document” type (XML); a variety of “national character string types” (NATIONAL CHARACTER(n), etc.); and a variety of datetime types (DATE, TIME, TIMESTAMP, INTERVAL). However, I’ll ignore such types, mostly, for the purposes of this book. Points arising:
+
+- A number of defaults, abbreviations, and alternative spellings ─ e.g., INT for INTEGER, CHAR for CHARACTER, VARCHAR for CHARACTER VARYING, CLOB for CHARACTER LARGE OBJECT ─ are also supported.
+
+- As you can see, SQL, unlike Tutorial D, requires its various character string types to have an associated length specification.
+
+- The same goes for the various BINARY types. Note: BINARY really means bit string, or (perhaps better) byte string; the associated length specification gives the corresponding length in octets [14]. Also, while BINARY LARGE OBJECT can be abbreviated to BLOB, BINARY and BINARY VARYING can’t be abbreviated at all (contrary to expectations, perhaps).
+
+- Strictly speaking, CHAR (for example) isn’t really a type as such ─ rather, it’s a type generator. By contrast, CHAR(25), for example, is a type as such, and it’s obtained by invoking that type generator with the value 25 as sole argument to that invocation. What’s more, analogous remarks apply to everything in the foregoing list except for type BOOLEAN and the various integer types (SMALLINT, INTEGER, BIGINT) [15]. For simplicity, however, I’ll overlook this point in what follows (most of the time, at any rate) and continue to refer to CHAR and the rest as if they were indeed types as such.
+
+- Literals of more or less conventional format are supported for all of these types.
+
+- An explicit assignment operator is supported for all of these types. The syntax is:
+
+SET <scalar variable ref> = <scalar exp> ;
+
+Scalar assignments are also performed implicitly when various other operations (e.g., FETCH) are executed. Note: Throughout this book in formal syntax definitions like the one just shown, I use ref and exp as abbreviations for reference and expression, respectively.
+
+- An explicit equality comparison operator is also supported for all of these types [16]. The syntax is: 
+
+<scalar exp> = <scalar exp>
+
+Equality comparisons are also performed implicitly when numerous other operations (e.g., joins and unions, grouping and duplicate elimination operations, and many others) are executed.
+
+- Regarding type BOOLEAN in particular, I should point out that although it’s included in the SQL standard, it’s supported by few if any of the mainstream SQL products. Of course, boolean expressions can always appear in WHERE, ON, and HAVING clauses, even if the system doesn’t support type BOOLEAN as such. In such a system, however, no table can have a column of type BOOLEAN, and no variable can be declared to be of type BOOLEAN. As a consequence, workarounds (e.g., “yes/no columns”) might sometimes be needed.
+
+- Finally, in addition to the foregoing scalar types, SQL also supports something it calls domains. However, SQL’s domains aren’t types at all; rather, they’re just a kind of factored out “common column definition,” with a number of rather strange properties that are well beyond the scope of this book. You can use them if you like, but don’t make the mistake of thinking they’re true relational domains (i.e., types).
+
+TYPE CHECKING AND COERCION IN SQL
+
+SQL supports only a weak form of strong typing (if you see what I mean). To be specific:
+
+- BOOLEAN values can be assigned only to BOOLEAN variables and compared only with BOOLEAN values.
+
+- Numeric values can be assigned only to numeric variables and compared only with numeric values (where “numeric” means INTEGER, SMALLINT, BIGINT, NUMERIC, DECIMAL, or FLOAT).
+
+- Character string values can be assigned only to character string variables and compared only with character string values (where “character string” means CHAR, VARCHAR, or CLOB).
+
+- Bit string values can be assigned only to bit string variables and compared only with bit string values (where “bit string” means BINARY, BINARY VARYING, or BLOB).
+
+Thus, for example, an attempt to compare a number and a character string is illegal. However, an attempt to compare (say) two numbers is legal, even if those numbers are of different types ─ say INTEGER and FLOAT, respectively (in this example, the INTEGER value will be coerced to type FLOAT before the comparison is done). Which brings me to the question of type coercion... It’s a widely accepted principle in computing in general that coercions are best avoided, because they’re error prone. In SQL in particular, one bizarre consequence of permitting coercions is that certain unions, intersections, and differences can yield a result with rows that don’t appear in either operand! For example, consider the SQL tables T1 and T2 shown in Fig. 2.3 below. Let column X be of type INTEGER in table T1 but NUMERIC(5,1) in table T2, and let column Y be of type NUMERIC(5,1) in table T1 but INTEGER in table T2. Now consider the SQL query:
+
+SELECT X , Y FROM T1 
+UNION
+SELECT X , Y FROM T2
+
+The result is shown as the rightmost table in Fig. 2.3. As the figure suggests, columns X and Y in that result are both of type NUMERIC(5,1), and all values in those columns are obtained, in effect, by coercing some INTEGER value to type NUMERIC(5,1). Thus, the result consists exclusively of rows that appear in neither T1 nor T2! ─ a very strange kind of union, you might be forgiven for thinking [17].
+
+T1
+
+X Y
+0 1.0
+0 2.0
+
+T2
+
+X   Y
+0.0 0
+0.0 1
+1.0 2
+
+X   Y
+0.0 1.0
+0.0 2.0
+0.0 0.0
+1.0 2.0
+
+Fig. 2.3: A very strange “union”
+
+Strong recommendation: Do your best to avoid coercions wherever possible. (My own clear preference would be to do away with them entirely, regardless of whether we’re in the SQL context or any other context.) In the SQL context in particular, I recommend that you ensure that columns with the same name are always of the same type; this discipline, along with others recommended elsewhere in this book, will go a long way toward ensuring that type conversions in general are avoided. And when they can’t be avoided, I recommend doing them explicitly, using CAST or some CAST equivalent. For example (with reference to the foregoing UNION query):
+
+SELECT CAST ( X AS NUMERIC(5,1) ) AS X , Y FROM T1 
+UNION
+SELECT X , CAST ( Y AS NUMERIC(5,1) ) AS Y FROM T2
+
+For completeness, however, I need to add that certain coercions are unfortunately built into the very fabric of SQL and so can’t be avoided. (I realize the following remarks might not make much sense at this point in the book, but I don’t want to lose them.) To be specific:
+
+- If a table expression tx is used as a row subquery, then the table t denoted by tx is supposed to have just one row r, and that table t is coerced to that row r. Note: The term subquery occurs ubiquitously in SQL contexts. I’ll explain it in detail in Chapter 12; prior to that point, you can take it to mean, albeit rather loosely, just a SELECT expression enclosed in parentheses.
+
+- If a table expression tx is used as a scalar subquery, then the table t denoted by tx is supposed to have just one column and just one row and hence to contain just one value v, and that table t is doubly coerced to that value v. Note: This case occurs in connection with SQL-style aggregation in particular (see Chapter 7).
+
+- In practice, the row expression rx in the ALL or ANY comparison rx q sq ─ where (a) q is a comparison operator such as “<” or “>” followed by the keyword ALL or ANY and (b) sq is a subquery ─ often consists of a simple scalar expression, in which case the scalar value denoted by that expression is effectively coerced to a row that contains just that scalar value. Note: Throughout this book, I use the term row expression to mean either a row subquery or a row selector invocation (where row selector in turn is my preferred term for what SQL calls a row value constructor ─ see Chapter 3); in other words, I use row expression to mean any expression that denotes a row, just as I use table expression to mean any expression that denotes a table. As for ALL or ANY comparisons, they’re discussed in Chapter 11.
+
+Finally, SQL also uses the term coercion in a very special sense in connection with character strings. The details are beyond the scope of this book.
+
+COLLATIONS IN SQL
+
+SQL’s rules regarding type checking and coercion, in the case of character strings in particular, are (sadly) rather more complex than I’ve been pretending so far, and I need to elaborate somewhat. Actually it’s impossible in a book of this nature to do more than just scratch the surface of the matter, but the basic idea is this: Any given character string (a) consists of characters from one associated character set and (b) has one associated collation. A collation ─ also known as a collating sequence ─ is a rule that’s associated with a specific character set and governs the comparison of strings of characters from that character set. Let C be a collation for character set S, and let a and b be any two characters from S. Then C must be such that exactly one of the comparisons a < b, a = b, and a > b evaluates to TRUE and the other two to FALSE (under C). Note: In early versions of SQL there was just one character set, that character set had just one collation, and that collation was based on the numerical order of the binary codes used to represent the characters in that character set. But there’s no intrinsic reason why collating sequences should have to depend on internal coding schemes, and there are good practical reasons why they shouldn’t.
+
+So much for the basic idea. However, there are complications. One arises from the fact that any given collation can have either PAD SPACE or NO PAD defined for it. Suppose the character strings ‘AB’ and ‘AB ’ (note the trailing space in the second of these) have the same character set and the same collation. Then those two strings are clearly distinct, and yet they’re considered to “compare equal” if PAD SPACE applies. Recommendation: Don’t use PAD SPACE ─ always use NO PAD instead, if possible. Note, however, that the choice between PAD SPACE and NO PAD affects comparisons only ─ it makes no difference to assignments [18].
+
+Another complication arises from the fact that the comparison a = b might evaluate to TRUE under a given collation, even if the characters a and b are distinct. For example, we might define a collation called CASE_INSENSITIVE in which each lowercase letter is defined to compare equal to its uppercase counterpart. As a consequence, again, strings that are clearly distinct will sometimes compare equal.
+
+We see, therefore, that certain comparisons of the form v1 = v2 can give TRUE in SQL even if v1 and v2 are distinct (and possibly even if they’re of different types, thanks to SQL’s support for coercion). I’ll use the term “equal but distinguishable” to refer to such pairs of values. Now, equality comparisons are performed, often implicitly, in numerous contexts ─ examples include MATCH, LIKE, UNIQUE, UNION, and JOIN ─ and the kind of equality involved in all such cases is indeed “equal even if distinguishable.” For example, let collation CASE_INSENSITIVE be as defined above, and let PAD SPACE apply to that collation. Then, if the PNO columns of tables P and SP both use that collation, and if ‘P2’ and ‘p2 ’ are PNO values in, respectively, some row of P and some row of SP, those two rows will be regarded as satisfying the foreign key constraint from SP to P, despite the lowercase ‘p’ and trailing spaces in the foreign key value.
+
+What’s more, when evaluating expressions involving operators such as UNION, INTERSECT, EXCEPT, JOIN, GROUP BY, DISTINCT (and so on), the system sometimes has to decide which of several equal but distinguishable values is to be chosen as the value of some column in some result row. Unfortunately, SQL itself fails to give complete guidance in such situations. As a consequence, certain table expressions are indeterminate ─ the SQL term is possibly nondeterministic ─ in the sense that SQL doesn’t fully specify how they should be evaluated; indeed, they might quite legitimately give different results on different occasions. For example, if collation CASE_INSENSITIVE applies to column C in table T, then SELECT MAX(C) FROM T might return ‘ZZZ’ on one occasion and ‘zzz’ on another, even if T hasn’t changed in the interim.
+
+I won’t give SQL’s rules here for when a given expression is “possibly nondeterministic” (see Chapter 12 for further discussion). It’s important to note, however, that such expressions aren’t allowed in integrity constraints (see Chapter 8), because they could cause updates to succeed or fail unpredictably. Observe in particular, therefore, that this rule implies among other things that many table expressions ─ even simple SELECT expressions, sometimes ─ aren’t allowed in constraints if they involve a column of some character string type! Strong recommendation: Avoid possibly nondeterministic expressions as much as you can.
+
+ROW AND TABLE TYPES IN SQL
+
+Here repeated from the section “Scalar vs. Nonscalar Types” is an example of a tuple variable definition:
+
+VAR STV TUPLE { STATUS INTEGER , SNO CHAR , CITY CHAR , SNAME CHAR } ;
+
+The expression TUPLE {...} here is, as you’ll recall, an invocation of the TUPLE type generator. SQL has a corresponding ROW type generator (though it calls it a type constructor). Here’s an SQL analog of the foregoing Tutorial D example:
+
+DECLARE SRV /* SQL row variable */ 
+        ROW ( SNO VARCHAR(5) ,
+              SNAME VARCHAR(25) , 
+              STATUS INTEGER ,
+              CITY VARCHAR(20) ) ;
+
+Unlike tuples, however, rows in SQL have a left to right ordering to their components [19]; in the case at hand, there are actually 24 (= 4 * 3 * 2 * 1) different row types all consisting of the same four components (!).
+
+SQL also supports row assignment. Recall this Tutorial D tuple assignment: 
+
+STV := TUPLE FROM ( S WHERE SNO = ‘S1’ ) ;
+
+Here’s an SQL row assignment analog:
+
+SET SRV = ( S WHERE SNO = ‘S1’ ) ;
+
+The expression on the right side here is a row subquery ─ i.e., it’s a table expression, syntactically speaking, but it’s one that’s acting as a row expression. That’s why there’s no explicit counterpart to Tutorial D’s TUPLE FROM (see the discussion of subqueries and coercion in the section “SQL Type Checking and Coercion” a couple of pages back).
+
+Row assignments are also involved, in effect, in SQL UPDATE statements (see Chapter 3).
+
+Turning to tables: Interestingly, SQL doesn’t really have a TABLE type generator (or type constructor, as SQL would probably call it) at all! ─ i.e., it has nothing directly analogous to the RELATION type generator described earlier in this chapter. However, it does have a mechanism, CREATE TABLE, for defining what by rights should be called table variables. For example, recall this definition from the section “Scalar vs. Nonscalar Types”:
+
+VAR S BASE
+      RELATION { SNO CHAR , SNAME CHAR , STATUS INTEGER , CITY CHAR } 
+      KEY { SNO } ;
+
+Here’s an SQL analog:
+
+CREATE TABLE S
+     ( SNO    VARCHAR(5)  NOT NULL ,
+       SNAME  VARCHAR(25) NOT NULL , 
+       STATUS INTEGER     NOT NULL , 
+       CITY   VARCHAR(20) NOT NULL , 
+       UNIQUE ( SNO ) ) ;
+
+Note carefully, however, that there’s nothing ─ no sequence of linguistic tokens ─ in this example that can logically be labeled “an invocation of the TABLE type constructor.” (This fact might become more apparent when you realize that the specification UNIQUE(SNO), which defines a certain integrity constraint on suppliers, doesn’t have to come after the column definitions but can appear almost anywhere ─ e.g., between the definitions of columns SNO and SNAME. Not to mention the NOT NULL specifications on the individual column definitions, which also define certain integrity constraints.) In fact, to the extent that the variable S can be regarded (in SQL) as having any type at all, that type is nothing more than bag of rows, where the rows in question are of type ROW (SNO VARCHAR(5), SNAME VARCHAR(25), STATUS INTEGER, CITY VARCHAR(20)).
+
+That said, I should say too that SQL does support something it calls “typed tables.” The term isn’t very appropriate, however, because if TT is a “typed table” that has been defined to be “of type T,” then TT is not of type T, and neither are its rows! More important, I think you should avoid such tables anyway, because they’re inextricably intertwined with SQL’s support for pointers, and pointers are explicitly prohibited in the relational model [20]. In fact, if some table has a column whose values are pointers to rows in some “target” table, then that table can’t possibly represent a relation in the relational model sense [21]. As I’ve just indicated, however, such tables are unfortunately permitted in SQL; the pointers are called reference values, and the columns that contain them are said to be of some REF type. Quite frankly, it’s not clear why these features are included in SQL at all; certainly there seems to be no useful functionality that can be achieved with them that can’t equally well ─ in fact, better ─ be achieved without them. Strong recommendation: Don’t use them, or any features related to them.
+
+Aside: To avoid a possible confusion, I should add that SQL actually uses the terminology of “referencing” in two quite different senses. One is as sketched above. The other, and older, sense has to do with foreign keys; a foreign key value in one row is said to “reference” the row that contains the corresponding target key value. Note, however, that foreign keys certainly aren’t pointers! ─ there are several logical differences between the two concepts, including in particular the fact that foreign keys refer to rows, which are values, whereas pointers are addresses and therefore, by definition, refer to variables. (Recall from Chapter 1 that it’s variables, not values, that “have location.” Values, having no location, certainly don’t have addresses.) End of aside.
+
+CONCLUDING REMARKS
+
+It’s a common misconception that the relational model deals only with rather simple types: numbers, strings, perhaps dates and times, and not much else. In this chapter, I’ve tried to show among other things that this is indeed a misconception. Rather, relations can have attributes of any type whatsoever (other than as noted in just a moment) ─ the relational model nowhere prescribes just what those types must be, and in fact they can be as complex as you like. In other words, the question as to what types are supported is orthogonal to the question of support for the relational model itself. Or, less precisely but more catchily: Types are orthogonal to tables.
+
+I also remind you that the foregoing state of affairs in no way violates the requirements of first normal form ─ first normal form just means that every tuple in every relation contains a single value, of the appropriate type, in every attribute position. Now we know those types can be anything, we also know all relations are in first normal form by definition.
+
+Finally, I mentioned in the introduction to this chapter that there were certain important exceptions to the rule that relational attributes can be of any type whatsoever. In fact, there are two (both of which I’ll simplify just slightly for present purposes). The first is that if relation r is of type T, then no attribute of r can itself be of type T (think about it!). The second is that no relation in the database can have an attribute of any pointer type. Prerelational databases were full of pointers, and access to such databases involved a lot of pointer chasing, a state of affairs that made application programming error prone and direct end user access impossible. (These aren’t the only problems with pointers, but they’re among the more obvious ones.) Codd wanted to get away from such problems in his relational model, and of course he succeeded.
+
+EXERCISES
+
+2.1 What’s a type? What’s the difference between a domain and a type?
+
+2.2 What do you understand by the term selector? And what exactly is a literal?
+
+2.3 What’s a THE_ operator?
+
+2.4 Physical representations are always hidden from the user: True or false?
+
+2.5 This chapter has touched on several more logical differences (refer back to Chapter 1 if you need to refresh your memory regarding this important notion), including:
+
+argument vs. parameter
+database vs. DBMS
+foreign key vs. pointer
+generated type vs. nongenerated type 
+relation vs. type
+type vs. representation
+user defined type vs. system defined type
+user defined operator vs. system defined operator
+
+What exactly is the logical difference in each of these cases?
+
+2.6 Explain in your own words the difference between the concepts scalar and nonscalar.
+
+2.7 What do you understand by the term coercion? Why is coercion a bad idea?
+
+2.8 Why doesn’t domain check override make sense?
+
+2.9 What’s a type generator?
+
+2.10 Define first normal form. Why do you think it’s so called?
+
+2.11 Let X be an expression. What’s the type of X? What’s the significance of the fact that X is of some type?
+
+2.12 Using the definition of the REFLECT operator in the body of the chapter (section “What’s a Type?”) as a template, define a Tutorial D operator that, given an integer, returns the cube of that integer.
+
+2.13 Let LENGTH be a user defined type, with the obvious semantics. Use Tutorial D to define an operator that, given the length of two adjacent sides of a rectangle, returns the corresponding area.
+
+2.14 Give an example of a relation type. Distinguish between relation types, relation values, and relation variables.
+
+2.15 Use SQL or Tutorial D or both to define relvars P and SP from the suppliers-and-parts database. If you give both SQL and Tutorial D definitions, identify as many differences between them as you can. What’s the significance of the fact that relvar P (for example) is of a certain relation type?
+
+2.16 With reference to the departments-and-employees database from Chapter 1 (see Fig. 1.1), suppose the attributes are of the following user defined types:
+
+DNO : DNO 
+DNAME : NAME 
+BUDGET : MONEY 
+ENO : ENO 
+ENAME : NAME 
+SALARY : MONEY
+
+Suppose departments also have a LOCATION attribute, of user defined type CITY (say). Which of the following scalar expressions are valid? For those that are, state the type of the result; for the others, give an expression that will achieve what appears to be the desired effect.
+
+a. LOCATION = ‘London’
+
+b. ENAME = DNAME
+
+c. SALARY * 5
+
+d. BUDGET + 50000
+
+e. ENO > ‘E2’
+
+f. ENAME || DNAME
+
+g. LOCATION || ‘burg’
+
+2.17 It’s sometimes suggested that types are really variables, in a sense. For example, employee numbers might grow from three digits to four as a business expands, so we might need to update “the set of all possible employee numbers.” Discuss.
+
+2.18 A type is a set of values and the empty set is a legitimate set; thus, we might define an empty type to be a type where the set in question is empty. Can you think of any uses for such a type?
+
+2.19 In the relational world, the equality operator “=” applies to every type. By contrast, SQL doesn’t require “=” to apply to every type, and it doesn’t fully define the semantics in all of the cases where it does apply. What are the implications of this state of affairs?
+
+2.20 Following on from the previous exercise, we can say that if v1 = v2 evaluates to TRUE in the relational world, then executing some operator Op on v1 and executing that same operator Op on v2 always has exactly the same effect, for all possible operators Op. But this is another precept that SQL violates. Can you think of any examples of such violation? What are the implications?
+
+2.21 Why are pointers excluded from the relational model?
+
+2.22 The Assignment Principle ─ which is very simple, but fundamental ─ states that after assignment of the value v to the variable V, the comparison V = v evaluates to TRUE (see Chapter 5). Yet again, however, this is a precept that SQL violates (fairly ubiquitously, in fact). Can you think of any examples of such violation? What are the implications?
+
+2.23 Do you think that types “belong to” databases, in the same sense that relvars do?
+
+2.24 In the first example of an SQL SELECT expression in this chapter, I pointed out that there was no terminating semicolon because the expression was an expression and not a statement. But what’s the difference? 
+
+2.25 Explain as carefully as you can the logical difference between a relation with a relation valued attribute (RVA) and a “relation” with a repeating group.
+
+2.26 What’s a subquery?
+
+2.27 To repeat from Exercise 2.19: In the relational world, the equality operator “=” applies to every type. But what about type BOOLEAN? And what about SQL’s row and table types?
+
+[1] DBMS = database management system. Note that there’s a logical difference between a DBMS and a database! Unfortunately, the industry very commonly uses the term database when it means either some DBMS product, such as Oracle, or the particular copy of such a product that happens to be installed on a particular computer. I do not follow this usage in this book. The problem is, if you call the DBMS a database, what do you call the database?
+
+[2] DBA = database administrator.
+
+[3] This observation is valid regardless of whether we’re in an SQL context (as in the present discussion) or otherwise ─ but I should make it clear that selectors in SQL aren’t as straightforward as they might be, and selector as such isn’t an SQL term. I should also make it clear that selectors have nothing to do with the SQL SELECT operator.
+
+[4] Again this observation is valid regardless of whether we’re in an SQL context or some other context ─ though (as with selectors) THE_ operators in SQL aren’t as straightforward as they might be, and “THE_ operator” as such isn’t an SQL term. I note too that some types might have more than one associated THE_ operator. See Chapter 8 for further discussion.
+
+[5] Observe that I don’t claim it’s well designed ─ indeed, it probably isn’t ─ but that’s not the point. I’m concerned here with what’s legal, not with questions of good design. The design of R3 is legal.
+
+[6] In case you’re wondering, the difference is that sets in general can contain anything, but relations contain tuples. Note, however, that a relation certainly resembles a general set inasmuch as it too can be regarded as a single value.
+
+[7] The individual elements in an SQL multiset don’t have to be rows but can be values of any available SQL type ─ for example, integers. The same goes for arrays as well.
+
+[8] Throughout this book I treat declared and defined as synonymous.
+
+[9] The logical difference between type and representation is important here. To spell the matter out, the operators associated with type T are the operators associated with type T ─ not the operators associated with the representation of type T. For example, just because the representation for type SNO happens to be CHAR (say), it doesn’t follow that we can concatenate two supplier numbers; we can do that only if concatenation is an operator that’s defined for type SNO. (In fact I did mention exactly this example in passing in the section “Equality Comparisons,” as you might recall.)
+
+[10] This paragraph touches on another important logical difference, incidentally: namely, that between arguments and parameters (see Exercise 2.5 at the end of the chapter). Note too that the POINT selector, unlike the SNO and PNO selectors discussed earlier, takes two arguments (because points are represented by pairs of values, not just by a single value).
+
+[11] The concept might be familiar, but it seems to be quite difficult to find a good definition for it in the literature! See Exercise 2.2.
+
+[12] This sentence is only an approximation to the truth. A more accurate statement would be: Nongenerated types ─ see later in the present section ─ are scalar; generated types (e.g., relation types) are typically nonscalar, but don’t have to be. An example of a scalar generated type is the SQL type CHAR(25) (see the next section).
+
+[13] Note that it does make sense to talk about the heading of a tuple ─ tuples have headings just as relations do (as will be explained in more detail in the next chapter).
+
+[14] True bit string types ─ BIT(n) and BIT VARYING(n), where n was the length in bits ─ were introduced in SQL:1992 but dropped again in SQL:2003.
+
+[15] SQL also supports a ROW type generator, as we know. In fact, it also supports ARRAY, MULTISET, and REF (but, oddly enough, not TABLE) as type generators.
+
+[16] Unfortunately that support is severely flawed, however. First of all, SQL supports coercions (see later), with the consequence that “=” can give TRUE even when the comparands are of different types. Second, in the case of character string types, it’s possible for “=” to give TRUE even when the comparands are of the same type but clearly distinct (see the section “Collations in SQL”). And it’s also possible ─ for all types, not just character string types ─ for “=” not to give TRUE even when the comparands aren’t distinguishable; in particular, this happens when (but not only when) the comparands are both null. Also, for certain types not discussed in detail in this book, including type XML and certain user defined types, “=” isn’t defined at all.
+
+[17] In connection with this example, one reviewer suggested that the “strangeness” of the union might not matter in practice, since at least no information has been lost in the result. Well, that observation might be valid, in this particular example. But if the SQL language designers want to define an operator that manifestly doesn’t behave like the union operator of the relational model (or set theory, come that), then it seems to me that, first, it doesn’t help the cause of understanding to call that operator “union”; second (and rather more important), it isn’t incumbent on me to show such a “union” can sometimes cause problems ─ rather, it’s incumbent on those language designers to show it can’t.
+
+[18] As a historical note, I remark that in the original (i.e., IBM) version of SQL, the only available collation ─ which was based on the internal coding scheme, of course ─ supported PAD SPACE only, and did that only tacitly. The reason for this state of affairs was a desire to conform to the corresponding rules for PL/I.
+
+[19] Oddly enough, SQL refers to the components of row types produced by invocation of the ROW type constructor (and to the components of rows of such types) not as columns but as fields.
+
+[20] Perhaps I should elaborate briefly on what I mean by the term pointer. A pointer is a value (an address, essentially) for which certain special operators ─ notably referencing and dereferencing operators ─ are, and in fact must be, defined. Here are rough definitions of those operators: (a) Given a variable V, the referencing operator applied to V returns the address of V; (b) given a value v of type pointer (i.e., an address), the dereferencing operator applied to v returns the variable that v points to (i.e., the variable located at the given address).
+
+[21] As a matter of fact, the target table can’t either.
