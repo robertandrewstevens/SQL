@@ -1,0 +1,238 @@
+---
+title: "Data Analysis Using SQL and Excel"
+author: "Robert A. Stevens"
+date: "4/7/2018"
+output: html_document
+---
+
+by Gordon S. Linoff
+
+## About the Author
+
+Gordon Linoff (gordon@data-miners.com) is a recognized expert in the field of data mining. He has more than twenty-five years of experience working with companies large and small to analyze customer data and to help design data warehouses. His passion for SQL and relational databases dates to the early 1990s, when he was building a relational database engine designed for large corporate data warehouses at the now-defunct Thinking Machines Corporation. Since then, he has had the opportunity to work with all the leading database vendors, including Microsoft, Oracle, and IBM.
+
+With his colleague Michael Berry, Gordon has written three of the most popular books on data mining, starting with Data Mining Techniques for Marketing, Sales, and Customer Support. In addition to writing books on data mining, he also teaches courses on data mining, and has taught thousands of students on four continents.
+
+Gordon is currently a principal at Data Miners, a consulting company he and Michael Berry founded in 1998. Data Miners is devoted to doing and teaching data mining and customer-centric data analysis.
+
+## Contents
+
+Foreword
+
+Acknowledgments
+
+Introduction 
+
+Chapter 1: A Data Miner Looks at SQL
+
+Chapter 2: What’s In a Table? Getting Started with Data Exploration
+
+Chapter 3: How Different Is Different?
+
+Chapter 4: Where Is It All Happening? Location, Location, Location
+
+Chapter 5: It’s a Matter of Time
+
+Chapter 6: How Long Will Customers Last? Survival Analysis to Understand Customers and Their Value
+
+Chapter 7: Factors Affecting Survival: The What and Why of Customer Tenure
+
+Chapter 8: Customer Purchases and Other Repeated Events
+
+Chapter 9: What’s in a Shopping Cart? Market Basket Analysis and Association Rules
+
+Chapter 10: Data Mining Models in SQL
+
+Chapter 11: The Best-Fit Line: Linear Regression Models
+
+Chapter 12: Building Customer Signatures for Further Analysis
+
+Appendix: Equivalent Constructs Among Databases
+
+## Foreword
+
+Gordon Linoff and I have written three and a half books together. (Four, if we get to count the second edition of Data Mining Techniques as a whole new book; it didn’t feel like any less work.) Neither of us has written a book without the other before, so I must admit to a tiny twinge of regret upon first seeing the cover of this one without my name on it next to Gordon’s. The feeling passed very quickly as recollections of the authorial life came flooding back — vacations spent at the keyboard instead of in or on the lake, opportunities missed, relationships strained. More importantly, this is a book that only Gordon Linoff could have written. His unique combination of talents and experiences informs every chapter.
+
+I first met Gordon at Thinking Machines Corporation, a now long-defunct manufacturer of parallel supercomputers where we both worked in the late eighties and early nineties. Among other roles, Gordon managed the implementation of a parallel relational database designed to support complex analytical queries on very large databases. The design point for this database was radically different from other relational database systems available at the time in that no trade-offs were made to support transaction processing. The requirements for a system designed to quickly retrieve or update a single record are quite different from the requirements for a system to scan and join huge tables. Jettisoning the requirement to support transaction processing made for a cleaner, more efficient database for analytical processing. This part of Gordon’s background means he understands SQL for data analysis literally from the inside out.
+
+Just as a database designed to answer big important questions has a different structure from one designed to process many individual transactions, a book about using databases to answer big important questions requires a different approach to SQL. Many books on SQL are written for database administrators. Others are written for users wishing to prepare simple reports. Still others attempt to introduce some particular dialect of SQL in every detail. This one is written for data analysts, data miners, and anyone who wants to extract maximum information value from large corporate databases. Jettisoning the requirement to address all the disparate types of database user makes this a better, more focused book for the intended audience. In short, this is a book about how to use databases the way we ourselves use them.
+
+Even more important than Gordon’s database technology background, is his many years as a data mining consultant. This has given him a deep understanding of the kinds of questions businesses need to ask and of the data they are likely to have available to answer them. Years spent exploring corporate databases has given Gordon an intuitive feel for how to approach the kinds of problems that crop up time and again across many different business domains:
+
+- *How to take advantage of geographic data.* A zip code field looks much richer when you realize that from zip code you can get to latitude and longitude and from latitude and longitude you can get to distance. It looks richer still when your realize that you can use it to join in census bureau data to get at important attributes such as population density, median income, percentage of people on public assistance, and the like.
+
+- *How to take advantage of dates.* Order dates, ship dates, enrollment dates, birth dates. Corporate data is full of dates. These fields look richer when you understand how to turn dates into tenures, analyze purchases by day of week, and track trends in fulfillment time. They look richer still when you know how to use this data to analyze time-to-event problems such as time to next purchase or expected remaining lifetime of a customer relationship.
+
+- *How to build data mining models directly in SQL.* This book shows you how to do things in SQL that you probably never imagined possible, including generating association rules for market basket analysis, building regression models, and implementing naïve Bayesian models and scorecards.
+
+- *How to prepare data for use with data mining tools.* Although more than most people realize can be done using just SQL and Excel, eventually you will want to use more specialized data mining tools. These tools need data in a specific format known as a customer signature. This book shows you how to create these data mining extracts.
+
+The book is rich in examples and they all use real data. This point is worth saying more about. Unrealistic datasets lead to unrealistic results. This is frustrating to the student. In real life, the more you know about the business context, the better your data mining results will be. Subject matter expertise gives you a head start. You know what variables ought to be predictive and have good ideas about new ones to derive. Fake data does not reward these good ideas because patterns that should be in the data are missing and patterns that shouldn’t be there have been introduced inadvertently. Real data is hard to come by, not least because real data may reveal more than its owners are willing to share about their business operations. As a result, many books and courses make do with artificially constructed datasets. Best of all, the datasets used in the book are all available for download at the companion web site and from www.data-miners.com.
+
+I reviewed the chapters of this book as they were written. This process was very beneficial to my own use of SQL and Excel. The exercise of thinking about the fairly complex queries used in the examples greatly increased my understanding of how SQL actually works. As a result, I have lost my fear of nested queries, multi-way joins, giant case statements, and other formerly daunting aspects of the language. In well over a decade of collaboration, I have always turned to Gordon for help using SQL and Excel to best advantage. Now, I can turn to this book. And you can too.
+
+\- Michael J. A. Berry
+
+## Introduction
+
+Data. Analysis. Presentation. These three key capabilities are needed for effectively transforming data into information. And yet, these three topics are rarely treated together. Other books focus on one or the other — on the details of relational databases, or on applying statistics to business problems, or on using Excel. This book approaches the challenges of data analysis from a more holistic perspective, and with the aim of explaining the relevant ideas both to people responsible for analyzing data and to people who want to use such information, responsibly.
+
+The motivation for this approach came from a colleague, Nick Drake, who is a statistician by training. Once upon a time, he was looking for a book that would explain how to use SQL for the complex queries needed for data analysis. There are many books on SQL, few focused on using the language for queries, and none that come strictly from a perspective of analyzing data. Similarly, there are many books on statistics, none of which address the simple fact that most of the data being used resides in relational databases. This book is intended to fill that gap.
+
+There are many approaches to data analysis. My earlier books, written with Michael Berry, focus on the more advanced algorithms and case studies usually falling under the heading “data mining.” By contrast, this book focuses on the “how-to.” It starts by describing data stored in databases and continues through preparing and producing results. Interspersed are stories based on my experience in the field, explaining how results might be applied and why some things work and other things do not. The examples are so practical that the data used for them is available on the companion web site and at www.data-miners.com.
+
+One of the truisms about data warehouses and analysis databases in general is that they don’t actually do anything. Yes, they store data. Yes, they bring together data from different sources, cleansing and clarifying along the way. Yes, they define business dimensions, store transactions about customers, and, perhaps, summarize important data. (And, yes, all these are very important!) However, data in a database resides on so many spinning disks and in complex data structures in a computer’s memory. So much data. So little information.
+
+Oil deposits and diamonds hidden in rich seams beneath the surface of the earth are worth much less than gasoline at the pump or Tiffany diamond rings. Prospectors can make a quick buck on such deposits. On the other hand, the companies willing to invest the dollars to transform and process the raw materials into marketable goods are the ones that uncover the long-term riches.
+
+This book is about the basic tools needed for exploiting data, particularly data that describes customers. There are many fancy algorithms for statistical modeling and data mining. However, “garbage-in, garbage-out.” The results of even the most sophisticated techniques are only as good as the data being used. Data is central to the task of understanding customers, understanding products, and understanding markets.
+
+The chapters in this book discuss different aspects of data and several different analytic techniques. The analytic techniques range from exploratory data analysis to survival analysis, from market basket analysis to naïve Bayesian models, from simple animations to regression. Of course, the potential range of possible techniques is much larger than can be presented in one book. The methods have proven useful over time and are applicable in many different areas.
+
+And finally, data and analysis are not enough. Data must be analyzed, and the results must be presented to the right audience. To fully exploit its value, we must transform data into stories and scenarios, charts and metrics, and insights.
+
+### Overview of the Book and Technology
+
+This book focuses on three key technological areas used for transforming data into actionable information:
+
+- Relational databases store the data. The basic language for retrieving data is SQL.
+
+- Excel spreadsheets are the most popular tool for presenting data. Perhaps the most powerful feature of Excel is the charting capability, which turns columns of numbers into pictures.
+
+- Statistics is the foundation of data analysis.
+
+These three technologies are presented together, because they are all interrelated. SQL answers the question “how do we pull data from a database?” Statistics answers the question “how is it relevant”? And Excel makes it possible to convince other people of the veracity of what we find.
+
+The description of data processing is organized around the SQL language. Although there are extensions of SQL and other very powerful data manipulation languages, SQL is common to most databases. And, databases such as Oracle, IBM’s DB2, and Microsoft SQL Server are common in the business world, storing the vast majority of business data transactions. Other databases such as mysql are available at no cost and easily downloaded. The good news is that all relational databases support SQL as a query language. However, just as England and the United States have been described as “two countries separated by a common language,” each database supports a slightly different dialect of SQL. The Appendix contains a list of commonly used functions and how they are represented in various different dialects.
+
+Similarly, there are beautiful presentation tools and professional graphics packages. However, very rare and exceptional is the workplace computer that does not have Excel (or an equivalent spreadsheet).
+
+Statistics and data mining techniques do not always require advanced tools. Some very important techniques are readily available using the combination of SQL and Excel, including survival analysis, naïve Bayesian models, and association rules. In fact, the methods in this book are often more powerful than the methods available in many statistics and data mining tools, precisely because they are close to the data and customizable for specific applications. The explanation of the techniques covers both the basic ideas and the extensions that may not be available in other tools.
+
+The chapters describing the various techniques provide a solid introduction to modeling and data exploration, in the context of familiar tools and data. They also highlight when the more advanced tools are useful, because there is not a simpler solution using more readily available tools.
+
+In the interests of full disclosure, I should admit that in the early 1990s I worked on a package called Darwin at a company called Thinking Machines. In the intervening years, this package has become much more powerful and user-friendly, and has now grown into Oracle Data Mining. In addition to Oracle, SQL Server offers data mining extensions within the tool — an exciting development that brings advanced data analysis even closer to the data.
+
+This book does not discuss such functionality at all. The methods in the chapters have been chosen for their general applicability to data stored in relational databases. The explicit purpose is not to focus on a particular relational database engine. In many ways, the methods discussed here complement such extensions.
+
+### How This Book Is Organized
+
+The twelve chapters in this book fall roughly into three parts. The first three introduce key concepts of SQL, Excel, and statistics. The six middle chapters discuss various methods of exploring data, and techniques specifically suited to SQL and Excel. The last three focus on the idea of modeling, in the sense of statistics and data mining.
+
+Each chapter explains some aspect of data analysis using SQL and Excel from several different perspectives, including:
+
+- Business examples for using the analysis
+
+- Questions the analysis answers
+
+- How the analytic techniques work
+
+- The SQL syntax for implementing the techniques
+
+- The results (as tables or charts), and how they are created in Excel
+
+Examples in the chapters are generally available in Excel at www.data-miners.com.
+
+SQL is a concise language that is sometimes difficult to follow. Dataflows, graphical representations of data processing that explain data manipulations, are used to illustrate how the SQL works.
+
+Results are presented in charts and tables, sprinkled throughout the book. In addition, important features of Excel are highlighted, and interesting uses of Excel graphics are explained. Each chapter has a couple of technical asides, typically explaining some aspect of a technique or an interesting bit of history associated with the methods described in the chapter.
+
+#### Introductory Chapters
+
+The first chapter, “A Data Miner Looks at SQL,” introduces SQL from the perspective of data analysis. This is the querying part of the SQL language, where data stored in databases is extracted using SQL queries.
+
+Ultimately, data about customers and about the business is stored in SQL databases. This chapter introduces entity-relationship diagrams to describe the structure of the data — the tables and columns and how they relate to each other. It also introduces dataflows to describe the processing of queries; dataflows provide a graphical explanation of how data is processed.
+
+The first chapter also describes the datasets used for examples throughout the book (and which are also available on the companion web site). This data includes tables describing retail purchases, tables describing mobile telephone customers, and reference tables that describe zip codes and the calendar.
+
+The second chapter, “What’s In a Table? Getting Started with Data Exploration,” introduces Excel for exploratory data analysis and presentation. Of many useful capabilities in Excel, perhaps the most useful are charts. As the ancient Chinese saying goes, “a picture paints a thousand words,” and Excel makes it possible to paint pictures using data. Such charts are not only useful aesthetically, but more practically for Word documents, PowerPoint, email, the Web, and so on.
+
+Charts are not a means unto themselves. This chapter starts down the road of exploratory data analysis, using charts to convey interesting summaries of data. In addition, this chapter discusses summarizing columns in a table, as well as the interesting idea of using SQL to generate SQL queries.
+
+Chapter 3, “How Different Is Different?”, explains some key concepts of descriptive statistics, such as averages, p-values, and the chi-square test. The purpose of this chapter is to show how to use such statistics on data residing in tables. The particular statistics and statistical tests are chosen for their practicality, and the chapter focuses on applying the methods, not explaining the underlying theory. Conveniently, most of the statistical tests that we want to do are feasible in Excel and even in SQL.
+
+#### SQL Techniques
+
+Several techniques are suited very well for the combination of SQL and Excel. 
+
+Chapter 4, “Where Is It All Happening? Location, Location, Location,” explains geography and how to incorporate geographic information into data analysis. Geography starts with locations, described by latitude and longitude. There are then various levels of geography, such as census blocks, zip code tabulation areas, and the more familiar counties and states, all of which have information available from the Census Bureau. This chapter also discusses various methods for comparing results at different levels of geography. And, finally, no discussion of geography would be complete without maps. Using Excel, it is possible to build very rudimentary maps.
+
+Chapter 5, “It’s a Matter of Time,” discusses another key attribute of customer behavior, when things occur. This chapter describes how to access features of dates and times in databases, and then how to use this information to understand customers.
+
+The chapter includes examples for accurately making year-over-year comparisons, for summarizing by day of the week, for measuring durations in days, weeks, and months, and for calculating the number of active customers by day, historically. The chapter ends with a simple animation in Excel.
+
+Chapters 6 and 7, “How Long Will Customers Last? Survival Analysis to Understand Customers and Their Value” and “Factors Affecting Survival: The What and Why of Customer Tenure,” explain one of the most important analytic techniques for understanding customers over time. Survival analysis has its roots in traditional statistics. However, it is very well suited to problems related to customers.
+
+Chapter 6 introduces the basic ideas of hazard probabilities and survival, explaining how to calculate them easily using the combination of SQL and Excel. Perhaps surprisingly, sophisticated statistical tools are not needed to get started using survival analysis. Chapter 6 then explains how important ideas in survival analysis, such as average customer lifetime, can be used in a business context. It continues by explaining how to put these pieces together into a forecast.
+
+Chapter 7 extends the discussion in three different areas. First, it addresses a key problem in many customer-oriented databases, called left truncation. Second, it explains a very interesting idea in survival analysis called competing risks. This idea incorporates the fact that customers leave for different reasons. The third idea is to use survival analysis for before-and-after analysis. That is, how can we quantify what happens to customers when something happens during their lifetime — such as quantifying the effect of enrollment in a loyalty program or of a major billing fiasco.
+
+Chapters 8 and 9, “Customer Purchases and Other Repeated Events” and “What’s in a Shopping Cart? Market Basket Analysis and Association Rules,” explain how to understand what customers are purchasing using SQL and Excel. Chapter 8 covers everything about the purchase — when it occurs, where it occurs, how often — except for the particular items being purchased. Purchases contain a lot of information, even before we dive into the details of the items.
+
+Chapter 9 explains association rules, which are combinations of products purchased at the same time or in sequence. Building association rules in SQL is rather sophisticated, usually requiring intermediate tables. The methods in this chapter extend traditional association rule analysis, introducing alternative measures that make them more useful, and show how to produce combinations of different things, such as clicks that result in a purchase (to use an example from the web).
+
+Chapters 8 and 9 also introduce SQL window functions (called “analytic functions” in Oracle). These are very powerful functions that should be part of the repertoire of all analysts using SQL.
+
+#### Modeling Techniques
+
+The last three chapters discuss statistical and data mining modeling techniques and methods.
+
+Chapter 10, “Data Mining Models in SQL,” introduces the idea of data mining modeling and the terminology associated with building such models. It also discusses some important types of models that are well-suited to business problems and the SQL environment. Look-alike models find things similar to a given example. Lookup models use a lookup table to find model scores.
+
+This chapter also discusses a more sophisticated modeling technique called naïve Bayesian models. This technique combines information along various business dimensions to estimate an unknown quantity.
+
+Chapter 11, “The Best Fit Line: Linear Regression Models,” covers a more traditional statistical technique, linear regression. Several variants of linear regression are introduced, including polynomial regression, weighted regression, multiple regression, and exponential regression. These are explained graphically, using Excel charts, along with the R2 value that measures how well the model fits the data.
+
+Regression is explained using both Excel and SQL. Although Excel has several built-in functions for regression, there is an additional method using Solver, which is more powerful than the built-in functions. This chapter introduces Solver (which is free and bundled with Excel) in the context of linear regression.
+
+The final chapter, “Building Customer Signatures for Further Analysis,” introduces the customer signature. This is a data structure that summarizes what a customer looks like at a particular point in time. Customer signatures are very powerful for modeling.
+
+This chapter recognizes that although SQL and Excel are quite powerful, more sophisticated tools are sometimes necessary. The customer signature is the right way to summarize customer information, under many circumstances. And, SQL is a very powerful tool for this summarization.
+
+### Who Should Read this Book
+
+This book is designed for several audiences, with varying degrees of technical skills.
+
+On the less technical side are managers, particularly those with a quantitative bent who are responsible for understanding customers or a business unit. Such people are often quite proficient in Excel, but, alas, much of the data they need resides in relational databases. To help them, this book provides examples of business scenarios where analysis provides useful results. These scenarios are detailed, showing not only the business problem, but the technical approach and the results.
+
+Another part of the audience consists of people whose job is to understand data and customers, often having a job title including the word “analyst.” These individuals typically use Excel and other tools, sometimes having direct access to the data warehouse or to some customer-centric database. This book can help by improving SQL querying skills, showing good examples of charts, and introducing survival analysis and association rules for understanding customers and the business.
+
+At the most technical end are statisticians, who typically use special-purpose tools such as SAS, SPSS, and S-plus. However, the data resides in databases. This book can help the very technical with their SQL skills, and also provide examples of using analysis to solve particular business problems.
+
+In addition, database administrators, database designers, and information architects may find this book interesting. The queries shown in the various chapters illustrate what people really want to do with the data, and should encourage database administrators and designers to create efficient databases that support these needs.
+
+I encourage all readers, even the technically proficient, to read (or at least skim) the first three chapters. These chapters introduce SQL, Excel, and statistics all from the perspective of analyzing large quantities of data. This perspective is different from how these subjects are usually introduced. Certain ideas in these chapters, such as the example data, dataflows, SQL syntax, and good chart design, are used throughout the book.
+
+### Tools You Will Need
+
+This book is designed to be stand-alone. That is, readers should be able to learn the ideas and gain understanding directly from the text.
+
+All the SQL in the book has been tested (in Microsoft SQL Server). The datasets and results are available on the companion web sites and at www.data-miners.com. Readers who want hands-on experience are encouraged to download the data and run the examples in the book.
+
+Most examples in the book are vendor-neutral, so they should run with only minor modification on almost any fully functional relational database (I do not recommend Microsoft Access for this purpose). If you do not have a database, there are various software packages available for downloading — database vendors often have stand-alone versions of their software available at no cost. A trial version of SQL Server is available at http://www.microsoft.com/sql/default.mspx. A trial version of Oracle 10g is available at http://www.oracle.com/technology/software/products/database/oracle10g/index.html. In addition, free database software is available, in the form of mysql and other databases.
+
+Some examples in the book use SQL window functions, which are currently available only in Microsoft SQL and Oracle SQL. I do hope that these functions — which are part of the SQL standard — are adopted by more database vendors in the future because they are tremendously useful for data analysis and data mining.
+
+### What’s on the Web Site
+
+The companion web site at Wiley and at www.data-miners.com contains the datasets used in the book. These datasets contain the following information:
+
+- Reference tables. There are three reference tables, two containing census information (from the 2000 Census) and one containing calendar information about dates
+
+- Subscribers dataset. This is data describing a subset of customers in a mobile telephone company
+
+- Purchases dataset. This is data describing customer purchase patterns
+
+This data is available for download, along with instructions for loading it into SQL Server.
+
+In addition, the companion web site has pages with additional information, such as spreadsheets containing the SQL queries and answers for all examples in the book and a discussion forum.
+
+### Summary
+
+The idea for this book originated with a colleague’s question about a reference book for SQL for data analysis queries. However, another reference book on SQL is not needed, even one focused on the practical aspects of using the language for querying purposes.
+
+For analyzing data, SQL cannot be learned in a vacuum. A SQL query, no matter how deftly crafted, is usually not the entire solution to a business problem. The business problem needs to be transformed into a question, which can be answered via a query. The results then need to be presented, often as tables or Excel charts.
+
+I would extend this further. In the real world, statistics also cannot be learned in a vacuum. Once upon a time, collecting data was a time-consuming and difficult process. Now, there are web sites devoted to storing data sets and making them available to anyone who wants them. The companion web site for this book, for example, puts dozens of megabytes of data just a few clicks away. The problem of analyzing data now extends beyond the realm of a few statistical methods to the processes for managing and extracting data as well.
+
+This book combines three key ideas into a single thread of solving problems. I hope this book helps readers with technical skills. Throughout my work as a data miner, I have found SQL, Excel, and statistics to be critical tools for analyzing data. More important than the specific technical skills, though, I hope this book helps readers improve their technical skills and gives them ideas so they can better understand their customers and their businesses.

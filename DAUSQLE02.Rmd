@@ -1,5 +1,5 @@
 ---
-title: "DAUSQLE02"
+title: "CHAPTER 2: What’s In a Table? Getting Started with Data Exploration"
 author: "Robert A. Stevens"
 date: "April 14, 2016"
 output: html_document
@@ -11,8 +11,6 @@ setwd("~/GitHub/SQL")
 ```
 
 *Data Analysis Using SQL and Excel* by Gordon S. Linoff
-
-# CHAPTER 2: What’s In a Table? Getting Started with Data Exploration
 
 The previous chapter introduced the SQL language from the perspective of data analysis. This chapter demonstrates the use of SQL for exploring data, the first step in any analysis project. The emphasis shifts from databases in general to data; understanding data — and the underlying customers — is a theme common to this chapter and the rest of the book.
 

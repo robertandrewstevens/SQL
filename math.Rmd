@@ -1,0 +1,29 @@
+---
+title: "Untitled"
+author: "Robert A. Stevens"
+date: "4/18/2018"
+output: html_document
+---
+
+$\frac{e^{-\left(\frac{x-\mu}{\sigma\sqrt{2}}\right)^2}}{\sigma\sqrt{2\pi}}$
+
+$\frac{}{}$
+
+$e^{-\left(\frac{x-\mu}{\sigma\sqrt{2}}\right)^2}$
+
+$e^{}$
+
+$\left(\frac{x - \mu}{\sigma\sqrt{2}\right)^2$
+
+
+$(\frac{x - \mu}{\sigma\sqrt{2})^2$
+
+$\frac{x - \mu}{\sigma\sqrt{2}}$
+
+$x - \mu$
+
+$\sigma\sqrt{2}$
+
+$\sigma\sqrt{2\pi}$
+
+$e^{i \pi} = -1$

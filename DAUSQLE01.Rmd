@@ -1,5 +1,5 @@
 ---
-title: "DAUSQLE01"
+title: "CHAPTER 1: A Data Miner Looks at SQL"
 author: "Robert A. Stevens"
 date: "April 14, 2016"
 output: html_document
@@ -11,8 +11,6 @@ setwd("~/GitHub/SQL")
 ```
 
 *Data Analysis Using SQL and Excel* by Gordon S. Linoff
-
-# CHAPTER 1: A Data Miner Looks at SQL
 
 Everywhere data is being collected, every transaction, every web page visit, every payment — all these and much, much more are filling relational databases with raw data. Computing power and storage have been growing more cost effective over the past decades, a trend destined to continue in the future. Databases are no longer merely a platform for storing data. They are increasingly becoming powerful engines for transforming data into information, useful information about customers and products and business practices.
 

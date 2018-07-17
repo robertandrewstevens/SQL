@@ -1,139 +1,167 @@
-CHAPTER
-6
-How Long Will Customers Last? Survival Analysis to Understand Customers and Their Value
+CHAPTER 6: How Long Will Customers Last? 
+
+Survival Analysis to Understand Customers and Their Value
+
 How long will a lightbulb last? What factors influence a cancer patient’s prognosis? What is the mean time to failure (MTTF) of a disk drive? These questions may seem to have little relationship to each other, but they do have one thing in common. They are all questions that can be answered using sur- vival analysis, because they involve time-to-event estimations. And, if we think about customers instead of lightbulbs, patients, and disk drives, they readily translate into important questions about customers, their tenures, and their value.
+
 The scientific and industrial origins of survival analysis explain the termi- nology. Its emphasis on “failure” and “risk,” “mortality” and “recidivism” may explain why, once upon a time, survival analysis did not readily catch on in the business and marketing world. That time has passed, and survival analysis is recognized as a powerful set of analytic techniques for understand- ing customers. And, the combination of SQL and Excel is sufficiently powerful to apply many of these techniques to large customer databases.
+
 Survival analysis estimates how long it takes for a particular event to hap- pen. A customer starts; when will that customer stop? By assuming that the future will be similar to the past (the homogeneity assumption), the wealth of data about historical customer behavior can help us understand what will happen and when.
-239
-www.it-ebooks.info
-240 Chapter 6 ■ How Long Will Customers Last?
+
 For customers that have a well-defined beginning and end, the most important time-to-event question is when the customers will stop. These are subscription relationships. Examples abound:
-■■ Customers get a mortgage, and are customers until they pay the mort- gage off (or default).
-■■ Customers get a credit card, and are customers until they stop using the card (or stop paying).
-■■ Customers get a telephone, and are customers until they cancel the phone service (or stop paying).
-■■ Customers subscribe to a magazine, and are customers until they cancel the delivery (or stop paying).
+
+- Customers get a mortgage, and are customers until they pay the mort- gage off (or default)
+
+- Customers get a credit card, and are customers until they stop using the card (or stop paying)
+
+- Customers get a telephone, and are customers until they cancel the phone service (or stop paying)
+
+- Customers subscribe to a magazine, and are customers until they cancel the delivery (or stop paying)
+
 This chapter focuses on these types of relationships. Chapter 8 looks at time- to-event problems in other areas, such as retailing relationships where cus- tomers return, but there is no explicit end to the relationship.
+
 Survival analysis is a broad, multifaceted subject. This chapter is intended as an introduction to the important concepts and their application to customer data using SQL and Excel. It starts with a bit of history. The history is not only interesting but also puts the topics in a good context for understanding time- to-event analysis. Examples are then provided to give a qualitative feel for how survival analysis provides information, because this type of analysis is a powerful way of gaining insight into customer behavior, both qualitatively and quantitatively.
+
 Of course, survival analysis is more than history and description. The quan- titative sections describe how to do the calculations, starting with the hazard, moving to survival, and then extracting useful measures from the survival probabilities. The final example is using survival analysis to estimate customer value, or at least estimate future revenue. The next chapter picks up where this one leaves off, covering some more advanced topics in survival analysis.
+
 Background on Survival Analysis
+
 The origins of survival analysis can be traced back to a paper published in 1693 by Edmund Halley, as described in the aside “An Early History of Survival Analysis.” The techniques were developed further in the late 19th and 20th cen- turies, particularly for applications in social sciences, industrial process con- trol, and medical research. These applications necessarily used a small amount of data, because all data had to be collected by hand. A typical medical study, for instance, has dozens or hundreds of participants, rather than the multi- tudes of customers whose information is stored in today’s databases.
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 241
+
 AN EARLY HISTORY OF SURVIVAL ANALYSIS
-Survival analysis predates what we call statistics by about two centuries. Much of what we call statistics was invented in the 19th and 20th centuries; however, the origins of survival analysis go back to the 17th century, specifically to a paper presented in 1693 to the Royal Society in London. This paper, published in the Royal Society’s Philosophical Transactions, was “An Estimate of the Degrees of the Mortality of Mankind, drawn from curious Tables of the Births and Funerals at the City of Breslaw, with an Attempt to ascertain the Price of Annuities.” It is available online at http://www.pierre-marteau.com/ editions/1693-mortality.html.
+
+Survival analysis predates what we call statistics by about two centuries. Much of what we call statistics was invented in the 19th and 20th centuries; however, the origins of survival analysis go back to the 17th century, specifically to a paper presented in 1693 to the Royal Society in London. This paper, published in the Royal Society’s Philosophical Transactions, was “An Estimate of the Degrees of the Mortality of Mankind, drawn from curious Tables of the Births and Funerals at the City of Breslaw, with an Attempt to ascertain the Price of Annuities.” It is available online at http://www.pierre-marteau.com/editions/1693-mortality.html.
+
 The paper’s author, Edmund Halley, is now famous for quite another reason. In 1758, sixteen years after his death, a comet he predicted to return did indeed return. And Halley’s comet has continued to return every 76 or so years.
-In the paper, Halley presents the basic calculations for survival analysis
-using mortality data collected from Breslau (now called by its Polish name Wroclaw, located in southeastern Poland). These techniques are still used today. And, in other ways, the paper is quite modern.
+
+In the paper, Halley presents the basic calculations for survival analysis using mortality data collected from Breslau (now called by its Polish name Wroclaw, located in southeastern Poland). These techniques are still used today. And, in other ways, the paper is quite modern.
+
 For one thing, technological innovations in computing enabled Halley’s analysis. No, not the calculator or electronic computer. Logarithms and the slide rule were invented earlier in the 1600s. These innovations made it possible to do lots of multiplications and divisions much more efficiently than ever.
+
 Halley was also responding to the availability of data. The “curious tables of births and funerals” refers to the fact that Breslau was keeping track of births and deaths at the time. Why Breslau and not some other city? The reason is unknown. Perhaps Breslau was keeping accurate records of births and deaths in response to the counter-reformation. Mandating records strengthened the Catholic churches that gathered these vital statistics, helping to ensure that everyone was born and died a Catholic.
+
 And what was the application of the new techniques, calculated using the new technology, on the newly available data? Financial calculations for life insurance. This is surely an application we can relate to today. In fact, this particular method of calculating survival values is now called the life table method, because actuaries in life insurance companies have been using the same techniques for about 200 years.
+
 Some things do change, however, such as his opinion that “four of six [women] should bring a Child every year” and “Celibacy ought to be discouraged . . . by extraordinary Taxing and Military Service.” The paper also includes what is, perhaps, the earliest reference to infant morality rates. At the time, Breslau had a rate of 281 infant deaths per 1000 births. By comparison, the country with the worst infant mortality in the modern world, Angola, had an estimated rate of 185 per 1000 in 2006, and Poland had improved to a very respectable 7 per 1000. Some things do fortunately change for the better.
-www.it-ebooks.info
-242 Chapter 6 ■ How Long Will Customers Last?
+
 This section shows some examples of survival analysis without strictly defining terms such as hazard probabilities and survival. The purpose is to present ideas and show how survival analysis can be used qualitatively, for explaining what is happening. The examples start with life expectancy, then an explanation of survival in the medical realm, and finally ending with an example of hazard probabilities and how they shed light on customer behavior.
+
 Life Expectancy
+
 Life expectancy is a natural application of survival analysis, because it answers the question how long people will survive. Figure 6-1 shows life expectancy curves for the U.S. population broken out by gender and race (http:// www.cdc.gov/nchs/data/nvsr/nvsr54/nvsr54_14.pdf), as calculated by the U.S. Census Bureau in 2003. For instance, the curves show that only 90% of black males survive to about 45 years old. By comparison, 90% of white women survive to their early sixties. About 3% of females — whether black or white — are expected to survive to age 100. On the other hand, only about half as many males are expected to survive to that age.
-100%
-90%
-80%
-70%
-60%
-50%
-40%
-30%
-20%
-10%
-0%
+
 Figure 6-1: Life expectancy curves are an example of survival curves.
+
 Life expectancy curves are examples of survival curves. One property is that they always start at 100% and decline toward 0%. They also provide informa- tion, such as the fact that almost everyone survives to age 50 or so. After that, the curves decline more sharply, because as people age, their risk of dying increases. Even at age 50, it is apparent that the different groups behave differ- ently, with black men having noticeably lower survival than the other groups.
+
 The point where half the population survives differs for the four groups:
-■■ For black males, half survive to about age 73.5;
-■■ For white males, half survive to about age 79; www.it-ebooks.info
-White Females Black Females White Males Black Males
-Survival
-0 5 101520253035404550556065707580859095100
-Age
-Chapter 6 ■ How Long Will Customers Last? 243
-■■ For black females, half survive to about age 80.5; and,
-■■ For white females, half survive to about age 84.
-This age, where half survive, is called the median age, and it is a useful measure
-for comparing different groups.
+
+- For black males, half survive to about age 73.5
+
+- For white males, half survive to about age 79
+
+- For black females, half survive to about age 80.5
+
+- For white females, half survive to about age 84
+
+This age, where half survive, is called the median age, and it is a useful measure for comparing different groups.
+
 Medical Research
+
 Purportedly, one of the ten most cited scientific papers of all time is a classic paper on survival analysis published in 1972. This paper, by Sir David Cox — the “Sir” was added because of his renown as a statistician — was called “Regression Models and Life Tables (with Discussion).” It introduced a tech- nique, now called Cox proportional hazards regression, which provides a way of measuring the effects of various factors on survival.
+
 As an example, consider what happens to prisoners after they are released from prison. Longitudinal studies follow groups of prisoners over time to deter- mine what happens to them. These studies are for research into recidivism, a fancy word used to describe prisoners who return to their criminal behavior. Some prisoners return to a life of crime. Others are rehabilitated. Others are lost to follow-up for some reason.
+
 What factors affect the ultimate outcome? Is it the length of time they were in prison? Is it the crime that they committed? Is it their gender, previous criminal history, availability of counseling after release? Data from longitudinal studies is analyzed to understand which factors are most important in determining who goes back to prison, and who doesn’t. And the analysis that researchers use is often based on the techniques invented by Sir David Cox back in 1972 (and so the paper describing the study often cites the original paper).
+
 These ideas have been applied in many different areas, from the effect of smoking and diabetes on longevity to the factors that affect the length of time people remain unemployed, from the factors that affect the length of business cycles to the impact of a drug such as Vioxx on cardiovascular disease. Deter- mining which factors affect survival — for better or worse — is quite useful.
+
 Examples of Hazards
+
 Survival is the probability that someone survives to a given point in time. A related concept, the hazard, is the probability that someone succumbs to a risk at a given point in time. Figure 6-2 shows two examples of hazard proba- bility curves.
-The top chart in Figure 6-2 is the overall risk of dying, based on the 2003 data for the U.S. population. This chart shows the risk at yearly intervals, and reveals interesting facts. During the first year, the hazard is relatively large. The infant mortality rate, as this number is called, is about 0.7% (which is many
-www.it-ebooks.info
-244 Chapter 6 ■ How Long Will Customers Last?
-times less than in Angola in 2006 or Breslau in the 1680s). After the first year, the risk of dying falls considerably, rising a bit as teens learn how to drive, and then more as people age. The shape of this curve, where it starts a bit high, falls, and then increases again is called the “bathtub-shaped” hazard. The name comes from the shape of the curve, which follows the contours of a bath- tub. Imagine the drain on the left side.
-3.0% 2.5% 2.0% 1.5% 1.0% 0.5% 0.0%
-10% 9% 8% 7% 6% 5% 4% 3% 2% 1% 0%
-0 5 10 15 20 25 30 35 40 45 50 55 60 65 70
-Age (years)
-0 30 60 90
-120 150 180 210 240 270 300 330 360 390 420 450
-Tenure (days)
+
+The top chart in Figure 6-2 is the overall risk of dying, based on the 2003 data for the U.S. population. This chart shows the risk at yearly intervals, and reveals interesting facts. During the first year, the hazard is relatively large. The infant mortality rate, as this number is called, is about 0.7% (which is many times less than in Angola in 2006 or Breslau in the 1680s). After the first year, the risk of dying falls considerably, rising a bit as teens learn how to drive, and then more as people age. The shape of this curve, where it starts a bit high, falls, and then increases again is called the “bathtub-shaped” hazard. The name comes from the shape of the curve, which follows the contours of a bath- tub. Imagine the drain on the left side.
+
 Figure 6-2: These are two examples of hazard probabilities: the top chart is mortality and the bottom chart is stopped subscriptions.
+
 The bottom chart in Figure 6-2 shows the more complicated hazard proba- bilities for the risk of customers stopping a subscription a certain number of days after they start. This chart also has several features. First, the hazard at tenure 0 is quite high because many customers are recorded as starting but are not able to start — perhaps their credit cards didn’t go through, or their addresses were incorrect, or they immediately changed their mind. There are another two peaks between 60 and 90 days out. These peaks correspond to customers not paying and to customers stopping after the end of the initial promotional period.
-www.it-ebooks.info
-Daily Hazard Probability
-Yearly Mortality
-Chapter 6 ■ How Long Will Customers Last? 245
+
 The hazard curve also has a bumpiness, with an evident weekly pattern and also peaks about every thirty days. The explanation is the billing period: cus- tomers are more likely to stop shortly after receiving a bill. Finally, the long- term trend in the hazard probabilities is downwards, indicating that as customers stay longer, their chance of leaving decreases. This long-term down- ward trend is a good measure of loyalty; it shows that as customers stay around longer, they are less likely to leave.
-TIP Thelong-termtrendinthehazardprobabilitiesisagoodmeasureof loyalty, because it shows what happens as customers become more familiar with you.
+
+TIP The long-term trend in the hazard probabilities is a good measure of loyalty, because it shows what happens as customers become more familiar with you.
+
 The Hazard Calculation
+
 The rest of this chapter explores and explains various calculations used in sur- vival analysis, with particular emphasis on using SQL and Excel to do them. The examples in the rest of the chapter use the subscription dataset, which consists of customers of a mobile phone company in three markets.
+
 The hazard calculation is the foundation of survival analysis. It is tempting to say that calculating hazards is easy, but estimating unbiased hazards is hard. The hazards, in turn, lead to survival probabilities, and these, in turn, to informative charts and useful measures. The survival calculations use data, particularly the start date, stop date, and stop type columns. This section first explores these columns and then goes into the calculation of the hazard itself.
+
 Data Investigation
+
 Survival analysis fundamentally relies on two pieces of information about each customer, the stop flag (whether the customer is stopped or active) and the tenure (how long the customer was active). Often, these columns must be derived from other columns in the database. In the Subs table, for instance, the tenure is already calculated but the stop flag must be derived from other columns.
+
 Because this information is so important, a good place to start is with data exploration. This is true even when the fields are precalculated, because the definitions in the data may not match exactly the definitions that we need.
+
 Stop Flag
-The stop flag specifies which customers are active and which are stopped, as of the cutoff date. What happens to customers after the cutoff date is
-www.it-ebooks.info
-246 Chapter 6 ■ How Long Will Customers Last?
-unknown. The STOP_TYPE column contains the stop reasons. What values does
-this column take on? A simple aggregation query answers this question:
+
+The stop flag specifies which customers are active and which are stopped, as of the cutoff date. What happens to customers after the cutoff date is unknown. The STOP_TYPE column contains the stop reasons. What values does this column take on? A simple aggregation query answers this question:
+
          SELECT stop_type, COUNT(*), MIN(customer_id), MAX(customer_id)
          FROM subs
          GROUP BY stop_type
+
 Table 6-1 shows three stop types that are expected, and NULL which indicates that customers area still active. The query includes the minimum and maxi- mum customer ID, which is useful for finding rows that contain each value.
+
 The stop types have the following meanings:
-■■ NULL means that the customer is still active.
-■■ “I” stands for “involuntary” and means the company initiated the stop, usually due to nonpayment on bills.
-■■ “V” stands for “voluntary” and means the customer initiated the stop.
-■■ “M” stands for “migration” and means the customer switched to another product.
+
+- NULL means that the customer is still active
+
+- “I” stands for “involuntary” and means the company initiated the stop, usually due to nonpayment on bills
+
+- “V” stands for “voluntary” and means the customer initiated the stop
+
+- “M” stands for “migration” and means the customer switched to another product
+
 A customer is active when the stop type is NULL. Otherwise, the customer has stopped. This rule is expressed in SQL as:
+
          SELECT (CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as isstop
+
 The inverse of the stop flag is the active flag, which is simply one minus the stop flag. In statistics, survival analysis often focuses on the active flag rather than the stop flag, calling it the censor flag. The two are related in a simple manner, and either can be used for the calculations.
+
 The stop type originally stored in the data took on dozens of different values, indicating the myriad of particular reasons why someone might stop (“bad service,” “no service at home,” “billing dispute,” and so on). These spe- cific reasons were then mapped into the voluntary and involuntary categories in the STOP_TYPE column.
-Table 6-1: Stop Types in the Subscription Data MINIMUM
-MAXIMUM CUSTOMERID
-115985522 115960366 115908229 115962722
-STOP_TYPE
-NULL I
-M
-V
-COUNT CUSTOMERID
-2,390,959 2 790,457 217 15,508 9460 1,871,111 52
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 247
+
+Table 6-1: Stop Types in the Subscription Data 
+
+STOP_TYPE COUNT     MINIMUM CUSTOMERID MAXIMUM CUSTOMERID
+NULL      2,390,959                  2          115985522 
+I           790,457                217          115960366 
+M            15,508               9460          115908229 
+V         1,871,111                 52          115962722
+
 Tenure
+
 The tenure is the length of time between a customer’s start date and stop date. Usually, the tenure needs to be calculated, using differences between the dates. The subscription table, though, already has tenure defined. Using the Microsoft SQL function for subtracting dates, the definition is:
+
   SELECT DATEDIFF(day, start_date,
                   (CASE WHEN stop_type IS NOT NULL THEN ‘2006-12-28‘
                         ELSE stop_date END)) as tenure
+
 This expression follows the logic that a customer’s tenure is known when the customer has already stopped. However, if the customer has not stopped, the tenure is as of the cutoff date (in a working database, this might be the cur- rent date or the most recent load date).
-WARNING A stop date can be the first day a customer is no longer active.
-Or, it can be the last day a customer is active — the particular definition depends on the database. The tenure calculation is slightly different for these two cases. In the first case, the tenure is the difference between the start and stop dates. In the second, it is one more than the difference.
+
+WARNING A stop date can be the first day a customer is no longer active. Or, it can be the last day a customer is active — the particular definition depends on the database. The tenure calculation is slightly different for these two cases. In the first case, the tenure is the difference between the start and stop dates. In the second, it is one more than the difference.
+
 In order to have unbiased calculations for the hazard and survival probabil- ities, the start and stop dates need to be accurate. There are many things that can affect the accuracy of dates, particularly older dates:
-■■ Customer records for stopped customers fail to be loaded into the database.
-■■ The start date gets replaced with another date, such as the date the account was loaded into the database.
-■■ The stop date gets overwritten with dates that occur after the stop date, such as the date an unpaid account was written off.
-■■ The start date gets overwritten with another date, such as the date the customer switched to another product.
+
+- Customer records for stopped customers fail to be loaded into the database.
+
+- The start date gets replaced with another date, such as the date the account was loaded into the database.
+
+- The stop date gets overwritten with dates that occur after the stop date, such as the date an unpaid account was written off.
+
+- The start date gets overwritten with another date, such as the date the customer switched to another product.
+
 Investigating dates is definitely important. The place to start is with a his- togram of the starts and stops over time. The following query produces a histogram by year:
+
 SELECT YEAR(thedate) as year, SUM(isstart) as starts, SUM(isstop) as stops FROM ((SELECT start_date as thedate, 1 as isstart, 0 as isstop
          FROM subs s)
         UNION ALL
@@ -141,151 +169,178 @@ SELECT YEAR(thedate) as year, SUM(isstart) as starts, SUM(isstop) as stops FROM 
 FROM subs s) )s
   GROUP BY YEAR(thedate)
   ORDER BY 1
-www.it-ebooks.info
-248 Chapter 6 ■ How Long Will Customers Last?
+
 The results from this query are in Table 6-2. Notice that there are over two million customers that have NULL stop dates; these customers are still active. The first two rows of the table also show that there are 182 customers with questionable start dates — either NULL or in 1958. The data for these cus- tomers is invalid. There should be no customers that predate the invention of wireless phones. Because there are so few, the best thing to do is just filter them out.
+
 Table 6-2: Start and Stop Date by Year
 YEAR
 <NULL>
 1958 1988 1989 1990 1991 1992 1993 1994 1995 1996 1997 1998 1999 2000 2001 2002 2003 2004 2005 2006
 STARTS STOPS
 181 2,390,959 1 0 70 0 213 0 596 0 1,011 0 2,288 0 3,890 0 7,371 0 11,638 0 22,320 0 42,462 0 66,701 0 102,617 0 146,975 0 250,471 0 482,291 0 865,219 0 1,112,707 793,138 1,292,819 874,845 656,194 1,009,093
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 249
+
 A very important feature of the data is that there are no stops prior to 2004. Was this because superior business practices during that time resulted in no stops? Probably not. Was this because the company forgot to record stops in the database? Probably not. The most likely reason is that the data was loaded in 2004, and only active customers were loaded. This data is an example of left truncation, because rows have been filtered out based on the stop date. The next chapter explains how to handle left truncation.
+
 In order to get unbiased estimates of the hazard and survival probabilities, the start and stop dates need to come from the same time period. For now, the solution is to filter the data, removing any starts that happened prior to 2004. In addition, one customer has a negative tenure. Throughout this chapter, the expression“WHERE start_date >= ‘2004-01-01’ AND tenure >= 0”ispartof most of the queries on the subscription table.
+
 Hazard Probability
+
 The hazard probability at tenure t is the ratio between two numbers: the num- ber of customers who succumb to the risk divided by everyone who could have succumbed to the risk. The denominator is called the population at risk at tenure t. The hazard probability is always between 0% and 100%. It is never negative, because the population at risk and the population that succumb to the risk are counts and neither is ever negative. It is not greater than 100%, because the population at risk always includes at least everyone who suc- cumbs to the risk. The calculation is easy; for any given tenure, we simply divide two numbers. Getting the right numbers is the challenge.
+
 As a simple example, consider 100 customers who start on January 1st and are still active on January 31st. If two of these customers stop on February 1st, then the 31-day hazard is 2%. There are 100 customers in the population at risk and two who succumb. The ratio is 2%.
+
 The 31-day hazard remains the same regardless of how many customers actually start on January 1st, so long as all but 100 stop during the month of Jan- uary. The customers who stop in January are not at risk on day 31, because they are no longer active. These stopped-too-early customers do not affect the 31-day hazard.
+
 The following SQL query calculates the hazard at tenure 100 in the sub- scription table:
-  SELECT 100 as TENURE, COUNT(*) as popatrisk,
+
+SELECT 100 as TENURE, COUNT(*) as popatrisk,
          SUM(CASE WHEN tenure = 100 AND stop_type IS NOT NULL
                   THEN 1 ELSE 0 END) as succumbtorisk,
          AVG(CASE WHEN tenure = 100 AND stop_type IS NOT NULL
                 THEN 1.0 ELSE 0 END) as h_100
 WHERE start_date >= ‘2004-01-01’ AND tenure >= 100
 FROM subs
-www.it-ebooks.info
-250 Chapter 6 ■ How Long Will Customers Last?
+
 The population at risk consists of all customers whose tenure is greater than or equal to 100. Of the 2,589,423 customers at risk, 2,199 of them stopped at tenure 100. This gives a 100-day hazard of 0.085%. Notice that this calcula- tion considers only customers since 2004, because of the left truncation issue in the data.
+
 Visualizing Customers: Time versus Tenure
+
 Figure 6-3 shows two pictures of the same group of customers. In each picture, one customer is represented by a line, with a vertical bar indicating where a customer starts and a circle indicating the stop date or current date (for active customers). An open circle means that the customer is still active, suggesting an open account. A filled circle means the customer has stopped, suggesting a closed account.
-Customer 5
-Customer 7
-Customer 6
-Customer 8
-Customer 4
-Customer 3
-Customer 2
-Customer 1
-Calendar Time cutoff date
-Customer 5
-Customer 4
-Customer 3
-Customer 7
-Customer 6
-Customer 2
-Customer 1
-Customer 8
-Tenure
+
 Figure 6-3: This is a picture of customers on the calendar time and tenure timelines.
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 251
+
 The two charts show the same customers from two different perspectives. The top one shows the customers based on when they start and stop in calen- dar time. All customers that are active are active until the cutoff date. The bot- tom shows the same customers on the tenure timeline. The customers have been shifted to the left, so they all start at the same time, tenure zero. On the calendar time, all the active customers were aligned on the right, because they are all active on the cutoff date. On the tenure chart, the active customers are interspersed at all tenures. Some long tenure customers are no longer active, and some are active. Some short tenure customers are active, some are not. The aside, “Visualizing Survival Customers Using Excel” explains how these charts were made using Excel charts.
+
 The calendar time frame and tenure time both show customers and their tenures. Survival analysis focuses on the tenure time frame, because tenure generally has the greater effect on customer retention. After all, the fact that customers can only stop after they have started puts a condition on the tenure, but not on the calendar time. Also, a myriad of events happen on the tenure time frame, such as monthly bills, contract renewals, and the end of the initial promotion.
+
 However, the calendar time frame is also important. The calendar time frame has seasonality and other things that affect all customers at the same time. One of the challenges in survival analysis is incorporating all the available information from these two time frames.
+
 Censoring
+
 Figure 6-3, the visualization of customers in the two time frames, also hints at one of the most important concepts in survival analysis. The tenure of cus- tomers who have stopped is known, because these customers have both a start date and a stop date. However, customers who are still active have an unknown tenure. Of course, their tenure is at least as long as they have been around, but the ultimate value is unknown. Any given active customer could stop tomorrow, or ten years from now.
+
 Tenure is an example of censored data values. In Figure 6-3, censored cus- tomers are represented by empty circles on the right end. In this diagram, cen- soring is synonymous with being active, although this is not always the case. Censoring can have other causes, as we will see in the later in this chapter and in the next chapter.
+
 Censored data values are central to survival analysis. There are three differ- ent types of censoring.
+
 The type just described is, strictly speaking, right censoring. This occurs when the tenure is known to be greater than some value T. Right censoring is the most common type of censoring.
-www.it-ebooks.info
-252 Chapter 6 ■ How Long Will Customers Last?
+
 VISUALIZING SURVIVAL CUSTOMERS USING EXCEL
+
 The charts in Figure 6-3 were created using Excel. Each chart includes two series plotted using a scatter plot. One series is for all customers. This series has the tail, which is really an X-error bar. The other series fills in some of the circles for the active customers.
+
 The following data was used for the empty circles on the top chart:
-NAME ID Y-VALUE
-Ann 8 7.5
-Bob 7 Cora 6 Diane 5 Emma 4 Fred 3 Gus 2 Hal 1
-X START X-END
-LENGTH
-12 14 2 6.5 6 13 7 5.5 6 13 7 4.5 3 3 0 3.5 3 14 11 2.5 5 10 5 1.5 6 7 1 0.5 9 14 5
+
+NAME  ID Y-VALUE X-START X-END LENGTH
+Ann    8     7.5      12    14      2 
+Bob    7     6.5       6    13      7 
+Cora   6     5.5       6    13      7 
+Diane  5     4.5       3     3      0 
+Emma   4     3.5       3    14     11 
+Fred   3     2.5       5    10      5 
+Gus    2     1.5       6     7      1 
+Hal    1     0.5       9    14      5
+
 The Y-Value is the vertical position of the line. The reason for starting at 0.5 and incrementing by 1 is purely aesthetic. These values control the spacing of the lines on the chart and the distance from the customers to the top and bottom of the chart. This can also be done by adjusting the Y-axis, but the fraction 0.5 makes it work without such meddling.
-The points are plotted using the X-END values rather than the X-START values. The symbol is a circle, with a size of 10 pts and a white background
-(if no background color is set, the gridline shows through). To set the symbol, right-click the series, choose “Format Data Series,” and go to the “Patterns” tab. The appropriate selections are on the right.
+
+The points are plotted using the X-END values rather than the X-START values. The symbol is a circle, with a size of 10 pts and a white background (if no background color is set, the gridline shows through). To set the symbol, right-click the series, choose “Format Data Series,” and go to the “Patterns” tab. The appropriate selections are on the right.
+
 The tail is added by going to the “X error bars” tab and clicking the “Minus” option. The length is in the “Length” column. This is set by clicking “Custom” and putting in the appropriate series reference by the “-” sign.
+
 The labels on the lines are data labels. Add these by going to the “Data Labels” tab and clicking next to “Y-Value.” When the values appear, select one value by left-clicking, then right-click and choose “Format Data Labels.” There is not a great deal of flexibility on the placement of data labels, so we have to improvise. On the “Alignment” tab, set the “Label position” to “Left,” so the text goes to the left of the circle. On the “Font” tab, set the “Effects” to “Superscript” so the text is above the line. And, on the “Number” tab, click “Customer” and type in ‘“Customer”0’ (include the double quotes, but not the single quotes). This gives the “Customer X” label. The font is 12-pt Arial. Alternatively, the XY-Labeler introduced in Chapter 4 can be used to label the lines with actual customer names.
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 253
-VISUALIZING SURVIVAL CUSTOMERS USING EXCEL (CONTINUED)
+
 Add the filled circles using another data series, setting the options on “Patterns” to fill in the circle. Copy the data for the three customers who are active (customers 1, 4, and 8) and add the series. The X-error bar and data labels do not need to be set in this case.
+
 The final step is to add the vertical gridlines and to remove two axes (by clicking on each of them and typing <delete>).
+
 Voila! The end result is a chart that depicts customers using Excel charting — certainly an unexpected application for charting.
+
 Left censoring is the opposite of right censoring. This occurs when the tenure is known to be less than some value T. Left censoring is not very common, but it can occur when we have forgotten the start date of a customer but we know it was after some date. Another example occurs when the data is a current snapshot of a group of customers, where there is a stop flag but not a stop date. So, a row in the data specifies that a customer has stopped. It also has the start date and the snapshot date. All we know is the customer stopped before the snapshot date.
+
 Interval censoring is the combination of left censoring and right censoring. It is basically the left censoring case when customers are still active, so they are right censored in addition to being left censored. Interval censoring can also occur when data is being collected at long intervals. For instance, researchers studying prisoners after they are released may check in on the prisoners every year. If a prisoner drops out of the study, the tenure is known only to the nearest year.
+
 In customer databases, the start date is usually known. As an example of a sit- uation where the start date is not known, consider the question of how long patients survive after cancer appears. The only date that is known is the diagno- sis date of the cancer, not when the cancer first appeared. The age of the cancer is right censored because the start date is not known, but is known to be before the diagnosis date. Ironically, one result of relying on the detection date is that better cancer detection can result in better five-year survival after diagnosis, even for the same treatment. The cancer is simply diagnosed earlier so the patient survives longer after the diagnosis.
+
 Left censoring and interval censoring are unusual in customer databases. The typical situation with customer databases is that the start date is known, and active customers are right censored.
+
 Survival and Retention
+
 Hazard probabilities measure the probability that someone succumbs to a risk at a given time. Survival is the probability that someone has not succumbed to the risk up to that time. In other words, survival accumulates information about hazards.
-www.it-ebooks.info
-254 Chapter 6 ■ How Long Will Customers Last? Point Estimate for Survival
+
+Point Estimate for Survival
+
 Survival at time t is the proportion of customers who are active at tenure t. For a given tenure, the survival question is: What proportion of customers survived to at least tenure t? This question is easy to answer in SQL for any given tenure:
-         SELECT 100 as tenure, COUNT(*) as popatrisk,
-                SUM(CASE WHEN tenure < 100 AND stop_type IS NOT NULL
-                         THEN 1 ELSE 0 END) as succumbtorisk,
-                AVG(CASE WHEN tenure >= 100 OR stop_type IS NULL
-                         THEN 1.0 ELSE 0 END) as s_100
-         FROM subs
-         WHERE start_date >= ‘2004-01-01’ AND tenure >= 0 AND
-               start_date <= DATEADD(dd, -100, ‘2006-12-28’)
+
+SELECT 100 as tenure, COUNT(*) as popatrisk,
+       SUM(CASE WHEN tenure < 100 AND stop_type IS NOT NULL
+                THEN 1 ELSE 0 END) as succumbtorisk,
+       AVG(CASE WHEN tenure >= 100 OR stop_type IS NULL
+                THEN 1.0 ELSE 0 END) as s_100
+FROM  subs
+WHERE start_date >= ‘2004-01-01’ AND tenure >= 0 AND
+      start_date <= DATEADD(dd, -100, ‘2006-12-28’)
+
 This calculation is similar to the point estimate for the hazard. The population at risk is everyone who started more than 100 days before the cutoff date, because these are the only customers in the data who could have survived to 100 days. The ones who survived are those who are either still active or whose tenure is greater than 100 days. The survival is the ratio of those who survived to the population at risk.
+
 Calculating Survival for All Tenures
+
 The customers who survive to tenure t are those customers that have not yet succumbed to the risk of stopping. Mathematically, the survival at tenure t is the product of one minus the hazards for all tenures less than t. One minus the hazard is the probability that someone did not succumb to the risk at that point in time. It could also be called the incremental survival, because it corresponds to the survival from tenure t to tenure t+1. Overall survival at tenure t, then, is the product of the incremental survivals up to t.
+
 This type of cumulative product is, alas, not readily supported in standard SQL. Fortunately, the combination of SQL and Excel makes the calculation easy. The first step is to calculate the hazards for all tenures, then to calculate the incremental survival, and then the cumulative product.
 The calculation of the hazard probability uses two items of information:
-■■ Population that succumbed to the risk: the number of customers who
-stopped at exactly tenure t.
-■■ Population at risk: the number of customers whose tenure is greater
-than or equal to t.
+
+- Population that succumbed to the risk: the number of customers who stopped at exactly tenure t
+
+- Population at risk: the number of customers whose tenure is greater than or equal to t
+
 The population at risk at tenure t is an example of a cumulative sum, because it is the sum of all customers whose tenure is greater than or equal to t. Excel is the tool of choice for the calculation.
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 255
+
 The calculation requires two values for all tenures: the number of cus- tomers whose tenure is exactly t and the number of customers that stopped at exactly tenure t:
-  SELECT tenure, COUNT(*) as popt,
+
+SELECT   tenure, COUNT(*) as popt,
          SUM(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as stopt
-  FROM subs
-  WHERE start_date >= ‘2004-01-01’ AND tenure >= 0
-  GROUP BY tenure
-  ORDER BY 1
+FROM     subs
+WHERE    start_date >= ‘2004-01-01’ AND tenure >= 0
+GROUP BY tenure
+ORDER BY 1
+
 When the results are copied into Excel, one column has TENURE, one col- umn POPT, and the third STOPT. Assume that the results are copied, with the data starting at cell C29. What is the population at risk at a given tenure? The population at risk is the sum of the POPT values (in column D) for that tenure and higher.
+
 To do the calculation without typing in a separate formula for all 1,093 rows, use a formula that changes when it is copied down the column. Such a formula for cell F29 is “=SUM($D29:$D$1121)”. This formula has the range “$D29:$D$1121”, so the sum starts at D29 and continues through D1121. The pre- fix “$” holds that portion of the cell reference constant. Copying the formula down (by highlighting the region and typing <control>-D) modifies the first cell reference in the range. Cell F30 gets the formula “=SUM($D30:$D1121)”, and so on to “=SUM($D1121:$D1121)”.
+
 The hazard is then the ratio between the stops and the population at risk, which for cell G29 is “=E29/F29”. Figure 6-4 shows an Excel spreadsheet with these formulas.
+
 Figure 6-4: These formulas in an Excel spreadsheet calculate hazards and survival.
-www.it-ebooks.info
-256 Chapter 6 ■ How Long Will Customers Last?
+
 The next step is to calculate the survival as the cumulative product of one minus the hazards. The following formula in cell H29 is the survival formula: “=IF($C29=0, 1, H28*(1-G28))”.The“if”partoftheformulatakescareofthe case when the tenure is zero and the survival is 100%. Each subsequent sur- vival value is the previous survival value multiplied by one minus the previ- ous hazard. This type of formula, where the formulas in a column of cells refer to the values calculated in previous rows in the same column is called a recur- sive formula. When this formula is copied down the column, the formula calcu- lates the survival value for all tenures. The resulting survival curve is shown in Figure 6-5.
-100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
-0 30
-60 90
-120 150 180 210 240 270 300 330 360 390 420 450
-Tenure (Days)
+
 Figure 6-5: This is the survival curve for the subscription data.
+
 In this case, all tenure values appear in the table (there are no gaps in the tenure column). However, this is not necessarily true. When this happens, it means that no stopped or active customers have exactly that particular tenure. The hazard is zero for the missing tenure, and the survival is the same as the previous survival. This does not cause any problems with the calculation. It does, however, make scatter plots preferable for survival curves rather than line charts. When values are skipped, the scatter plot does a better job labeling the X-axis.
+
 Calculating Survival in SQL
+
 Having the hazard and survival probabilities in SQL tables, rather than in Excel, is sometimes convenient. One approach is to do the calculations in Excel, save the results out as text files, and re-import them into SQL. However, it is possible to do the calculations directly in SQL in a multi-step approach:
-1. Createthesurvivaltablewiththeappropriatecolumns. 2. LoadthesurvivaltablewithSTOPTandPOPT.
-3. CalculatethecumulativepopulationandENDTENURE.
-www.it-ebooks.info
-Survival
-Chapter 6 ■ How Long Will Customers Last? 257
-4. CalculatethehazardandNUMDAYS.
-5. CalculateSURVIVAL.
-6. FixENDTENUREandNUMDAYSinlastrow.
+
+1. Create the survival table with the appropriate columns 
+
+2. Load the survival table with STOPT and POPT
+
+3. Calculate the cumulative population and ENDTENURE
+
+4. Calculate the hazard and NUMDAYS
+
+5. Calculate SURVIVAL
+
+6. Fix ENDTENURE and NUMDAYS in last row
+
 This processing requires using SQL data manipulation language (DML), which includes INSERT and UPDATE. The syntax for these expressions varies more between databases than the syntax for the SELECT. Also, when doing the processing, some steps are easier and much more efficient using database extensions, particularly those that allow cumulative sums. However, in this section, the calculations are shown using self-joins, an alternative approach supported by standard SQL.
+
 Step 1. Create the Survival Table
+
 The following SQL creates the survival table:
-  CREATE TABLE survival (
+
+CREATE TABLE survival (
        tenure       INT,
        popt         INT,
        stopt        INT,
@@ -295,147 +350,169 @@ The following SQL creates the survival table:
        endtenure    INT,
        numdays      INT
 )
+
 Most of these columns are similar to the Excel version. The purpose of ENDTENURE and NUMDAYS is to take care of the situation where tenures are skipped because there are no active or stopped customers with exactly that tenure. The survival for a skipped tenure value is the same as the survival for the previous tenure. The idea is that we can look up survival values using the expres- sion:“WHERE tenure BETWEEN survival.tenure AND survival.endtenure”and this works for skipped tenures as well as other tenures.
+
 Step 2: Load POPT and STOPT
+
 Loading the table with the base information uses the insert statement:
-  INSERT INTO survival
-       SELECT tenure,
-              COUNT(*) as popt,
-              SUM(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END
-                 ) as stopt,
-              NULL as cumpopt, NULL as hazard, NULL as survival,
-              NULL as endtenure, NULL as numdays
-www.it-ebooks.info
-(continued)
-258 Chapter 6 ■ How Long Will Customers Last?
-       FROM subs
-       WHERE start_date >= ‘2004-01-01’ AND
-             tenure >= 0
-       GROUP BY tenure
+
+INSERT INTO survival
+SELECT      tenure,
+            COUNT(*) as popt,
+            SUM(CASE WHEN stop_type IS NOT NULL THEN 1 ELSE 0 END) as stopt,
+            NULL as cumpopt, NULL as hazard, NULL as survival,
+            NULL as endtenure, NULL as numdays
+FROM        subs
+WHERE       start_date >= ‘2004-01-01’ AND tenure >= 0
+GROUP BY    tenure
+
 This is the same basic query used that prepares the data for the Excel calcula- tion. Here, an INSERT statement is wrapped around the query to add rows into the survival table.
+
 Step 3: Calculate Cumulative Population
+
 The next step is to calculate the cumulative population and ENDTENURE. The self-join query that calculates these columns is:
-  SELECT s1.tenure, SUM(s2.popt) as cumpopt,
-         MIN(CASE WHEN s2.tenure > s1.tenure THEN s2.TENURE-1 END
-            ) as endtenure
-  FROM survival s1 LEFT OUTER JOIN
-survival s2
-       ON s1.tenure <= s2.tenure
-  GROUP BY s1.tenure
+
+SELECT   s1.tenure, SUM(s2.popt) as cumpopt,
+         MIN(CASE WHEN s2.tenure > s1.tenure THEN s2.TENURE-1 END) as endtenure
+FROM     survival s1 LEFT OUTER JOIN survival s2 ON s1.tenure <= s2.tenure
+GROUP BY s1.tenure
+
 The challenge is expressing this as an update statement. This is a challenge because this query is updating the same table that’s generating the values. One solution that works for all databases is to place the results of the query in a tem- porary table and do the update from there. Another is to use syntax specific to a particular database. The following is the statement in Microsoft SQL:
-  UPDATE survival
+
+UPDATE survival
        SET survival.cumpopt = ssum.cumpopt,
            survival.endtenure = ssum.endtenure
-       FROM (SELECT s1.tenure, SUM(s2.popt) as cumpopt,
-             MIN(CASE WHEN s2.tenure > s1.tenure THEN s2.TENURE-1 END
-                ) as endtenure
-             FROM survival s1 LEFT OUTER JOIN
-                  survival s2
-             ON s1.tenure <= s2.tenure
-             GROUP BY s1.tenure) ssum
-       WHERE survival.tenure = ssum.tenure
+FROM (SELECT s1.tenure, SUM(s2.popt) as cumpopt,
+      MIN(CASE WHEN s2.tenure > s1.tenure THEN s2.TENURE-1 END
+         ) as endtenure
+      FROM survival s1 LEFT OUTER JOIN survival s2 ON s1.tenure <= s2.tenure
+      GROUP BY s1.tenure) ssum
+WHERE survival.tenure = ssum.tenure
+
 Notice that this query uses a subquery with a self-join within the update state- ment. Some databases have extensions that make it possible to calculate the cumulative sum more directly. For instance, Oracle’s implementation of win- dow functions (which they call analytic functions) support the syntax SUM(popt) OVER (ORDER BY tenure ROWS UNBOUNDED PRECEDING) to do the calculation without a self-join.
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 259
+
 Step 4: Calculate the Hazard
+
 The next step is to calculate the hazard probability and NUMDAYS:
-  UPDATE survival
+
+UPDATE survival
        SET survival.hazard = stopt*1.0 / cumpopt,
            survival.numdays = endtenure – tenure + 1
+
 Step 5: Calculate the Survival
+
 The survival calculation is another accumulation, but this time a product instead of a sum. What we are trying to do is to add survival as a column using logic such as the following:
-  SELECT s1.tenure, COALESCE(PRODUCT(1-s2.hazard), 1) as survival
-  FROM survival s1 LEFT OUTER JOIN
-       survival s2
-       ON s1.tenure > s2.tenure
-       GROUP BY s1.tenure
+
+SELECT   s1.tenure, COALESCE(PRODUCT(1-s2.hazard), 1) as survival
+FROM     survival s1 LEFT OUTER JOIN survival s2 ON s1.tenure > s2.tenure
+GROUP BY s1.tenure
+
 The COALESCE() statement takes care of the case when the tenure is zero. In this case, there are no hazards, so the result would be NULL. COALESCE() returns the first non-NULL argument.
+
 Unfortunately, SQL does not support PRODUCT() as an aggregation func- tion. So, we have to go back to high school algebra, and remember how to use logarithms: raising e to the power of the sum of the logarithms of numbers is the same as multiplying the numbers together. So, PRODUCT() is calculated as:
-  SELECT EXP(SUM(LOG(1-s2.hazard))
+
+SELECT EXP(SUM(LOG(1-s2.hazard))
+
 This expression sums the logs of the incremental survivals and then undoes the log, a roundabout way to do the multiplication.
+
 One way to express the update in Microsoft SQL is using a correlated subquery:
-  UPDATE survival
+
+UPDATE survival
        SET survival =
            (CASE WHEN tenure = 0 THEN 1
                  ELSE (SELECT EXP(SUM(LOG(1-hazard)))
- FROM survival s2
- WHERE s2.tenure < survival.tenure
-)
-END)
-www.it-ebooks.info
-260 Chapter 6 ■ How Long Will Customers Last?
+                       FROM survival s2
+                       WHERE s2.tenure < survival.tenure
+                      )
+            END)
+
 This differs from the method used in Excel. In this query, survival is calculated as the products of all the previous incremental survivals, rather than using a recursive calculation. The reason is that rows can be updated in any order. There is no guarantee that tenure zero be updated before tenure one. If tenure one is updated first, it would get the value of NULL using a recursive approach because survival at tenure zero is NULL before it is updated. Doing the full product calculates the correct value.
+
 Step 6: Fix ENDTENURE and NUMDAYS in Last Row
+
 The last row of the table has a NULL value for ENDTENURE. The following code fixes this:
-  UPDATE survival
+
+UPDATE survival
        SET endtenure = tenure+100000-1, numdays = 100000
        WHERE endtenure IS NULL
+
 Extending the final survival for a long time makes it possible to look up sur- vival values in the table, even for tenures that go beyond the range of data. Extrapolating beyond the range of data is not recommended, but it is some- times necessary.
+
 Generalizing the SQL
+
 Doing the survival calculations in SQL rather than Excel has an advantage, because Excel’s limit on the number of rows limits the number of tenures. This is particularly important when including grouping parameters, such as mar- ket and rate plan and channel, in the query. The combination of all these exceeds the capacity of Excel.
+
 Modifying the preceding queries to support such groups is not difficult. First, the groups need to be included in the survival table, and Step 2 needs to be modified to have the GROUP BY clause. Then, the queries in Steps 3 and 5 need to be modified so the tenure comparison only occurs within the same group. For a single group, the syntax would look like:
-             WHERE survival.tenure <= s2.tenure AND
-                   survival.group1 = s2.group1)
+
+WHERE survival.tenure <= s2.tenure AND
+      survival.group1 = s2.group1)
+
 This structure readily generalizes to any number of columns used to define the groups. However, as the number of groups grows, the size of each group decreases, meaning that there is less data for the survival calculation.
+
 A Simple Customer Retention Calculation
-Survival is one method of understanding how long customers stay around. Customer retention is an alternative approach. The purpose in presenting it
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 261
-here is to better understand survival by comparing it to another sensible mea- sure. A typical customer retention question is: Of customers who started xxx days ago, how many are still active? This question can be answered directly in SQL:
-  SELECT DATEDIFF(day, start_date, ‘2006-12-28’) as days_ago,
+
+Survival is one method of understanding how long customers stay around. Customer retention is an alternative approach. The purpose in presenting it here is to better understand survival by comparing it to another sensible mea- sure. A typical customer retention question is: Of customers who started xxx days ago, how many are still active? This question can be answered directly in SQL:
+
+SELECT   DATEDIFF(day, start_date, ‘2006-12-28’) as days_ago,
          COUNT(*) as numstarts,
          SUM(CASE WHEN stop_type IS NULL THEN 1 ELSE 0 END
             ) as numactives,
          AVG(CASE WHEN stop_type IS NULL THEN 1.0 ELSE 0 END
             ) retention
-  FROM subs
-  WHERE start_date >= ‘2004-01-01’ AND tenure >= 0
-  GROUP BY DATEDIFF(day, start_date, ‘2006-12-28’)
-  ORDER BY 1
+FROM     subs
+WHERE    start_date >= ‘2004-01-01’ AND tenure >= 0
+GROUP BY DATEDIFF(day, start_date, ‘2006-12-28’)
+ORDER BY 1
+
 This query counts the customers who started on a certain day, calculating the proportion that are still active.
+
 The result has three columns of data. The first column is the number of days ago that customers started, relative to the cutoff date of the data. Other time units, such as weeks or months, might be more appropriate. The second col- umn is the number of starts that occurred on that day. And the third column specifies how many of those customers are currently active. Figure 6-6 shows a plot of the results as a retention curve, which is the proportion of customers who are active as of the cutoff date.
-100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
-0 30 60 90
-120 150 180 210 240 270 300 330 360 390 420 450
-Tenure (Days)
+
 Figure 6-6: This is an example of a retention curve for the subscription data.
-Like the survival curve, the retention curve always starts at 100%, because customers who just started are still active. Second, it generally declines. How- ever, this decline can be jagged, with the curve going up in some places rather than down. For instance, of customers who started 90 days ago, 80.1% are still active on the cutoff date. Of customers who started 324 days ago, 80.4% are still active. Looked at in another way, this says that 19.9% of customers
-www.it-ebooks.info
-Retention
-262 Chapter 6 ■ How Long Will Customers Last?
-stopped in the first 90 days. But, only 19.6% of customers stopped in the first 324 days. Intuitively, this does not make sense. It is almost as if customers were reincarnating between the two days. In practice it probably means that partic- ularly good customers were acquired 324 days ago and particularly bad cus- tomers were acquired 90 days ago. Jaggedness in retention is counterintuitive, because fewer older customers ought to be around than newer customers.
+
+Like the survival curve, the retention curve always starts at 100%, because customers who just started are still active. Second, it generally declines. How- ever, this decline can be jagged, with the curve going up in some places rather than down. For instance, of customers who started 90 days ago, 80.1% are still active on the cutoff date. Of customers who started 324 days ago, 80.4% are still active. Looked at in another way, this says that 19.9% of customers stopped in the first 90 days. But, only 19.6% of customers stopped in the first 324 days. Intuitively, this does not make sense. It is almost as if customers were reincarnating between the two days. In practice it probably means that partic- ularly good customers were acquired 324 days ago and particularly bad cus- tomers were acquired 90 days ago. Jaggedness in retention is counterintuitive, because fewer older customers ought to be around than newer customers.
+
 Comparison between Retention and Survival
+
 Figure 6-7 shows retention and survival on the same chart. This chart com- bines the curves in Figures 6-5 and 6-6.
-100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
-0 30
-60 90
-120 150 180 210 240 270 300 330 360 390 420 450
-Tenure (Days)
+
 Figure 6-7: Retention and survival plots are shown for the same dataset.
+
 Both curves start at 100% and decline. However, the survival curve has no jaggedness because it is always flat or declining. Mathematically, this property is called monotonically non-increasing, and it is always true for survival curves. Sur- vival curves are smooth; they do not exhibit the jaggedness of retention curves.
+
 One way of eliminating the jaggedness on retention curves is to smooth the curve using moving averages. The problem is that this smoothes away useful information. Also, the points no longer have a clear meaning, because they are averages of several different times, each of which has a different group of starts. A much better solution is to calculate the corresponding survival curve.
+
 Simple Example of Hazard and Survival
-This section explores the simplest example of survival, the constant hazard, in order to better understand the concepts underlying survival. Although such simplicity does not occur with customers, it does readily apply to a very differ- ent domain, radioactivity. A radioactive isotope is one that decays at a constant
-www.it-ebooks.info
-Survival/Retention
-Chapter 6 ■ How Long Will Customers Last? 263
-rate; by emitting subatomic particles, it transmutes into other elements. The rate of decay is usually described in terms of the half-life. For instance, the most com- mon isotope of uranium, U-238, has a half-life of about 4.5 billion years, mean- ing that half the U-238 in a sample decays in this time. On the other hand, another isotope called U-239 has a half-life of about 23 minutes. The longer the half-life, the slower the rate of decay, and the more stable the element.
+
+This section explores the simplest example of survival, the constant hazard, in order to better understand the concepts underlying survival. Although such simplicity does not occur with customers, it does readily apply to a very differ- ent domain, radioactivity. A radioactive isotope is one that decays at a constant rate; by emitting subatomic particles, it transmutes into other elements. The rate of decay is usually described in terms of the half-life. For instance, the most com- mon isotope of uranium, U-238, has a half-life of about 4.5 billion years, mean- ing that half the U-238 in a sample decays in this time. On the other hand, another isotope called U-239 has a half-life of about 23 minutes. The longer the half-life, the slower the rate of decay, and the more stable the element.
+
 There are several reasons for using radioactivity as an example. Because the decay rates are constant (at least according to modern theories of the physics), radioactivity provides simple examples outside the realm of human behavior. Also, constant hazards are a good baseline for understanding more complex hazards. We can always ask what constant survival rate would have resulted in the survival observed at a given tenure.
+
 Constant hazards are also a good tool for understanding a phenomenon called unobserved heterogeneity. This phenomenon is quite important in the world of survival analysis. However, as its name suggests, it is not observed directly, making it a bit challenging to recognize and understand.
+
 Constant Hazard
+
 A constant hazard is exactly what its name suggests, a constant. Excel can handle all the calculations for a constant hazard. Assuming a constant haz- ard, the half-life and hazard probability are interchangeable. If cell A1 con- tains the half-life, then the following formula in cell B1 translates this into a hazard probability:
+
 =1-0.5^(1/A1)
-Conversely, if B2 contains the hazard probability, then the following formula in
-cell C1 calculates the half-life: -1/LOG(1-B1, 2)
+
+Conversely, if B2 contains the hazard probability, then the following formula in cell C1 calculates the half-life: 
+
+-1/LOG(1-B1, 2)
+
 Consider two radioactive isotopes of radium, RA-223 and RA-224. The first has a half-life of 11.43 days and the second a half-life of 3.63 days, which cor- respond respectively to daily hazard (decay) probabilities of 5.9% and 17.4%. This means that after one day, about 95.1% of RA-223 remains, and about 82.6% of RA-224 remains. Figure 6-8 shows the survival curves for these two elements.
+
 The shape of the survival curve follows an exponential curve, which is always the case when the hazard is constant. These survival curves show that within a few weeks, almost all the RA-224 has disappeared. On the other hand, some of the RA-223 remains, because it decays more slowly.
-www.it-ebooks.info
-264 Chapter 6 ■ How Long Will Customers Last?
-100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
+
 Figure 6-8: Survival curves for RA-223 and RA-224 show the proportion of the elements remaining after a given number of days.
+
 What Happens to a Mixture
+
 Assume that a sample of radium contains 100 grams of RA-223 and 100 grams of RA-224. How does this mixture behave? Table 6-3 shows the amount of each iso- tope that remains after a given amount of time. (The actual mass of the sample remains pretty close to 200 grams, because the radium just changes into other elements, primarily radon, and very little mass is lost in the process.)
-Table6-3: AmountofRadiumLeft,Assuming100GramsofRA-223andRA-224atBeginning
+
+Table6-3: Amount of Radium Left, Assuming 100 Grams of RA-223 and RA-224 at Beginning
+
 RA-223
 RA-224
 0 7 14 21 28 35 42
@@ -456,8 +533,7 @@ TOTAL (GRAMS)
 91.7 83.3 75.9 69.3
 RA-223 %
 50.0% 53.3% 56.5% 59.7% 62.7% 65.7% 68.6% 71.3% 73.9% 76.4% 78.6%
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 265
+
 The amount of radium remaining is the sum of the amount of RA-223 and RA-224. The proportion of the original radium remaining is this sum divided by 200 grams, a formula remarkably similar to taking the average of the sur- vival curves. Actually, it is the weighted average times the original sample size in grams. Because the original sample started out with the same amount of the two isotopes, the weights are equal.
 Given this proportion, what are the hazard probabilities that correspond to the overall radium mixture? One guess would be the average of the two haz- ard probabilities, or a constant hazard of about 11.6%. Although inspired, this guess is wrong. A mixture of two things with different constant hazards does not have a constant hazard.
 The hazard can be calculated from the survival values. The hazard at a given time t is the proportion of the population at risk that stops before time t+1 (or decays in the case of radioactivity). The hazard is one minus the ratio of the survival at t+1 divided by the survival at t.
@@ -470,8 +546,7 @@ RA-224
 Mixture
 RA-223
 0 7 14 21 28 35 42
-www.it-ebooks.info
-266 Chapter 6 ■ How Long Will Customers Last?
+
 The same phenomenon applies to customers. If there are two ways of acquir- ing customers, one that attracts lots of short-term customers (“bad”) and one that attracts some long-term customers (“good”), which is better in the long term? Say 1,000 “bad” customers and 100 “good” customers start at the same time. After a year, 20 “bad” customers might remain compared to 60 “good” customers. Even though “good” customers were acquired at a rate one-tenth that of the bad customers, after a year, three times as many remain.
 Constant Hazard Corresponding to Survival
 For each point on a survival curve, there is a constant hazard that would pro- duce that survival value at that tenure. To calculate the corresponding con- stant hazard, assume that cell A1 contains the number of days and cell B1 contains the survival proportion at that day. The following formula in cell C1 calculates the corresponding daily hazard probability:
@@ -486,9 +561,9 @@ Constant Hazard
 120 150 180 210 240 270 300 330 360 390 420 450
 Tenure (days)
 Figure 6-10: Comparison of the effective constant hazard to the actual hazard for the subscription data.
-www.it-ebooks.info
+
 Hazard Probability
-Chapter 6 ■ How Long Will Customers Last? 267
+
 A survival curve (or retention plot) paints a pretty picture. Survival is not only for creating pretty pictures. It can also be used to measure different groups of customers, as discussed in the next section.
 Comparing Different Groups of Customers
 Survival analysis facilitates comparing different groups of customers. This sec- tion walks through an example on the subscriber data using things that are known about customers when they start. These things are called time-zero covariates, because they are known at the start time (tenure 0). The next chap- ter investigates approaches for working with time-dependent covariates, things that happen during customers’ lifetimes.
@@ -511,8 +586,7 @@ ACTIVES
 685,176 519,709 390,414
 PROPORTION ACTIVE
 45.7% 52.2% 68.9%
-www.it-ebooks.info
-268 Chapter 6 ■ How Long Will Customers Last?
+
 Combined, these two pieces of evidence are quite convincing that Smallville is inhabited by better customers. However, care must be taken when interpret- ing such evidence. For instance, imagine that there is another town, Shangri- La, where customers start and they never stop. We would expect Shangri-La to have a very high average tenure. However, what if our company only man- aged to break into the market three months ago? In that case, everyone would have started in the last three months and the average tenure would probably be about 45 days, much less than the other markets. Stratifying survival curves is a better way to compare markets.
 Stratifying by Market
 To calculate survival for one market, a WHERE clause can be used:
@@ -541,8 +615,7 @@ tion about each market. The desired results would have the tenure, then the popu
   GROUP BY tenure
   ORDER BY 1
 WARNING Don’t use the “LIKE” function when a direct comparison suffices, because“LIKE”istypicallymuchlessefficient.Forinstance,use“market = ‘Gotham’”ratherthan“market LIKE ‘G%‘”.
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 269
+
 An alternative way to write the SQL is using indicator variables. That is, to create a separate variable for each market that takes on the values of 0 or 1. The perfor- mance of the two queries should be quite similar. The version with the indicator variables has the advantage that each comparison is defined only once, which reduces the possibility of error (such as misspelling the market name):
   SELECT tenure,
          SUM(isg) as popg, SUM(ism) as popm, SUM(iss) as pops,
@@ -558,29 +631,35 @@ An alternative way to write the SQL is using indicator variables. That is, to cr
   WHERE start_date >= ‘2004-01-01’ AND tenure >= 0
   GROUP BY tenure
   ORDER BY 1
+
 Figure 6-11 shows the first few rows of the resulting table (the columns for Metropolis and Smallville are hidden). It also shows the formulas used for the calculation. Notice that the columns are in groups, with the population columns coming first and then the stop columns. This is on purpose, so the hazard and survival formulas can be entered once and then copied to adjacent cells — to the right as well as downward. Copying formulas is surely easier than typing them over and over.
+
 These formulas have some minor differences from the earlier survival calculations:
-■■ The formula for cumulative population is POPT plus the cumulative population at the next tenure.
-■■ The hazard calculation takes into account the possibility that the popu- lation is 0. In this case, it returns the value #NA, because #NA works best in charts.
-■■ The survival calculation refers to the tenure column with a column- fixed reference $C1117, instead of C1117. This makes it easier to copy the formula across multiple columns.
-■■ The column headers include the population in parentheses.
+
+- The formula for cumulative population is POPT plus the cumulative population at the next tenure
+
+- The hazard calculation takes into account the possibility that the popu- lation is 0. In this case, it returns the value #NA, because #NA works best in charts
+
+- The survival calculation refers to the tenure column with a column- fixed reference $C1117, instead of C1117. This makes it easier to copy the formula across multiple columns
+
+- The column headers include the population in parentheses
+
 The resulting survival curves are in Figure 6-12. Notice that the legend has the population in parentheses after the market name. The population was appended onto the market name for just this reason.
 These curves confirm the earlier observation that survival in Gotham seems worse than survival in the other two markets. All three markets show the drop
-www.it-ebooks.info
-270 Chapter 6 ■ How Long Will Customers Last?
+
 in survival at one year, which corresponds to the contract expiration date. At 450 days — safely after the contract expiration — only 50.1% of Gotham’s cus- tomers remain, compared to 59.2% for Metropolis and 74.8% for Smallville.
 Figure 6-11: These screen shots show the data and Excel formulas for calculating survival by market (only Gotham is shown; the columns for Metropolis and Smallville are hidden).
 TIP InExcel,itispossibletolabelasinglepointonaseries.Todoso,click the series to select it. Then click again to select the point. Then right click and choose “Format Data Point.” Under the “Data Labels” tab, choose the Y Value. You can then double-click the text to format it. A good idea is to make the text the same color as the series itself.
 Survival Ratio
 The ratio between survival curves is a good way of comparing different groups, because it captures long-term trends in survival. This ratio is simply dividing the survival for one market by the survival for another. Let’s use the best survival as the standard, which is Smallville. Figure 6-13 shows the ratio of survival for the three markets to customers in Smallville. Smallville’s sur- vival ratio is uninteresting, because it is always one.
-www.it-ebooks.info
+
 100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
 Smallville (566,751)
 Metropolis (995,572)
 Gotham (1,499,396)
 74.8% 59.2%
 50.1%
-Chapter 6 ■ How Long Will Customers Last? 271
+
 Survival Ratio to Smalleville Survival
 0 30 60 90 120150180210240270300330360390420450
 Tenure (Days)
@@ -596,8 +675,7 @@ Tenure (Days)
 Figure 6-13: The survival ratio is the ratio of survival in each market to Smallville’s survival.
 The survival ratio chart shows that Gotham’s survival is uniformly worse than Smallville’s at all points in time. Survival in Metropolis is as bad as Gotham in the first year, but then it improves. Although the chart does not specify what is happening, the timing is suggestive. For instance, some cus- tomers start with one-year contracts, some with two-year contracts, and some with no contracts at all. Further, customers on one-year contracts are more likely to cancel at one year than during the first year. So, perhaps the difference between Metropolis and Gotham is due to the proportion of customers on one- year contracts. Whatever the cause, the survival ratio changes for different tenures. There is not a uniform proportionality between the curves.
 Sometimes the ratio between survival curves can provide somewhat mis- leading results. For instance, if one market has very poor coverage in outlying areas, then customers from these areas would sign up for the service and
-www.it-ebooks.info
-272 Chapter 6 ■ How Long Will Customers Last?
+
 quickly stop — their cell phone is not working. Say, 5% of the customers stop in the first couple of months due to bad coverage. This 5% lingers in the survival curves. So, even if the two markets are identical — except for the outlying cov- erage issue that only affects recent starts — the ratio will always show that the first market is worse because the ratio accumulates the differences in survival.
 Conditional Survival
 The survival ratio suggests another question about survival. Two markets have essentially the same survival characteristics for the first year, but then their survival diverges after the contract expiration period. What about cus- tomers who make it beyond the contract expiration? Do customers start to look more similar or more different?
@@ -613,8 +691,7 @@ Excel’s VLOOKUP() function makes it easy to find the survival at time 390. The
 Figure 6-14 shows the survival and the conditional survival at time 390 for the three markets. The same pattern holds after thirteen months, with Small- ville being the best and Gotham the worst for survival after thirteen months.
 Comparing Survival over Time
 There are three years of complete starts in the subscription data. The analyses so far have mixed all the data together. One interesting question is whether the hazards have changed over time. This section presents three ways to approach
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 273
+
 this problem. The first looks at whether a particular hazard has changed over time. The second looks at customers by the year in which they started, answer- ing the question: What is the survival of customers who started in a given year? The third takes snapshots of the hazards at the end of each year, answering the question: What did the hazards look like at the end of each year? All these ways of approaching this question use the same data. They simply require cleverness to calculate the hazards.
 100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
 Smallville (566,751)
@@ -628,8 +705,7 @@ The next chapter presents yet another way to look at this problem. It answers th
 How Has a Particular Hazard Changed over Time?
 The calculation of the hazard is really the average of a particular hazard prob- ability during a period of time. So far, this average has been over the three years of data starting in 2004. Trends in hazards, particularly in hazards rele- vant to the business, can provide important information.
 Figure 6-15 shows the trend in the 365-day hazard over the course of 2005 and 2006 (there are not 365 days worth of data for 2004 since we are using only starts during these three years). This hazard is interesting because it is associ- ated with anniversary churn; that is, customers leaving on the one-year anniversary after they start. As the chart shows, anniversary churn increased in 2005, hitting a peak at the end of the year, and then stabilized through 2006. The 28-day moving average removes much of the variability, helping to see the long-term pattern.
-www.it-ebooks.info
-274 Chapter 6 ■ How Long Will Customers Last?
+
 5.0% 4.5% 4.0% 3.5% 3.0% 2.5% 2.0% 1.5% 1.0% 0.5% 0.0%
 Figure 6-15: The hazard at 365 days changes throughout 2005 and 2006.
 Calculating the hazard requires thinking carefully about the population at risk at each point in time. At any given tenure, the population at risk for the 365-day hazard probability is all customers whose tenure is exactly 365. Cal- culating this population for any given date, such as Feb 14, 2006, is easy:
@@ -652,8 +728,7 @@ stop_type IS NOT NULL THEN 1 ELSE 0 END) as stop365, AVG(CASE WHEN stop_date = d
 In this query, most of the work is being done in the GROUP BY and SELECT clauses. The date of interest is 365 days after the start. All customers who are
 Jan 2005 Feb 2005 Mar 2005 Apr 2005 May 2005 Jun 2005 Jul 2005 Aug 2005 Sep 2005 Oct 2005 Nov 2005 Dec 2005 Jan 2006 Feb 2006 Mar 2006 Apr 2006 May 2006 Jun 2006 Jul 2006 Aug 2006 Sep 2006 Oct 2006 Nov 2006 Dec 2006
 Hazard at Tenure 365
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 275
+
 active 365 days after they start are in the population at risk on exactly that date. Of these, some customers stop, as captured by the stop date being 365 days after the start date. Because no accumulations are necessary, the hazard can be readily calculated.
 It is important to note that one particular hazard — even one as large as anniversary churn — has a very small impact on overall survival. However, trends in particular hazards can be useful for tracking particular aspects of the business. The next two subsections discuss changes in overall survival from one year to the next.
 What Is Customer Survival by Year of Start?
@@ -678,8 +753,7 @@ Filtering customers by their start date is an acceptable way of calculating haz-
 Figure 6-16 shows the resulting survival curves for starts in each year. One thing apparent in the chart is that the length of the curves varies by year. Because the cutoff date is in 2006, the starts in 2006 only have survival for about one year. The starts in 2005 have survival values for two years, and 2004 starts have three years of survival.
 What Did Survival Look Like in the Past?
 This question is more challenging than the previous one, because shifting the cutoff date to an earlier date potentially changes both the tenure and stop flag for customers. Figure 6-17 illustrates what happens. Customers who are now stopped, such as customers 3, 6, and 7, are active as of the earlier cutoff date.
-www.it-ebooks.info
-276 Chapter 6 ■ How Long Will Customers Last?
+
 Similarly, the tenure for most customers has also changed. Technically, the process of shifting the cutoff date is forcing the right censorship date to be at an earlier date than the cutoff date for the data. This discussion uses “cutoff date” to mean the latest date in the database, and “right censorship date” to be the earlier date. Up to now, these two dates have been the same.
 100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
 Figure 6-16: The survival curves here are based on starts in each of the years.
@@ -698,20 +772,29 @@ Customer 1
 cutoff date
 Figure 6-17: Shifting the right censorship date into the past changes the tenure, the stop flag, and the group of customers included in the survival calculation.
 Consider a customer who started on 1 Jan 2004 and stopped on 1 Jan 2006. In the database, this customer has a tenure of two years and the stop flag is 1, indicating that the customer is no longer active. What does the customer look
-www.it-ebooks.info
+
 YR2004 (1,112,630)
 YR2005 (1,292,819)
 YR0026 (656,193)
-Chapter 6 ■ How Long Will Customers Last? 277
+
 like at the end of 2004, though? The customer is active on that date, so the cur- rent stop flag is incorrect. And, the customer’s tenure is one year, rather than two years. So, the tenure is also incorrect. Both the tenure and the stop flag need to be recalculated. Similarly, customers who start after the right censor- ship date should not be included.
+
 Recalculating tenure and the stop flag as of some right censorship date, such as 2004-12-31, uses the following rules:
-■■ Only customers who started on or before the right censorship date are included in the calculation.
-■■ For customers who are currently active, the stop flag is 0, indicating that they were active as of the right censorship date.
-■■ For customers who are currently stopped and whose stop date is after the right censorship date, the stop flag is 0. Otherwise the stop flag is 1.
+
+- Only customers who started on or before the right censorship date are included in the calculation
+
+- For customers who are currently active, the stop flag is 0, indicating that they were active as of the right censorship date
+
+- For customers who are currently stopped and whose stop date is after the right censorship date, the stop flag is 0. Otherwise the stop flag is 1
+
 The tenure on the right censorship date has a similar logic, incorporating the following rules:
-■■ For customers whose stop date is on or before the right censorship date, the tenure is the stop date minus the start date.
-■■ For the rest of the customers, the tenure is the right censorship date minus the stop date.
+
+- For customers whose stop date is on or before the right censorship date, the tenure is the stop date minus the start date
+
+- For the rest of the customers, the tenure is the right censorship date minus the stop date
+
 The following SQL uses two levels of subqueries to define the new stop flag and tenure columns:
+
   SELECT tenure2004, COUNT(*) as pop2004, SUM(isstop2004) as stop2004
   FROM (SELECT s.*,
                (CASE WHEN stop_type IS NULL THEN 0
@@ -728,9 +811,9 @@ The following SQL uses two levels of subqueries to define the new stop flag and 
 )s
 GROUP BY tenure2004
 ORDER BY 1
+
 Note that this query uses a subquery to define CENSORDATE as the right cen- sorship date. The purpose is to define CENSORDATE only once, reducing the possibility of errors in the query.
-www.it-ebooks.info
-278 Chapter 6 ■ How Long Will Customers Last?
+
 Figure 6-18 shows the survival curves as of the end of the three years. These curves vary in length, with the 2004 curve only having one year of survival data, 2005 having two years, and 2006 having three years. Also, the 2004 curve is the survival for only 2004 starts. 2005 has both 2004 and 2005, and 2006 has starts from all three years. The survival curves as of the end of 2005 and 2006 are very similar to each other, because there is a big overlap in the customers used for the calculations.
 Important Measures Derived from Survival
 Survival and hazard curves provide nice pictures of customers over time, and make it possible to compare different groups of customers visually. Graphics are great for conveying information, but survival analysis can also provide informative metrics. This section discusses three particular measures: the point estimate of survival, the median customer lifetime, and the average remaining customer lifetime. It ends with a discussion of confidence in the hazard values.
@@ -746,38 +829,49 @@ Figure 6-18: Shifting the right censorship date back to the end of each year mak
 Point Estimate of Survival
 The point estimate of survival is the survival value at a particular tenure. For instance, earlier the point estimate at 450 days was used to compare survival in the three markets. This calculation looks up the survival value at a particu- lar point tenure value. The point estimate answers the simple question: How many customers do we expect to survive up to a given point in time?
 There are some situations where the point estimate is the best measure to use. For instance, many companies invest in customer acquisition, so cus- tomers must stay around long enough to recoup this investment. This is true
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 279
+
 when telephone companies give away handsets, when insurance companies pay commissions to agents, and so on. For a given acquisition effort, an impor- tant question is how many customers “graduate” to the profitable stage of the customer relationship?
 Of course, answering such a question in detail might require understanding the cash flows that each customer generates and range of predictive models to handle expected tenure and expected revenues and expected costs. And all of that is difficult enough for existing customers, and harder still for prospects. A simpler approach is to see which customers survive to a particular tenure, which is usually a good enough approximation:
-■■ Perhaps when the customer has passed the initial promo period and is paying the full bill;
-■■ Perhaps when revenues from the customer have paid for initial outlays, such as commissions to agents or the cost of handsets; or,
-■■ Perhaps a seemingly arbitrary period, such as one year.
+
+- Perhaps when the customer has passed the initial promo period and is paying the full bill
+
+- Perhaps when revenues from the customer have paid for initial outlays, such as commissions to agents or the cost of handsets
+
+- Perhaps a seemingly arbitrary period, such as one year
+
 The point estimate of the survival function is then a good measure for the effectiveness of such campaigns.
 As an example, a major newspaper publisher used survival analysis for understanding its home delivery customers. Many things happen during the initial period when customers sign up for home delivery. For instance:
-■■ The customer may never get a paper delivered because they live in a non-routable area.
-■■ The customer may not pay their first bill.
-■■ The customer may have only signed up for the initial promotional
-discount.
+
+- The customer may never get a paper delivered because they live in a non-routable area
+
+- The customer may not pay their first bill
+
+- The customer may have only signed up for the initial promotional discount
+
 Each of these affects the survival during the first few months. After analyz- ing the customers, though, it became clear that four months was an impor- tant milestone, and quite predictive of longer-term survival. One advantage of four months over one year (the previous measure) is that four-month sur- vival is available eight months sooner for new customers. That is, it became possible to measure the retention effectiveness of acquisition campaigns — using four-month survival — within a few months after the campaign starts.
 Median Customer Tenure
 Another measure of survival is the median customer tenure or customer half-life. This is the tenure where exactly half the customers have left. The median cus- tomer tenure is easy to calculate. It is simply the place where the survival curve crosses the horizontal 50% line, as shown in Figure 6-19.
-www.it-ebooks.info
-280 Chapter 6 ■ How Long Will Customers Last?
+
 100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
 Figure 6-19: The median lifetime is the tenure where the survival curve passes the 50% line.
-The median customer tenure suffers from the same problem that all medi- ans do. It tells us about exactly one customer, the one in the middle. Consider three different scenarios.
+The median customer tenure suffers from the same problem that all medi- ans do. It tells us about exactly one customer, the one in the middle. Consider three different scenarios:
+
 1. Scenario1:allcustomerssurviveforexactlyoneyearandthenallcus- tomers stop.
+
 2. Scenario2:customersstopatauniformpaceforthefirsttwoyears,so half the customers have left after one year and the remaining half in the second year.
+
 3. Scenario3:halfthecustomersminusonestoponthefirstday,thenone customer stops after a year, and the remaining customers stay around indefinitely.
+
 All of these scenarios have exactly the same median customer tenure, one year, because that is when half the customers have left. However, in the first sce- nario, all the customers survived for all of the first year, whereas in the third, almost half were gone immediately. The first scenario has no one surviving beyond one year; the second has no one surviving beyond two years, and in the third, they survive indefinitely. These examples illustrate that the median tenure does not provide information about what happens to customers before and after the median tenure. It simply says that the customer in the middle survived to that point in time.
 The median tenure also illustrates one of the disadvantages of the retention curve, versus the survival curve. Because it is jagged, the retention curve might cross the 50% line several times. Which is the correct value for median retention? The right answer is to use survival instead of retention.
 568
 0 60 120 180 240 300 360 420 480 540 600 660 720
 Tenure (Days)
-www.it-ebooks.info
+
 Survival
-Chapter 6 ■ How Long Will Customers Last? 281 Average Customer Lifetime
+
+Average Customer Lifetime
+
 The median customer lifetime provides information about exactly one cus- tomer, the one in the middle. Averages are more useful, because they can be included in financial calculations. So if a customer generates $200 in revenue per year, and the average customer stays for two years, then the average cus- tomer generates $400 in revenue.
 The average truncated tenure is the average tenure for a given period of time after customers start, answering a question such as: “What is the average number of days that customers are expected to survive in the first year after they start?” Limiting the span to one year is helpful for both business reasons and technical reasons. On the business side, it means that the results can be validated after one year. On the technical side, average truncated tenures are easier to calculate, because they are for a finite time period.
 Calculating the average truncated tenure from the survival curve turns out to be quite easy. To illustrate the process, start with the simplest case, the average one-day tenure. That is, what is the average tenure of customers in the one day after they start? The number of customers who survived to day one is the num- ber who started times day-one survival. The average divides by the number who started, so the average is just the survival on day one. If 99% of customers survive for one day, then the average customer survives for 0.99 days in the first day after they start.
@@ -785,8 +879,8 @@ What is the average two-day tenure? This is the average number of days that cust
 This generalizes to any tenure. The average tenure for any given time after a customer starts is the sum of the survival values up to that tenure.
 Another way of looking at the calculation leads to the observation that the area under the survival curve is the average truncated tenure. Figure 6-20 shows how to calculate the area, by placing rectangles around each survival value. The area of each rectangle is the base times the height. The base is one time unit. The height is the survival value. Voila. The area under the curve is the sum of the survival values, which as we just saw, is the average trun- cated tenure.
 TIP Theareaunderthesurvivalcurveistheaveragecustomerlifetimeforthe period of time covered by the curve. For instance, for a survival curve that has two years of data, the area under the curve up to day 730 is the two-year average tenure.
-www.it-ebooks.info
-282 Chapter 6 ■ How Long Will Customers Last?
+
+
 100% 90% 80% 70% 60% 50% 40% 30% 20% 10% 0%
 Figure 6-20: The average customer lifetime is the area under the survival curve.
 Confidence in the Hazards
@@ -796,9 +890,9 @@ Chapter 3 discussed confidence intervals in general and the standard error of a 
 The most important thing to note is that the standard error is quite small. For this reason, it is safe to ignore it. Second, there are theoretical reasons why the standard error of a proportion overstates the error for hazards. It is worth not- ing that as the tenure gets larger, the population at risk declines, so the standard error gets bigger. This is particularly true for the one-year calculation in month 12. When the population at risk has one million customers, the standard error is so small that it can be ignored. However, when there are only one hundred customers, the standard error is quite large.
 0 2 4 6 8 10 12 14 16 18 20 22 24 26 28
 Tenure (Days)
-www.it-ebooks.info
+
 Survival
-Chapter 6 ■ How Long Will Customers Last? 283
+
 Table 6-5: Standard Error for Hazard Calculations Using One Year vs Two Years of Starts ONE YEAR TWO YEAR
 CUMULATIVE STANDARD CUMULATIVE
 STANDARD H ERROR
@@ -823,6 +917,7 @@ POPULATION H ERROR
 POPULATION
 1,949,012 1,747,837 1,676,349 1,616,928 1,539,639 1,445,250 1,372,105 1,305,919 1,245,427 1,182,404 1,116,510 1,053,415 969,757
 The query used to generate the data for this is:
+
   SELECT tenure,
          SUM(CASE WHEN start_date >= ‘2006-01-01’ THEN 1 ELSE 0 END
             ) as oneyear,
@@ -841,9 +936,9 @@ The query used to generate the data for this is:
   WHERE start_date >= ‘2004-01-01’ AND tenure >= 0
   GROUP BY tenure
   ORDER BY 1
+
 This query is quite similar to earlier queries that calculated hazards.
-www.it-ebooks.info
-284 Chapter 6 ■ How Long Will Customers Last?
+
 WARNING Survival values and hazards are accurate when lots of data are used for the calculation. As the number of data points in the calculations decreases (even down to the few hundreds), the values have a much larger margin of error.
 Using Survival for Customer Value Calculations
 The customer value calculation is theoretically quite simple. The value of a customer is estimated future revenue times the estimated future duration of the customer relationship. This just has one little challenge, knowing the future. We can make informed guesses using historical data.
@@ -852,8 +947,7 @@ The choice of revenue instead of profit or net revenue is quite intentional. In 
 Often, customers have little control over costs, which might be subject to internal allocation formulas. An actual profitability calculation would neces- sarily be making many assumptions about the future, and these assumptions might turn out to have a greater impact on customer value than customer behavior. So, although such profitability analyses are interesting and perhaps necessary for financial modeling, they do not necessarily benefit from being done at the granularity of individual customers.
 Consider a magazine as a good example. Subscription customers receive the magazine, hopefully paying for copies that in turn generate revenue for the com- pany. Customers continue their subscription while they see value in the relation- ship. However, profitability depends on all sources of revenue and costs, including the amount of advertising, the cost of paper, and the cost of postage. These cost factors are beyond customer control; on the other hand, revenue is based on when customers start and stop and is under their control.
 This section discusses customer value, with particular emphasis on using survival analysis for estimating the customer duration. It starts with a method of estimating revenue, which is then applied to estimating the value of future starts. Then, the method is applied to existing customers. The purpose of cus- tomer value is generally to compare different groups of customers or prospects over time. Customer value is a tool to help enable companies to make more informed decisions about their customers.
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 285
+
 Estimated Revenue
 The estimated revenue is assumed to be a stream of money that arrives at a given rate, such as $50/month. This rate may be calculated based on the his- tory of a particular customer or group of customers. It might also be estimated for a group of prospects based on the products they will use after they start. Note that for a real financial calculation, future revenue might be discounted. However, because customer value calculations are for insight rather than accounting, discounts are usually a distraction.
 The subscription data does not have a separate revenue history, so this sec- tion uses the initial monthly fee as a good estimate for the revenue stream. Actual billing data or payment data would be preferable, but it is not available.
@@ -873,9 +967,9 @@ $$ AVERAGE MONTHLY
 $36.10 $39.05 $37.97 $36.80 $36.86 $38.97
 $$ AVERAGE DAILY
 $1.19 $1.28 $1.25 $1.21 $1.21 $1.28
-www.it-ebooks.info
+
 Continued on next page
-286 Chapter 6 ■ How Long Will Customers Last? Table 6-6 (continued)
+Table 6-6 (continued)
 NUMBER OF
 SUBSCRIBERS MONTHLY
 53,082 $39.61 65,582 $38.19 15,423 $37.48 44,108 $37.82 24,871 $38.43 42,640 $37.36
@@ -899,16 +993,25 @@ NUMBER OF CUSTOMERS
 100.0 100.0 99.5 99.1 98.8 98.5
 DAILY CUMULATIVE REVENUE REVENUE
 $128.46 $128.46 $128.46 $256.92 $127.84 $384.76 $127.34 $512.10 $126.92 $639.02 $126.54 $765.56
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 287 SQL Day-by-Day Approach
+SQL Day-by-Day Approach
 Assume that there are two tables, Survivalmc and Revenue. Survivalmc has the following columns:
-■■ Market;
-■■ Channel;
-■■ Tenureindays;and, ■■ Survival.
+
+- Market
+
+- Channel
+
+- Tenureindays
+
+- Survival
+
 This table could be created using the process described earlier for calculating survival in SQL, breaking the results into groups based on market and channel. The Revenue table has:
-■■ Market;
-■■ Channel; and,
-■■ Daily revenue.
+
+- Market
+
+- Channel
+
+- Daily revenue
+
 This table could be created from the query used to generate Table 6-7.
 With these two tables, it is possible to calculate the estimated revenue for the
 first 365 days after a customer starts:
@@ -925,8 +1028,7 @@ first 365 days after a customer starts:
   GROUP BY market, channel
 The approach is to join Survivalmc to Revenue and then multiply the values together to get expected revenue per day. The first 365 days are then summed for each channel and market. The complication in the query comes from the possibility that some tenure values are missing in the survival table.
 The calculation for revenue uses NUMDAYS, because some tenure values might be skipped in Survivalmc. For instance, if days 101 and 102 are missing, the row for tenure 100 would have NUMDAYS set to three. This means that the survival remains the same for three days. The next row in the table would be for tenure 103. These missing tenure values need to be included in the revenue calculation.
-www.it-ebooks.info
-288 Chapter 6 ■ How Long Will Customers Last?
+
 The need for NUMDAYS365 occurs when the missing tenures are at the end of the first year. For instance, if tenure 364 had NUMDAYS set to 10, its sur- vival would be counted ten times instead of one. The use of NUMDAYS365 fixes this boundary-effect problem.
 SQL Summary Approach
 An alternative approach calculates the sum of the survival values first, and then multiplies by the revenue. This is possible because the revenue is constant for each day, so it can, in essence, be factored out. The SQL looks like:
@@ -950,8 +1052,7 @@ Gotham $283.78 Metropolis $349.10 Smallville $402.90
 FIRST YEAR REVENUE BY CHANNEL DEALER MAIL STORE
 $392.53 $331.31 $399.52 $349.64 $420.56 $387.89
 $385.13 $408.33 $417.33
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 289 Estimated Revenue for a Simple Group of
+Estimated Revenue for a Simple Group of
 Existing Customers
 Existing customers pose a different challenge from new starts. Obtaining his- torical revenue is simply a matter of adding up the revenue that existing cus- tomers have paid. For future revenue, there is a hitch. Existing customers are not starting at tenure zero, because these customers are active now and have a particular tenure. So, direct application of survival values is not the right approach. The solution is to use conditional survival, that is, survival conditioned on the fact that customers have already survived up to their cur- rent tenure.
 Estimated Second Year Revenue for a Homogenous Group
@@ -970,9 +1071,9 @@ Applying the conditional survival to the group of existing customers uses a join
 ■■ The group of customers needs to be defined. This consists of customers who are active and who started exactly 365 days before the cutoff date. There are 1,928 of them.
 ■■ The conditional survival needs to be calculated. This uses the survival divided by the survival at day 365, and only applies to tenures greater than or equal to 365.
 ■■ Each customer is joined to the survival table, for all tenures between 365 and 729 (these are the tenures these customers have in the forecast year).
-■■ This table is then aggregated by the market and channel dimensions. www.it-ebooks.info
+■■ This table is then aggregated by the market and channel dimensions. 
 
-290 Chapter 6 ■ How Long Will Customers Last? The query that does this is:
+The query that does this is:
          SELECT ssum.market, ssum.channel, oneyear.numsubs, oneyear.numactives,
                 oneyear.numactives*ssum.survdays*r.avgdaily as year2revenue
          FROM (SELECT market, channel, COUNT(*) as numsubs,
@@ -1004,8 +1105,7 @@ Applying the conditional survival to the group of existing customers uses a join
 Table 6-9 shows the second year revenue for the group that started exactly one year previously. Notice that there are two ways of calculating revenue per cus- tomer. The “Year 2 Revenue Per Start” column is based on the original number of starts; the “Year 2 Revenue Per Year 1 Active” is based on the customers who survived the first year. Comparing this table to Table 6.8, we see that the second year revenue per start is always lower than the first year. That is because some customers leave during the first year. Some groups, such as Smallville/Store, have very high retention, so their second year revenue is almost as high as the first year revenue.
 Pre-calculating Yearly Revenue by Tenure
 The preceding query is not only complicated, it is also starting to push the limits of SQL in terms of performance. The Subs table contains over one mil- lion rows (although most are filtered out), and it is being joined to 365 rows of Survivalmc. The intermediate result is, conceptually, a table with hundreds
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 291 of millions of rows. Expanding the forecast period and increasing the num-
+of millions of rows. Expanding the forecast period and increasing the num-
 bers of customers causes this to grow quite quickly.
 Table 6-9: Second Year Revenue per Customer by Market/Channel Combination
 NUMBER OF
@@ -1025,9 +1125,9 @@ What is the yearly revenue for a single customer in the next year, for any given
        ) oneyear LEFT OUTER JOIN
        (SELECT s.market, s.channel,
                SUM(numdays730*s.survival/s365.survival) as survdays
-www.it-ebooks.info
+
 (continued)
-292 Chapter 6 ■ How Long Will Customers Last?
+
         FROM (SELECT s.*,
                      (CASE WHEN endtenure >= 730 THEN 730 – tenure
                            ELSE numdays END) as numdays730
@@ -1049,18 +1149,27 @@ Notice that the outermost query here does not do an aggregation. This is because
 TIP When combining multiple tables and doing an aggregation, it is often more efficient to aggregate first and then do the joins, if this is possible.
 Estimated Future Revenue for All Customers
 Estimating the next year of revenue for all existing customers adds another level of complexity. Pre-calculating as much as possible helps. What is needed is a survival table with the following columns:
-■■ Market;
-■■ Channel;
-■■ Tenureindays;and,
-■■ Sum of conditional survival for the next 365 days.
+
+- Market
+
+- Channel
+
+- Tenureindays
+
+- Sum of conditional survival for the next 365 days
+
 One big problem is what happens to the oldest customers. The largest tenure is 1091 days. There is no data beyond this point. There are several approaches:
-■■ Assume that everyone stops. This is not reasonable because these are good customers.
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 293
-■■ Assume that no one stops. This is the approach we take, although it overestimates revenue for long-term customers, because it assumes they do not stop.
-■■ Calculate a longer-term rate of decline, perhaps using a constant haz- ard. Add rows to the survival table incorporating this information.
+
+- Assume that everyone stops. This is not reasonable because these are good customers.
+
+- Assume that no one stops. This is the approach we take, although it overestimates revenue for long-term customers, because it assumes they do not stop.
+
+- Calculate a longer-term rate of decline, perhaps using a constant haz- ard. Add rows to the survival table incorporating this information.
+
 The third approach is the simplest, because it uses the table of survival values directly.
+
 The following query calculates the sum of the conditional survival values for the next 365 days. It uses a self-join for the calculation:
+
   SELECT s.market, s.channel, s.tenure, s.numdays,
          SUM((s1year.survival/s.survival) *
              (CASE WHEN s1year.endtenure - s.tenure >= 365
@@ -1094,8 +1203,6 @@ The next step is to join this to the revenue table and to the original data. For
              ON s.market = s1year.market AND
                 s.channel = s1year.channel AND
                 s1year.tenure BETWEEN s.tenure AND s.tenure+365
-www.it-ebooks.info
-294 Chapter 6 ■ How Long Will Customers Last?
         GROUP BY s.market, s.channel, s.tenure, s.numdays
        ) ssum
        ON subs.market = ssum.market AND
@@ -1125,8 +1232,7 @@ Mail Store Chain Dealer Mail Store Chain Dealer Mail Store
 236,886 106,011 226,968 301,656 204,862 262,086
 68,448 240,753 100,028
 157,522 3,061,719
-www.it-ebooks.info
-Chapter 6 ■ How Long Will Customers Last? 295
+
 Such a table often suggests more questions than it answers: What difference does the mix of rate plans make to the revenue? What is the revenue for starts by year in each of the groups? What other factors affect revenue?
 Lessons Learned
 This chapter introduced survival analysis for understanding customers. The earliest origins of survival analysis were for understanding mortality rates to calculate the value of financial products. This was pretty sophisticated stuff for 1693. Since then, the technique has been used in many areas, from manu- facturing to medical outcomes studies to understanding convicts released from prison.
@@ -1134,5 +1240,3 @@ Two key concepts in survival analysis are the hazard probability, which is the p
 Survival can also be quantified. The median customer tenure (or customer half-life) is the time it takes for half the customers to stop. The point estimate of survival, such as the one year survival, is the proportion of customers who make it to one year. The average truncated tenure is the average tenure of a customer during a period of time.
 One powerful way that survival analysis can be used is to estimate customer value by estimating future customer revenue. This works for both new and existing customers. Although the calculations are a bit complicated, the ideas are fairly simple — just multiplying the average expected survival by the revenue.
 The next chapter dives into survival analysis in more detail, introducing the concepts of time windows (to handle left truncation) and competing risks.
-www.it-ebooks.info
-www.it-ebooks.info

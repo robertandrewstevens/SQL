@@ -1,4 +1,16 @@
-CHAPTER 3: How Different Is Different?
+---
+title: "CHAPTER 3: How Different Is Different?"
+author: "Robert A. Stevens"
+date: "4/7/2018"
+output: html_document
+---
+
+```{r, comment=NA}
+library(sqldf)
+setwd("~/GitHub/SQL")
+```
+
+*Data Analysis Using SQL and Excel* by Gordon S. Linoff
 
 The previous two chapters show how to do various calculations and visualizations using SQL and Excel. This chapter moves from calculating results to understanding the significance of the resulting measurements. When are two values so close that they are essentially the same? When are two values far enough apart that we are confident in their being different?
 
@@ -12,7 +24,7 @@ This chapter introduces the statistics used for addressing the question “how d
 
 Two other statistical techniques are also introduced. One is the difference of proportions, which is often used for comparing the response rates between groups of customers. The other is the chi-square test, which is also used to compare results among different groups of customers and determine whether the groups are essentially the same or fundamentally different. Throughout the chapter there are simple examples with small amounts of data to illustrate the ideas. There are also larger examples using the purchase and subscriptions databases to illustrate how to apply the ideas on real datasets stored in databases.
 
-Basic Statistical Concepts
+## Basic Statistical Concepts
 
 Over the past two centuries, statistics has delved into the mathematics of understanding measurements and their interpretation. Although the theoretical aspects of the subject are beyond the range of this book, there are some basic concepts that are very useful for our analyses. In fact, not using the foundation of statistics would be negligent, because so many brilliant minds have already answered questions quite similar to the ones being asked. Of course, the great minds of statistics who were developing these techniques a century ago did not have access to modern computing and data access, much less to the vast volumes of data available today. Many of their methods, however, have withstood the test of time.
 
@@ -26,11 +38,11 @@ This section discusses the some important concepts in statistics, in the spirit 
 
 The later sections in this chapter build on these ideas, applying the results to real-world data.
 
-The Null Hypothesis
+### The Null Hypothesis
 
 Statisticians are naturally skeptical, and that is a good thing. When looking at data, their default assumption is that nothing out-of-the-ordinary is going on. This, in turn, implies that any observed differences among groups are just due to chance. So, if one candidate is polling 50% and the other 45%, statisticians start with the assumption that there is no difference in support for the candidates. Others may be astounded by such an assumption, because 50% seems quite different from 45%. The statistician starts by assuming that the different polling numbers are just a matter of chance, probably due to the particular people who were included in the poll.
 
-TIP Perhaps the most important lesson from statistics is skepticism and the willingness to ask questions. The default assumption should be that differences are due to chance; data analysis has to demonstrate that this assumption is highly unlikely.
+**TIP:** *Perhaps the most important lesson from statistics is skepticism and the willingness to ask questions. The default assumption should be that differences are due to chance; data analysis has to demonstrate that this assumption is highly unlikely.*
 
 The assumption that nothing extraordinary is occurring has a name, the Null Hypothesis. A vocabulary note: “Null” here is a statistical term and has nothing to do with the database use of the term. To avoid ambiguity, “Null Hypothesis” is a statistical phrase and any other use of “NULL” refers to the SQL keyword.
 
@@ -52,7 +64,7 @@ Sometimes, just formulating the Null Hypothesis is valuable, because it articula
 
 These hypotheses are stated in clear business terms. They can be validated, using available data. The answers, however, are not simply “true” or “false.” The answers are a confidence that the statement is true. Very low p-values (confidence values) imply a very low confidence that the statement is true, which in turn implies that the observed difference is significant.
 
-Confidence and Probability
+### Confidence and Probability
 
 The idea of confidence is central to the notion of measuring whether two things are the same or different. Statisticians do not ask “are these different?” Instead, they ask the question “how confident are we that these are the same?” When this confidence is very low, it is reasonable to assume that the two measurements are indeed different.
 
@@ -64,13 +76,15 @@ There is a tendency to think of confidence as a probability. This is not quite c
 
 The inverse notion of “how different is different” is “when are two things the same.” One way of expressing this is by asking how confident we are that the difference is or is not zero. In the polling example, where one candidate has 50% support and the other 45%, the Null Hypothesis on the difference is: “The difference in support between the two candidates is zero,” meaning the two candidates actually have the same support in the overall population. A p-value of 1% means that if multiple polls were conducted at the same time, with the same methodology and with the only difference being the people randomly chosen to participate in the polls and the assumption that there is no difference in support for the candidates, then we would expect 99% of the polls to have less than the observed difference. That is, the observed difference is big, so it suggests a real difference in support for the candidates in the overall population. If the p-value were 50%, then even though the difference is noticeable in the poll, it says very little about which candidate has greater support.
 
-Normal Distribution
+### Normal Distribution
 
 The normal distribution, also called the bell curve and the Gaussian distribution, plays a special role in statistics. In many situations, the normal distribution can answer the following question: Given an observed measure on a sample (such as a poll), what confidence do we have that the actual measure for the whole population falls within a particular range? For instance, if 50% of poll respondents say they support Candidate A, what does this mean about Candidate A’s support in the whole population? Pollsters report something like “There is a 95% confidence that the candidate’s support is between 47.5% and 52.5%.”
 
 In this particular case, the confidence interval is 47.5% to 52.5% and the confidence is 95%. A different level of confidence would produce a different interval. So the interval for 99.9% confidence would be wider. The interval for 90% would be narrower.
 
-MONTY HALL PARADOX
+-----
+
+**MONTY HALL PARADOX**
 
 Monty Hall was the famous host of the television show Let’s Make a Deal from 1963 through 1986. This popular show offered prizes, which were hidden behind three doors. One of the doors contained a grand prize, such as a car or vacation. The other two had lesser prizes, such as a goat or rubber chicken. In this simplification of the game show, a contestant is asked to choose one of the doors and can keep the prize behind it. One of the remaining two doors is then opened, revealing perhaps a rubber chicken, and the contestant is asked whether he or she wants to keep the unseen prize behind the chosen door or switch to the other unopened one.
 
@@ -86,6 +100,8 @@ What are those probabilities? The probabilities are 33.3% that the prize is behi
 
 Confidence levels can help us understand this problem. At the beginning, the contestant should be 33.3% confident that the prize is behind the chosen door and 66.7% confident that the prize is behind one of the other two. This confidence does not change when another door without the prize is opened, because the contestant should realize that it is always possible to show a door with no prize. Nothing has changed. So given the opportunity to switch, the contestant should do so, and double his or her chances of winning.
 
+-----
+
 Measuring the confidence interval uses the normal distribution, shown in Figure 3-1 for the data corresponding to the polling example. In this example, the average is 50%, and the range from 47.5% and 52.5% has 95% confidence. The two points define the ends of the confidence interval, and the area under the curve, between the two points, measures the confidence. The units on the vertical axis are shown, but they are not important. They just guarantee that the area under the entire curve equals 100%.
 
 The normal distribution is a family of curves, defined by two numbers, the average and standard deviation. The average determines where the center of the distribution is, so smaller averages result in curves shifted to the left, and larger averages have curves shifted to the right. The standard deviation determines how narrow and high or how wide and flat the hump is in the middle. Small standard deviations make the curve spikier; larger standard deviations spread it out. Otherwise, the shape of the curve remains the same, and the area under all these curves is always one.
@@ -94,26 +110,27 @@ Properties of the normal distribution are well understood. So, about 68% of the 
 
 Table 3-1 shows the confidence for various confidence intervals measured in terms of standard deviations. The distance from a value to the average, measured in standard deviations, is called the z-score. This is actually a simple transformation on any set of data, where the difference between the value and average is divided by the standard deviation. Z-scores are particularly useful when comparing variables that have different ranges, such as the average age and average income of a group of people. Z-scores are also useful for transforming variables for data mining modeling.
 
-Figure 3-1: The area under the normal distribution, between two points, is the confidence that the measurement on the entire population falls in that range.
+**Figure 3-1:** The area under the normal distribution, between two points, is the confidence that the measurement on the entire population falls in that range.
 
-Table 3-1: Confidence Levels Associated with Various Z-Scores (which is half the width of the confidence interval measured in standard deviations)
+**Table 3-1:** Confidence Levels Associated with Various Z-Scores (which is half the width of the confidence interval measured in standard deviations)
 
 Z-SCORE CONFIDENCE
-1.00 68.269% 
-1.64 89.899% 
-1.96 95.000% 
-2.00 95.450% 
-2.50 98.758% 
-3.00 99.730% 
-3.29 99.900% 
-3.89 99.990% 
-4.00 99.994% 
-4.42 99.999% 
-5.00 100.000%
+------- ----------
+1.00       68.269% 
+1.64       89.899% 
+1.96       95.000% 
+2.00       95.450% 
+2.50       98.758% 
+3.00       99.730% 
+3.29       99.900% 
+3.89       99.990% 
+4.00       99.994% 
+4.42       99.999% 
+5.00      100.000%
 
 The values in Table 3-1 were calculated using the Excel formula:
 
-<confidence> = NORMSDIST(<z-score>) – NORMSDIST(- <z-score>)
+    <confidence> = NORMSDIST(<z-score>) – NORMSDIST(- <z-score>)
 
 In Excel, the function NORMSDIST() calculates the area under the normal distribution up to a particular z-score. That is, it defines the confidence interval from minus infinity to the z-score. To get a finite confidence interval on either side of the average, calculate the one from minus infinity to <value> and then subtract out the one from minus infinity to minus z-score, as shown in Figure 3-2.
 
@@ -121,23 +138,23 @@ normsdist(y)
 normsdist(x)
 minus infinity x avg y normsdist(y) – normsdist(x)
 
-Figure 3-2: The Excel function NORMSDIST() can be used to calculate the confidence for an interval around the average.
+**Figure 3-2:** The Excel function NORMSDIST() can be used to calculate the confidence for an interval around the average.
 
 The preceding formula works for z-scores that are positive. A slight variation works for all z-scores:
 
-  <confidence> = ABS(NORMSDIST(<z-score>) – NORMSDIST(-<z-score>))
+    <confidence> = ABS(NORMSDIST(<z-score>) – NORMSDIST(-<z-score>))
 
 From the preceding polling example, the standard deviation can be reverse engineered. The confidence is 95%, implying that the confidence interval ranges 1.96 times the standard deviation on either side of the average. Because the confidence interval is 2.5% on either side of the average, the standard deviation is 2.5%/1.96 or 1.276%. This information can be used to calculate the 99.9% confidence interval. It is 3.29 times the standard deviation. So, the confidence interval for the poll with 99.9% confidence ranges from 50% – 3.29*1.276% to 50% + 3.29*1.276%, or 45.8% to 54.2%.
 
 As a final note, the normal distribution depends on knowing the average and standard deviation. All we have is data, which does not include this information directly. Fortunately, statistics provides some methods for estimating these values from data, as explained in examples throughout this chapter.
 
-How Different Are the Averages?
+## How Different Are the Averages?
 
 The retail purchase data has purchases from all fifty states, and then some. This section addresses the question of whether the average purchase amount (in the column TOTALPRICE) differs in different states. Statistics answers this question, and most of the calculations can be done using SQL queries.
 
 Let’s start with the observation that the average purchase amount for the 17,839 purchases from California is $85.48 and the average purchase amount for the 53,537 purchases from New York is $70.14. Is this difference significant?
 
-The Approach
+### The Approach
 
 The approach to answering the question starts by putting all the orders from New York and California into one big bucket whose overall average total price is $73.98. The question is: What is the likelihood that a random subset of 17,839 purchases from this bucket has an average TOTALPRICE of $85.48? If this probability is largish, then orders from California look like a random sample, and there is nothing special about them. On the other hand, if the p-value is small, there is evidence that orders from California are different from a random sample of orders from the two states, leading to the conclusion that California orders are different.
 
@@ -145,15 +162,15 @@ Looking at extreme cases can help shed light on this approach. Assume that all o
 
 A cursory look at the data shows that this is not the case. Given that TOTALPRICE runs the gamut of values from $0 to $10,000, can we say anything about whether the difference in average order size in New York and California is due to randomness, or due to a difference in the markets?
 
-Standard Deviation for Subset Averages
+### Standard Deviation for Subset Averages
 
 The preceding question is about averages of samples. Something called the Central Limit Theorem in statistics sheds light on precisely the subject of the average of a subset of values randomly selected from a larger group. This theorem says that if we repeatedly take samples of a given size, then the distribution of the averages of these samples approximates a normal distribution, whose average and standard deviation are based on exactly three factors:
 
-- The average of the original data;
+- The average of the original data
 
-- The standard deviation of the original data; and,
+- The standard deviation of the original data
 
-- The size of the sample.
+- The size of the sample
 
 Notice that the Central Limit Theorem says nothing about the distribution of the original values. The wonder of this theorem is that it works for basically any distribution of the original values. The Central Limit Theorem tells us about the distribution of the averages of the samples, not the distribution of the original values.
 
@@ -161,25 +178,26 @@ Consider the average TOTALPRICE of ten orders taken randomly. If this process is
 
 The Central Limit Theorem says that the average of the distribution is the average of the original data and the standard deviation is the standard deviation of the original data divided by the square root of the sample size. As the sample size gets larger, the standard deviation gets smaller, and the distribution becomes taller and narrower and more centered on the average. This means that the average of a larger sample is much more likely to be very close to the overall average, than the average of a smaller sample. In statistics-speak, the standard deviation of the average of a sample is called the standard error (of the sample). So, the previous formulation says that the standard error of a sample is equal to the standard deviation of the population divided by the square root of the sample size.
 
-
 Sample Size 250
 Sample Size 100
 Sample Size 50
 Sample Size 10
 Sample Size 5
 
-Figure 3-3: The theoretical distributions of TOTALPRICE for different sample sizes follow the normal distribution.
+**Figure 3-3:** The theoretical distributions of TOTALPRICE for different sample sizes follow the normal distribution.
 
 Now, the question about the average values of California and New York gets a little tricky. It is trivial to calculate the average and standard deviation of the New York and California orders, using the SQL aggregation functions AVG() and STDDEV(). However, the question that we want to answer is slightly different. The question is: What is the likelihood that taking the average of 17,839 values randomly chosen from the population results in an average of $85.48 and taking a sample of 53,537 values results in $70.14?
 
 Looking at the distribution of values from each state helps to understand what is happening. The following SQL query returns the counts of the TOTALPRICE column in five-dollar increments:
 
-  SELECT 5*FLOOR(totalprice/5),
+```
+SELECT   5*FLOOR(totalprice/5),
          SUM(CASE WHEN state = ‘CA’ THEN 1 ELSE 0 END) as CA,
          SUM(CASE WHEN state = ‘NY’ THEN 1 ELSE 0 END) as NY
-  FROM orders o
-  WHERE o.state IN (‘CA’, ‘NY’)
-  GROUP BY 5*FLOOR(totalprice/5)
+FROM     orders o
+WHERE    o.state IN (‘CA’, ‘NY’)
+GROUP BY 5*FLOOR(totalprice/5)
+```
 
 A histogram of the results is shown in Figure 3-4, which has the averages for each state in the legend. Visually, the two histograms look quite similar, suggesting that the average sizes for each state might well be within the margin of error. However, the analysis is not yet complete.
 
